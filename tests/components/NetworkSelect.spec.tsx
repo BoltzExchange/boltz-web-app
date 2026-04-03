@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import NetworkSelect from "../../src/components/NetworkSelect";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
-import { BTC } from "../../src/consts/Assets";
+import { BTC, LN, RBTC } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import { TestComponent, contextWrapper, signals } from "../helper";
@@ -73,6 +73,26 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000000002",
                     },
                 },
+                "USDT0-POL": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Polygon PoS",
+                        symbol: "POL",
+                        gasToken: "POL",
+                        chainId: 137,
+                        nativeCurrency: {
+                            name: "POL",
+                            symbol: "POL",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000004",
+                    },
+                },
                 "USDT0-CFX": {
                     ...actual.config.assets.USDT0,
                     canSend: false,
@@ -103,6 +123,7 @@ const sendableUsdt0VariantAssets = getSendableUsdt0VariantAssets(config.assets);
 const unsendableUsdt0VariantAssets = getUnsendableUsdt0VariantAssets(
     config.assets,
 );
+const evmAddress = "0x5000000000000000000000000000000000000000";
 
 const openNetworkSelect = (side = Side.Send) => {
     render(
@@ -152,5 +173,30 @@ describe("NetworkSelect", () => {
 
         expect(signals.pair().fromAsset).toEqual("USDT0-OP");
         expect(screen.queryByText(i18n.en.select_network)).toBeNull();
+    });
+
+    test("should not clear EVM-style destination when only send network changes", async () => {
+        openNetworkSelect();
+        setPairAssets("USDT0-ETH", RBTC);
+        signals.setOnchainAddress(evmAddress);
+        signals.setAddressValid(true);
+
+        fireEvent.click(await screen.findByTestId("select-USDT0-POL"));
+
+        expect(signals.pair().fromAsset).toEqual("USDT0-POL");
+        expect(signals.pair().toAsset).toEqual(RBTC);
+        expect(signals.onchainAddress()).toEqual(evmAddress);
+    });
+
+    test("should not clear EVM-style destination when receive network changes", async () => {
+        openNetworkSelect(Side.Receive);
+        setPairAssets(LN, "USDT0-ETH");
+        signals.setOnchainAddress(evmAddress);
+        signals.setAddressValid(true);
+
+        fireEvent.click(await screen.findByTestId("select-USDT0-POL"));
+
+        expect(signals.pair().toAsset).toEqual("USDT0-POL");
+        expect(signals.onchainAddress()).toEqual(evmAddress);
     });
 });

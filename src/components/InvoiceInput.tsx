@@ -20,6 +20,7 @@ import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
+    let validationRequest = 0;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
@@ -55,10 +56,19 @@ const InvoiceInput = () => {
     };
 
     const validate = async (input: HTMLTextAreaElement) => {
+        const requestId = ++validationRequest;
         const inputValue = input.value.trim();
+        const isStale = () =>
+            requestId !== validationRequest ||
+            input.value.trim() !== inputValue;
+
         setInvoice(inputValue);
+        setBolt12Loading(false);
 
         if (inputValue.length === 0) {
+            if (isStale()) {
+                return;
+            }
             clearInputError(input);
             resetInvoiceState();
             return;
@@ -70,6 +80,9 @@ const InvoiceInput = () => {
         const actualAsset =
             (await probeUserInput(LN, invoiceValue)) ??
             (await probeUserInput(LN, address));
+        if (isStale()) {
+            return;
+        }
 
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
@@ -80,10 +93,16 @@ const InvoiceInput = () => {
                 satAmount,
                 minerFee(),
             );
+            if (isStale()) {
+                return;
+            }
             setSendAmount(sendAmt);
         }
 
         // Auto switch direction based on address
+        if (isStale()) {
+            return;
+        }
         if (
             actualAsset !== LN &&
             actualAsset !== null &&
@@ -109,7 +128,12 @@ const InvoiceInput = () => {
                 try {
                     isBolt12 = await isBolt12Offer(invoiceValue);
                 } finally {
-                    setBolt12Loading(false);
+                    if (!isStale()) {
+                        setBolt12Loading(false);
+                    }
+                }
+                if (isStale()) {
+                    return;
                 }
 
                 if (isBolt12) {
@@ -117,14 +141,19 @@ const InvoiceInput = () => {
                     setInvoice(invoiceValue);
                 } else {
                     const sats = await validateInvoice(invoiceValue);
+                    if (isStale()) {
+                        return;
+                    }
+                    const sendAmount = await pair().calculateSendAmount(
+                        BigNumber(sats),
+                        minerFee(),
+                    );
+                    if (isStale()) {
+                        return;
+                    }
                     setAmountChanged(Side.Receive);
                     setReceiveAmount(BigNumber(sats));
-                    setSendAmount(
-                        await pair().calculateSendAmount(
-                            BigNumber(sats),
-                            minerFee(),
-                        ),
-                    );
+                    setSendAmount(sendAmount);
                     setInvoice(invoiceValue);
                     setBolt12Offer(undefined);
                     setLnurl("");
@@ -132,8 +161,14 @@ const InvoiceInput = () => {
                 }
             }
 
+            if (isStale()) {
+                return;
+            }
             clearInputError(input);
         } catch (e) {
+            if (isStale()) {
+                return;
+            }
             input.classList.add("invalid");
             input.setCustomValidity(t(e.message));
             resetInvoiceState();

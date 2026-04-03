@@ -117,14 +117,160 @@ hr.spacer {
 }
 
 .fees-dyn {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
 }
-.fees-dyn > * {
-    flex-grow: 1;
+
+.fees-dyn > .fees-dyn-denom {
     display: flex;
     align-items: center;
-    justify-content: start;
+}
+
+.fees-dyn-right {
+    text-align: right;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--color-white-60);
+
+    .denominator {
+        transform-origin: right center;
+    }
+}
+
+.fee-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    vertical-align: middle;
+}
+
+.fee-amount > .denominator {
+    margin-left: -0.9em;
+}
+
+.fee-amount > [data-denominator="USDT"] {
+    margin-left: -0em;
+}
+
+.fee-amount > .denominator-text-symbol {
+    transform: none;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.fees-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.2rem;
+    border: none;
+    background: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-align: right;
+    transition: color 0.18s ease-out;
+}
+
+@media (hover: hover) {
+    .fees-toggle:hover {
+        color: var(--color-text);
+    }
+}
+
+.fees-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    font-size: 0.85em;
+    rotate: 0deg;
+    transition: rotate 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: rotate;
+}
+
+.fees-toggle[aria-expanded="true"] .fees-toggle-icon {
+    rotate: 90deg;
+}
+
+.fees-details-shell {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: clip;
+    opacity: 0;
+    transition:
+        grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.16s ease-out;
+}
+
+.fees-details-shell.is-expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.fees-details-inner {
+    min-height: 0;
+    overflow: clip;
+    opacity: 0;
+    translate: 0 -0.35rem;
+    transition:
+        opacity 0.22s ease-out,
+        translate 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fees-details-shell.is-expanded .fees-details-inner {
+    overflow: visible;
+    opacity: 1;
+    translate: 0 0;
+}
+
+@supports (interpolate-size: allow-keywords) {
+    .fees-details-shell {
+        interpolate-size: allow-keywords;
+        display: block;
+        block-size: 0;
+        transition:
+            block-size 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.16s ease-out;
+    }
+
+    .fees-details-shell.is-expanded {
+        block-size: auto;
+    }
+}
+
+.fees-details {
+    display: block;
+    text-align: right;
+    padding: 0.1rem 0 0.1rem;
+    overflow-wrap: break-word;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fees-toggle-icon,
+    .fees-details-shell {
+        transition: none;
+    }
+
+    .fees-details-inner {
+        transition: none;
+        translate: 0 0;
+        opacity: 1;
+    }
+}
+
+.fees-abbrev-underline {
+    border-bottom: 1px dashed currentColor;
+    cursor: pointer;
+}
+
+.fees-extra-line {
+    display: block;
+    text-align: right;
+    overflow-wrap: break-word;
 }
 .fees-dyn,
 .icons > div {
@@ -359,17 +505,73 @@ textarea.invalid {
 }
 .fees-dyn label {
     display: block;
+    margin: 0;
 }
 #receiveAmount,
 #sendAmount {
     font-size: 33px;
+    line-height: 1.2;
     text-align: right;
+}
+#receiveAmount:disabled,
+#sendAmount:disabled {
+    user-select: none;
+    -webkit-user-select: none;
 }
 @media (max-width: 488px) {
     #receiveAmount,
     #sendAmount {
         font-size: 30px;
     }
+}
+
+.amount-field {
+    position: relative;
+    width: 100%;
+}
+
+.amount-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.amount-value-skeleton {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(46%, 7.75rem);
+    height: calc(33px * 0.85);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(
+        90deg,
+        var(--color-white-10) 25%,
+        var(--color-white-15) 50%,
+        var(--color-white-10) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 2s ease-in-out infinite;
+}
+
+@media (max-width: 488px) {
+    .amount-value-skeleton {
+        width: min(44%, 7rem);
+        height: calc(30px * 0.85);
+        transform: translateY(-50%);
+    }
+}
+
+.amount-field input.amount-input--quote-pending {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+    caret-color: transparent;
+}
+
+.amount-field input.amount-input--quote-pending::placeholder {
+    color: transparent;
+    opacity: 0;
 }
 
 .input-with-label {
@@ -579,12 +781,13 @@ textarea.invalid {
 [data-denominator="usd"] {
     background-image: url(../assets/usd.svg);
     background-position: center;
+    transform: scale(1.5);
 }
 [data-denominator="USDT"] {
     margin: 2px;
     background-image: none;
     background-color: var(--color-text);
-    width: 10px;
+    width: 13px;
     height: 10px;
     background-position: center;
     transform: scale(1.35) translateY(1px);
@@ -597,6 +800,23 @@ textarea.invalid {
     mask-position: center;
     -webkit-mask-size: contain;
     mask-size: contain;
+}
+
+.denominator-text {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+    margin-right: 0.25em;
+}
+
+.denominator-text-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    font-size: 0.95rem;
+    line-height: 1;
+    transform: translateY(1px);
 }
 
 .denomination .active {
@@ -990,7 +1210,7 @@ textarea.invalid {
 }
 .network-fee,
 .boltz-fee {
-    margin-right: 4px;
+    margin-right: 0.75rem;
 }
 
 .globe {
@@ -1107,6 +1327,10 @@ header {
 .swap-limits {
     display: inline-flex;
     gap: 0.8rem;
+
+    .denominator-text {
+        margin-left: 0.5rem;
+    }
 }
 
 .text-bold {

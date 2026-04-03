@@ -304,12 +304,29 @@ const ConnectWallet = (props: {
 }) => {
     const { t } = useGlobalContext();
     const { providers, connectedWallet } = useWeb3Signer();
-    const { setAddressValid, setOnchainAddress } = useCreateContext();
+    const { onchainAddress, setAddressValid, setOnchainAddress } =
+        useCreateContext();
 
     const address = () => connectedWallet()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
     const [walletCompatible, setWalletCompatible] = createSignal<boolean>(true);
+    const [syncedAddress, setSyncedAddress] = createSignal<
+        string | undefined
+    >();
     let latestSyncId = 0;
+
+    const clearSyncedAddress = () => {
+        const currentSyncedAddress = syncedAddress();
+        if (currentSyncedAddress === undefined) {
+            return;
+        }
+
+        setAddressValid(false);
+        if (onchainAddress() === currentSyncedAddress) {
+            setOnchainAddress("");
+        }
+        setSyncedAddress(undefined);
+    };
 
     const syncWalletState = async (
         asset: string,
@@ -342,8 +359,7 @@ const ConnectWallet = (props: {
             setNetworkValid(true);
 
             if (props.syncAddress) {
-                setAddressValid(false);
-                setOnchainAddress("");
+                clearSyncedAddress();
             }
             return;
         }
@@ -362,8 +378,14 @@ const ConnectWallet = (props: {
         setNetworkValid(true);
 
         if (isWalletConnectableAsset(asset) && props.syncAddress) {
-            setAddressValid(currentAddress !== undefined);
-            setOnchainAddress(currentAddress || "");
+            if (currentAddress === undefined) {
+                clearSyncedAddress();
+                return;
+            }
+
+            setAddressValid(true);
+            setOnchainAddress(currentAddress);
+            setSyncedAddress(currentAddress);
             return;
         }
     };
@@ -380,8 +402,7 @@ const ConnectWallet = (props: {
 
     onCleanup(() => {
         if (props.syncAddress) {
-            setAddressValid(false);
-            setOnchainAddress("");
+            clearSyncedAddress();
         }
     });
 

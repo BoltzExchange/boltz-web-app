@@ -79,6 +79,26 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000000002",
                     },
                 },
+                "USDT0-POL": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Polygon PoS",
+                        symbol: "POL",
+                        gasToken: "POL",
+                        chainId: 137,
+                        nativeCurrency: {
+                            name: "POL",
+                            symbol: "POL",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000004",
+                    },
+                },
                 "USDT0-CFX": {
                     ...actual.config.assets.USDT0,
                     canSend: false,
@@ -113,6 +133,7 @@ const sendableUsdt0VariantAssets = getSendableUsdt0VariantAssets(config.assets);
 const unsendableUsdt0VariantAssets = getUnsendableUsdt0VariantAssets(
     config.assets,
 );
+const evmAddress = "0x5000000000000000000000000000000000000000";
 
 describe("AssetSelect", () => {
     test.each`
@@ -313,6 +334,38 @@ describe("AssetSelect", () => {
         expect(signals.pair().toAsset).toEqual(BTC);
         expect(signals.onchainAddress()).toBe("");
     });
+
+    test.each`
+        asset
+        ${RBTC}
+        ${"USDT0-ETH"}
+        ${"USDT0-POL"}
+    `(
+        "should not clear EVM-style destination when only send asset changes for $asset",
+        async ({ asset }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <SelectAsset />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            signals.setOnchainAddress(evmAddress);
+            signals.setAddressValid(true);
+            signals.setAssetSelection(AssetSelection.Asset);
+            signals.setAssetSelected(Side.Send);
+            setPairAssets(LN, asset);
+
+            fireEvent.click(await screen.findByTestId(`select-${BTC}`));
+
+            expect(signals.pair().fromAsset).toEqual(BTC);
+            expect(signals.pair().toAsset).toEqual(asset);
+            expect(signals.onchainAddress()).toEqual(evmAddress);
+        },
+    );
 
     test("should hide unsendable assets when selecting send asset", async () => {
         render(

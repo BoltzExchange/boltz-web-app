@@ -25,6 +25,7 @@ import {
     handleListKeyDown,
     scrollToFocused,
 } from "../utils/assetSearch";
+import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset } from "../utils/selectableAsset";
 
 const isTouchDevice = () =>
@@ -105,21 +106,26 @@ const NetworkSelect = () => {
 
         setInvoice("");
 
+        let nextPair: Pair;
+
         if (assetSelected() === Side.Send) {
             let toAsset = pair().toAsset;
             if (toAsset === newAsset) {
                 toAsset = pair().fromAsset;
-                setOnchainAddress("");
             }
-            setPair(new Pair(pairs(), newAsset, toAsset, regularPairs()));
+            nextPair = new Pair(pairs(), newAsset, toAsset, regularPairs());
         } else {
             let fromAsset = pair().fromAsset;
             if (fromAsset === newAsset) {
                 fromAsset = pair().toAsset;
             }
-            setPair(new Pair(pairs(), fromAsset, newAsset, regularPairs()));
+            nextPair = new Pair(pairs(), fromAsset, newAsset, regularPairs());
+        }
+
+        if (!shouldPreserveOnchainAddress(pair(), nextPair)) {
             setOnchainAddress("");
         }
+        setPair(nextPair);
 
         close();
 

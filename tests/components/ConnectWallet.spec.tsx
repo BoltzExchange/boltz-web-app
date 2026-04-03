@@ -143,7 +143,7 @@ vi.mock("../../src/utils/boltzClient", async () => {
     };
 });
 
-const { RBTC } = await import("../../src/consts/Assets");
+const { RBTC, USDT0 } = await import("../../src/consts/Assets");
 const { config } = await import("../../src/config");
 const { CreateProvider, useCreateContext } =
     await import("../../src/context/Create");
@@ -254,6 +254,29 @@ const Probe = () => {
     );
 };
 
+const SyncAddressProbe = () => {
+    const { onchainAddress, setAddressValid, setOnchainAddress } =
+        useCreateContext();
+    const [asset, setAsset] = createSignal(RBTC);
+
+    return (
+        <>
+            <button
+                onClick={() => {
+                    setAddressValid(true);
+                    setOnchainAddress(
+                        "0x5000000000000000000000000000000000000000",
+                    );
+                }}>
+                set destination
+            </button>
+            <button onClick={() => setAsset(USDT0)}>switch asset</button>
+            <div data-testid="onchain-address">{onchainAddress()}</div>
+            <ConnectWallet asset={asset()} syncAddress={true} />
+        </>
+    );
+};
+
 describe("ConnectWallet", () => {
     let provider: MockEthereumProvider;
 
@@ -322,5 +345,33 @@ describe("ConnectWallet", () => {
             screen.queryByText(i18n.en.switch_network),
         ).not.toBeInTheDocument();
         expect(screen.getByTestId("send-amount").textContent).toBe("123456");
+    });
+
+    test("keeps a manual EVM-style destination when switching synced assets without a wallet", async () => {
+        render(() => <SyncAddressProbe />, { wrapper });
+
+        await waitFor(() => {
+            expect(
+                screen.getByRole("button", { name: i18n.en.connect_wallet }),
+            ).not.toBeDisabled();
+        });
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "set destination" }),
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId("onchain-address").textContent).toBe(
+                "0x5000000000000000000000000000000000000000",
+            );
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "switch asset" }));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("onchain-address").textContent).toBe(
+                "0x5000000000000000000000000000000000000000",
+            );
+        });
     });
 });

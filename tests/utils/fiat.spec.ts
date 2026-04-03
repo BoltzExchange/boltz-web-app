@@ -114,6 +114,7 @@ describe("fiat", () => {
     test("should report whether a gas token has a USD price lookup", () => {
         expect(hasGasTokenPriceLookup("POL")).toBe(true);
         expect(hasGasTokenPriceLookup("RBTC")).toBe(true);
+        expect(hasGasTokenPriceLookup("SOL")).toBe(true);
         expect(hasGasTokenPriceLookup("BTCN")).toBe(false);
     });
 

@@ -519,6 +519,63 @@ describe("Create", () => {
         );
     });
 
+    test("should update the loading target immediately when selecting a limit", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            globalSignals.setPairs(pairs);
+
+            await waitFor(() => {
+                expect(signals.minimum()).toBeGreaterThan(0);
+            });
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => new Promise<BigNumber>(() => undefined))
+                .mockName("calculateReceiveAmount");
+
+            signals.setAmountChanged(Side.Receive);
+
+            const receiveAmountInput = (await screen.findByTestId(
+                "receiveAmount",
+            )) as HTMLInputElement;
+            const sendAmountInput = (await screen.findByTestId(
+                "sendAmount",
+            )) as HTMLInputElement;
+            const formattedMinimum = formatAmount(
+                BigNumber(signals.minimum()),
+                Denomination.Sat,
+                globalSignals.separator(),
+                BTC,
+            );
+
+            fireEvent.click(await screen.findByText(formattedMinimum));
+
+            expect(signals.amountChanged()).toEqual(Side.Send);
+            expect(sendAmountInput.disabled).toEqual(false);
+            expect(receiveAmountInput.disabled).toEqual(true);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     test("should prioritize amount errors", async () => {
         render(
             () => (

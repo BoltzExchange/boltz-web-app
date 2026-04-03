@@ -415,7 +415,7 @@ describe("Pair", () => {
         quoteOftReceiveAmountMock.mockResolvedValue(
             makeOftQuote({
                 amountIn: 1_000_000n,
-                amountOut: 1_000_000n,
+                amountOut: 999_970n,
                 msgFee: 25n,
             }),
         );
@@ -425,8 +425,14 @@ describe("Pair", () => {
         const creationData = await pair.creationData(sendAmount, 0);
 
         expect(sendAmount.toNumber()).toBe(1_000_000);
+        expect(pair.hasPreOft).toBe(true);
+        expect(pair.hasPostOft).toBe(false);
         expect(pair.oftMessagingFeeFromLatestQuote(sendAmount)).toBe(25n);
         expect(pair.oftMessagingFeeToken).toBe("POL");
+        expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
+            30,
+        );
+        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
         expect(
             pair.boltzSwapSendAmountFromLatestQuote(sendAmount)?.toNumber(),
         ).toBe(1480);
@@ -449,10 +455,12 @@ describe("Pair", () => {
         const sendAmount = await pair.calculateSendAmount(BigNumber(1_000), 0);
 
         expect(sendAmount.toNumber()).toBe(1_030);
+        expect(pair.hasPreOft).toBe(false);
+        expect(pair.hasPostOft).toBe(true);
         expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
             30,
         );
-        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
+        expect(pair.oftTransferFeeAsset).toBe(USDT0);
     });
 
     test("should include OFT native drop costs in post-OFT receive quotes", async () => {

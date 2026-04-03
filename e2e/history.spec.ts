@@ -1,8 +1,10 @@
 import { type Page, expect, test } from "@playwright/test";
+import BigNumber from "bignumber.js";
 import fs from "fs";
 import path from "path";
 
 import dict from "../src/i18n/i18n";
+import { btcToSat } from "../src/utils/denomination";
 import {
     generateBitcoinBlock,
     generateInvoiceLnd,
@@ -33,7 +35,9 @@ test.describe("History", () => {
         await inputReceiveAmount.fill(receiveAmount);
 
         const invoiceInput = page.locator("textarea[data-testid='invoice']");
-        const invoice = await generateInvoiceLnd(1000000);
+        const invoice = await generateInvoiceLnd(
+            btcToSat(BigNumber(receiveAmount)).toNumber(),
+        );
         await invoiceInput.fill(invoice);
 
         const buttonCreateSwap = page.locator(

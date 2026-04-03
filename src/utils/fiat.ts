@@ -59,6 +59,9 @@ const gasTokenPriceLookups: Record<string, PriceLookupConfig> = {
     SEI: {
         coinGeckoId: "sei",
     },
+    SOL: {
+        coinGeckoId: "solana",
+    },
     SGB: {
         coinGeckoId: "songbird",
     },

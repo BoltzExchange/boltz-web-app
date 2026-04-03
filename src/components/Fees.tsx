@@ -1,5 +1,4 @@
 import { BigNumber } from "bignumber.js";
-import { formatUnits } from "ethers";
 import type { Accessor } from "solid-js";
 import {
     Show,
@@ -8,20 +7,21 @@ import {
     createResource,
     onMount,
 } from "solid-js";
-import { gasTokenToGetUsdCents } from "src/utils/qouter";
 
 import { config } from "../config";
-import { BTC, LBTC } from "../consts/Assets";
+import { BTC, LBTC, isUsdt0Asset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { isConfidentialAddress } from "../utils/compat";
-import { formatAmount, formatDenomination } from "../utils/denomination";
+import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
+import AmountDenominator from "./AmountDenominator";
 import { getClaimAddress } from "./CreateButton";
+import FeesCollapse from "./FeesCollapse";
 import Denomination from "./settings/Denomination";
 
 const ppmFactor = 10_000;
@@ -56,6 +56,22 @@ export const isToUnconfidentialLiquid = ({
     assetReceive() === LBTC &&
     addressValid() &&
     !isConfidentialAddress(onchainAddress());
+
+export const RoutingFee = () => {
+    const { t } = useGlobalContext();
+    const { pair } = useCreateContext();
+
+    return (
+        <Show when={pair().maxRoutingFee !== undefined}>
+            <span class="fees-extra-line">
+                {t("routing_fee_limit")}:{" "}
+                <span data-testid="routing-fee-limit">
+                    {pair().maxRoutingFee * ppmFactor} ppm
+                </span>
+            </span>
+        </Show>
+    );
+};
 
 const Fees = () => {
     const {
@@ -102,40 +118,6 @@ const Fees = () => {
         }
 
         return pair().feeOnSend(boltzSwapSendAmount);
-    });
-    const oftMessagingFee = createMemo(() => {
-        if (!pair().isRoutable) {
-            return undefined;
-        }
-
-        receiveAmount();
-
-        return pair().oftMessagingFeeFromLatestQuote(sendAmount());
-    });
-    const formattedOftMessagingFee = createMemo(() => {
-        const fee = oftMessagingFee();
-        if (fee === undefined) {
-            return undefined;
-        }
-
-        return BigNumber(
-            formatUnits(
-                fee,
-                config.assets[assetSend()]?.network?.nativeCurrency?.decimals ??
-                    18,
-            ),
-        )
-            .toFixed(6)
-            .replace(/\.?0+$/, "");
-    });
-    const oftTransferFee = createMemo(() => {
-        if (!pair().isRoutable) {
-            return undefined;
-        }
-
-        receiveAmount();
-
-        return pair().oftTransferFeeFromLatestQuote(sendAmount());
     });
 
     const gasAbstractionTrigger = createMemo(() => {
@@ -236,106 +218,65 @@ const Fees = () => {
 
     return (
         <div class="fees-dyn">
-            <Denomination />
-            <label>
-                {t("network_fee")}:{" "}
-                <span class="network-fee" data-testid="network-fee">
-                    {formatAmount(
-                        BigNumber(minerFee()),
-                        denomination(),
-                        separator(),
-                        BTC,
-                        true,
-                    )}
-                    <span
-                        class="denominator"
-                        data-denominator={denomination()}
-                    />
-                </span>
-                <br />
-                {t("fee")} (
-                <span
-                    class={
-                        config.isPro &&
-                        getFeeHighlightClass(
-                            boltzFee(),
-                            getPair(
-                                regularPairs(),
-                                swapType(),
-                                assetSend(),
-                                assetReceive(),
-                            )?.fees.percentage,
-                        )
-                    }>
-                    {boltzFee().toString().replaceAll(".", separator())}%
-                </span>
-                ):{" "}
-                <span class="boltz-fee" data-testid="boltz-fee">
-                    {formatAmount(
-                        boltzFeeAmount(),
-                        denomination(),
-                        separator(),
-                        BTC,
-                        true,
-                    )}
-                    <span
-                        class="denominator"
-                        data-denominator={denomination()}
-                    />
-                </span>
-                <Show when={pair().maxRoutingFee !== undefined}>
-                    <br />
-                    {t("routing_fee_limit")}:{" "}
-                    <span data-testid="routing-fee-limit">
-                        {pair().maxRoutingFee * ppmFactor} ppm
-                    </span>
-                </Show>
-                <Show when={formattedOftMessagingFee() !== undefined}>
-                    <br />
-                    {t("oft_messaging_fee_label")}:{" "}
-                    <span
-                        class="oft-messaging-fee"
-                        data-testid="oft-messaging-fee">
-                        {formattedOftMessagingFee()}
-                    </span>{" "}
-                    {pair().oftMessagingFeeToken}
-                </Show>
+            <div class="fees-dyn-denom">
+                <Denomination />
+            </div>
+            <div class="fees-dyn-right">
                 <Show
                     when={
-                        oftTransferFee() !== undefined &&
-                        oftTransferFee()!.isGreaterThan(0) &&
-                        pair().oftTransferFeeAsset !== undefined
-                    }>
-                    <br />
-                    {t("legacy_mesh_fee_label")}:{" "}
-                    <span data-testid="legacy-mesh-fee">
-                        {formatAmount(
-                            oftTransferFee()!,
-                            denomination(),
-                            separator(),
-                            pair().oftTransferFeeAsset!,
-                            true,
-                        )}
-                    </span>
-                    <span
-                        class="denominator"
-                        data-denominator={formatDenomination(
-                            denomination(),
-                            pair().oftTransferFeeAsset!,
-                        )}
-                    />
+                        !isUsdt0Asset(assetSend()) &&
+                        !isUsdt0Asset(assetReceive())
+                    }
+                    fallback={<FeesCollapse />}>
+                    <label>
+                        {t("network_fee")}:{" "}
+                        <span class="fee-amount">
+                            <span class="network-fee" data-testid="network-fee">
+                                {formatAmount(
+                                    BigNumber(minerFee()),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
+                        </span>
+                        <br />
+                        {t("fee")} (
+                        <span
+                            class={
+                                config.isPro &&
+                                getFeeHighlightClass(
+                                    boltzFee(),
+                                    getPair(
+                                        regularPairs(),
+                                        swapType(),
+                                        assetSend(),
+                                        assetReceive(),
+                                    )?.fees.percentage,
+                                )
+                            }>
+                            {boltzFee().toString().replaceAll(".", separator())}
+                            %
+                        </span>
+                        ):{" "}
+                        <span class="fee-amount">
+                            <span class="boltz-fee" data-testid="boltz-fee">
+                                {formatAmount(
+                                    boltzFeeAmount(),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
+                        </span>
+                        <RoutingFee />
+                    </label>
                 </Show>
-                <Show when={getGasToken()}>
-                    <br />
-                    {t("gas_topup_label", {
-                        cost: gasTokenToGetUsdCents,
-                        gasToken:
-                            config.assets?.[assetReceive()]?.network
-                                ?.gasToken ?? "",
-                    })}{" "}
-                    <span class="denominator" data-denominator="usd" />
-                </Show>
-            </label>
+            </div>
         </div>
     );
 };

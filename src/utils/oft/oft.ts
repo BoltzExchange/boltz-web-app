@@ -79,6 +79,15 @@ type OftLimit = [bigint, bigint];
 type OftFeeDetail = [bigint, string];
 type OftReceipt = [bigint, bigint];
 
+export type OftReceiveQuote = {
+    amountIn: bigint;
+    amountOut: bigint;
+    msgFee: MsgFee;
+    oftLimit: OftLimit;
+    oftFeeDetails: OftFeeDetail[];
+    oftReceipt: OftReceipt;
+};
+
 type OftEventName = "OFTSent" | "OFTReceived";
 
 export type OftSentEvent = {
@@ -619,14 +628,7 @@ export const quoteOftReceiveAmount = async (
     route: OftRoute,
     amount: bigint,
     options: OftQuoteOptions = {},
-): Promise<{
-    amountIn: bigint;
-    amountOut: bigint;
-    msgFee: MsgFee;
-    oftLimit: OftLimit;
-    oftFeeDetails: OftFeeDetail[];
-    oftReceipt: OftReceipt;
-}> => {
+): Promise<OftReceiveQuote> => {
     if (amount === 0n) {
         return {
             amountIn: 0n,
