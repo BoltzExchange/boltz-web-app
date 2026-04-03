@@ -83,7 +83,7 @@
         "@solidjs/router": "^0.16.1",
         "@trezor/connect-web": "^9.7.2",
         "@vulpemventures/secp256k1-zkp": "^3.2.1",
-        "bignumber.js": "^9.3.1",
+        "bignumber.js": "^10.0.2",
         "bolt11": "^1.4.1",
         "boltz-bolt12": "^0.2.0",
         "boltz-core": "^4.0.1",

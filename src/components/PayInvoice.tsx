@@ -27,7 +27,7 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
             <h2 data-testid="pay-invoice-title">
                 {t("pay_invoice_to", {
                     amount: formatAmount(
-                        BigNumber(props.sendAmount),
+                        BigNumber(props.sendAmount ?? 0),
                         denomination(),
                         separator(),
                         BTC,
