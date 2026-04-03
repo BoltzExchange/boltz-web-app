@@ -9,11 +9,15 @@
         "moduleResolution": "bundler",
         "jsx": "preserve",
         "jsxImportSource": "solid-js",
+        "strict": false,
         "types": ["vite/client", "bignumber.js", "vitest/globals", "node"],
-        "baseUrl": ".",
+        "paths": {
+            "src/*": ["./src/*"]
+        },
         "outDir": "ts-out",
         "noImplicitReturns": true,
         "noUnusedLocals": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "stableTypeOrdering": true
     }
 }

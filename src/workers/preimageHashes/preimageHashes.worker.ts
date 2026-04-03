@@ -1,6 +1,11 @@
-import { crypto } from "bitcoinjs-lib";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 
-import { evmPath, mnemonicToHDKey } from "../../utils/rescueFile";
+import {
+    derivePreimage,
+    evmPath,
+    mnemonicToHDKey,
+} from "../../utils/rescueDerivation";
 import { maxIterations } from "./constants";
 
 const batchSize = 1_000;
@@ -21,11 +26,9 @@ self.onmessage = ({
     let entries: PreimageHashEntry[] = [];
 
     for (let i = 0; i < maxIterations; i++) {
-        const preimage = crypto.sha256(
-            Buffer.from(parentKey.deriveChild(i).privateKey),
-        );
-        const preimageHex = preimage.toString("hex");
-        const preimageHash = crypto.sha256(preimage).toString("hex");
+        const preimage = derivePreimage(parentKey.deriveChild(i).privateKey);
+        const preimageHex = hex.encode(preimage);
+        const preimageHash = hex.encode(sha256(preimage));
 
         entries.push([preimageHash, { preimage: preimageHex, index: i }]);
 

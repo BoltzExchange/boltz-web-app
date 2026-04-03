@@ -55,7 +55,8 @@ const getOftMessagingFeeTokenDecimals = (token: string | undefined): number => {
         return 18;
     }
 
-    const directAssetConfig = config.assets?.[token];
+    const assets = config.assets;
+    const directAssetConfig = assets?.[token];
     const directDecimals =
         directAssetConfig?.token?.decimals ??
         directAssetConfig?.network?.nativeCurrency?.decimals;
@@ -63,8 +64,12 @@ const getOftMessagingFeeTokenDecimals = (token: string | undefined): number => {
         return directDecimals;
     }
 
+    if (assets === undefined) {
+        return 18;
+    }
+
     return (
-        Object.values(config.assets ?? {}).find(
+        Object.values(assets).find(
             (assetConfig) => assetConfig.network?.gasToken === token,
         )?.network?.nativeCurrency?.decimals ?? 18
     );

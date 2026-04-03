@@ -92,9 +92,9 @@ const TransactionClaimed = () => {
                     {t("successfully_swapped", {
                         amount: formatAmount(
                             BigNumber(
-                                swap().dex?.position === HopsPosition.After
+                                (swap().dex?.position === HopsPosition.After
                                     ? swap().dex?.quoteAmount
-                                    : swap().receiveAmount,
+                                    : swap().receiveAmount) ?? 0,
                             ),
                             denomination(),
                             separator(),

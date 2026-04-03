@@ -1,14 +1,12 @@
-import { HDKey } from "@scure/bip32";
-import {
-    generateMnemonic,
-    mnemonicToSeedSync,
-    validateMnemonic,
-} from "@scure/bip39";
+import type { HDKey } from "@scure/bip32";
+import { generateMnemonic, validateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
-import { crypto } from "bitcoinjs-lib";
 
 import { config } from "../config";
 import { type AssetType, isEvmAsset } from "../consts/Assets";
+import { derivePreimage, evmPath, mnemonicToHDKey } from "./rescueDerivation";
+
+export { evmPath, mnemonicToHDKey } from "./rescueDerivation";
 
 export enum Errors {
     InvalidFile = "invalid file",
@@ -21,7 +19,6 @@ export type RescueFile = {
 };
 
 export const derivationPath = "m/44/0/0/0";
-export const evmPath = (chainId: number) => `m/44/${chainId}/0/0`;
 
 const getPath = (index: number) => `${derivationPath}/${index}`;
 
@@ -29,11 +26,6 @@ const getEvmPath = (chainId: number, index: number) =>
     `${evmPath(chainId)}/${index}`;
 
 export const getPathGasAbstraction = (chainId: number) => `m/44/${chainId}/1/0`;
-
-export const mnemonicToHDKey = (mnemonic: string) => {
-    const seed = mnemonicToSeedSync(mnemonic);
-    return HDKey.fromMasterSeed(seed);
-};
 
 export const getXpub = (rescueFile: RescueFile) => {
     return mnemonicToHDKey(rescueFile.mnemonic).publicExtendedKey;
@@ -92,5 +84,5 @@ export const derivePreimageFromRescueKey = (
 ): Buffer => {
     const privateKey = deriveKey(rescueKey, keyIndex, asset, hdKey).privateKey;
 
-    return crypto.sha256(Buffer.from(privateKey));
+    return Buffer.from(derivePreimage(privateKey));
 };
