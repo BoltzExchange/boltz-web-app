@@ -149,6 +149,16 @@ hr.spacer {
     margin-left: -0.9em;
 }
 
+.fee-amount > [data-denominator="USDT"] {
+    margin-left: -0em;
+}
+
+.fee-amount > .denominator-text-symbol {
+    transform: none;
+    font-size: inherit;
+    line-height: inherit;
+}
+
 .fees-toggle {
     display: inline-flex;
     align-items: center;
@@ -236,6 +246,7 @@ hr.spacer {
     display: block;
     text-align: right;
     padding: 0.1rem 0 0.1rem;
+    overflow-wrap: break-word;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -259,6 +270,7 @@ hr.spacer {
 .fees-extra-line {
     display: block;
     text-align: right;
+    overflow-wrap: break-word;
 }
 .fees-dyn,
 .icons > div {
