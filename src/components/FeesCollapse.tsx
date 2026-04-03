@@ -373,12 +373,17 @@ const FeesCollapse = () => {
                                 <TokenFee token={pair().oftMessagingFeeToken} />
                             </span>
                         </Show>
-                        <Show when={getGasToken()}>
+                        <Show
+                            when={
+                                getGasToken() &&
+                                config.assets?.[pair().toAsset]?.network
+                                    ?.gasToken
+                            }>
                             <br />
                             {t("gas_topup_label", {
                                 gasToken:
                                     config.assets?.[pair().toAsset]?.network
-                                        ?.gasToken ?? "",
+                                        ?.gasToken,
                             })}
                         </Show>
                     </label>
