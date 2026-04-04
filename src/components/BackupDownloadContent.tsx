@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { downloadRescueFile } from "../utils/backup";
@@ -15,6 +17,14 @@ const BackupDownloadContent = (props: BackupDownloadContentProps) => {
     const { hasBrowserWallet } = useWeb3Signer();
 
     const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
+    const downloadKey = () => {
+        try {
+            downloadRescueFile(rescueFile);
+            props.onFileDownloaded();
+        } catch (e) {
+            notify("error", formatError(e));
+        }
+    };
 
     return (
         <>
@@ -24,26 +34,18 @@ const BackupDownloadContent = (props: BackupDownloadContentProps) => {
             <Warning />
             <p>{t("download_boltz_rescue_key_subline_third")}</p>
             <div class="btns">
-                <button
-                    class="btn"
-                    onClick={() => {
-                        if (isMobileEvmBrowser()) {
-                            props.onMnemonicRequested();
-                            return;
-                        }
-
-                        try {
-                            downloadRescueFile(rescueFile);
-                            props.onFileDownloaded();
-                        } catch (e) {
-                            notify("error", formatError(e));
-                        }
-                    }}>
-                    {isMobileEvmBrowser()
-                        ? t("generate_key")
-                        : t("download_new_key")}
+                <button class="btn" onClick={downloadKey}>
+                    {t("download_new_key")}
                 </button>
             </div>
+            <Show when={isMobileEvmBrowser()}>
+                <button
+                    class="btn btn-light"
+                    data-testid="show-mnemonic-backup"
+                    onClick={() => props.onMnemonicRequested()}>
+                    {t("show_rescue_key_instead")}
+                </button>
+            </Show>
         </>
     );
 };
