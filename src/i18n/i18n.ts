@@ -271,6 +271,7 @@ const dict = {
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
         generate_key: "Generate new key",
+        show_rescue_key_instead: "Show the 12-word rescue key instead",
         backup_boltz_rescue_key: "Backup Boltz Rescue Key",
         backup_boltz_rescue_key_subline_second:
             "This new key works on any device and works for all swaps created with it.",
@@ -762,6 +763,8 @@ const dict = {
         next: "Weiter",
         pagination_info: "Seite {{ start }} von {{ end }}",
         generate_key: "Neuen Schlüssel generieren",
+        show_rescue_key_instead:
+            "Stattdessen den 12-Wort-Rettungsschlüssel anzeigen",
         backup_boltz_rescue_key: "Boltz Rettungsschlüssel sichern",
         backup_boltz_rescue_key_subline_second:
             "Dieser neue Schlüssel funktioniert auf jedem Gerät und ist für alle Swaps gültig.",
@@ -1253,6 +1256,8 @@ const dict = {
         next: "Siguiente",
         pagination_info: "Página {{ start }} de {{ end }}",
         generate_key: "Generar nueva clave",
+        show_rescue_key_instead:
+            "Mostrar en su lugar la clave de rescate de 12 palabras",
         backup_boltz_rescue_key: "Backup clave de rescate Boltz",
         backup_boltz_rescue_key_subline_second:
             "Esta nueva clave funciona en cualquier dispositivo y funciona para todas las transacciones creadas con ella.",
@@ -1744,6 +1749,8 @@ const dict = {
         next: "Próximo",
         pagination_info: "Página {{ start }} de {{ end }}",
         generate_key: "Gerar nova chave",
+        show_rescue_key_instead:
+            "Mostrar a chave de resgate de 12 palavras em vez disso",
         backup_boltz_rescue_key: "Backup chave de resgate da Boltz",
         backup_boltz_rescue_key_subline_second:
             "Esta nova chave funciona em qualquer dispositivo e funciona para todas as trocas criadas com ela.",
@@ -2203,6 +2210,7 @@ const dict = {
         next: "下一页",
         pagination_info: "{{ start }} 的 {{ end }} 页",
         generate_key: "生成新密钥",
+        show_rescue_key_instead: "改为显示 12 个单词的救援密钥",
         backup_boltz_rescue_key: "备份 Boltz 救援密钥",
         backup_boltz_rescue_key_subline_second:
             "这个新密钥适用于任何设备，并可用于所有用其创建的兑换操作。",
@@ -2673,6 +2681,7 @@ const dict = {
         next: "次へ",
         pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
         generate_key: "新しいキーを生成",
+        show_rescue_key_instead: "代わりに12語のレスキューキーを表示",
         backup_boltz_rescue_key: "Boltzレスキューキーのバックアップ",
         backup_boltz_rescue_key_subline_second:
             "この新しいキーはどのデバイスでも動作し、このキーで作成されたすべてのスワップに対応します。",
