@@ -55,6 +55,11 @@ const compressedPubkeyToXOnly = (pubkey: Uint8Array) => {
     return hex.decode(point.x.toString(16).padStart(64, "0"));
 };
 
+const normalizeBolt12NodeId = (pubkey: Uint8Array) =>
+    pubkey.length === compressedPubkeyLength
+        ? compressedPubkeyToXOnly(pubkey)
+        : pubkey;
+
 // `bolt12-utils` exposes blinded paths as raw bytes, so parse just enough to
 // recover the final `blinded_node_id` values that can sign returned invoices.
 const parseFinalBlindedNodeIdSets = (
@@ -192,7 +197,9 @@ export const decodeInvoice = (
 
             return {
                 type: InvoiceType.Bolt12,
-                satoshis: Number((fields.invoice_amount ?? 0n) / 1_000n),
+                satoshis: Number(
+                    ((fields.invoice_amount ?? 0n) + 500n) / 1_000n,
+                ),
                 preimageHash: hex.encode(fields.invoice_payment_hash),
             };
 
@@ -443,22 +450,35 @@ export const validateInvoiceForOffer = (
     const { fields, records } = decodeBolt12Invoice(invoice);
 
     if (decodedOffer.issuer_id !== undefined) {
-        possibleSigners.push(hex.decode(decodedOffer.issuer_id));
+        possibleSigners.push(
+            normalizeBolt12NodeId(hex.decode(decodedOffer.issuer_id)),
+        );
     }
 
     if (decodedOffer.paths !== undefined) {
         possibleSigners.push(
-            ...extractFinalBlindedNodeIds(hex.decode(decodedOffer.paths)),
+            ...extractFinalBlindedNodeIds(hex.decode(decodedOffer.paths)).map(
+                normalizeBolt12NodeId,
+            ),
         );
     }
 
     if (
         fields.invoice_node_id === undefined ||
-        fields.signature === undefined ||
+        fields.signature === undefined
+    ) {
+        throw "invalid invoice signature";
+    }
+
+    const normalizedInvoiceNodeId = normalizeBolt12NodeId(
+        fields.invoice_node_id,
+    );
+
+    if (
         !Bolt12.verifySignature(
             "invoice",
             Bolt12.computeMerkleRoot(records),
-            compressedPubkeyToXOnly(fields.invoice_node_id),
+            normalizedInvoiceNodeId,
             fields.signature,
         )
     ) {
@@ -466,7 +486,7 @@ export const validateInvoiceForOffer = (
     }
 
     for (const signer of possibleSigners) {
-        if (equalBytes(signer, fields.invoice_node_id)) {
+        if (equalBytes(signer, normalizedInvoiceNodeId)) {
             return true;
         }
     }

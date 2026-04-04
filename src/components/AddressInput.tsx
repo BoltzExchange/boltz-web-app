@@ -19,9 +19,11 @@ import { isValidTronAddress } from "../utils/chains/tron";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
+    decodeInvoice,
     extractAddress,
     extractBip21Amount,
     extractInvoice,
+    isInvoice,
 } from "../utils/invoice";
 
 const AddressInput = () => {
@@ -64,7 +66,8 @@ const AddressInput = () => {
         const invoice = extractInvoice(inputValue);
 
         try {
-            const assetName = pair().toAsset;
+            const currentPair = pair();
+            const assetName = currentPair.toAsset;
             if (isEvmAsset(assetName)) {
                 if (!isAddress(address)) {
                     throw new Error();
@@ -106,18 +109,65 @@ const AddressInput = () => {
                 return;
             }
 
+            const bip21Amount = extractBip21Amount(inputValue);
+            const shouldApplyBip21Amount =
+                bip21Amount !== null &&
+                !(
+                    actualAsset === LN &&
+                    invoice !== null &&
+                    isInvoice(invoice) &&
+                    decodeInvoice(invoice).satoshis > 0
+                );
+
+            let nextPair = currentPair;
+
+            switch (actualAsset) {
+                case LN:
+                    nextPair = new Pair(
+                        pairs(),
+                        currentPair.fromAsset === LN
+                            ? assetName
+                            : currentPair.fromAsset,
+                        LN,
+                        regularPairs(),
+                    );
+                    break;
+
+                case null:
+                    throw new Error();
+
+                default:
+                    if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
+                        throw new Error();
+                    }
+
+                    if (assetName !== actualAsset) {
+                        nextPair = new Pair(
+                            pairs(),
+                            currentPair.toAsset,
+                            actualAsset,
+                            regularPairs(),
+                        );
+                    }
+            }
+
+            if (shouldApplyBip21Amount) {
+                const satAmount = btcToSat(bip21Amount);
+                setAmountChanged(Side.Receive);
+                setReceiveAmount(satAmount);
+                const sendAmt = await nextPair.calculateSendAmount(
+                    satAmount,
+                    minerFee(),
+                );
+                if (isStale()) {
+                    return;
+                }
+                setSendAmount(sendAmt);
+            }
+
             switch (actualAsset) {
                 case LN: {
-                    setPair(
-                        new Pair(
-                            pairs(),
-                            pair().fromAsset === LN
-                                ? assetName
-                                : pair().fromAsset,
-                            LN,
-                            regularPairs(),
-                        ),
-                    );
+                    setPair(nextPair);
                     setOnchainAddress("");
                     setInvoice(invoice);
                     notify("success", t("switch_paste"));
@@ -125,37 +175,11 @@ const AddressInput = () => {
                 }
 
                 case null:
-                    throw new Error();
+                    break;
 
                 default: {
-                    if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
-                        throw new Error();
-                    }
-
-                    const bip21Amount = extractBip21Amount(inputValue);
-                    if (bip21Amount) {
-                        const satAmount = btcToSat(bip21Amount);
-                        setAmountChanged(Side.Receive);
-                        setReceiveAmount(satAmount);
-                        const sendAmt = await pair().calculateSendAmount(
-                            satAmount,
-                            minerFee(),
-                        );
-                        if (isStale()) {
-                            return;
-                        }
-                        setSendAmount(sendAmt);
-                    }
-
                     if (assetName !== actualAsset) {
-                        setPair(
-                            new Pair(
-                                pairs(),
-                                pair().toAsset,
-                                actualAsset,
-                                regularPairs(),
-                            ),
-                        );
+                        setPair(nextPair);
                         notify("success", t("switch_paste"));
                     }
 

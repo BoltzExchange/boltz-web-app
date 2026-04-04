@@ -58,8 +58,7 @@ const InvoiceInput = () => {
 
     const validate = async (input: HTMLTextAreaElement) => {
         const requestId = ++validationRequest;
-        const getCurrentInputValue = () =>
-            input.value.trim() || invoice().trim();
+        const getCurrentInputValue = () => input.value.trim();
         const inputValue = getCurrentInputValue();
         const isStale = () =>
             requestId !== validationRequest ||
