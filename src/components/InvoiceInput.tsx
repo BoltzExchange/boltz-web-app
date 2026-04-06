@@ -181,29 +181,6 @@ const InvoiceInput = () => {
         }),
     );
 
-    // reset invoice if amount is changed
-    createEffect(
-        on([receiveAmount, sendAmount, invoice], () => {
-            const amount = Number(receiveAmount());
-            if (
-                invoice() !== "" &&
-                !isLnurl(invoice()) &&
-                !receiveAmount().isZero()
-            ) {
-                try {
-                    const inv = decodeInvoice(invoice());
-                    if (inv.satoshis !== 0 && inv.satoshis !== amount) {
-                        setInvoice("");
-                    }
-
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                } catch (e) {
-                    return;
-                }
-            }
-        }),
-    );
-
     return (
         <textarea
             required
