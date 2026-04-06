@@ -152,7 +152,7 @@ const validateReverse = async (
     getEtherSwap: ContractGetter,
     getErc20Swap: ContractGetter,
 ): Promise<void> => {
-    const invoiceData = await decodeInvoice(swap.invoice);
+    const invoiceData = decodeInvoice(swap.invoice);
 
     // Amounts
     if (invoiceData.satoshis !== swap.sendAmount) {
@@ -230,7 +230,7 @@ const validateSubmarine = async (
     }
 
     // SwapTree
-    const invoiceData = await decodeInvoice(swap.invoice);
+    const invoiceData = decodeInvoice(swap.invoice);
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
@@ -379,11 +379,11 @@ export const validateResponse = async (
     }
 };
 
-export const validateInvoice = async (inputValue: string) => {
+export const validateInvoice = (inputValue: string): number => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
         if (isInputInvoice) {
-            const decoded = await decodeInvoice(inputValue);
+            const decoded = decodeInvoice(inputValue);
             if (decoded.satoshis === 0) {
                 throw new Error("invalid_0_amount");
             }

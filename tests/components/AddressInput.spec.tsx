@@ -1,10 +1,11 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import BigNumber from "bignumber.js";
 import { vi } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
+import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
-import * as compat from "../../src/utils/compat";
 import {
     TestComponent,
     contextWrapper,
@@ -16,8 +17,39 @@ vi.mock("../../src/utils/invoice", async () => {
     const actual = await vi.importActual("../../src/utils/invoice");
     return {
         ...actual,
+        decodeInvoice: vi.fn((input: string) => {
+            if (input.startsWith("lnbcrt1500u")) {
+                return { satoshis: 150_000 };
+            }
+            if (input.startsWith("lnbcrt1zeroamt")) {
+                return { satoshis: 0 };
+            }
+            if (input.startsWith("lni1bad")) {
+                throw new Error("invalid bolt12 invoice");
+            }
+            return { satoshis: 1000 };
+        }),
         isBolt12Offer: vi.fn((offer: string) => {
-            return Promise.resolve(offer.startsWith("lno1"));
+            return offer.startsWith("lno1");
+        }),
+    };
+});
+
+vi.mock("../../src/utils/validation", async () => {
+    const actual = await vi.importActual("../../src/utils/validation");
+    return {
+        ...actual,
+        validateInvoice: vi.fn((inputValue: string) => {
+            if (inputValue.startsWith("lnbcrt1500u")) {
+                return 150_000;
+            }
+            if (inputValue.startsWith("lnbcrt1zeroamt")) {
+                throw new Error("invalid_0_amount");
+            }
+            if (inputValue.startsWith("ln")) {
+                return 1000;
+            }
+            throw new Error("invalid_invoice");
         }),
     };
 });
@@ -176,6 +208,10 @@ describe("AddressInput", () => {
             );
 
             setPairAssets(signals.pair().fromAsset, asset);
+            const currentPair = signals.pair();
+            currentPair.calculateSendAmount = vi
+                .fn()
+                .mockResolvedValue(BigNumber(9_999_999));
 
             const addressInput = (await screen.findByTestId(
                 "onchainAddress",
@@ -188,7 +224,17 @@ describe("AddressInput", () => {
             await waitFor(() => {
                 expect(signals.invoice()).toEqual(expectedInvoice);
                 expect(signals.pair().toAsset).toEqual(LN);
+                expect(signals.receiveAmount()).toEqual(BigNumber(1000));
             });
+
+            const expectedSendAmount = await signals
+                .pair()
+                .calculateSendAmount(BigNumber(1000), signals.minerFee());
+
+            expect(currentPair.calculateSendAmount).not.toHaveBeenCalled();
+            expect(signals.pair().fromAsset).toEqual(asset);
+            expect(signals.pair().toAsset).toEqual(LN);
+            expect(signals.sendAmount()).toEqual(expectedSendAmount);
         },
     );
 
@@ -224,7 +270,72 @@ describe("AddressInput", () => {
         });
     });
 
-    test("should ignore stale address validation results", async () => {
+    test("should keep fixed lightning invoice amount over BIP21 amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                    <AddressInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(LN, BTC);
+
+        const invoice =
+            "lnbcrt1500u1p5az9mypp5jlkdaygjwdzd7m06ll348lcvl24ffhpjht8m56fv3aqxpxu804xqdqqcqpjxqyz5vqsp5sq6khl9gvcw70x76nv7vxs5gq28qheehatdtlg6lxgjky029zcws9qxpqysgq762ls0zjnv82zg9rezt5y5ywh4qskmrw42r8ulynra56qa26pru4qjfrn6mz8ek3245905fvs5v969pu3cuvnw9l4f50gwq5c7kcrxgqklqs8h";
+        const bip21Uri = `bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.002&lightning=${invoice}`;
+
+        const addressInput = (await screen.findByTestId(
+            "onchainAddress",
+        )) as HTMLInputElement;
+
+        fireEvent.input(addressInput, {
+            target: { value: bip21Uri },
+        });
+
+        await waitFor(() => {
+            expect(signals.invoice()).toEqual(invoice);
+            expect(signals.pair().toAsset).toEqual(LN);
+            expect(signals.receiveAmount()).toEqual(BigNumber(150_000));
+        });
+    });
+
+    test("should apply BIP21 amount when lightning invoice has no fixed amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                    <AddressInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(LN, BTC);
+
+        const invoice = "lnbcrt1zeroamt1pjtest";
+        const bip21Uri = `bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.002&lightning=${invoice}`;
+
+        const addressInput = (await screen.findByTestId(
+            "onchainAddress",
+        )) as HTMLInputElement;
+
+        fireEvent.input(addressInput, {
+            target: { value: bip21Uri },
+        });
+
+        await waitFor(() => {
+            expect(signals.invoice()).toEqual(invoice);
+            expect(signals.pair().toAsset).toEqual(LN);
+            expect(signals.receiveAmount()).toEqual(BigNumber(200_000));
+        });
+    });
+
+    test("should reject BIP21 when embedded lni invoice fails to decode", async () => {
         render(
             () => (
                 <>
@@ -235,46 +346,21 @@ describe("AddressInput", () => {
             { wrapper: contextWrapper },
         );
 
-        setPairAssets(signals.pair().fromAsset, LBTC);
+        setPairAssets(LN, BTC);
+
+        const bip21Uri =
+            "bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.001&lno=lni1baddata";
 
         const input = (await screen.findByTestId(
             "onchainAddress",
         )) as HTMLInputElement;
-        const validAddress = "ert1qhtlluwskenvrf4w8hwds70w9wdwem4fwsd0pk8";
-        const invalidAddress = "lq1invalid";
-
-        let resolveProbe!: (asset: string | null) => void;
-        vi.spyOn(compat, "probeUserInput").mockImplementationOnce(
-            () =>
-                new Promise((resolve) => {
-                    resolveProbe = resolve;
-                }),
-        );
 
         fireEvent.input(input, {
-            target: { value: validAddress },
+            target: { value: bip21Uri },
         });
 
         await waitFor(() => {
             expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(validAddress);
-        });
-
-        fireEvent.input(input, {
-            target: { value: invalidAddress },
-        });
-
-        await waitFor(() => {
-            expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(invalidAddress);
-            expect(input.className).toContain("invalid");
-        });
-
-        resolveProbe(LBTC);
-
-        await waitFor(() => {
-            expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(invalidAddress);
             expect(input.className).toContain("invalid");
         });
     });

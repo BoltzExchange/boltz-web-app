@@ -89,11 +89,10 @@ const getPreOftCommitmentClaimAddress = (swap: SomeSwap) =>
         ? (swap as ChainSwap).lockupDetails.claimAddress
         : swap.claimAddress;
 
-const getSwapPreimageHash = async (swap: SomeSwap): Promise<string> => {
+const getSwapPreimageHash = (swap: SomeSwap): string => {
     switch (swap.type) {
         case SwapType.Submarine:
-            return (await decodeInvoice((swap as SubmarineSwap).invoice))
-                .preimageHash;
+            return decodeInvoice((swap as SubmarineSwap).invoice).preimageHash;
 
         case SwapType.Chain:
             return hex.encode(sha256(hex.decode((swap as ChainSwap).preimage)));
@@ -236,7 +235,9 @@ export const SwapExecutionWorker = () => {
                     fromBlock: receivedEvent.blockNumber,
                 }),
             );
-            return undefined;
+            return {
+                status: PreOftCommitmentLockupRecoveryStatus.NotFound,
+            };
         }
         const tokenAddress = getTokenAddress(commitmentAsset);
         const matchingLockups = lockupLogs.flatMap((event) => {
@@ -857,7 +858,7 @@ export const SwapExecutionWorker = () => {
                 await postCommitmentSignatureForTransaction({
                     asset: storedSwap.assetSend,
                     swapId: storedSwap.id,
-                    preimageHash: await getSwapPreimageHash(storedSwap),
+                    preimageHash: getSwapPreimageHash(storedSwap),
                     commitmentTxHash: storedSwap.commitmentLockupTxHash,
                     slippage: slippage(),
                     erc20Swap: getErc20Swap(commitmentAsset),

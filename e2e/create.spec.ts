@@ -1,5 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
+import { randomUUID } from "crypto";
 import fs from "fs";
 
 import { BTC, LBTC, LN, getAssetDisplaySymbol } from "../src/consts/Assets";
@@ -130,6 +131,44 @@ test.describe("BIP21 URIs", () => {
         await expect(receiveAsset).toContainClass("asset-LN");
     });
 
+    test("Embedded BOLT12 offer in address input preserves BIP21 amount", async ({
+        page,
+    }) => {
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection",
+            )
+            .click();
+        await page.getByTestId("select-LN").click();
+
+        const address = await getBitcoinAddress();
+        const bolt12Offer = await getBolt12Offer();
+        const expectedSatAmount = 200_000;
+        const bip21Uri = `bitcoin:${address}?amount=0.002&lno=${bolt12Offer}`;
+
+        const divFlipAssets = page.locator("#flip-assets");
+        await divFlipAssets.click();
+
+        const addressInput = page.getByTestId("onchainAddress");
+        await addressInput.fill(bip21Uri);
+
+        const invoiceInput = page.getByTestId("invoice");
+        await expect(invoiceInput).toHaveValue(bolt12Offer);
+
+        const receiveAmount = page.getByTestId("receiveAmount");
+        await expect(receiveAmount).toHaveValue(
+            formatAmount(
+                BigNumber(expectedSatAmount),
+                Denomination.Sat,
+                ".",
+                BTC,
+            ),
+        );
+
+        const receiveAsset = page.getByTestId("asset-receive");
+        await expect(receiveAsset).toContainClass("asset-LN");
+    });
+
     test("Lightning URI in invoice input", async ({ page }) => {
         await page
             .locator(
@@ -211,7 +250,7 @@ test.describe("BIP21 URIs", () => {
 });
 
 const completeBackup = async (page: Page) => {
-    const fileName = "rescue-file.json";
+    const fileName = `rescue-file-${randomUUID()}.json`;
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: dict.en.download_new_key }).click();
 

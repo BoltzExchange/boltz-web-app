@@ -1,6 +1,5 @@
-import { Show, createResource } from "solid-js";
+import { Show, createMemo } from "solid-js";
 
-import LoadingSpinner from "../components/LoadingSpinner";
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
@@ -17,9 +16,9 @@ const InvoiceSet = () => {
     const { swap } = usePayContext();
     const submarine = swap() as SubmarineSwap;
 
-    const [preimageHash] = createResource(async () => {
-        return (await decodeInvoice(submarine.invoice)).preimageHash;
-    });
+    const preimageHash = createMemo(
+        () => decodeInvoice(submarine.invoice).preimageHash,
+    );
 
     return (
         <Show
@@ -34,23 +33,21 @@ const InvoiceSet = () => {
                     bip21={submarine.bip21}
                 />
             }>
-            <Show when={!preimageHash.loading} fallback={<LoadingSpinner />}>
-                <LockupEvm
-                    swapId={submarine.id}
-                    gasAbstraction={getLockupGasAbstraction(submarine)}
-                    amount={submarine.expectedAmount}
-                    claimAddress={submarine.claimAddress}
-                    preimageHash={preimageHash()}
-                    timeoutBlockHeight={submarine.timeoutBlockHeight}
-                    asset={submarine.assetSend}
-                    hops={
-                        submarine.dex?.position === HopsPosition.Before
-                            ? submarine.dex.hops
-                            : undefined
-                    }
-                    oft={getPreOftDetail(submarine.oft)}
-                />
-            </Show>
+            <LockupEvm
+                swapId={submarine.id}
+                gasAbstraction={getLockupGasAbstraction(submarine)}
+                amount={submarine.expectedAmount}
+                claimAddress={submarine.claimAddress}
+                preimageHash={preimageHash()}
+                timeoutBlockHeight={submarine.timeoutBlockHeight}
+                asset={submarine.assetSend}
+                hops={
+                    submarine.dex?.position === HopsPosition.Before
+                        ? submarine.dex.hops
+                        : undefined
+                }
+                oft={getPreOftDetail(submarine.oft)}
+            />
         </Show>
     );
 };

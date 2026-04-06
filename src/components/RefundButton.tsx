@@ -55,7 +55,6 @@ import {
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
-import { decodeInvoice } from "../utils/invoice";
 import {
     buildOftSendAlchemyCall,
     getOftProvider,
@@ -846,11 +845,6 @@ const RefundButton = (props: {
     const { setSwapStorage, getSwap } = useGlobalContext();
     const { setSwap } = usePayContext();
 
-    const [preimageHash] = createResource(async () => {
-        return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
-            .preimageHash;
-    });
-
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     createEffect(() => {
@@ -868,7 +862,6 @@ const RefundButton = (props: {
             }
         });
     });
-
     return (
         <Show
             when={
@@ -899,28 +892,22 @@ const RefundButton = (props: {
                             oft={props.swap().oft}
                         />
                     }>
-                    <Show
-                        when={!preimageHash.loading}
-                        fallback={<LoadingSpinner />}>
-                        <RefundEvm
-                            swapId={props.swap().id}
-                            gasAbstraction={getLockupGasAbstraction(
-                                props.swap(),
-                            )}
-                            signerAddress={props.swap().signer}
-                            derivationPath={props.swap().derivationPath}
-                            swapType={SwapType.Submarine}
-                            setRefundTxId={setRefundTxId}
-                            asset={props.swap().assetSend}
-                            commitmentLockupTxHash={
-                                props.swap().commitmentLockupTxHash
-                            }
-                            lockupTxHash={props.swap().lockupTx}
-                            dexDetails={props.swap().dex}
-                            destination={props.swap().signer}
-                            oft={props.swap().oft}
-                        />
-                    </Show>
+                    <RefundEvm
+                        swapId={props.swap().id}
+                        gasAbstraction={getLockupGasAbstraction(props.swap())}
+                        signerAddress={props.swap().signer}
+                        derivationPath={props.swap().derivationPath}
+                        swapType={SwapType.Submarine}
+                        setRefundTxId={setRefundTxId}
+                        asset={props.swap().assetSend}
+                        commitmentLockupTxHash={
+                            props.swap().commitmentLockupTxHash
+                        }
+                        lockupTxHash={props.swap().lockupTx}
+                        dexDetails={props.swap().dex}
+                        destination={props.swap().signer}
+                        oft={props.swap().oft}
+                    />
                 </Show>
             }>
             <RefundBtc {...props} setRefundTxId={setRefundTxId} />
