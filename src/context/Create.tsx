@@ -277,6 +277,8 @@ export type CreateContextType = {
     setMinimum: Setter<number>;
     maximum: Accessor<number>;
     setMaximum: Setter<number>;
+    limitsLoading: Accessor<boolean>;
+    setLimitsLoading: Setter<boolean>;
     boltzFee: Accessor<number>;
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
@@ -417,6 +419,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [amountChanged, setAmountChanged] = createSignal(Side.Send);
     const [minimum, setMinimum] = createSignal<number>(0);
     const [maximum, setMaximum] = createSignal<number>(0);
+    const [limitsLoading, setLimitsLoading] = createSignal<boolean>(true);
 
     // fees
     const [boltzFee, setBoltzFee] = createSignal(0);
@@ -477,6 +480,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setMinimum,
                 maximum,
                 setMaximum,
+                limitsLoading,
+                setLimitsLoading,
                 boltzFee,
                 setBoltzFee,
                 minerFee,

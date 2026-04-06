@@ -90,6 +90,7 @@ const Fees = () => {
         receiveAmount,
         setMaximum,
         setMinimum,
+        setLimitsLoading,
         minerFee,
         setMinerFee,
         boltzFee,
@@ -164,48 +165,70 @@ const Fees = () => {
             setMinerFee(fee + gasAbstractionExtraCost());
         };
 
-        if (pairs() && pair().isRoutable) {
-            setBoltzFee(pair().feePercentage);
+        if (!pairs()) {
+            setLimitsLoading(true);
+            return;
+        }
 
-            const swapToCreate = pair().swapToCreate;
-            if (!swapToCreate) return;
+        if (!pair().isRoutable) {
+            setLimitsLoading(false);
+            setMinimum(0);
+            setMaximum(0);
+            return;
+        }
 
-            switch (swapToCreate.type) {
-                case SwapType.Submarine:
-                    updateMinerFee(pair().minerFees);
-                    break;
+        setBoltzFee(pair().feePercentage);
 
-                case SwapType.Reverse:
-                case SwapType.Chain: {
-                    let fee = pair().minerFees;
-                    if (
-                        isToUnconfidentialLiquid({
-                            assetReceive,
-                            addressValid,
-                            onchainAddress,
-                        })
-                    ) {
-                        fee += unconfidentialExtra;
-                    }
+        const swapToCreate = pair().swapToCreate;
+        if (!swapToCreate) {
+            setLimitsLoading(false);
+            return;
+        }
 
-                    updateMinerFee(fee);
-                    break;
+        switch (swapToCreate.type) {
+            case SwapType.Submarine:
+                updateMinerFee(pair().minerFees);
+                break;
+
+            case SwapType.Reverse:
+            case SwapType.Chain: {
+                let fee = pair().minerFees;
+                if (
+                    isToUnconfidentialLiquid({
+                        assetReceive,
+                        addressValid,
+                        onchainAddress,
+                    })
+                ) {
+                    fee += unconfidentialExtra;
                 }
-            }
 
-            const initiatingPair = pair();
-            void Promise.all([
-                initiatingPair.getMinimum(),
-                initiatingPair.getMaximum(),
-            ]).then(([min, max]) => {
+                updateMinerFee(fee);
+                break;
+            }
+        }
+
+        const initiatingPair = pair();
+        setLimitsLoading(true);
+        void Promise.all([
+            initiatingPair.getMinimum(),
+            initiatingPair.getMaximum(),
+        ])
+            .then(([min, max]) => {
                 if (pair() !== initiatingPair) {
                     return;
                 }
 
                 setMinimum(min);
                 setMaximum(max);
+                setLimitsLoading(false);
+            })
+            .catch(() => {
+                if (pair() !== initiatingPair) {
+                    return;
+                }
+                setLimitsLoading(false);
             });
-        }
     });
 
     void fetchPairs();

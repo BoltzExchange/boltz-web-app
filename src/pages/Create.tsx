@@ -104,6 +104,7 @@ const Create = () => {
         setAmountChanged,
         minimum,
         maximum,
+        limitsLoading,
         setAmountValid,
         boltzFee,
         minerFee,
@@ -688,6 +689,7 @@ const Create = () => {
                 <SwapLimits
                     asset={pair().fromAsset}
                     denomination={denomination()}
+                    loading={limitsLoading()}
                     maximum={maximum()}
                     maximumLabel={t("max")}
                     minimum={minimum()}

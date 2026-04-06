@@ -13,11 +13,13 @@ type SwapLimitProps = {
     onClick: () => void;
     separator: string;
     icon: Denomination | string;
+    loading?: boolean;
 };
 
 type SwapLimitsProps = {
     asset: string;
     denomination: Denomination;
+    loading?: boolean;
     maximum: number;
     maximumLabel: string;
     minimum: number;
@@ -31,14 +33,25 @@ const SwapLimit = (props: SwapLimitProps) => {
     return (
         <span>
             {props.label}
-            <span onClick={() => props.onClick()} class="btn-small btn-light">
-                {formatAmount(
-                    BigNumber(props.amount),
-                    props.denomination,
-                    props.separator,
-                    props.asset,
-                )}
-            </span>
+            {props.loading ? (
+                <span
+                    class="swap-limit-value swap-limit-value-loading"
+                    aria-busy="true"
+                    aria-disabled="true">
+                    <span class="skeleton" aria-hidden="true" />
+                </span>
+            ) : (
+                <span
+                    onClick={() => props.onClick()}
+                    class="btn-small btn-light swap-limit-value">
+                    {formatAmount(
+                        BigNumber(props.amount),
+                        props.denomination,
+                        props.separator,
+                        props.asset,
+                    )}
+                </span>
+            )}
             <AmountDenominator value={props.icon} />
         </span>
     );
@@ -61,6 +74,7 @@ const SwapLimits = (props: SwapLimitsProps) => {
                 label={`${props.sendLabel} ${props.minimumLabel}:`}
                 onClick={() => props.onSelectAmount(props.minimum)}
                 separator={props.separator}
+                loading={props.loading}
             />
             <SwapLimit
                 amount={props.maximum}
@@ -70,6 +84,7 @@ const SwapLimits = (props: SwapLimitsProps) => {
                 label={`${props.maximumLabel}:`}
                 onClick={() => props.onSelectAmount(props.maximum)}
                 separator={props.separator}
+                loading={props.loading}
             />
         </span>
     );
