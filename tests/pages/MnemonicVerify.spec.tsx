@@ -103,7 +103,13 @@ describe("MnemonicVerifyContent", () => {
                     .slice(i * 4, (i + 1) * 4)
                     .includes(buttonText),
             );
-            const correctButtonElement = await screen.findByText(correctButton);
+            const buttonsContainer = await screen.findByTestId(
+                "verification-buttons",
+            );
+            const correctButtonElement = within(buttonsContainer).getByRole(
+                "button",
+                { name: correctButton },
+            );
             fireEvent.click(correctButtonElement);
         }
 
@@ -132,7 +138,13 @@ describe("MnemonicVerifyContent", () => {
             (buttonText) => !mnemonic.split(" ").includes(buttonText),
         );
 
-        const incorrectButtonElement = screen.getByText(incorrectButton);
+        const buttonsContainer = await screen.findByTestId(
+            "verification-buttons",
+        );
+        const incorrectButtonElement = within(buttonsContainer).getByRole(
+            "button",
+            { name: incorrectButton },
+        );
 
         fireEvent.click(incorrectButtonElement);
 
