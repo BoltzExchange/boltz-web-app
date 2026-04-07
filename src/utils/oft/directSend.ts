@@ -5,6 +5,7 @@ import { requireTokenConfig } from "../../consts/Assets";
 import TempoOFTWrapperAbi from "../../consts/abis/tempo/TempoOFTWrapper.json";
 import type { OftRoute } from "../Pair";
 import { createEvmOftContract } from "./evm";
+import { getBufferedOftNativeFee } from "./oft";
 import {
     type OftContract,
     defaultOftName,
@@ -124,7 +125,7 @@ export const getOftDirectRequiredNativeBalance = (
 ): bigint => {
     switch (target.kind) {
         case OftDirectSendTargetKind.Oft:
-            return (msgFee[0] * 110n) / 100n;
+            return getBufferedOftNativeFee(msgFee[0]);
 
         case OftDirectSendTargetKind.TempoWrapper:
             return 0n;

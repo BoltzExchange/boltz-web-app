@@ -5,7 +5,6 @@ import {
     createMemo,
     createResource,
     createSignal,
-    onMount,
 } from "solid-js";
 
 import { config } from "../config";
@@ -28,6 +27,7 @@ import {
 } from "../utils/oft/directSend";
 import {
     createOftContract,
+    getBufferedOftNativeFee,
     getOftTransport,
     getQuotedOftContract,
     getSolanaOftTokenBalance,
@@ -252,7 +252,7 @@ const SendToOft = (props: {
             getSolanaOftTokenBalance(oftRoute, walletAddress),
             getSolanaBalance(props.oft.sourceAsset, walletAddress),
         ]);
-        const requiredNativeBalance = (msgFee[0] * BigInt(110)) / BigInt(100);
+        const requiredNativeBalance = getBufferedOftNativeFee(msgFee[0]);
         const hasEnoughTokenBalance = balance >= props.amount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;

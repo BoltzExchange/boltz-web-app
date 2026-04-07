@@ -87,6 +87,10 @@ vi.mock("../../src/utils/oft/evm", () => ({
         mockCreateEvmOftContract(...args),
 }));
 
+vi.mock("../../src/utils/oft/oft", () => ({
+    getBufferedOftNativeFee: (nativeFee: bigint) => (nativeFee * 110n) / 100n,
+}));
+
 vi.mock("../../src/utils/oft/registry", () => ({
     defaultOftName: "usdt0",
     findOftChainContract: (...args: unknown[]) =>

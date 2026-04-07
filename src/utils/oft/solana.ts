@@ -453,7 +453,7 @@ const getRemainingAccounts = async (
 };
 
 const formatSolanaLogsMessage = (logs: string[] | undefined | null): string =>
-    logs === undefined || logs.length === 0
+    logs === undefined || logs === null || logs.length === 0
         ? ""
         : `\nLogs:\n${logs.join("\n")}`;
 
@@ -532,7 +532,7 @@ const simulateTransactionReturn = async <T>(
             formatSolanaLogsMessage(simulation.value.logs),
         );
         throw new Error(
-            `Simulation failed: ${JSON.stringify(simulation.value.err)}}`,
+            `Simulation failed: ${JSON.stringify(simulation.value.err)}`,
         );
     }
     const returnData = simulation.value.returnData;

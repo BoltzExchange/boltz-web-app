@@ -600,7 +600,8 @@ export const SwapExecutionWorker = () => {
                     return;
                 }
 
-                if (sendTransaction.meta?.err != null) {
+                const logMessages = sendTransaction.meta?.logMessages;
+                if (sendTransaction.meta?.err != null || logMessages == null) {
                     await abandonFailedOftSend(
                         currentSwap.id,
                         currentSwap.oft.sourceAsset,
@@ -609,9 +610,7 @@ export const SwapExecutionWorker = () => {
                     return;
                 }
 
-                guid = getSolanaOftGuidFromLogs(
-                    sendTransaction.meta.logMessages,
-                );
+                guid = getSolanaOftGuidFromLogs(logMessages);
                 break;
             }
 

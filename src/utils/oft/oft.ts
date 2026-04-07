@@ -420,6 +420,9 @@ const getLegacyMeshSourceAmount = (destinationAmount: bigint): bigint => {
     );
 };
 
+export const getBufferedOftNativeFee = (nativeFee: bigint): bigint =>
+    (nativeFee * 110n) / 100n;
+
 const createOftSendParam = async (
     route: OftRoute,
     recipient: string | undefined,
