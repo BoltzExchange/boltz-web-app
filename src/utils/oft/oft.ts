@@ -284,31 +284,6 @@ export const getOftSentEvent = (
         contractAddress,
     );
 
-export const getOftReceivedEvent = (
-    contract: OftTransportClient,
-    receipt: Parameters<typeof getEvmOftReceivedEvent>[1],
-    contractAddress: string,
-): OftReceivedEvent =>
-    getEvmOftReceivedEvent(
-        requireEvmOftClient(contract, "OFTReceived decoding"),
-        receipt,
-        contractAddress,
-    );
-    const event = parseOftReceivedLog(contract, oftReceivedLog);
-
-    log.debug("Parsed OFTReceived event", {
-        contractAddress,
-        guid: event.guid,
-        srcEid: event.srcEid.toString(),
-        toAddress: event.toAddress,
-        amountReceivedLD: event.amountReceivedLD.toString(),
-        blockNumber: event.blockNumber,
-        logIndex: event.logIndex,
-    });
-
-    return event;
-};
-
 export const getOftSentGuid = (
     contract: OftTransportClient,
     receipt: Parameters<typeof getEvmOftSentEvent>[1],
@@ -319,7 +294,11 @@ export const getOftReceivedGuid = (
     contract: OftTransportClient,
     receipt: Parameters<typeof getEvmOftReceivedEvent>[1],
     contractAddress: string,
-): string => getOftReceivedEvent(contract, receipt, contractAddress).guid;
+): string => getEvmOftReceivedEvent(
+        requireEvmOftClient(contract, "OFT receive lookup"),
+        receipt,
+        contractAddress,
+    ).guid;
 
 export const getOftReceivedEventByGuid = async (
     contract: OftTransportClient,
@@ -689,4 +668,3 @@ export const getOftTransactionSender = async (
 function parseOftReceivedLog(contract: any, oftReceivedLog: any) {
     throw new Error("Function not implemented.");
 }
-
