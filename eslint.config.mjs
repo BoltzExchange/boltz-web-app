@@ -65,6 +65,8 @@ export default [
                                 "@metaplex-foundation/umi",
                                 "@metaplex-foundation/umi-bundle-defaults",
                                 "@metaplex-foundation/umi-signer-wallet-adapters",
+                                "@solana/kit",
+                                "../generated/solana-oft/src/generated",
                             ],
                             allowTypeImports: true,
                         },

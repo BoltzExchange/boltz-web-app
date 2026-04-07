@@ -5,6 +5,7 @@ import {
     createMemo,
     createResource,
     createSignal,
+    onMount,
 } from "solid-js";
 
 import { config } from "../config";

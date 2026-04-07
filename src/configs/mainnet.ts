@@ -55,6 +55,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
             symbol: variant.symbol,
             gasToken: variant.gasToken ?? variant.symbol,
             transport,
+            oftQuotePayer: variant.oftQuotePayer,
             rpcUrls: variant.rpcUrls,
             mesh,
         },
@@ -291,6 +292,7 @@ const usdt0Variants: Usdt0Variant[] = [
         gasToken: "SOL",
         transport: NetworkTransport.Solana,
         nativeDecimals: 9,
+        oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
         rpcUrls: [

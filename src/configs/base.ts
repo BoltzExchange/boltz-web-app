@@ -24,6 +24,7 @@ export type Usdt0Variant = {
     gasToken?: string;
     transport?: NetworkTransport;
     chainId?: number;
+    oftQuotePayer?: string;
     tokenAddress: string;
     blockExplorerUrl: string;
     rpcUrls: string[];
@@ -50,6 +51,7 @@ export type Asset = {
         gasToken: string;
         transport: NetworkTransport;
         chainId?: number;
+        oftQuotePayer?: string;
         rpcUrls: string[];
         nativeCurrency?: {
             name: string;

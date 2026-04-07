@@ -323,7 +323,7 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         sourceAsset: string,
         txHash: string,
-        blockNumber: number,
+        blockNumber?: number,
     ) => {
         const latestSwap = await getSwap<SomeSwap>(swapId);
         if (
@@ -597,6 +597,15 @@ export const SwapExecutionWorker = () => {
                     currentSwap.oft.txHash,
                 );
                 if (sendTransaction === undefined) {
+                    return;
+                }
+
+                if (sendTransaction.meta?.err != null) {
+                    await abandonFailedOftSend(
+                        currentSwap.id,
+                        currentSwap.oft.sourceAsset,
+                        currentSwap.oft.txHash,
+                    );
                     return;
                 }
 

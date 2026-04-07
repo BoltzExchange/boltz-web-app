@@ -11,6 +11,7 @@ import type {
 import { Buffer } from "buffer";
 import log from "loglevel";
 
+import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolanaOft from "../../lazy/solanaOft";
 import {
@@ -174,9 +175,7 @@ const createSolanaWalletAdapter = async (
 };
 
 const getQuotePayer = async (
-    modules: SolanaOftModules,
-    connection: Connection,
-    storeAddress: string,
+    sourceAsset: string,
     walletProvider?: SolanaWalletProvider,
 ): Promise<string> => {
     const walletAddress =
@@ -188,33 +187,14 @@ const getQuotePayer = async (
         return walletAddress;
     }
 
-    const [signature] = await connection.getSignaturesForAddress(
-        new modules.web3.PublicKey(storeAddress),
-        { limit: 1 },
-        "confirmed",
-    );
-    if (signature !== undefined) {
-        const transaction = await connection.getParsedTransaction(
-            signature.signature,
-            {
-                commitment: "confirmed",
-                maxSupportedTransactionVersion: 0,
-            },
-        );
-        const signer = transaction?.transaction.message.accountKeys.find(
-            (account) => account.signer,
-        )?.pubkey;
-
-        if (typeof signer === "string") {
-            return signer;
-        }
-        if (signer !== undefined) {
-            return signer.toBase58();
-        }
+    const configuredQuotePayer =
+        config.assets?.[sourceAsset]?.network?.oftQuotePayer;
+    if (configuredQuotePayer !== undefined) {
+        return configuredQuotePayer;
     }
 
     throw new Error(
-        `Could not determine a valid Solana quote payer for OFT store ${storeAddress}`,
+        `Could not determine a valid Solana quote payer for ${sourceAsset}`,
     );
 };
 
@@ -297,12 +277,7 @@ export const getSolanaLegacyMeshContext = async ({
             tokenMint,
             tokenEscrow,
             endpointProgram,
-            quotePayer: await getQuotePayer(
-                modules,
-                connection,
-                storeAddress,
-                walletProvider,
-            ),
+            quotePayer: await getQuotePayer(sourceAsset, walletProvider),
             addressLookupTableAddress,
         };
     } catch (error) {
@@ -548,6 +523,18 @@ const simulateTransactionReturn = async <T>(
             commitment: "confirmed",
         },
     );
+    if (simulation.value.err !== null) {
+        log.error(
+            `Simulation failed: ${JSON.stringify(simulation.value.err)}`,
+            {
+                cause: simulation.value.err,
+            },
+            formatSolanaLogsMessage(simulation.value.logs),
+        );
+        throw new Error(
+            `Simulation failed: ${JSON.stringify(simulation.value.err)}}`,
+        );
+    }
     const returnData = simulation.value.returnData;
 
     if (
