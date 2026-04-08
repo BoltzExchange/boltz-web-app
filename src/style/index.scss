@@ -142,7 +142,7 @@ hr.spacer {
     display: inline-flex;
     align-items: center;
     gap: 0.5em;
-    vertical-align: middle;
+    vertical-align: baseline;
 }
 
 .fee-amount > .denominator {
@@ -155,8 +155,8 @@ hr.spacer {
 
 .fee-amount > .denominator-text-symbol {
     transform: none;
-    font-size: inherit;
-    line-height: inherit;
+    margin-left: -0.17em;
+    color: var(--color-white);
 }
 
 .fees-toggle {
