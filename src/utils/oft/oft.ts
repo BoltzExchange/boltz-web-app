@@ -514,49 +514,6 @@ export const buildOftApprovalCall = async (
     return undefined;
 };
 
-export const buildOftSendAlchemyCall = async ({
-    route,
-    recipient,
-    amount,
-    refundAddress,
-    oftName = defaultOftName,
-}: {
-    route: OftRoute;
-    recipient: string;
-    amount: bigint;
-    refundAddress: string;
-    oftName?: string;
-}): Promise<AlchemyCall> => {
-    if (getOftTransport(route.from) !== NetworkTransport.Evm) {
-        throw new Error(
-            "Alchemy OFT send call is only supported for EVM routes",
-        );
-    }
-
-    const oftContract = await getOftContract(route, oftName);
-    const quotedOft = requireEvmOftClient(
-        await getQuotedOftContract(route, oftName),
-        "Alchemy OFT send encoding",
-    );
-    const { sendParam, msgFee } = await quoteOftSend(
-        quotedOft,
-        route,
-        recipient,
-        amount,
-        { oftName },
-    );
-
-    return {
-        to: oftContract.address,
-        data: quotedOft.interface.encodeFunctionData("send", [
-            sendParam,
-            msgFee,
-            refundAddress,
-        ]),
-        value: msgFee[0].toString(),
-    };
-};
-
 export const quoteOftReceiveAmount = async (
     route: OftRoute,
     amount: bigint,

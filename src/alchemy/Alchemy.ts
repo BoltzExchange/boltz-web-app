@@ -331,7 +331,7 @@ const getCallsStatus = async (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const prefixHex = (data: string) =>
+export const prefixHex = (data: string) =>
     data.startsWith("0x") ? data : `0x${data}`;
 
 export const sendTransaction = async (
