@@ -1,12 +1,12 @@
 import { useGlobalContext } from "../context/Global";
 import ConnectWallet from "./ConnectWallet";
 
-const InsufficientBalance = (props: { asset?: string }) => {
+const InsufficientBalance = (props: { asset?: string; line?: string }) => {
     const { t } = useGlobalContext();
 
     return (
         <>
-            <p>{t("insufficient_balance_line")}</p>
+            <p>{props.line ?? t("insufficient_balance_line")}</p>
             <ConnectWallet asset={props.asset} />
             <button class="btn" disabled={true}>
                 {t("insufficient_balance")}

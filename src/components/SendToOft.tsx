@@ -16,6 +16,7 @@ import {
     createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
+import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { getSolanaNativeBalance as getSolanaBalance } from "../utils/chains/solana";
 import {
@@ -72,6 +73,9 @@ const SendToOft = (props: {
 
     const expectedChainId = () =>
         config.assets?.[props.oft.sourceAsset]?.network?.chainId;
+
+    const sourceGasToken = () =>
+        config.assets?.[props.oft.sourceAsset]?.network?.gasToken;
 
     const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
     const [requiredTokenBalance, setRequiredTokenBalance] =
@@ -499,6 +503,12 @@ const SendToOft = (props: {
                         fallback={
                             <InsufficientBalance
                                 asset={props.oft.sourceAsset}
+                                line={t(
+                                    "insufficient_gas_balance_line" as DictKey,
+                                    {
+                                        gasToken: sourceGasToken(),
+                                    },
+                                )}
                             />
                         }>
                         <Show
