@@ -206,7 +206,7 @@ const dict = {
         gas_topup_tooltip:
             "Automatically convert a small portion of your swap into native gas if your connected wallet has no gas.",
         gas_topup_label: "Destination gas ({{ gasToken }}) included",
-        oft_messaging_fee_label: "OFT fee",
+        layer_zero_fee: "LayerZero Fee",
         legacy_mesh_fee_label: "Legacy Mesh fee",
         waiting_for_oft: "Waiting for OFT",
         dex_quote_changed: "DEX quote has changed",
@@ -694,7 +694,7 @@ const dict = {
         gas_topup_tooltip:
             "Wandelt automatisch einen kleinen Teil deines Swaps in natives Gas um, wenn dein verbundenes Wallet kein Gas hat.",
         gas_topup_label: "Ziel-Gas ({{ gasToken }}) enthalten",
-        oft_messaging_fee_label: "OFT-Gebuehr",
+        layer_zero_fee: "LayerZero-Gebuehr",
         legacy_mesh_fee_label: "Legacy-Mesh-Gebuehr",
         waiting_for_oft: "Warte auf OFT",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
@@ -1191,7 +1191,7 @@ const dict = {
         gas_topup_tooltip:
             "Convierte automáticamente una pequeña parte de tu swap en gas nativo si tu monedero conectado no tiene gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        oft_messaging_fee_label: "Tarifa OFT",
+        layer_zero_fee: "Tarifa LayerZero",
         legacy_mesh_fee_label: "Tarifa Legacy Mesh",
         waiting_for_oft: "Esperando OFT",
         dex_quote_changed: "La cotización de DEX ha cambiado",
@@ -1683,7 +1683,7 @@ const dict = {
         gas_topup_tooltip:
             "Converte automaticamente uma pequena parte da sua troca em gas nativo se a sua carteira conectada não tiver gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        oft_messaging_fee_label: "Taxa OFT",
+        layer_zero_fee: "Taxa LayerZero",
         legacy_mesh_fee_label: "Taxa Legacy Mesh",
         waiting_for_oft: "Aguardando OFT",
         dex_quote_changed: "A cotação da DEX mudou",
@@ -2152,7 +2152,7 @@ const dict = {
         gas_topup_tooltip:
             "如果您连接的钱包没有 Gas，将自动把交换的一小部分转换为原生 Gas。",
         gas_topup_label: "已包含目标链 Gas ({{ gasToken }})",
-        oft_messaging_fee_label: "OFT 费用",
+        layer_zero_fee: "LayerZero 费用",
         legacy_mesh_fee_label: "Legacy Mesh 费用",
         waiting_for_oft: "等待 OFT",
         dex_quote_changed: "DEX 报价已变更",
@@ -2616,7 +2616,7 @@ const dict = {
         gas_topup_tooltip:
             "接続されたウォレットにガスがない場合、スワップの一部を自動的にネイティブガスに変換します。",
         gas_topup_label: "宛先ガス ({{ gasToken }}) を含む",
-        oft_messaging_fee_label: "OFT手数料",
+        layer_zero_fee: "LayerZero手数料",
         legacy_mesh_fee_label: "Legacy Mesh手数料",
         waiting_for_oft: "OFTを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",

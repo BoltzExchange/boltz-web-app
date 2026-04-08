@@ -368,7 +368,7 @@ const FeesCollapse = () => {
                                 formattedOftMessagingFee() !== undefined
                             }>
                             <br />
-                            {t("oft_messaging_fee_label")}:{" "}
+                            {t("layer_zero_fee")}:{" "}
                             <span class="fee-amount">
                                 <span
                                     class="oft-messaging-fee"
@@ -402,7 +402,7 @@ const FeesCollapse = () => {
                     formattedOftMessagingFee() !== undefined
                 }>
                 <span class="fees-extra-line">
-                    {t("oft_messaging_fee_label")}:{" "}
+                    {t("layer_zero_fee")}:{" "}
                     <span class="fee-amount">
                         <span
                             class="oft-messaging-fee"
