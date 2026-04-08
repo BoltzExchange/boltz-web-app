@@ -8,6 +8,7 @@ COPY . .
 
 ARG NETWORK=mainnet
 
+RUN npm run generate
 RUN npm run $NETWORK
 RUN if [ "$NETWORK" = "pro" ]; then npm run build:pro; else npm run build:regular; fi
 
