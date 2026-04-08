@@ -9,7 +9,6 @@ import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { btcToSat } from "../utils/denomination";
 import {
-    decodeInvoice,
     extractAddress,
     extractBip21Amount,
     extractInvoice,
@@ -29,8 +28,6 @@ const InvoiceInput = () => {
         minerFee,
         invoice,
         amountValid,
-        receiveAmount,
-        sendAmount,
         setAmountChanged,
         setInvoice,
         setInvoiceValid,
@@ -42,6 +39,7 @@ const InvoiceInput = () => {
         setBolt12Offer,
         setAddressValid,
         setBolt12Loading,
+        setQuoteLoading,
     } = useCreateContext();
 
     const clearInputError = (input: HTMLTextAreaElement) => {
@@ -63,59 +61,62 @@ const InvoiceInput = () => {
         const isStale = () =>
             requestId !== validationRequest ||
             getCurrentInputValue() !== inputValue;
+
         setInvoice(inputValue);
-        setBolt12Loading(false);
-
-        if (inputValue.length === 0) {
-            if (isStale()) {
-                return;
-            }
-            clearInputError(input);
-            resetInvoiceState();
-            return;
-        }
-
-        const address = extractAddress(inputValue);
-        const invoiceValue = extractInvoice(inputValue);
-
-        const actualAsset =
-            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
-
-        const bip21Amount = extractBip21Amount(inputValue);
-        if (bip21Amount) {
-            const satAmount = btcToSat(bip21Amount);
-            setAmountChanged(Side.Receive);
-            setReceiveAmount(satAmount);
-            const sendAmt = await pair().calculateSendAmount(
-                satAmount,
-                minerFee(),
-            );
-            if (isStale()) {
-                return;
-            }
-            setSendAmount(sendAmt);
-        }
-
-        // Auto switch direction based on address
-        if (isStale()) {
-            return;
-        }
-        if (
-            actualAsset !== LN &&
-            actualAsset !== null &&
-            (!bitcoinOnly() || isBitcoinOnlyAsset(actualAsset))
-        ) {
-            const fromAsset =
-                pair().fromAsset === actualAsset ? LN : pair().fromAsset;
-            setPair(new Pair(pairs(), fromAsset, actualAsset, regularPairs()));
-            setInvoice("");
-            setOnchainAddress(address);
-            setAddressValid(true);
-            notify("success", t("switch_paste"));
-            return;
-        }
 
         try {
+            if (inputValue.length === 0) {
+                if (isStale()) {
+                    return;
+                }
+                clearInputError(input);
+                resetInvoiceState();
+                return;
+            }
+
+            const address = extractAddress(inputValue);
+            const invoiceValue = extractInvoice(inputValue);
+
+            const actualAsset =
+                probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
+
+            const bip21Amount = extractBip21Amount(inputValue);
+            if (bip21Amount) {
+                const satAmount = btcToSat(bip21Amount);
+                setAmountChanged(Side.Receive);
+                setReceiveAmount(satAmount);
+                setQuoteLoading(true);
+                const sendAmt = await pair().calculateSendAmount(
+                    satAmount,
+                    minerFee(),
+                );
+                if (isStale()) {
+                    return;
+                }
+                setSendAmount(sendAmt);
+            }
+
+            // Auto switch direction based on address
+            if (isStale()) {
+                return;
+            }
+            if (
+                actualAsset !== LN &&
+                actualAsset !== null &&
+                (!bitcoinOnly() || isBitcoinOnlyAsset(actualAsset))
+            ) {
+                const fromAsset =
+                    pair().fromAsset === actualAsset ? LN : pair().fromAsset;
+                setPair(
+                    new Pair(pairs(), fromAsset, actualAsset, regularPairs()),
+                );
+                setInvoice("");
+                setOnchainAddress(address);
+                setAddressValid(true);
+                notify("success", t("switch_paste"));
+                return;
+            }
+
             if (isLnurl(invoiceValue)) {
                 setLnurl(invoiceValue);
                 setInvoice(invoiceValue);
@@ -138,6 +139,8 @@ const InvoiceInput = () => {
                     setInvoice(invoiceValue);
                 } else {
                     const sats = validateInvoice(invoiceValue);
+                    setAmountChanged(Side.Receive);
+                    setQuoteLoading(true);
                     const sendAmount = await pair().calculateSendAmount(
                         BigNumber(sats),
                         minerFee(),
@@ -145,7 +148,6 @@ const InvoiceInput = () => {
                     if (isStale()) {
                         return;
                     }
-                    setAmountChanged(Side.Receive);
                     setReceiveAmount(BigNumber(sats));
                     setSendAmount(sendAmount);
                     setInvoice(invoiceValue);
@@ -167,6 +169,10 @@ const InvoiceInput = () => {
             input.setCustomValidity(t(e.message));
             resetInvoiceState();
             setInvoiceError(e.message);
+        } finally {
+            if (!isStale()) {
+                setQuoteLoading(false);
+            }
         }
     };
 
@@ -177,29 +183,6 @@ const InvoiceInput = () => {
                 pair().toAsset === LN
             ) {
                 await validate(inputRef);
-            }
-        }),
-    );
-
-    // reset invoice if amount is changed
-    createEffect(
-        on([receiveAmount, sendAmount, invoice], () => {
-            const amount = Number(receiveAmount());
-            if (
-                invoice() !== "" &&
-                !isLnurl(invoice()) &&
-                !receiveAmount().isZero()
-            ) {
-                try {
-                    const inv = decodeInvoice(invoice());
-                    if (inv.satoshis !== 0 && inv.satoshis !== amount) {
-                        setInvoice("");
-                    }
-
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                } catch (e) {
-                    return;
-                }
             }
         }),
     );

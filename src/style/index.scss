@@ -1331,6 +1331,12 @@ header {
     .denominator-text {
         margin-left: 0.5rem;
     }
+
+    .swap-limit-value-loading {
+        display: inline-flex;
+        align-items: center;
+        padding: 0 6px;
+    }
 }
 
 .text-bold {

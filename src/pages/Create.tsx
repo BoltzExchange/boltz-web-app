@@ -51,6 +51,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
+import { decodeInvoice, isLnurl } from "../utils/invoice";
 import { createAssetProvider, getRpcUrls } from "../utils/provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
@@ -86,7 +87,10 @@ const Create = () => {
         setGetGasToken,
         assetSelection,
         assetSelected,
+        invoice,
+        setInvoice,
         invoiceValid,
+        setInvoiceValid,
         addressValid,
         sendAmount,
         setSendAmount,
@@ -100,6 +104,7 @@ const Create = () => {
         setAmountChanged,
         minimum,
         maximum,
+        limitsLoading,
         setAmountValid,
         boltzFee,
         minerFee,
@@ -313,6 +318,22 @@ const Create = () => {
         setSendAmount(BigNumber(0));
     };
 
+    const clearStaleInvoice = () => {
+        if (invoice() === "" || isLnurl(invoice())) {
+            return;
+        }
+        try {
+            const invoiceSats = decodeInvoice(invoice()).satoshis;
+            if (invoiceSats === 0) {
+                return;
+            }
+            setInvoice("");
+            setInvoiceValid(false);
+        } catch {
+            // not a valid invoice, nothing to clear
+        }
+    };
+
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value
@@ -321,18 +342,25 @@ const Create = () => {
             .replaceAll(",", ".");
 
         setAmountChanged(Side.Receive);
+        clearStaleInvoice();
+
+        if (isEmptyAmount(amount)) {
+            ++quoteRequestId;
+            clearQuoteDebounce();
+            setQuoteLoading(false);
+            resetAmounts();
+            validateAmount();
+            return;
+        }
+
+        changeDenomination(amount);
+        const satAmount = convertAmount(
+            pair().toAsset,
+            BigNumber(amount),
+            denomination(),
+        );
+
         loadingGuard(async (isCurrent) => {
-            if (isEmptyAmount(amount)) {
-                resetAmounts();
-                validateAmount();
-                return;
-            }
-            changeDenomination(amount);
-            const satAmount = convertAmount(
-                pair().toAsset,
-                BigNumber(amount),
-                denomination(),
-            );
             if (satAmount.isZero()) {
                 setAmountChanged(Side.Receive);
                 resetAmounts();
@@ -362,19 +390,26 @@ const Create = () => {
             .replaceAll(",", ".");
 
         setAmountChanged(Side.Send);
+        clearStaleInvoice();
+
+        if (isEmptyAmount(amount)) {
+            ++quoteRequestId;
+            clearQuoteDebounce();
+            setQuoteLoading(false);
+            resetAmounts();
+            validateAmount();
+            return;
+        }
+
+        changeDenomination(amount);
+        const satAmount = convertAmount(
+            pair().fromAsset,
+            BigNumber(amount),
+            denomination(),
+        );
+
         loadingGuard(async (isCurrent) => {
-            if (isEmptyAmount(amount)) {
-                resetAmounts();
-                validateAmount();
-                return;
-            }
-            changeDenomination(amount);
-            const satAmount = convertAmount(
-                pair().fromAsset,
-                BigNumber(amount),
-                denomination(),
-            );
-            const receiveAmount = await pair().calculateReceiveAmount(
+            const newReceiveAmount = await pair().calculateReceiveAmount(
                 satAmount,
                 minerFee(),
                 undefined,
@@ -385,7 +420,7 @@ const Create = () => {
                 return;
             }
             setSendAmount(satAmount);
-            setReceiveAmount(receiveAmount);
+            setReceiveAmount(newReceiveAmount);
             validateAmount();
         });
     };
@@ -489,9 +524,10 @@ const Create = () => {
 
     const setAmount = (amount: number) => {
         setAmountChanged(Side.Send);
+        clearStaleInvoice();
         loadingGuard(async (isCurrent) => {
             setSendAmount(BigNumber(amount));
-            const receiveAmount = await pair().calculateReceiveAmount(
+            const newReceiveAmount = await pair().calculateReceiveAmount(
                 BigNumber(amount),
                 minerFee(),
                 undefined,
@@ -501,7 +537,7 @@ const Create = () => {
             if (!isCurrent()) {
                 return;
             }
-            setReceiveAmount(receiveAmount);
+            setReceiveAmount(newReceiveAmount);
             validateAmount();
             sendAmountRef?.focus();
         });
@@ -653,6 +689,7 @@ const Create = () => {
                 <SwapLimits
                     asset={pair().fromAsset}
                     denomination={denomination()}
+                    loading={limitsLoading()}
                     maximum={maximum()}
                     maximumLabel={t("max")}
                     minimum={minimum()}
