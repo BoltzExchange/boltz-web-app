@@ -2,7 +2,7 @@ import { hex } from "@scure/base";
 import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import type { RefundDetails } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
-import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
+import type { LiquidRefundDetails } from "boltz-core/liquid";
 import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
