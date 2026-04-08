@@ -1,0 +1,2093 @@
+{
+    "address": "PubkeynewfromarrayprogramidfromenvOFTIDn9UovNrJD8pQyBLheeHNayuG1wJSEAoxkmM14vw5gcsTT",
+    "metadata": {
+        "name": "oft",
+        "version": "0.1.0",
+        "spec": "0.1.0",
+        "description": "Created with Anchor"
+    },
+    "instructions": [
+        {
+            "name": "burn",
+            "discriminator": [116, 110, 29, 56, 107, 219, 42, 93],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "BurnParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "deposit_local",
+            "discriminator": [183, 51, 160, 173, 94, 131, 201, 173],
+            "accounts": [
+                {
+                    "name": "signer",
+                    "signer": true
+                },
+                {
+                    "name": "token_source",
+                    "writable": true
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "DepositLocalParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "init_oft",
+            "discriminator": [182, 169, 147, 16, 201, 45, 76, 23],
+            "accounts": [
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "oft_store",
+                    "writable": true
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "endpoint_settings"
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "system_program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "InitOFTParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "lz_receive",
+            "discriminator": [8, 179, 120, 109, 33, 118, 189, 80],
+            "accounts": [
+                {
+                    "name": "payer",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "peer"
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true
+                },
+                {
+                    "name": "to_address",
+                    "optional": true
+                },
+                {
+                    "name": "token_dest",
+                    "writable": true,
+                    "optional": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "associated_token_program"
+                },
+                {
+                    "name": "system_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "LzReceiveParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "lz_receive_types_info",
+            "discriminator": [43, 148, 213, 93, 101, 127, 37, 170],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "lz_receive_types_accounts"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "LzReceiveParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "lz_receive_types_v2",
+            "discriminator": [109, 157, 200, 142, 138, 223, 159, 164],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "token_mint"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "LzReceiveParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "LzReceiveTypesV2Result"
+                }
+            }
+        },
+        {
+            "name": "nilify",
+            "discriminator": [143, 136, 129, 199, 36, 35, 160, 85],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "NilifyParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "oft_version",
+            "discriminator": [179, 115, 253, 187, 88, 22, 80, 64],
+            "accounts": [],
+            "args": [],
+            "returns": {
+                "defined": {
+                    "name": "Version"
+                }
+            }
+        },
+        {
+            "name": "quote_oft",
+            "discriminator": [179, 255, 92, 202, 251, 82, 82, 118],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits"
+                },
+                {
+                    "name": "peer"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "QuoteOFTParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "QuoteOFTResult"
+                }
+            }
+        },
+        {
+            "name": "quote_send",
+            "discriminator": [207, 0, 49, 214, 160, 211, 76, 211],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits"
+                },
+                {
+                    "name": "peer"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "QuoteSendParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "MessagingFee"
+                }
+            }
+        },
+        {
+            "name": "quote_send_credits",
+            "discriminator": [166, 117, 54, 109, 220, 29, 112, 107],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits"
+                },
+                {
+                    "name": "peer"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "QuoteSendCreditsParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "MessagingFee"
+                }
+            }
+        },
+        {
+            "name": "quote_withdraw_remote",
+            "discriminator": [198, 64, 228, 34, 69, 19, 122, 58],
+            "accounts": [
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits"
+                },
+                {
+                    "name": "peer"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "QuoteSendParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "MessagingFee"
+                }
+            }
+        },
+        {
+            "name": "send",
+            "discriminator": [102, 251, 20, 187, 65, 75, 12, 69],
+            "accounts": [
+                {
+                    "name": "signer",
+                    "signer": true
+                },
+                {
+                    "name": "peer"
+                },
+                {
+                    "name": "oft_store",
+                    "writable": true
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "token_source",
+                    "writable": true
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "SendParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "send_credits",
+            "discriminator": [92, 161, 204, 14, 139, 189, 105, 227],
+            "accounts": [
+                {
+                    "name": "planner",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "peer"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "SendCreditsParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "MessagingReceipt"
+                }
+            }
+        },
+        {
+            "name": "set_oft_config",
+            "discriminator": [55, 126, 87, 217, 159, 66, 24, 194],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store",
+                    "writable": true
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "SetOFTConfigParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "set_peer_config",
+            "discriminator": [79, 187, 168, 57, 139, 140, 93, 47],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "writable": true,
+                    "signer": true
+                },
+                {
+                    "name": "peer",
+                    "writable": true
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "system_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "SetPeerConfigParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "withdraw_fees",
+            "discriminator": [198, 212, 171, 109, 144, 215, 174, 89],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store",
+                    "writable": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true
+                },
+                {
+                    "name": "token_dest",
+                    "writable": true
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "WithdrawFeesParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "withdraw_local",
+            "discriminator": [112, 250, 134, 10, 96, 9, 236, 176],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "token_escrow",
+                    "writable": true
+                },
+                {
+                    "name": "token_dest",
+                    "writable": true
+                },
+                {
+                    "name": "token_mint"
+                },
+                {
+                    "name": "token_program"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "WithdrawLocalParams"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "withdraw_remote",
+            "discriminator": [135, 200, 45, 240, 165, 104, 44, 102],
+            "accounts": [
+                {
+                    "name": "admin",
+                    "signer": true
+                },
+                {
+                    "name": "oft_store"
+                },
+                {
+                    "name": "credits",
+                    "writable": true
+                },
+                {
+                    "name": "peer"
+                },
+                {
+                    "name": "event_authority"
+                },
+                {
+                    "name": "program"
+                }
+            ],
+            "args": [
+                {
+                    "name": "params",
+                    "type": {
+                        "defined": {
+                            "name": "SendParams"
+                        }
+                    }
+                }
+            ],
+            "returns": {
+                "defined": {
+                    "name": "MessagingReceipt"
+                }
+            }
+        }
+    ],
+    "accounts": [
+        {
+            "name": "Credits",
+            "discriminator": [167, 92, 156, 89, 224, 222, 250, 237]
+        },
+        {
+            "name": "EndpointSettings",
+            "discriminator": [221, 232, 73, 56, 10, 66, 72, 14]
+        },
+        {
+            "name": "OFTStore",
+            "discriminator": [195, 215, 104, 134, 185, 195, 240, 114]
+        },
+        {
+            "name": "PeerConfig",
+            "discriminator": [181, 157, 86, 198, 33, 193, 94, 203]
+        }
+    ],
+    "events": [
+        {
+            "name": "AddressLookupTableSet",
+            "discriminator": [54, 206, 97, 134, 147, 43, 12, 34]
+        },
+        {
+            "name": "BurnAndNilifyAdminSet",
+            "discriminator": [198, 129, 215, 13, 129, 143, 91, 13]
+        },
+        {
+            "name": "CreditsReceived",
+            "discriminator": [247, 1, 147, 84, 187, 118, 0, 23]
+        },
+        {
+            "name": "CreditsSent",
+            "discriminator": [227, 230, 87, 90, 214, 189, 44, 241]
+        },
+        {
+            "name": "EnforcedOptionsSet",
+            "discriminator": [146, 122, 60, 148, 172, 173, 245, 181]
+        },
+        {
+            "name": "FeeBpsSet",
+            "discriminator": [157, 56, 175, 190, 219, 193, 106, 208]
+        },
+        {
+            "name": "FeesWithdrawn",
+            "discriminator": [234, 15, 0, 119, 148, 241, 40, 21]
+        },
+        {
+            "name": "LocalDeposit",
+            "discriminator": [137, 122, 12, 175, 43, 253, 64, 206]
+        },
+        {
+            "name": "LocalWithdrawn",
+            "discriminator": [123, 143, 13, 174, 243, 234, 207, 102]
+        },
+        {
+            "name": "LpAdminSet",
+            "discriminator": [204, 123, 111, 142, 215, 147, 149, 241]
+        },
+        {
+            "name": "OFTReceived",
+            "discriminator": [144, 129, 112, 67, 144, 152, 201, 42]
+        },
+        {
+            "name": "OFTSent",
+            "discriminator": [108, 171, 219, 2, 189, 21, 110, 110]
+        },
+        {
+            "name": "PeerAddressSet",
+            "discriminator": [23, 136, 173, 207, 43, 0, 240, 232]
+        },
+        {
+            "name": "PlannerSet",
+            "discriminator": [15, 204, 218, 142, 168, 147, 236, 100]
+        },
+        {
+            "name": "RemoteWithdrawReceived",
+            "discriminator": [19, 91, 253, 185, 110, 208, 124, 198]
+        },
+        {
+            "name": "RemoteWithdrawn",
+            "discriminator": [97, 15, 220, 84, 178, 82, 9, 250]
+        },
+        {
+            "name": "SuperAdminSet",
+            "discriminator": [138, 32, 131, 104, 28, 14, 79, 204]
+        }
+    ],
+    "errors": [
+        {
+            "code": 6000,
+            "name": "Unauthorized"
+        },
+        {
+            "code": 6001,
+            "name": "InvalidSender"
+        },
+        {
+            "code": 6002,
+            "name": "InvalidDecimals"
+        },
+        {
+            "code": 6003,
+            "name": "SlippageExceeded"
+        },
+        {
+            "code": 6004,
+            "name": "InvalidTokenDest"
+        },
+        {
+            "code": 6005,
+            "name": "InsufficientFeeBalance"
+        },
+        {
+            "code": 6006,
+            "name": "InvalidAmount"
+        },
+        {
+            "code": 6007,
+            "name": "InsufficientCredits"
+        },
+        {
+            "code": 6008,
+            "name": "InvalidEID"
+        },
+        {
+            "code": 6009,
+            "name": "InvalidMessage"
+        },
+        {
+            "code": 6010,
+            "name": "InvalidFeeBps"
+        },
+        {
+            "code": 6011,
+            "name": "TONComposeNotSupported"
+        }
+    ],
+    "types": [
+        {
+            "name": "AccountMetaRef",
+            "docs": [
+                "Account metadata for V2 execution planning.",
+                "Used by the Executor to construct the final transaction.",
+                "",
+                "V2 removes the legacy is_signer flag from V1's AccountMeta.",
+                "Instead, signer roles are explicitly declared through AddressLocator variants.",
+                "This provides clearer semantics and enables multiple signer support."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "pubkey",
+                        "docs": [
+                            "The account address locator - supports multiple resolution strategies"
+                        ],
+                        "type": {
+                            "defined": {
+                                "name": "AddressLocator"
+                            }
+                        }
+                    },
+                    {
+                        "name": "is_writable",
+                        "docs": [
+                            "Whether the account should be writable in the final transaction"
+                        ],
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AddressLocator",
+            "docs": [
+                "A generic account locator used in LZ execution planning for V2.",
+                "Can reference the address directly, via ALT, or as a placeholder.",
+                "",
+                "This enum enables the compact account referencing design of V2, supporting:",
+                "- OApps to request multiple signer accounts, not just a single Executor EOA",
+                "- Dynamic creation of writable EOA-based data accounts",
+                "- Efficient encoding of addresses via ALTs, reducing account list size",
+                "",
+                "The legacy is_signer flag is removed. Instead, signer roles are explicitly",
+                "declared through Payer and indexed Signer(u8) variants."
+            ],
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "Address",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "AltIndex",
+                        "fields": ["u8", "u8"]
+                    },
+                    {
+                        "name": "Payer"
+                    },
+                    {
+                        "name": "Signer",
+                        "fields": ["u8"]
+                    },
+                    {
+                        "name": "Context"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "AddressLookupTableSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": {
+                            "option": "pubkey"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "BurnAndNilifyAdminSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "BurnParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "sender",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "nonce",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "payload_hash",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Credits",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "entries",
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "CreditsEntry"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "CreditsBatch",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "credits_arbitrum",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "credits_celo",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "credits_eth",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "credits_solana",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "credits_ton",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "credits_tron",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "CreditsEntry",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "CreditsReceived",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "message",
+                        "type": "bytes"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "CreditsSent",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "credits_batch",
+                        "type": {
+                            "defined": {
+                                "name": "CreditsBatch"
+                            }
+                        }
+                    },
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "DepositLocalParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EndpointSettings",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "lz_token_mint",
+                        "type": {
+                            "option": "pubkey"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EnforcedOptions",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "withdraw_remote",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "send_oft",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "send_credits",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "send_oft_and_call",
+                        "type": "bytes"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "EnforcedOptionsSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "send",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "send_and_call",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "send_credits",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "withdraw_remote",
+                        "type": "bytes"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "FeeBpsSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "fee_bps",
+                        "type": "u16"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "FeesWithdrawn",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "to",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "InitOFTParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "super_admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "endpoint_program",
+                        "type": {
+                            "option": "pubkey"
+                        }
+                    },
+                    {
+                        "name": "alt",
+                        "type": {
+                            "option": "pubkey"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Instruction",
+            "docs": [
+                "The list of instructions that can be executed in the LzReceive transaction.",
+                "",
+                "V2's multi-instruction model enables complex patterns such as:",
+                "- Preprocessing steps before lz_receive (e.g., account initialization)",
+                "- Postprocessing steps after lz_receive (e.g., verification, cleanup)",
+                "- ABA messaging patterns with additional LayerZero sends",
+                "- Conditional execution flows based on message content"
+            ],
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "LzReceive",
+                        "fields": [
+                            {
+                                "name": "accounts",
+                                "docs": [
+                                    "Account list for the lz_receive instruction",
+                                    "Uses AddressLocator for flexible address resolution"
+                                ],
+                                "type": {
+                                    "vec": {
+                                        "defined": {
+                                            "name": "AccountMetaRef"
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "Standard",
+                        "fields": [
+                            {
+                                "name": "program_id",
+                                "docs": [
+                                    "Target program ID for the custom instruction"
+                                ],
+                                "type": "pubkey"
+                            },
+                            {
+                                "name": "accounts",
+                                "docs": [
+                                    "Account list for the custom instruction",
+                                    "Uses same AddressLocator system as LzReceive"
+                                ],
+                                "type": {
+                                    "vec": {
+                                        "defined": {
+                                            "name": "AccountMetaRef"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "name": "data",
+                                "docs": [
+                                    "Instruction data payload",
+                                    "Raw bytes containing the instruction's parameters"
+                                ],
+                                "type": "bytes"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "LocalDeposit",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "LocalWithdrawn",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "to",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "LpAdminSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "LzReceiveParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "sender",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "nonce",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "message",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "extra_data",
+                        "type": "bytes"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "LzReceiveTypesV2Result",
+            "docs": [
+                "Output of the lz_receive_types_v2 instruction.",
+                "",
+                "This structure enables the multi-instruction execution model where OApps can",
+                "define multiple instructions to be executed atomically by the Executor.",
+                "The Executor constructs a single transaction containing all returned instructions."
+            ],
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "context_version",
+                        "docs": ["The version of context account"],
+                        "type": "u8"
+                    },
+                    {
+                        "name": "alts",
+                        "docs": [
+                            "ALTs required for this execution context",
+                            "Used by the Executor to resolve AltIndex references in AccountMetaRef",
+                            "Enables efficient account list compression for complex transactions"
+                        ],
+                        "type": {
+                            "vec": "pubkey"
+                        }
+                    },
+                    {
+                        "name": "instructions",
+                        "docs": [
+                            "The complete list of instructions required for LzReceive execution",
+                            "MUST include exactly one LzReceive instruction",
+                            "MAY include additional Standard instructions for preprocessing/postprocessing",
+                            "Instructions are executed in the order returned"
+                        ],
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "Instruction"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "MessagingFee",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "native_fee",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "lz_token_fee",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "MessagingReceipt",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "nonce",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "fee",
+                        "type": {
+                            "defined": {
+                                "name": "MessagingFee"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "NilifyParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "sender",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "nonce",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "payload_hash",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTFeeDetail",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "fee_amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "description",
+                        "type": "string"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTLimits",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "min_amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "max_amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTReceipt",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "amount_sent_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "amount_received_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTReceived",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "to",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount_received_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTSent",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "from",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount_sent_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "amount_received_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OFTStore",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "token_mint",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "token_escrow",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "endpoint_program",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    },
+                    {
+                        "name": "fee_balance",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "super_admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "planner",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "lp_admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "burn_and_nilify_admin",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "fee_bps",
+                        "type": "u16"
+                    },
+                    {
+                        "name": "alt",
+                        "type": {
+                            "option": "pubkey"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PeerAddressSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PeerConfig",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "peer_address",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "enforced_options",
+                        "type": {
+                            "defined": {
+                                "name": "EnforcedOptions"
+                            }
+                        }
+                    },
+                    {
+                        "name": "bump",
+                        "type": "u8"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PeerConfigParam",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "PeerAddress",
+                        "fields": [
+                            {
+                                "array": ["u8", 32]
+                            }
+                        ]
+                    },
+                    {
+                        "name": "EnforcedOptions",
+                        "fields": [
+                            {
+                                "name": "send",
+                                "type": "bytes"
+                            },
+                            {
+                                "name": "send_and_call",
+                                "type": "bytes"
+                            },
+                            {
+                                "name": "send_credits",
+                                "type": "bytes"
+                            },
+                            {
+                                "name": "withdraw_remote",
+                                "type": "bytes"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "PlannerSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "QuoteOFTParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "to",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "min_amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "extra_options",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "compose_msg",
+                        "type": {
+                            "option": "bytes"
+                        }
+                    },
+                    {
+                        "name": "pay_in_lz_token",
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "QuoteOFTResult",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "oft_limits",
+                        "type": {
+                            "defined": {
+                                "name": "OFTLimits"
+                            }
+                        }
+                    },
+                    {
+                        "name": "oft_fee_details",
+                        "type": {
+                            "vec": {
+                                "defined": {
+                                    "name": "OFTFeeDetail"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "name": "oft_receipt",
+                        "type": {
+                            "defined": {
+                                "name": "OFTReceipt"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "QuoteSendCreditsParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "credits_batch",
+                        "type": {
+                            "defined": {
+                                "name": "CreditsBatch"
+                            }
+                        }
+                    },
+                    {
+                        "name": "extra_options",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "pay_in_lz_token",
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "QuoteSendParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "to",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "min_amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "extra_options",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "compose_msg",
+                        "type": {
+                            "option": "bytes"
+                        }
+                    },
+                    {
+                        "name": "pay_in_lz_token",
+                        "type": "bool"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RemoteWithdrawReceived",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "src_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "to",
+                        "type": "pubkey"
+                    },
+                    {
+                        "name": "amount_received_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "RemoteWithdrawn",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "guid",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SendCreditsParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "credits_batch",
+                        "type": {
+                            "defined": {
+                                "name": "CreditsBatch"
+                            }
+                        }
+                    },
+                    {
+                        "name": "extra_options",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "native_fee",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "lz_token_fee",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SendParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "dst_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "to",
+                        "type": {
+                            "array": ["u8", 32]
+                        }
+                    },
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "min_amount_ld",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "extra_options",
+                        "type": "bytes"
+                    },
+                    {
+                        "name": "compose_msg",
+                        "type": {
+                            "option": "bytes"
+                        }
+                    },
+                    {
+                        "name": "native_fee",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "lz_token_fee",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SetOFTConfigParams",
+            "type": {
+                "kind": "enum",
+                "variants": [
+                    {
+                        "name": "SuperAdmin",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "Delegate",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "Planner",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "LpAdmin",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "BurnAndNilifyAdmin",
+                        "fields": ["pubkey"]
+                    },
+                    {
+                        "name": "FeeBps",
+                        "fields": ["u16"]
+                    },
+                    {
+                        "name": "AddressLookupTable",
+                        "fields": [
+                            {
+                                "option": "pubkey"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SetPeerConfigParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "remote_eid",
+                        "type": "u32"
+                    },
+                    {
+                        "name": "config",
+                        "type": {
+                            "defined": {
+                                "name": "PeerConfigParam"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SuperAdminSet",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "address",
+                        "type": "pubkey"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Version",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "interface",
+                        "type": "u64"
+                    },
+                    {
+                        "name": "message",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "WithdrawFeesParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "WithdrawLocalParams",
+            "type": {
+                "kind": "struct",
+                "fields": [
+                    {
+                        "name": "amount_ld",
+                        "type": "u64"
+                    }
+                ]
+            }
+        }
+    ]
+}

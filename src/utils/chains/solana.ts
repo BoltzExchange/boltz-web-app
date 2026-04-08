@@ -1,4 +1,7 @@
-import { base58 } from "@scure/base";
+import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import { base58, hex } from "@scure/base";
+import type { Connection } from "@solana/web3.js";
+import { solidityPacked } from "ethers";
 import log from "loglevel";
 
 import { config } from "../../config";
@@ -13,6 +16,7 @@ export const solanaAtaRentExemptLamports = 2_039_280n;
 const solanaGetAccountInfoMethod = "getAccountInfo";
 const solanaRpcProbeTimeout = 5_000;
 const solanaTokenAccountExistsCache = new Set<string>();
+const solanaConnectionCache = new Map<string, Promise<Connection>>();
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -32,8 +36,141 @@ export const isValidSolanaAddress = (address: string): boolean => {
     }
 };
 
+export const encodeSolanaRecipient = (recipient: string): string =>
+    `0x${hex.encode(decodeSolanaAddress(recipient))}`;
+
+export const encodeSolanaAtaCreationOption = (): string =>
+    solidityPacked(["uint128", "uint128"], [0n, solanaAtaRentExemptLamports]);
+
 export const clearSolanaTokenAccountCreationCache = () => {
     solanaTokenAccountExistsCache.clear();
+};
+
+export const clearSolanaConnectionCache = () => {
+    solanaConnectionCache.clear();
+};
+
+export const getConnectedSolanaWalletAddress = async (
+    walletProvider: SolanaWalletProvider,
+): Promise<string | undefined> =>
+    walletProvider.publicKey?.toBase58() ??
+    (await walletProvider.getAccounts())[0]?.address;
+
+export const getSolanaAssociatedTokenAddress = async (
+    mintAddress: string,
+    ownerAddress: string,
+): Promise<string> => {
+    const { web3, splToken } = await lazySolana.get();
+
+    return splToken
+        .getAssociatedTokenAddressSync(
+            new web3.PublicKey(mintAddress),
+            new web3.PublicKey(ownerAddress),
+            false,
+            splToken.TOKEN_PROGRAM_ID,
+        )
+        .toBase58();
+};
+
+const createSolanaConnection = async (rpcUrl: string): Promise<Connection> => {
+    const { web3 } = await lazySolana.get();
+    const connection = new web3.Connection(rpcUrl, "confirmed");
+
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+        await Promise.race([
+            connection.getVersion(),
+            new Promise<never>((_, reject) => {
+                timeoutHandle = setTimeout(() => {
+                    reject(
+                        new Error(
+                            `Solana RPC request timed out after ${solanaRpcProbeTimeout}ms`,
+                        ),
+                    );
+                }, solanaRpcProbeTimeout);
+            }),
+        ]);
+    } finally {
+        if (timeoutHandle !== undefined) {
+            clearTimeout(timeoutHandle);
+        }
+    }
+
+    return connection;
+};
+
+const getOrCreateSolanaConnection = async (
+    rpcUrl: string,
+): Promise<Connection> => {
+    const cached = solanaConnectionCache.get(rpcUrl);
+    if (cached !== undefined) {
+        return await cached;
+    }
+
+    const created = createSolanaConnection(rpcUrl).catch((error: unknown) => {
+        solanaConnectionCache.delete(rpcUrl);
+        throw error;
+    });
+    solanaConnectionCache.set(rpcUrl, created);
+
+    return await created;
+};
+
+export const getSolanaConnection = async (
+    sourceAsset: string,
+): Promise<Connection> => {
+    const rpcUrls = requireRpcUrls(sourceAsset);
+    let lastError: unknown;
+
+    for (const rpcUrl of rpcUrls) {
+        try {
+            return await getOrCreateSolanaConnection(rpcUrl);
+        } catch (error) {
+            lastError = error;
+            log.warn("Failed to create Solana connection", {
+                sourceAsset,
+                rpcUrl,
+                error: formatError(lastError),
+            });
+        }
+    }
+
+    throw new Error(
+        `Failed to connect to Solana RPC for ${sourceAsset}: ${formatError(lastError)}`,
+    );
+};
+
+export const getSolanaTransactionSender = async (
+    sourceAsset: string,
+    txHash: string,
+): Promise<string | undefined> => {
+    const connection = await getSolanaConnection(sourceAsset);
+    const transaction = await connection.getParsedTransaction(txHash, {
+        commitment: "confirmed",
+        maxSupportedTransactionVersion: 0,
+    });
+    const signerPubkey = transaction?.transaction.message.accountKeys.find(
+        (account) => account.signer,
+    )?.pubkey;
+
+    return typeof signerPubkey === "string"
+        ? signerPubkey
+        : signerPubkey?.toBase58();
+};
+
+export const getSolanaNativeBalance = async (
+    sourceAsset: string,
+    ownerAddress: string,
+): Promise<bigint> => {
+    const [{ web3 }, connection] = await Promise.all([
+        lazySolana.get(),
+        getSolanaConnection(sourceAsset),
+    ]);
+
+    return BigInt(
+        await connection.getBalance(new web3.PublicKey(ownerAddress)),
+    );
 };
 
 const queryShouldCreateSolanaTokenAccount = async (
@@ -49,11 +186,11 @@ const queryShouldCreateSolanaTokenAccount = async (
     }
 
     decodeSolanaAddress(recipient);
-    const { PublicKey, getAssociatedTokenAddressSync } = await lazySolana.get();
+    const { web3, splToken } = await lazySolana.get();
 
-    const recipientPublicKey = new PublicKey(recipient);
-    const associatedTokenAddress = getAssociatedTokenAddressSync(
-        new PublicKey(mintAddress),
+    const recipientPublicKey = new web3.PublicKey(recipient);
+    const associatedTokenAddress = splToken.getAssociatedTokenAddressSync(
+        new web3.PublicKey(mintAddress),
         recipientPublicKey,
         true,
     );

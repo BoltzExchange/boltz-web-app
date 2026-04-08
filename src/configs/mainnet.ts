@@ -55,6 +55,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
             symbol: variant.symbol,
             gasToken: variant.gasToken ?? variant.symbol,
             transport,
+            oftQuotePayer: variant.oftQuotePayer,
             rpcUrls: variant.rpcUrls,
             mesh,
         },
@@ -65,12 +66,12 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     };
     if (transport === NetworkTransport.Evm) {
         asset.network.chainId = variant.chainId;
-        asset.network.nativeCurrency = {
-            name: variant.gasToken ?? variant.symbol,
-            symbol: variant.gasToken ?? variant.symbol,
-            decimals: variant.nativeDecimals ?? 18,
-        };
     }
+    asset.network.nativeCurrency = {
+        name: variant.gasToken ?? variant.symbol,
+        symbol: variant.gasToken ?? variant.symbol,
+        decimals: variant.nativeDecimals ?? 18,
+    };
     return asset;
 };
 
@@ -285,11 +286,13 @@ const usdt0Variants: Usdt0Variant[] = [
     },
     {
         asset: "USDT0-SOL",
-        canSend: false,
+        canSend: true,
         chainName: "Solana",
         symbol: "SOL",
         gasToken: "SOL",
         transport: NetworkTransport.Solana,
+        nativeDecimals: 9,
+        oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
         rpcUrls: [

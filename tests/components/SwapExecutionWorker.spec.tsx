@@ -1,8 +1,10 @@
 import { render, waitFor } from "@solidjs/testing-library";
 
 let currentSwap: Record<string, unknown>;
+let mockNetworkTransport = "evm";
 const mockQueryFilter = vi.fn();
 const mockLockupParseLog = vi.fn();
+const mockGetTransaction = vi.fn();
 
 const mockSetSwapStorage = vi.fn((swap: Record<string, unknown>) => {
     currentSwap = { ...swap };
@@ -59,7 +61,7 @@ vi.mock("../../src/config", () => ({
 }));
 
 vi.mock("../../src/consts/Assets", () => ({
-    getNetworkTransport: () => "evm",
+    getNetworkTransport: () => mockNetworkTransport,
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -142,6 +144,12 @@ vi.mock("../../src/utils/calculate", () => ({
     calculateAmountWithSlippage: (amount: bigint) => amount,
 }));
 
+vi.mock("../../src/utils/chains/solana", () => ({
+    getSolanaConnection: vi.fn(() => ({
+        getTransaction: mockGetTransaction,
+    })),
+}));
+
 vi.mock("../../src/utils/commitment", () => ({
     postCommitmentSignatureForTransaction: (...args: unknown[]) =>
         mockPostCommitmentSignatureForTransaction(...args),
@@ -160,8 +168,7 @@ vi.mock("../../src/utils/provider", () => ({
     })),
 }));
 
-vi.mock("../../src/utils/oft/oft", () => ({
-    createOftContract: vi.fn((address: string) => ({ address })),
+vi.mock("../../src/utils/oft/registry", () => ({
     getOftContract: vi.fn((route: { from: string }) =>
         Promise.resolve({
             address:
@@ -170,6 +177,14 @@ vi.mock("../../src/utils/oft/oft", () => ({
                     : "0x2222222222222222222222222222222222222222",
         }),
     ),
+}));
+
+vi.mock("../../src/utils/oft/solana", () => ({
+    getSolanaOftGuidFromLogs: vi.fn().mockReturnValue("0xguid"),
+}));
+
+vi.mock("../../src/utils/oft/oft", () => ({
+    createOftContract: vi.fn((address: string) => ({ address })),
     getOftProvider: vi.fn(() => ({
         getTransactionReceipt: vi.fn().mockResolvedValue({
             logs: [],
@@ -207,6 +222,8 @@ const oftUtils = await import("../../src/utils/oft/oft");
 describe("SwapExecutionWorker", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockNetworkTransport = "evm";
+        mockGetTransaction.mockReset();
         mockSendPopulatedTransaction
             .mockReset()
             .mockResolvedValue("0xcommitment");
@@ -424,6 +441,39 @@ describe("SwapExecutionWorker", () => {
         expect(
             mockPostCommitmentSignatureForTransaction,
         ).not.toHaveBeenCalled();
+    });
+
+    test("should abandon a failed Solana OFT send before decoding the guid", async () => {
+        mockNetworkTransport = "solana";
+        mockGetTransaction.mockResolvedValue({
+            slot: 123,
+            meta: {
+                err: {
+                    InstructionError: [0, "Custom"],
+                },
+                logMessages: [],
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSetSwapStorage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    oft: expect.objectContaining({
+                        txHash: undefined,
+                    }),
+                }),
+            );
+        });
+
+        expect(mockSetSwapStorage).toHaveBeenCalledWith(
+            expect.objectContaining({
+                oft: expect.objectContaining({
+                    txHash: undefined,
+                }),
+            }),
+        );
     });
 
     test("should ignore stale pre-OFT swaps that already moved past the pre-lockup stage", async () => {

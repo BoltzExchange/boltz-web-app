@@ -11,7 +11,7 @@ import {
     OftDirectSendTargetKind,
     getOftDirectSendTarget,
 } from "../../src/utils/oft/directSend";
-import { getOftContract } from "../../src/utils/oft/oft";
+import { getOftContract } from "../../src/utils/oft/registry";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 const originalNetwork = runtimeConfig.network;

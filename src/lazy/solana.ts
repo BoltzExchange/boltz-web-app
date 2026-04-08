@@ -6,8 +6,5 @@ export default new Loader("Solana", async () => {
         import("@solana/spl-token"),
     ]);
 
-    return {
-        PublicKey: web3.PublicKey,
-        getAssociatedTokenAddressSync: splToken.getAssociatedTokenAddressSync,
-    };
+    return { web3, splToken };
 });

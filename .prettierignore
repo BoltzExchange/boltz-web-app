@@ -1,1 +1,2 @@
 src/utils/dnssec/dnssec*
+src/generated/solana-oft/src/generated/**

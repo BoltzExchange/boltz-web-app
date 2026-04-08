@@ -29,9 +29,9 @@ type MockOftContractInstance = {
 
 const {
     mockSendOFT,
-    mockCreateOftContract,
+    mockCreateEvmOftContract,
     mockRequireTokenConfig,
-    mockGetPrimaryOftContract,
+    mockGetOftContract,
     mockGetOftChain,
     mockFindOftChainContract,
     mockEthersContract,
@@ -41,10 +41,10 @@ const {
 
     return {
         mockSendOFT,
-        mockCreateOftContract:
+        mockCreateEvmOftContract:
             vi.fn<(...args: unknown[]) => MockOftContractInstance>(),
         mockRequireTokenConfig: vi.fn<(asset: string) => MockTokenConfig>(),
-        mockGetPrimaryOftContract:
+        mockGetOftContract:
             vi.fn<(...args: unknown[]) => Promise<MockOftContract>>(),
         mockGetOftChain: vi.fn<(...args: unknown[]) => Promise<MockOftChain>>(),
         mockFindOftChainContract:
@@ -82,8 +82,13 @@ vi.mock("../../src/consts/Assets", () => ({
     requireTokenConfig: (asset: string) => mockRequireTokenConfig(asset),
 }));
 
+vi.mock("../../src/utils/oft/evm", () => ({
+    createEvmOftContract: (...args: unknown[]) =>
+        mockCreateEvmOftContract(...args),
+}));
+
 vi.mock("../../src/utils/oft/oft", () => ({
-    createOftContract: (...args: unknown[]) => mockCreateOftContract(...args),
+    getBufferedOftNativeFee: (nativeFee: bigint) => (nativeFee * 110n) / 100n,
 }));
 
 vi.mock("../../src/utils/oft/registry", () => ({
@@ -91,8 +96,7 @@ vi.mock("../../src/utils/oft/registry", () => ({
     findOftChainContract: (...args: unknown[]) =>
         mockFindOftChainContract(...args),
     getOftChain: (...args: unknown[]) => mockGetOftChain(...args),
-    getPrimaryOftContract: (...args: unknown[]) =>
-        mockGetPrimaryOftContract(...args),
+    getOftContract: (...args: unknown[]) => mockGetOftContract(...args),
 }));
 
 const {
@@ -151,12 +155,12 @@ describe("directSend", () => {
         mockRequireTokenConfig.mockReturnValue({
             address: "0x4000000000000000000000000000000000000004",
         });
-        mockGetPrimaryOftContract.mockResolvedValue(oftContract);
+        mockGetOftContract.mockResolvedValue(oftContract);
         mockGetOftChain.mockResolvedValue({
             contracts: [tempoWrapperContract],
         });
         mockFindOftChainContract.mockReturnValue(tempoWrapperContract);
-        mockCreateOftContract.mockReturnValue({
+        mockCreateEvmOftContract.mockReturnValue({
             approvalRequired: vi.fn().mockResolvedValue(false),
             send: vi.fn().mockResolvedValue(createMockTransaction("0xsend")),
         });
@@ -232,7 +236,7 @@ describe("directSend", () => {
 
     test("delegates approval checks to the OFT contract when needed", async () => {
         const approvalRequired = vi.fn().mockResolvedValue(true);
-        mockCreateOftContract.mockReturnValue({
+        mockCreateEvmOftContract.mockReturnValue({
             approvalRequired,
             send: vi.fn(),
         });
@@ -241,7 +245,7 @@ describe("directSend", () => {
             requiresOftDirectUserApproval(getOftTarget(), mockRunner as never),
         ).resolves.toBe(true);
 
-        expect(mockCreateOftContract).toHaveBeenCalledWith(
+        expect(mockCreateEvmOftContract).toHaveBeenCalledWith(
             oftContract.address,
             mockRunner,
         );
@@ -256,12 +260,12 @@ describe("directSend", () => {
             ),
         ).resolves.toBe(true);
 
-        expect(mockCreateOftContract).not.toHaveBeenCalled();
+        expect(mockCreateEvmOftContract).not.toHaveBeenCalled();
     });
 
     test("sends directly through the OFT contract for standard targets", async () => {
         const send = vi.fn().mockResolvedValue(createMockTransaction("0xsend"));
-        mockCreateOftContract.mockReturnValue({
+        mockCreateEvmOftContract.mockReturnValue({
             approvalRequired: vi.fn(),
             send,
         });
