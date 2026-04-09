@@ -37,7 +37,7 @@
         "bignumber.js": "^11.0.0",
         "bolt11": "^1.4.1",
         "bolt12-utils": "^0.1.1",
-        "boltz-core": "^4.0.3",
+        "boltz-core": "^4.0.4",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ethers": "^6.16.0",
@@ -1253,7 +1253,7 @@
 
     "bolt12-utils": ["bolt12-utils@0.1.1", "", { "dependencies": { "@noble/curves": "^1.8.1", "@noble/hashes": "^1.7.1" } }, "sha512-tkHa4yBzVFczA1MUpN0LCP3WnsMLEyrpd9dk2/OGBhMxuh2+/qgPzd7LvRyozd0g4WoG/v6JM9IL5ftC26sNtQ=="],
 
-    "boltz-core": ["boltz-core@4.0.3", "", { "dependencies": { "@boltz/bitcoin-ops": "^2.0.0", "@noble/curves": "^2.0.1", "@noble/hashes": "^2.0.1", "@scure/base": "^2.0.0", "@scure/btc-signer": "^2.0.1" }, "peerDependencies": { "@vulpemventures/secp256k1-zkp": "^3.2.1", "liquidjs-lib": "^6.0.2-liquid.37" } }, "sha512-3luExwkG/UjdVW/OXUJtfpDyizXUBAbffgvdlcon7cTb37/jQaMrnr1wDMwVP05WHb5B1xgWwxGXys2ho27/8A=="],
+    "boltz-core": ["boltz-core@4.0.4", "", { "dependencies": { "@boltz/bitcoin-ops": "^2.0.0", "@noble/curves": "^2.2.0", "@noble/hashes": "^2.2.0", "@scure/base": "^2.2.0", "@scure/btc-signer": "^2.0.1" }, "peerDependencies": { "@vulpemventures/secp256k1-zkp": "^3.2.1", "liquidjs-lib": "^6.0.2-liquid.37" } }, "sha512-GsPDIsSxfSU5bt/k2eDh+i2+C98zfoz1UkdRxG1G47yjjoEok6XZfMNF8qxTQiETTw6Aw7j+pBgasPuvbxY/jA=="],
 
     "boolbase": ["boolbase@1.0.0", "", {}, "sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww=="],
 
@@ -3066,6 +3066,8 @@
     "bolt12-utils/@noble/curves": ["@noble/curves@1.9.7", "", { "dependencies": { "@noble/hashes": "1.8.0" } }, "sha512-gbKGcRUYIjA3/zCCNaWDciTMFI0dCkvou3TL8Zmy5Nc7sJ47a0jtOeZoTaMxkuqRo9cRhjOdZJXegxYE5FN/xw=="],
 
     "bolt12-utils/@noble/hashes": ["@noble/hashes@1.8.0", "", {}, "sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A=="],
+
+    "boltz-core/@scure/base": ["@scure/base@2.2.0", "", {}, "sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg=="],
 
     "borsh/bs58": ["bs58@4.0.1", "", { "dependencies": { "base-x": "^3.0.2" } }, "sha512-Ok3Wdf5vOIlBrgCvTq96gBkJw+JUEzdBgyaza5HLtPm7yTHkjRy8+JzNyHF7BHa0bNWOQIp3m5YF0nnFcOIKLw=="],
 
