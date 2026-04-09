@@ -336,7 +336,7 @@ const buildRefundFollowUpCalls = async (
         },
         minAmountLd,
         msgFee[1],
-        resolvedDestination,
+        refundData.refundAddress,
     ]);
 
     return [
@@ -486,6 +486,12 @@ export const RefundEvm = (props: {
         );
     });
 
+    const walletAsset = createMemo(() => {
+        return props.oft?.position === OftPosition.Pre
+            ? props.oft?.sourceAsset
+            : props.asset;
+    });
+
     const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
         undefined,
     );
@@ -502,7 +508,7 @@ export const RefundEvm = (props: {
     });
 
     const networkValid = (): boolean | undefined => {
-        const expected = config.assets?.[props.asset]?.network?.chainId;
+        const expected = config.assets?.[walletAsset()]?.network?.chainId;
         if (expected === undefined) {
             return true;
         }
@@ -603,7 +609,7 @@ export const RefundEvm = (props: {
         <Switch>
             <Match when={refundDataTrigger() === undefined}>
                 <ConnectWallet
-                    asset={props.asset}
+                    asset={walletAsset()}
                     derivationPath={props.derivationPath}
                     addressOverride={() => props.signerAddress}
                 />
