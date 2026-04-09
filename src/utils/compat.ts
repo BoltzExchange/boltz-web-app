@@ -16,11 +16,11 @@ import {
 import type {
     LiquidClaimDetails,
     LiquidRefundDetails,
-} from "boltz-core/dist/lib/liquid";
+} from "boltz-core/liquid";
 import {
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
-} from "boltz-core/dist/lib/liquid";
+} from "boltz-core/liquid";
 import { Buffer } from "buffer";
 import type { TxOutput as LiquidTransactionOutput } from "liquidjs-lib";
 import {

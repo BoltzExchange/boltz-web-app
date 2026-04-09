@@ -2,7 +2,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import type { ClaimDetails } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
-import type { LiquidClaimDetails } from "boltz-core/dist/lib/liquid";
+import type { LiquidClaimDetails } from "boltz-core/liquid";
 import { type Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";

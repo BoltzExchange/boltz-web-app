@@ -1,4 +1,4 @@
-import { init } from "boltz-core/dist/lib/liquid";
+import { init } from "boltz-core/liquid";
 import { confidential } from "liquidjs-lib";
 
 import Loader from "./Loader";

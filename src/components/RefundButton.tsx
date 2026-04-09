@@ -19,7 +19,7 @@ import {
     createSignal,
 } from "solid-js";
 
-import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
+import { type AlchemyCall, prefixHex, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
 import {
@@ -32,7 +32,12 @@ import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { type Signer, useWeb3Signer } from "../context/Web3";
+import {
+    type Signer,
+    createRouterContract,
+    createTokenContract,
+    useWeb3Signer,
+} from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
 import {
     encodeDexQuote,
@@ -57,11 +62,11 @@ import {
 } from "../utils/evmTransaction";
 import {
     buildOftApprovalCall,
-    buildOftSendAlchemyCall,
     getOftTransactionSender,
     getQuotedOftContract,
     quoteOftSend,
 } from "../utils/oft/oft";
+import { getOftContract } from "../utils/oft/registry";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -118,6 +123,8 @@ export const sendRefundTransaction = async (
 };
 
 const buildRefundFollowUpCalls = async (
+    transactionSigner: Signer | Wallet,
+    asset: string,
     refundData: LockupEvent,
     refundSigner: Signer | Wallet,
     slippage: number,
@@ -208,7 +215,12 @@ const buildRefundFollowUpCalls = async (
         from: oft.destinationAsset,
         to: oft.sourceAsset,
     };
-    const quotedOft = await getQuotedOftContract(route);
+    const router = createRouterContract(route.from, transactionSigner);
+    const [routerAddress, oftContract, quotedOft] = await Promise.all([
+        router.getAddress(),
+        getOftContract(route),
+        getQuotedOftContract(route),
+    ]);
     const { msgFee } = await quoteOftSend(
         quotedOft,
         route,
@@ -217,7 +229,7 @@ const buildRefundFollowUpCalls = async (
     );
 
     let tradeAmountIn = refundData.amount;
-    const calls: AlchemyCall[] = [];
+    let msgFeeCalls: AlchemyCall[] = [];
     if (msgFee[0] > 0n) {
         const msgFeeAmountOut = calculateAmountWithSlippage(
             msgFee[0],
@@ -241,18 +253,16 @@ const buildRefundFollowUpCalls = async (
 
         const msgFeeCalldata = await encodeDexQuote(
             quoteChain,
-            refundData.refundAddress,
+            routerAddress,
             msgFeeAmountIn,
             msgFee[0],
             msgFeeQuote.data,
         );
-        calls.push(
-            ...msgFeeCalldata.calls.map((call) => ({
-                to: call.to,
-                value: call.value,
-                data: call.data,
-            })),
-        );
+        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
     }
 
     const [tradeQuote] = await quoteDexAmountIn(
@@ -271,44 +281,83 @@ const buildRefundFollowUpCalls = async (
     );
     const tradeCalldata = await encodeDexQuote(
         quoteChain,
-        dexRecipient,
+        routerAddress,
         tradeAmountIn,
         tradeAmountOutMin,
         tradeQuote.data,
     );
-    calls.push(
-        ...tradeCalldata.calls.map((call) => ({
-            to: call.to,
-            value: call.value,
-            data: call.data,
-        })),
-    );
+    const tradeCalls: AlchemyCall[] = tradeCalldata.calls.map((call) => ({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+    }));
+    const routerCalls = [...tradeCalls, ...msgFeeCalls].map((call) => ({
+        target: call.to,
+        value: call.value ?? "0",
+        callData: prefixHex(call.data ?? "0x"),
+    }));
 
-    const approvalCall = await buildOftApprovalCall(
-        route,
-        refundSigner.address,
-        tradeAmountOutMin,
-        refundSigner,
-    );
-
-    if (approvalCall !== undefined) {
-        calls.push(approvalCall);
+    const tokenContract = createTokenContract(route.from, transactionSigner);
+    const tokenAddress = await tokenContract.getAddress();
+    const approvalRequired = await quotedOft.approvalRequired();
+    if (approvalRequired) {
+        const approvalCall = await buildOftApprovalCall(
+            route,
+            oftContract.address,
+            BigInt(tradeQuote.quote),
+            transactionSigner,
+        );
+        if (approvalCall !== undefined) {
+            routerCalls.push({
+                target: approvalCall.to,
+                value: approvalCall.value ?? "0",
+                callData: prefixHex(approvalCall.data ?? "0x"),
+            });
+        }
     }
 
-    calls.push(
-        await buildOftSendAlchemyCall({
-            route,
-            recipient: resolvedDestination,
-            amount: tradeAmountOutMin,
-            refundAddress: refundData.refundAddress,
-        }),
+    const { sendParam } = await quoteOftSend(
+        quotedOft,
+        route,
+        resolvedDestination,
+        tradeAmountOutMin,
     );
+    const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
+    const executeOftData = router.interface.encodeFunctionData("executeOft", [
+        routerCalls,
+        tokenAddress,
+        oftContract.address,
+        {
+            dstEid: sendParam[0],
+            to: sendParam[1],
+            extraOptions: sendParam[4],
+            composeMsg: sendParam[5],
+            oftCmd: sendParam[6],
+        },
+        minAmountLd,
+        msgFee[1],
+        resolvedDestination,
+    ]);
 
-    return calls;
+    return [
+        {
+            to: refundData.tokenAddress,
+            data: erc20TransferInterface.encodeFunctionData("transfer", [
+                routerAddress,
+                refundData.amount,
+            ]),
+        },
+        {
+            to: routerAddress,
+            data: executeOftData,
+        },
+    ];
 };
 
 const buildErc20RefundTransaction = async ({
     gasAbstraction,
+    transactionSigner,
+    asset,
     contract,
     refundData,
     signature,
@@ -319,6 +368,8 @@ const buildErc20RefundTransaction = async ({
     cooperative,
 }: {
     gasAbstraction: GasAbstractionType;
+    transactionSigner: Signer | Wallet;
+    asset: string;
     contract: ERC20Swap;
     refundData: LockupEvent;
     signature?: Signature;
@@ -367,6 +418,8 @@ const buildErc20RefundTransaction = async ({
     }
 
     const followUpCalls = await buildRefundFollowUpCalls(
+        transactionSigner,
+        asset,
         refundData,
         contract.runner as Signer,
         slippage,
@@ -612,6 +665,8 @@ export const RefundEvm = (props: {
                                 ).connect(currentTransactionSigner);
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
+                                    transactionSigner: currentTransactionSigner,
+                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     signature: decSignature,
@@ -647,6 +702,8 @@ export const RefundEvm = (props: {
                                 ).connect(currentTransactionSigner);
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
+                                    transactionSigner: currentTransactionSigner,
+                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     slippage: slippage(),

@@ -2,8 +2,7 @@ import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import { SigHash } from "@scure/btc-signer";
 import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
 import { Musig, TaprootUtils, type Types } from "boltz-core";
-import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
-import type { MusigKeyAgg } from "boltz-core/dist/lib/musig/Musig";
+import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/liquid";
 import type { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
@@ -13,7 +12,7 @@ import type { ECKeys } from "../ecpair";
 export const createMusig = (
     ourKeys: ECKeys,
     theirPublicKey: Uint8Array,
-): MusigKeyAgg => {
+): Musig.MusigKeyAgg => {
     return Musig.create(new Uint8Array(ourKeys.privateKey), [
         // The key of Boltz always comes first
         theirPublicKey,
@@ -23,9 +22,9 @@ export const createMusig = (
 
 export const tweakMusig = (
     asset: string,
-    musig: MusigKeyAgg,
+    musig: Musig.MusigKeyAgg,
     tree: Types.TapTree,
-): MusigKeyAgg =>
+): Musig.MusigKeyAgg =>
     (asset === LBTC ? LiquidTaprootUtils : TaprootUtils).tweakMusig(
         musig,
         tree,
