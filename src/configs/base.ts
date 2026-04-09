@@ -30,6 +30,8 @@ export type Usdt0Variant = {
     blockExplorerUrl: string;
     rpcUrls: string[];
     mesh?: Usdt0Kind;
+    blockTimeSeconds?: number;
+    lzConfirmations?: number;
 };
 
 export type Asset = {
@@ -62,6 +64,8 @@ export type Asset = {
             minGas?: bigint;
         };
         mesh?: Usdt0Kind;
+        blockTimeSeconds?: number;
+        lzConfirmations?: number;
     };
     token?: {
         address: string;
@@ -115,6 +119,8 @@ export const arbitrumNetwork = {
         symbol: "ETH",
         decimals: 18,
     },
+    blockTimeSeconds: 0.25,
+    lzConfirmations: 20,
 };
 
 const defaults = {

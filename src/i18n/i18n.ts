@@ -211,6 +211,7 @@ const dict = {
             "A quote could not be obtained. Please check your connection and try again.",
         error_zero_quote: "Increase send amount",
         waiting_for_oft: "Waiting for OFT",
+        oft_eta: "Estimated arrival",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -704,6 +705,7 @@ const dict = {
             "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
         error_zero_quote: "Sendebetrag erhöhen",
         waiting_for_oft: "Warte auf OFT",
+        oft_eta: "Voraussichtliche Ankunft",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1206,6 +1208,7 @@ const dict = {
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
         error_zero_quote: "Aumenta la cantidad a enviar",
         waiting_for_oft: "Esperando OFT",
+        oft_eta: "Llegada estimada",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1703,6 +1706,7 @@ const dict = {
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
         error_zero_quote: "Aumente o valor a enviar",
         waiting_for_oft: "Aguardando OFT",
+        oft_eta: "Chegada estimada",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -2176,6 +2180,7 @@ const dict = {
         error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
         error_zero_quote: "提高发送金额",
         waiting_for_oft: "等待 OFT",
+        oft_eta: "预计到达",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
@@ -2645,6 +2650,7 @@ const dict = {
             "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
         error_zero_quote: "送信額を増やす",
         waiting_for_oft: "OFTを待機中",
+        oft_eta: "到着予定",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",

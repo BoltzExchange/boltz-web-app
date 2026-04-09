@@ -67,6 +67,8 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
             oftQuotePayer: variant.oftQuotePayer,
             rpcUrls: variant.rpcUrls,
             mesh,
+            blockTimeSeconds: variant.blockTimeSeconds,
+            lzConfirmations: variant.lzConfirmations,
         },
         token: {
             address: variant.tokenAddress,
@@ -95,6 +97,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         blockExplorerUrl: "https://etherscan.io",
         rpcUrls: ["https://ethereum-rpc.publicnode.com"],
+        blockTimeSeconds: 12,
+        lzConfirmations: 15,
     },
     {
         asset: "USDT0-BERA",
@@ -105,6 +109,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://berascan.com",
         rpcUrls: ["https://rpc.berachain.com"],
+        blockTimeSeconds: 2,
+        lzConfirmations: 20,
     },
     {
         asset: "USDT0-CFX",
@@ -171,6 +177,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x0200C29006150606B650577BBE7B6248F58470c1",
         blockExplorerUrl: "https://explorer.inkonchain.com",
         rpcUrls: ["https://rpc-gel.inkonchain.com"],
+        blockTimeSeconds: 1,
+        lzConfirmations: 20,
     },
     {
         asset: "USDT0-MNT",
@@ -227,6 +235,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
         blockExplorerUrl: "https://optimistic.etherscan.io",
         rpcUrls: ["https://mainnet.optimism.io/"],
+        blockTimeSeconds: 2,
+        lzConfirmations: 20,
     },
     {
         asset: "USDT0-PLASMA",
@@ -248,6 +258,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
         blockExplorerUrl: "https://polygonscan.com",
         rpcUrls: polygonRpcUrls,
+        blockTimeSeconds: 2,
+        lzConfirmations: 120,
     },
     {
         asset: "USDT0-RBTC",
@@ -271,6 +283,8 @@ const usdt0Variants: Usdt0Variant[] = [
             "https://sei.api.pocket.network",
             "https://evm-rpc.sei-apis.com",
         ],
+        blockTimeSeconds: 0.649,
+        lzConfirmations: 5,
     },
     {
         asset: "USDT0-STABLE",
@@ -293,6 +307,8 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
         blockExplorerUrl: "https://uniscan.xyz/",
         rpcUrls: ["https://unichain-rpc.publicnode.com"],
+        blockTimeSeconds: 1,
+        lzConfirmations: 20,
     },
     {
         asset: "USDT0-SOL",
@@ -308,6 +324,8 @@ const usdt0Variants: Usdt0Variant[] = [
         blockExplorerUrl: "https://solscan.io",
         rpcUrls: solanaRpcUrls,
         mesh: Usdt0Kind.Legacy,
+        blockTimeSeconds: 0.393,
+        lzConfirmations: 32,
     },
     {
         asset: "USDT0-TRON",
