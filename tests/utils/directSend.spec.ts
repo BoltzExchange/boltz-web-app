@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { OftDirectSendTarget } from "../../src/utils/oft/directSend";
+import type { OftRoute } from "../../src/utils/oft/types";
 
 type MockOftContract = {
     name: string;
@@ -97,6 +98,8 @@ vi.mock("../../src/utils/oft/registry", () => ({
         mockFindOftChainContract(...args),
     getOftChain: (...args: unknown[]) => mockGetOftChain(...args),
     getOftContract: (...args: unknown[]) => mockGetOftContract(...args),
+    formatRoute: (route: OftRoute) =>
+        `${route.sourceAsset} -> ${route.destinationAsset}`,
 }));
 
 const {
@@ -170,8 +173,8 @@ describe("directSend", () => {
     test("returns the primary OFT target for non-Tempo assets", async () => {
         await expect(
             getOftDirectSendTarget({
-                from: "USDT0-ETH",
-                to: "USDT0-ETH",
+                sourceAsset: "USDT0-ETH",
+                destinationAsset: "USDT0-ETH",
             }),
         ).resolves.toEqual(getOftTarget());
 
@@ -182,16 +185,16 @@ describe("directSend", () => {
     test("returns the Tempo wrapper target for Tempo assets", async () => {
         await expect(
             getOftDirectSendTarget({
-                from: "USDT0-TEMPO",
-                to: "USDT0-ETH",
+                sourceAsset: "USDT0-TEMPO",
+                destinationAsset: "USDT0-ETH",
             }),
         ).resolves.toEqual(getTempoWrapperTarget());
 
         expect(mockGetOftChain).toHaveBeenCalledWith(
             "USDT0-TEMPO",
             {
-                from: "USDT0-TEMPO",
-                to: "USDT0-ETH",
+                sourceAsset: "USDT0-TEMPO",
+                destinationAsset: "USDT0-ETH",
             },
             "usdt0",
         );
@@ -206,8 +209,8 @@ describe("directSend", () => {
 
         await expect(
             getOftDirectSendTarget({
-                from: "USDT0-TEMPO",
-                to: "USDT0-ETH",
+                sourceAsset: "USDT0-TEMPO",
+                destinationAsset: "USDT0-ETH",
             }),
         ).rejects.toThrow(
             "Missing Tempo OFT wrapper for route USDT0-TEMPO -> USDT0-ETH",

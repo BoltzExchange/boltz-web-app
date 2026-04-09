@@ -3,17 +3,17 @@ import { Contract, type ContractRunner } from "ethers";
 import { config } from "../../config";
 import { requireTokenConfig } from "../../consts/Assets";
 import TempoOFTWrapperAbi from "../../consts/abis/tempo/TempoOFTWrapper.json";
-import type { OftRoute } from "../Pair";
 import { createEvmOftContract } from "./evm";
 import { getBufferedOftNativeFee } from "./oft";
 import {
     type OftContract,
     defaultOftName,
     findOftChainContract,
+    formatRoute,
     getOftChain,
     getOftContract,
 } from "./registry";
-import type { MsgFee, SendParam } from "./types";
+import type { MsgFee, OftRoute, SendParam } from "./types";
 
 export const enum OftDirectSendTargetKind {
     Oft = "oft",
@@ -72,7 +72,7 @@ export const getOftDirectSendTarget = async (
     oftName = defaultOftName,
 ): Promise<OftDirectSendTarget> => {
     const oftContract = await getOftContract(route, oftName);
-    if (!isTempoSourceAsset(route.from)) {
+    if (!isTempoSourceAsset(route.sourceAsset)) {
         return {
             kind: OftDirectSendTargetKind.Oft,
             oftContract,
@@ -80,13 +80,13 @@ export const getOftDirectSendTarget = async (
         };
     }
 
-    const chain = await getOftChain(route.from, route, oftName);
+    const chain = await getOftChain(route.sourceAsset, route, oftName);
     const executionContract = findOftChainContract(chain, [
         tempoWrapperContractName,
     ]);
     if (executionContract === undefined) {
         throw new Error(
-            `Missing Tempo OFT wrapper for route ${route.from} -> ${route.to}`,
+            `Missing Tempo OFT wrapper for route ${formatRoute(route)}`,
         );
     }
 
@@ -94,7 +94,7 @@ export const getOftDirectSendTarget = async (
         kind: OftDirectSendTargetKind.TempoWrapper,
         oftContract,
         executionContract,
-        feeTokenAddress: requireTokenConfig(route.from).address,
+        feeTokenAddress: requireTokenConfig(route.sourceAsset).address,
     };
 };
 

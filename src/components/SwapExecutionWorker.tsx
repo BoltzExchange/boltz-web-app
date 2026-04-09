@@ -449,8 +449,8 @@ export const SwapExecutionWorker = () => {
         const destinationChainId =
             config.assets?.[destinationAsset]?.network?.chainId;
         const oftRoute = {
-            from: destinationAsset,
-            to: sourceAsset,
+            sourceAsset: destinationAsset,
+            destinationAsset: sourceAsset,
         };
         const oftContract = await getOftContract(oftRoute);
 
@@ -541,11 +541,7 @@ export const SwapExecutionWorker = () => {
             }),
         );
 
-        const oftRoute = {
-            from: currentSwap.oft.sourceAsset,
-            to: currentSwap.oft.destinationAsset,
-        };
-        const sourceOft = await getOftContract(oftRoute);
+        const sourceOft = await getOftContract(currentSwap.oft);
 
         const sourceTransport = getNetworkTransport(
             currentSwap.oft.sourceAsset,
@@ -577,7 +573,7 @@ export const SwapExecutionWorker = () => {
                     currentSwap.oft.sourceAsset,
                 );
                 const sourceContract = await createOftContract(
-                    oftRoute,
+                    currentSwap.oft,
                     sourceProvider,
                 );
                 guid = getOftSentEvent(

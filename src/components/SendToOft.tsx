@@ -116,16 +116,11 @@ const SendToOft = (props: {
         }
     };
 
-    const getOftRoute = () => ({
-        from: props.oft.sourceAsset,
-        to: props.oft.destinationAsset,
-    });
-
     const getOftRecipient = () =>
         getGasAbstractionSigner(props.oft.destinationAsset).address;
 
     const quoteOftSendState = async (recipient: string) => {
-        const oftRoute = getOftRoute();
+        const oftRoute = props.oft;
         const quotedOftInstance = await getQuotedOftContract(oftRoute);
         const { sendParam, msgFee } = await quoteOftSend(
             quotedOftInstance,
@@ -343,15 +338,14 @@ const SendToOft = (props: {
 
         log.debug(`Sending OFT ${props.oft.destinationAsset} to ${recipient}`);
 
-        const oftRoute = getOftRoute();
-        const quotedOftInstance = await getQuotedOftContract(oftRoute);
+        const quotedOftInstance = await getQuotedOftContract(props.oft);
         const oftInstance = await createOftContract(
-            oftRoute,
+            props.oft,
             WalletConnectProvider.getSolanaProvider(),
         );
         const { sendParam, msgFee } = await quoteOftSend(
             quotedOftInstance,
-            oftRoute,
+            props.oft,
             recipient,
             props.amount,
         );

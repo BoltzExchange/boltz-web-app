@@ -18,7 +18,6 @@ import type { Signer } from "src/context/Web3";
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
-import type { OftRoute } from "../Pair";
 import {
     clearSolanaTokenAccountCreationCache,
     encodeSolanaAtaCreationOption,
@@ -60,6 +59,7 @@ import type {
     OftReceipt,
     OftReceiveQuote,
     OftReceivedEvent,
+    OftRoute,
     OftSentEvent,
     OftTransportClient,
     OftTransportRunner,
@@ -177,7 +177,7 @@ const getOftStoreContract = async (
     route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContract> => {
-    const chain = await getOftChain(route.from, route, oftName);
+    const chain = await getOftChain(route.sourceAsset, route, oftName);
     const contract = chain?.contracts.find(
         (candidate) => candidate.name === "OFT Store",
     );
@@ -200,7 +200,7 @@ const getEvmOftRunner = (
     runner: OftTransportRunner,
 ): ContractRunner => {
     if (runner === undefined) {
-        return getOftProvider(route.from);
+        return getOftProvider(route.sourceAsset);
     }
     if (isSolanaWalletProvider(runner)) {
         throw new Error(
@@ -232,7 +232,7 @@ export const createOftContract = async (
     runner?: OftTransportRunner,
     oftName = defaultOftName,
 ): Promise<OftTransportClient> => {
-    const sourceTransport = getOftTransport(route.from);
+    const sourceTransport = getOftTransport(route.sourceAsset);
     const oftContract = await getOftContract(route, oftName);
 
     switch (sourceTransport) {
@@ -245,7 +245,7 @@ export const createOftContract = async (
         case NetworkTransport.Solana: {
             const oftStore = await getOftStoreContract(route, oftName);
             return createSolanaOftContract({
-                sourceAsset: route.from,
+                sourceAsset: route.sourceAsset,
                 programAddress: oftContract.address,
                 storeAddress: oftStore.address,
                 walletProvider: getSolanaOftWalletProvider(route, runner),
@@ -256,6 +256,13 @@ export const createOftContract = async (
             throw new Error(
                 `OFT sending is not implemented for ${NetworkTransport.Tron} yet`,
             );
+
+        default: {
+            const exhaustiveCheck: never = sourceTransport;
+            throw new Error(
+                `Unhandled OFT transport: ${String(exhaustiveCheck)}`,
+            );
+        }
     }
 };
 
@@ -430,7 +437,8 @@ const createOftSendParam = async (
     oftName = defaultOftName,
     extraOptions = "0x",
 ): Promise<SendParam> => {
-    const lzEid = (await getOftChain(route.to, route, oftName))?.lzEid;
+    const lzEid = (await getOftChain(route.destinationAsset, route, oftName))
+        ?.lzEid;
     if (lzEid === undefined) {
         throw new Error(
             `Missing LayerZero endpoint id for route ${formatRoute(route)} and OFT ${oftName}`,
@@ -439,7 +447,7 @@ const createOftSendParam = async (
 
     return [
         Number(lzEid),
-        encodeOftRecipient(route.to, recipient),
+        encodeOftRecipient(route.destinationAsset, recipient),
         amount,
         0n,
         extraOptions,
@@ -462,7 +470,7 @@ export const quoteOftSend = async (
     oftReceipt: OftReceipt;
 }> => {
     const createSolanaTokenAccount = await shouldCreateSolanaTokenAccount(
-        route.to,
+        route.destinationAsset,
         recipient,
     );
     const sendParam = await createOftSendParam(
@@ -498,7 +506,7 @@ export const buildOftApprovalCall = async (
     const approvalRequired = await oftContract.approvalRequired?.();
     if (approvalRequired) {
         const { address } = await getOftContract(route);
-        const tokenContract = createTokenContract(route.from, signer);
+        const tokenContract = createTokenContract(route.sourceAsset, signer);
         const allowance = await tokenContract.allowance(owner, address);
         if (allowance < amount * 10n) {
             return {
@@ -558,7 +566,10 @@ export const quoteOftAmountInForAmountOut = async (
         return 0n;
     }
 
-    if (getUsdt0Mesh(route.from, route.to) === Usdt0Kind.Legacy) {
+    if (
+        getUsdt0Mesh(route.sourceAsset, route.destinationAsset) ===
+        Usdt0Kind.Legacy
+    ) {
         return getLegacyMeshSourceAmount(amountOut);
     }
 
@@ -604,7 +615,7 @@ export const getSolanaOftTokenBalance = async (
 
     return await getSolanaLegacyMeshTokenBalance(
         {
-            sourceAsset: route.from,
+            sourceAsset: route.sourceAsset,
             programAddress: oftContract.address,
             storeAddress: oftStore.address,
         },
@@ -616,7 +627,9 @@ export const getOftTransactionSender = async (
     sourceAsset: string,
     txHash: string,
 ): Promise<string | undefined> => {
-    switch (getOftTransport(sourceAsset)) {
+    const transport = getOftTransport(sourceAsset);
+
+    switch (transport) {
         case NetworkTransport.Evm:
             return (await getOftProvider(sourceAsset).getTransaction(txHash))
                 ?.from;
@@ -626,5 +639,12 @@ export const getOftTransactionSender = async (
 
         case NetworkTransport.Tron:
             return undefined;
+
+        default: {
+            const exhaustiveCheck: never = transport;
+            throw new Error(
+                `Unhandled OFT transport: ${String(exhaustiveCheck)}`,
+            );
+        }
     }
 };

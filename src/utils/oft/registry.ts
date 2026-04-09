@@ -3,8 +3,8 @@ import { getUsdt0Mesh } from "src/consts/Assets";
 
 import { config } from "../../config";
 import { Usdt0Kind } from "../../configs/base";
-import type { OftRoute } from "../Pair";
 import { formatError } from "../errors";
+import type { OftRoute } from "./types";
 
 export type OftContract = {
     name: string;
@@ -33,7 +33,8 @@ const primaryOftContractNames = ["OFT", "OFT Adapter", "OFT Program"] as const;
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 
-export const formatRoute = (route: OftRoute) => `${route.from} -> ${route.to}`;
+export const formatRoute = (route: OftRoute) =>
+    `${route.sourceAsset} -> ${route.destinationAsset}`;
 
 export const clearOftRegistry = () => {
     oftDeploymentsPromise = undefined;
@@ -80,7 +81,7 @@ export const getOftChain = async (
     }
 
     const assetConfig = config.assets?.[asset];
-    const meshKind = getUsdt0Mesh(route.from, route.to);
+    const meshKind = getUsdt0Mesh(route.sourceAsset, route.destinationAsset);
     const registryKey: keyof OftTokenConfig =
         meshKind === Usdt0Kind.Legacy ? "legacyMesh" : "native";
 
@@ -110,7 +111,7 @@ export const getOftContract = async (
     route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContract> => {
-    const chain = await getOftChain(route.from, route, oftName);
+    const chain = await getOftChain(route.sourceAsset, route, oftName);
     const contract = findOftChainContract(chain, primaryOftContractNames);
     if (contract === undefined) {
         throw new Error(

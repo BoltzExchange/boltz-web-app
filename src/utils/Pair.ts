@@ -36,6 +36,7 @@ import {
     quoteOftAmountInForAmountOut,
     quoteOftReceiveAmount,
 } from "./oft/oft";
+import type { OftRoute } from "./oft/types";
 import {
     fetchDexQuote,
     fetchGasTokenQuote,
@@ -84,11 +85,6 @@ type Hop = {
         tokenIn: string;
         tokenOut: string;
     };
-};
-
-export type OftRoute = {
-    from: string;
-    to: string;
 };
 
 export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
@@ -154,8 +150,8 @@ export default class Pair {
             routeSource === USDT0 &&
             config.assets?.[routeSource] !== undefined
                 ? {
-                      from,
-                      to: routeSource,
+                      sourceAsset: from,
+                      destinationAsset: routeSource,
                   }
                 : undefined;
         const postOft =
@@ -163,8 +159,8 @@ export default class Pair {
             routeTarget === USDT0 &&
             config.assets?.[to] !== undefined
                 ? {
-                      from: routeTarget,
-                      to,
+                      sourceAsset: routeTarget,
+                      destinationAsset: to,
                   }
                 : undefined;
         this.postOft = postOft;
@@ -323,7 +319,7 @@ export default class Pair {
         }
 
         if (this.postOft !== undefined) {
-            return isEvmAsset(this.postOft.to)
+            return isEvmAsset(this.postOft.destinationAsset)
                 ? RequiredInput.Web3
                 : RequiredInput.Address;
         }
@@ -504,13 +500,13 @@ export default class Pair {
 
     private get preOftMessagingFeeToken() {
         return this.preOft !== undefined
-            ? config.assets?.[this.preOft.from]?.network?.gasToken
+            ? config.assets?.[this.preOft.sourceAsset]?.network?.gasToken
             : undefined;
     }
 
     private get postOftMessagingFeeToken() {
         return this.postOft !== undefined
-            ? config.assets?.[this.postOft.from]?.network?.gasToken
+            ? config.assets?.[this.postOft.sourceAsset]?.network?.gasToken
             : undefined;
     }
 
@@ -529,7 +525,7 @@ export default class Pair {
     };
 
     private get postOftClaimAsset() {
-        return this.postOftDexHop?.from ?? this.postOft?.from;
+        return this.postOftDexHop?.from ?? this.postOft?.sourceAsset;
     }
 
     private get postOftFeeQuoteDetails():
@@ -615,11 +611,11 @@ export default class Pair {
 
         try {
             log.info("Checking post-OFT native drop capability", {
-                sourceAsset: this.postOft.from,
+                sourceAsset: this.postOft.sourceAsset,
                 destinationAsset: this.to,
                 destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.from,
-                    this.postOft.to,
+                    this.postOft.sourceAsset,
+                    this.postOft.destinationAsset,
                 ),
                 postOftRecipient,
             });
@@ -802,11 +798,11 @@ export default class Pair {
             }
 
             log.info("Applying post-OFT quote", {
-                sourceAsset: this.postOft.from,
+                sourceAsset: this.postOft.sourceAsset,
                 destinationAsset: this.to,
                 destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.from,
-                    this.postOft.to,
+                    this.postOft.sourceAsset,
+                    this.postOft.destinationAsset,
                 ),
                 claimAmount: claimAmount.toFixed(),
                 getGasToken,
@@ -895,11 +891,11 @@ export default class Pair {
             }
 
             log.info("Inverting post-OFT quote", {
-                sourceAsset: this.postOft.from,
+                sourceAsset: this.postOft.sourceAsset,
                 destinationAsset: this.to,
                 destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.from,
-                    this.postOft.to,
+                    this.postOft.sourceAsset,
+                    this.postOft.destinationAsset,
                 ),
                 requestedAmount: amount.toFixed(),
                 getGasToken,
@@ -1008,7 +1004,7 @@ export default class Pair {
     }
 
     public get oftTransferFeeAsset() {
-        return this.postOft?.from ?? this.preOft?.from;
+        return this.postOft?.sourceAsset ?? this.preOft?.sourceAsset;
     }
 
     private quoteReceiveHop = async (

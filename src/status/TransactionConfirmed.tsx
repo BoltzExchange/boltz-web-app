@@ -186,10 +186,7 @@ const getAcceptedQuoteAmount = async (
         getGasToken,
     );
     const initialOftQuote = await quoteOftReceiveAmount(
-        {
-            from: oft.sourceAsset,
-            to: oft.destinationAsset,
-        },
+        oft,
         quote.trade.amountOut,
         oftQuoteOptions,
     );
@@ -209,10 +206,7 @@ const getAcceptedQuoteAmount = async (
         adjustedClaimAmount,
     );
     const adjustedOftQuote: OftReceiveQuote = await quoteOftReceiveAmount(
-        {
-            from: oft.sourceAsset,
-            to: oft.destinationAsset,
-        },
+        oft,
         adjustedTradeQuote.trade.amountOut,
         oftQuoteOptions,
     );
@@ -478,11 +472,7 @@ const claimErc20ViaRouterOft = async (
         throw new Error("claim hop is missing DEX details");
     }
 
-    const oftRoute = {
-        from: oft.sourceAsset,
-        to: oft.destinationAsset,
-    };
-    const oftContract = await getOftContract(oftRoute);
+    const oftContract = await getOftContract(oft);
     const sourceTransport = getNetworkTransport(oft.sourceAsset);
     if (sourceTransport !== NetworkTransport.Evm) {
         throw new Error(
@@ -497,10 +487,7 @@ const claimErc20ViaRouterOft = async (
         signer.provider.getNetwork(),
     ]);
 
-    const oftQuoteInstance = await getQuotedOftContract({
-        from: oft.sourceAsset,
-        to: oft.destinationAsset,
-    });
+    const oftQuoteInstance = await getQuotedOftContract(oft);
     const oftQuoteOptions = await getPostOftQuoteOptions(
         oft.destinationAsset,
         destination,
@@ -508,7 +495,7 @@ const claimErc20ViaRouterOft = async (
     );
     const { msgFee } = await quoteOftSend(
         oftQuoteInstance,
-        oftRoute,
+        oft,
         destination,
         quote.trade.amountOut,
         oftQuoteOptions,
@@ -536,7 +523,7 @@ const claimErc20ViaRouterOft = async (
     const amountOutMin = calculateAmountOutMin(amountOut, slippage);
     const { sendParam } = await quoteOftSend(
         oftQuoteInstance,
-        oftRoute,
+        oft,
         destination,
         amountOutMin,
         oftQuoteOptions,
@@ -618,7 +605,7 @@ const claimErc20ViaRouterOft = async (
     );
 
     const approvalCall = await buildOftApprovalCall(
-        oftRoute,
+        oft,
         routerAddress,
         amountOut,
         signer,

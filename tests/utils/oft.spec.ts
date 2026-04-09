@@ -20,8 +20,8 @@ const { shouldCreateSolanaTokenAccount } =
     await import("../../src/utils/chains/solana");
 
 const getOftRoute = (from: string, to = from) => ({
-    from,
-    to,
+    sourceAsset: from,
+    destinationAsset: to,
 });
 
 const validSolanaRecipient = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";

@@ -3,6 +3,11 @@ import type { Contract, ContractRunner } from "ethers";
 
 import type { NetworkTransport } from "../../configs/base";
 
+export type OftRoute = {
+    sourceAsset: string;
+    destinationAsset: string;
+};
+
 export type SendParam = [
     number,
     string,

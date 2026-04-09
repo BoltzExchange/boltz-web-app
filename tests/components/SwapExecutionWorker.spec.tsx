@@ -162,10 +162,10 @@ vi.mock("../../src/utils/provider", () => ({
 }));
 
 vi.mock("../../src/utils/oft/registry", () => ({
-    getOftContract: vi.fn((route: { from: string }) =>
+    getOftContract: vi.fn((route: { sourceAsset: string }) =>
         Promise.resolve({
             address:
-                route.from === "SRC"
+                route.sourceAsset === "SRC"
                     ? "0x1111111111111111111111111111111111111111"
                     : "0x2222222222222222222222222222222222222222",
         }),
