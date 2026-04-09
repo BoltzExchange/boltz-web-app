@@ -209,6 +209,8 @@ const dict = {
         layer_zero_fee: "LayerZero Fee",
         legacy_mesh_fee_label: "Legacy Mesh fee",
         retry: "Retry",
+        error_no_quote:
+            "A quote could not be obtained. Please check your connection and try again.",
         waiting_for_oft: "Waiting for OFT",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",

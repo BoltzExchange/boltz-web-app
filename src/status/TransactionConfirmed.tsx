@@ -1011,9 +1011,15 @@ const AutoClaimHops = (props: {
                     <p>{error()}</p>
                     <button
                         class="btn btn-primary"
+                        disabled={loading()}
                         onClick={async () => {
+                            const quote = freshQuote();
+                            if (!quote) {
+                                notify("error", t("error_no_quote"));
+                                return;
+                            }
                             setError(undefined);
-                            await executeClaim(freshQuote()!);
+                            await executeClaim(quote);
                         }}>
                         {t("retry")}
                     </button>
