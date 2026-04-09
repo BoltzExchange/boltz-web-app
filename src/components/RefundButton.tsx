@@ -27,6 +27,7 @@ import {
     type AssetType,
     getKindForAsset,
     isEvmAsset,
+    requireTokenConfig,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -35,7 +36,6 @@ import { usePayContext } from "../context/Pay";
 import {
     type Signer,
     createRouterContract,
-    createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
@@ -67,6 +67,7 @@ import {
     quoteOftSend,
 } from "../utils/oft/oft";
 import { getOftContract } from "../utils/oft/registry";
+import { createAssetProvider } from "../utils/provider";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -124,9 +125,7 @@ export const sendRefundTransaction = async (
 
 const buildRefundFollowUpCalls = async (
     transactionSigner: Signer | Wallet,
-    asset: string,
     refundData: LockupEvent,
-    refundSigner: Signer | Wallet,
     slippage: number,
     dexDetails?: DexDetail,
     destination?: string,
@@ -297,23 +296,18 @@ const buildRefundFollowUpCalls = async (
         callData: prefixHex(call.data ?? "0x"),
     }));
 
-    const tokenContract = createTokenContract(route.from, transactionSigner);
-    const tokenAddress = await tokenContract.getAddress();
-    const approvalRequired = await quotedOft.approvalRequired();
-    if (approvalRequired) {
-        const approvalCall = await buildOftApprovalCall(
-            route,
-            oftContract.address,
-            BigInt(tradeQuote.quote),
-            transactionSigner,
-        );
-        if (approvalCall !== undefined) {
-            routerCalls.push({
-                target: approvalCall.to,
-                value: approvalCall.value ?? "0",
-                callData: prefixHex(approvalCall.data ?? "0x"),
-            });
-        }
+    const approvalCall = await buildOftApprovalCall(
+        route,
+        routerAddress,
+        BigInt(tradeQuote.quote),
+        transactionSigner,
+    );
+    if (approvalCall !== undefined) {
+        routerCalls.push({
+            target: approvalCall.to,
+            value: approvalCall.value ?? "0",
+            callData: prefixHex(approvalCall.data ?? "0x"),
+        });
     }
 
     const { sendParam } = await quoteOftSend(
@@ -323,6 +317,7 @@ const buildRefundFollowUpCalls = async (
         tradeAmountOutMin,
     );
     const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
+    const tokenAddress = requireTokenConfig(route.from).address;
     const executeOftData = router.interface.encodeFunctionData("executeOft", [
         routerCalls,
         tokenAddress,
@@ -336,7 +331,7 @@ const buildRefundFollowUpCalls = async (
         },
         minAmountLd,
         msgFee[1],
-        resolvedDestination,
+        refundData.refundAddress,
     ]);
 
     return [
@@ -357,7 +352,6 @@ const buildRefundFollowUpCalls = async (
 const buildErc20RefundTransaction = async ({
     gasAbstraction,
     transactionSigner,
-    asset,
     contract,
     refundData,
     signature,
@@ -369,7 +363,6 @@ const buildErc20RefundTransaction = async ({
 }: {
     gasAbstraction: GasAbstractionType;
     transactionSigner: Signer | Wallet;
-    asset: string;
     contract: ERC20Swap;
     refundData: LockupEvent;
     signature?: Signature;
@@ -419,9 +412,7 @@ const buildErc20RefundTransaction = async ({
 
     const followUpCalls = await buildRefundFollowUpCalls(
         transactionSigner,
-        asset,
         refundData,
-        contract.runner as Signer,
         slippage,
         dexDetails,
         destination,
@@ -491,11 +482,11 @@ export const RefundEvm = (props: {
     );
 
     createEffect(() => {
-        if (signer() === undefined) {
+        if (transactionSigner() === undefined) {
             setSignerNetwork(undefined);
             return;
         }
-        void signer()
+        void transactionSigner()
             .provider?.getNetwork()
             .then((network) => setSignerNetwork(Number(network?.chainId)))
             .catch(() => setSignerNetwork(undefined));
@@ -550,10 +541,11 @@ export const RefundEvm = (props: {
             contractKind,
             transactionSigner,
         }) => {
-            const contract =
+            const contract = (
                 contractKind === AssetKind.ERC20
                     ? getErc20Swap(asset)
-                    : getEtherSwap(asset);
+                    : getEtherSwap(asset)
+            ).connect(createAssetProvider(asset));
 
             log.debug("Fetching lockup data");
             const receipt = await assertTransactionSignerProvider(
@@ -666,7 +658,6 @@ export const RefundEvm = (props: {
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
-                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     signature: decSignature,
@@ -703,7 +694,6 @@ export const RefundEvm = (props: {
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
-                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     slippage: slippage(),
@@ -939,45 +929,20 @@ const RefundButton = (props: {
                 !isEvmAsset(props.swap().assetSend)
             }
             fallback={
-                <Show
-                    when={props.swap().type === SwapType.Submarine}
-                    fallback={
-                        <RefundEvm
-                            swapId={props.swap().id}
-                            gasAbstraction={getLockupGasAbstraction(
-                                props.swap(),
-                            )}
-                            signerAddress={props.swap().signer}
-                            derivationPath={props.swap().derivationPath}
-                            swapType={SwapType.Chain}
-                            setRefundTxId={setRefundTxId}
-                            asset={props.swap().assetSend}
-                            commitmentLockupTxHash={
-                                props.swap().commitmentLockupTxHash
-                            }
-                            lockupTxHash={props.swap().lockupTx}
-                            dexDetails={props.swap().dex}
-                            destination={props.swap().signer}
-                            oft={props.swap().oft}
-                        />
-                    }>
-                    <RefundEvm
-                        swapId={props.swap().id}
-                        gasAbstraction={getLockupGasAbstraction(props.swap())}
-                        signerAddress={props.swap().signer}
-                        derivationPath={props.swap().derivationPath}
-                        swapType={SwapType.Submarine}
-                        setRefundTxId={setRefundTxId}
-                        asset={props.swap().assetSend}
-                        commitmentLockupTxHash={
-                            props.swap().commitmentLockupTxHash
-                        }
-                        lockupTxHash={props.swap().lockupTx}
-                        dexDetails={props.swap().dex}
-                        destination={props.swap().signer}
-                        oft={props.swap().oft}
-                    />
-                </Show>
+                <RefundEvm
+                    swapId={props.swap().id}
+                    gasAbstraction={getLockupGasAbstraction(props.swap())}
+                    signerAddress={props.swap().signer}
+                    derivationPath={props.swap().derivationPath}
+                    swapType={props.swap().type}
+                    setRefundTxId={setRefundTxId}
+                    asset={props.swap().assetSend}
+                    commitmentLockupTxHash={props.swap().commitmentLockupTxHash}
+                    lockupTxHash={props.swap().lockupTx}
+                    dexDetails={props.swap().dex}
+                    destination={props.swap().signer}
+                    oft={props.swap().oft}
+                />
             }>
             <RefundBtc {...props} setRefundTxId={setRefundTxId} />
         </Show>
