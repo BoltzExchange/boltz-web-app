@@ -28,11 +28,15 @@ export const retryWithBackoff = async <T>(
     fn: () => Promise<T>,
     maxRetries: number,
     baseDelayMs: number,
+    isRetryable?: (error: unknown) => boolean,
 ): Promise<T> => {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
             return await fn();
         } catch (e) {
+            if (isRetryable !== undefined && !isRetryable(e)) {
+                throw e;
+            }
             const delay = baseDelayMs * 2 ** attempt;
             log.warn(
                 `Attempt ${attempt + 1} failed, retrying in ${delay}ms`,

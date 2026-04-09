@@ -67,7 +67,7 @@ const getWalletRejectionFields = (
     };
 };
 
-const isWalletRejectionError = (message: unknown): boolean => {
+export const isWalletRejectionError = (message: unknown): boolean => {
     if (hasWalletRejectionPhrase(message)) {
         return true;
     }

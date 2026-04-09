@@ -51,7 +51,7 @@ import {
     calculateAmountWithSlippage,
 } from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
-import { formatError } from "../utils/errors";
+import { formatError, isWalletRejectionError } from "../utils/errors";
 import {
     type ClaimResult,
     claimAsset,
@@ -921,6 +921,7 @@ const AutoClaimHops = (props: {
                     ),
                 maxRetries,
                 baseDelayMs,
+                (e) => !isWalletRejectionError(e),
             );
 
             currentSwap.claimTx = transactionHash;

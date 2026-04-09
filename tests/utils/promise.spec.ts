@@ -213,8 +213,56 @@ describe("promise", () => {
         it("should work with maxRetries of 0 (single attempt, no retries)", async () => {
             const fn = vi.fn().mockRejectedValue(new Error("fail"));
 
-            await expect(retryWithBackoff(fn, 0, 1000)).rejects.toThrow("fail");
+            await expect(retryWithBackoff(fn, 0, 1000)).rejects.toThrow(
+                "fail",
+            );
             expect(fn).toHaveBeenCalledTimes(1);
+        });
+
+        it("should rethrow immediately when isRetryable returns false", async () => {
+            const nonRetryable = new Error("user rejected action");
+            const fn = vi.fn().mockRejectedValue(nonRetryable);
+
+            await expect(
+                retryWithBackoff(fn, 3, 1000, () => false),
+            ).rejects.toThrow("user rejected action");
+            expect(fn).toHaveBeenCalledTimes(1);
+            expect(logWarn).not.toHaveBeenCalled();
+        });
+
+        it("should retry when isRetryable returns true", async () => {
+            const fn = vi
+                .fn()
+                .mockRejectedValueOnce(new Error("transient"))
+                .mockResolvedValue("ok");
+
+            const promise = retryWithBackoff(fn, 3, 100, () => true);
+
+            await vi.advanceTimersByTimeAsync(100);
+
+            await expect(promise).resolves.toBe("ok");
+            expect(fn).toHaveBeenCalledTimes(2);
+        });
+
+        it("should selectively retry based on error type", async () => {
+            const retryable = new Error("LZ_InsufficientFee");
+            const nonRetryable = new Error("user rejected action");
+            const fn = vi
+                .fn()
+                .mockRejectedValueOnce(retryable)
+                .mockRejectedValueOnce(nonRetryable);
+            const isRetryable = (e: unknown) =>
+                e instanceof Error && e.message.includes("LZ_InsufficientFee");
+
+            const promise = retryWithBackoff(fn, 3, 100, isRetryable);
+            const caught = promise.catch((e: Error) => e);
+
+            await vi.advanceTimersByTimeAsync(100);
+
+            const err = (await caught) as Error;
+            expect(err.message).toBe("user rejected action");
+            expect(fn).toHaveBeenCalledTimes(2);
+            expect(logWarn).toHaveBeenCalledTimes(1);
         });
     });
 });
