@@ -124,9 +124,7 @@ export const sendRefundTransaction = async (
 
 const buildRefundFollowUpCalls = async (
     transactionSigner: Signer | Wallet,
-    asset: string,
     refundData: LockupEvent,
-    refundSigner: Signer | Wallet,
     slippage: number,
     dexDetails?: DexDetail,
     destination?: string,
@@ -353,7 +351,6 @@ const buildRefundFollowUpCalls = async (
 const buildErc20RefundTransaction = async ({
     gasAbstraction,
     transactionSigner,
-    asset,
     contract,
     refundData,
     signature,
@@ -365,7 +362,6 @@ const buildErc20RefundTransaction = async ({
 }: {
     gasAbstraction: GasAbstractionType;
     transactionSigner: Signer | Wallet;
-    asset: string;
     contract: ERC20Swap;
     refundData: LockupEvent;
     signature?: Signature;
@@ -415,9 +411,7 @@ const buildErc20RefundTransaction = async ({
 
     const followUpCalls = await buildRefundFollowUpCalls(
         transactionSigner,
-        asset,
         refundData,
-        contract.runner as Signer,
         slippage,
         dexDetails,
         destination,
@@ -668,7 +662,6 @@ export const RefundEvm = (props: {
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
-                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     signature: decSignature,
@@ -705,7 +698,6 @@ export const RefundEvm = (props: {
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
-                                    asset: props.asset,
                                     contract,
                                     refundData: currentRefundData,
                                     slippage: slippage(),
