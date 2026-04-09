@@ -67,6 +67,7 @@ import {
     quoteOftSend,
 } from "../utils/oft/oft";
 import { getOftContract } from "../utils/oft/registry";
+import { createAssetProvider } from "../utils/provider";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -476,29 +477,23 @@ export const RefundEvm = (props: {
         );
     });
 
-    const walletAsset = createMemo(() => {
-        return props.oft?.position === OftPosition.Pre
-            ? props.oft?.sourceAsset
-            : props.asset;
-    });
-
     const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
         undefined,
     );
 
     createEffect(() => {
-        if (signer() === undefined) {
+        if (transactionSigner() === undefined) {
             setSignerNetwork(undefined);
             return;
         }
-        void signer()
+        void transactionSigner()
             .provider?.getNetwork()
             .then((network) => setSignerNetwork(Number(network?.chainId)))
             .catch(() => setSignerNetwork(undefined));
     });
 
     const networkValid = (): boolean | undefined => {
-        const expected = config.assets?.[walletAsset()]?.network?.chainId;
+        const expected = config.assets?.[props.asset]?.network?.chainId;
         if (expected === undefined) {
             return true;
         }
@@ -546,10 +541,11 @@ export const RefundEvm = (props: {
             contractKind,
             transactionSigner,
         }) => {
-            const contract =
+            const contract = (
                 contractKind === AssetKind.ERC20
                     ? getErc20Swap(asset)
-                    : getEtherSwap(asset);
+                    : getEtherSwap(asset)
+            ).connect(createAssetProvider(asset));
 
             log.debug("Fetching lockup data");
             const receipt = await assertTransactionSignerProvider(
@@ -599,7 +595,7 @@ export const RefundEvm = (props: {
         <Switch>
             <Match when={refundDataTrigger() === undefined}>
                 <ConnectWallet
-                    asset={walletAsset()}
+                    asset={props.asset}
                     derivationPath={props.derivationPath}
                     addressOverride={() => props.signerAddress}
                 />
