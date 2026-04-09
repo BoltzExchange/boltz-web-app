@@ -67,6 +67,7 @@ import {
 } from "../utils/oft/oft";
 import { getOftContract } from "../utils/oft/registry";
 import type { OftReceiveQuote } from "../utils/oft/types";
+import { retryWithBackoff } from "../utils/promise";
 import {
     type ClaimQuote,
     type DexQuote,
@@ -897,21 +898,29 @@ const AutoClaimHops = (props: {
                 getGasAbstractionSigner(props.assetReceive),
             );
 
-            const transactionHash = await claimHops(
-                props.dex.hops,
-                props.gasAbstraction,
-                props.assetReceive,
-                props.preimage,
-                props.amount,
-                props.refundAddress,
-                props.timeoutBlockHeight,
-                props.signerAddress,
-                () => claimSigner,
-                getErc20Swap(props.assetReceive),
-                slippage(),
-                quote.quote,
-                props.getGasToken,
-                props.oft,
+            const maxRetries = 3;
+            const baseDelayMs = 2_000;
+            const transactionHash = await retryWithBackoff(
+                // eslint-disable-next-line solid/reactivity
+                () =>
+                    claimHops(
+                        props.dex.hops,
+                        props.gasAbstraction,
+                        props.assetReceive,
+                        props.preimage,
+                        props.amount,
+                        props.refundAddress,
+                        props.timeoutBlockHeight,
+                        props.signerAddress,
+                        () => claimSigner,
+                        getErc20Swap(props.assetReceive),
+                        slippage(),
+                        quote.quote,
+                        props.getGasToken,
+                        props.oft,
+                    ),
+                maxRetries,
+                baseDelayMs,
             );
 
             currentSwap.claimTx = transactionHash;
@@ -994,7 +1003,21 @@ const AutoClaimHops = (props: {
     );
 
     return (
-        <Show when={!error()} fallback={<p>{error()}</p>}>
+        <Show
+            when={!error()}
+            fallback={
+                <div class="error-container">
+                    <p>{error()}</p>
+                    <button
+                        class="btn btn-primary"
+                        onClick={async () => {
+                            setError(undefined);
+                            await executeClaim(freshQuote()!);
+                        }}>
+                        {t("retry")}
+                    </button>
+                </div>
+            }>
             <Show
                 when={
                     freshQuote() !== undefined &&

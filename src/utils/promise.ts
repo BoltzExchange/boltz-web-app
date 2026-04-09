@@ -1,3 +1,5 @@
+import log from "loglevel";
+
 export const firstResolved = <T>(promises: Promise<T>[]): Promise<T> => {
     if (promises.length === 0) {
         throw new Error("no promises provided");
@@ -20,6 +22,26 @@ export const firstResolved = <T>(promises: Promise<T>[]): Promise<T> => {
                 });
         });
     });
+};
+
+export const retryWithBackoff = async <T>(
+    fn: () => Promise<T>,
+    maxRetries: number,
+    baseDelayMs: number,
+): Promise<T> => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (e) {
+            const delay = baseDelayMs * 2 ** attempt;
+            log.warn(
+                `Attempt ${attempt + 1} failed, retrying in ${delay}ms`,
+                e,
+            );
+            await new Promise((r) => setTimeout(r, delay));
+        }
+    }
+    return await fn();
 };
 
 export const promiseWithTimeout = <T>(
