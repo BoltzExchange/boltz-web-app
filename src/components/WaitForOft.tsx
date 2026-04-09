@@ -1,4 +1,4 @@
-import { Show, createEffect, createSignal, onCleanup } from "solid-js";
+import { createEffect, createSignal, onCleanup } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { computeOftEtaSeconds } from "../utils/oftEta";
@@ -49,9 +49,7 @@ const WaitForOft = (props: {
         <>
             <h2>{t("waiting_for_oft")}</h2>
             <LoadingSpinner />
-            <Show when={remaining() !== undefined}>
-                <p>{countdownLabel()}</p>
-            </Show>
+            <p>{countdownLabel()}</p>
             <BlockExplorer
                 asset={props.sourceAsset}
                 txId={props.transactionHash}
