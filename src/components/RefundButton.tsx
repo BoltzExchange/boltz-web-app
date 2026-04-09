@@ -27,6 +27,7 @@ import {
     type AssetType,
     getKindForAsset,
     isEvmAsset,
+    requireTokenConfig,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -35,7 +36,6 @@ import { usePayContext } from "../context/Pay";
 import {
     type Signer,
     createRouterContract,
-    createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
@@ -297,23 +297,18 @@ const buildRefundFollowUpCalls = async (
         callData: prefixHex(call.data ?? "0x"),
     }));
 
-    const tokenContract = createTokenContract(route.from, transactionSigner);
-    const tokenAddress = await tokenContract.getAddress();
-    const approvalRequired = await quotedOft.approvalRequired();
-    if (approvalRequired) {
-        const approvalCall = await buildOftApprovalCall(
-            route,
-            oftContract.address,
-            BigInt(tradeQuote.quote),
-            transactionSigner,
-        );
-        if (approvalCall !== undefined) {
-            routerCalls.push({
-                target: approvalCall.to,
-                value: approvalCall.value ?? "0",
-                callData: prefixHex(approvalCall.data ?? "0x"),
-            });
-        }
+    const approvalCall = await buildOftApprovalCall(
+        route,
+        routerAddress,
+        BigInt(tradeQuote.quote),
+        transactionSigner,
+    );
+    if (approvalCall !== undefined) {
+        routerCalls.push({
+            target: approvalCall.to,
+            value: approvalCall.value ?? "0",
+            callData: prefixHex(approvalCall.data ?? "0x"),
+        });
     }
 
     const { sendParam } = await quoteOftSend(
@@ -323,6 +318,7 @@ const buildRefundFollowUpCalls = async (
         tradeAmountOutMin,
     );
     const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
+    const tokenAddress = requireTokenConfig(route.from).address;
     const executeOftData = router.interface.encodeFunctionData("executeOft", [
         routerCalls,
         tokenAddress,
