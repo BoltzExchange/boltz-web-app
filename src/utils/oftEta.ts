@@ -16,6 +16,7 @@ export const computeOftEtaSeconds = (
     const srcBlockTime = getBlockTimeSeconds(sourceAsset);
     const dstBlockTime = getBlockTimeSeconds(destinationAsset);
     const confirmations = getLzConfirmations(sourceAsset);
+
     if (
         srcBlockTime === undefined ||
         dstBlockTime === undefined ||

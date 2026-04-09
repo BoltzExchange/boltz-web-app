@@ -1,4 +1,4 @@
-import { Show, createMemo } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { computeOftEtaSeconds } from "../utils/oftEta";
@@ -12,25 +12,45 @@ const WaitForOft = (props: {
 }) => {
     const { t } = useGlobalContext();
 
-    const etaDate = createMemo(() => {
-        const etaSeconds = computeOftEtaSeconds(
+    const [remaining, setRemaining] = createSignal<number | undefined>();
+
+    createEffect(() => {
+        const eta = computeOftEtaSeconds(
             props.sourceAsset,
             props.destinationAsset,
         );
-        if (etaSeconds === undefined) {
-            return undefined;
-        }
-        return new Date(Date.now() + etaSeconds * 1_000).toLocaleString();
+        setRemaining(eta !== undefined ? Math.ceil(eta) : undefined);
     });
+
+    const timer = setInterval(() => {
+        setRemaining((prev) => {
+            if (prev === undefined) return undefined;
+            return Math.max(prev - 1, 0);
+        });
+    }, 1_000);
+
+    onCleanup(() => clearInterval(timer));
+
+    const countdownLabel = () => {
+        const secs = remaining();
+
+        if (secs === undefined) {
+            return t("oft_transfer_in_progress");
+        }
+
+        if (secs < 1) {
+            return t("oft_arriving_soon");
+        }
+
+        return `${t("oft_eta")} ~${secs}s`;
+    };
 
     return (
         <>
             <h2>{t("waiting_for_oft")}</h2>
             <LoadingSpinner />
-            <Show when={etaDate() !== undefined}>
-                <p>
-                    {t("oft_eta")}: {etaDate()}
-                </p>
+            <Show when={remaining() !== undefined}>
+                <p>{countdownLabel()}</p>
             </Show>
             <BlockExplorer
                 asset={props.sourceAsset}

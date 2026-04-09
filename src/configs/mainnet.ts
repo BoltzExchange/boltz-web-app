@@ -121,6 +121,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
         blockExplorerUrl: "https://evm.confluxscan.org",
         rpcUrls: ["https://evm.confluxrpc.com/"],
+        blockTimeSeconds: 1.276,
     },
     {
         asset: "USDT0-CORN",
@@ -132,6 +133,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
         blockExplorerUrl: "https://cornscan.io",
         rpcUrls: ["https://mainnet.corn-rpc.com"],
+        blockTimeSeconds: 30,
     },
     {
         asset: "USDT0-FLR",
@@ -146,6 +148,7 @@ const usdt0Variants: Usdt0Variant[] = [
             "https://rpc.ankr.com/flare",
             "https://flare-api.flare.network/ext/C/rpc",
         ],
+        blockTimeSeconds: 1.6,
     },
     {
         asset: "USDT0-HYPE",
@@ -156,6 +159,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
         blockExplorerUrl: "https://hyperevmscan.io",
         rpcUrls: ["https://rpc.hyperliquid.xyz/evm"],
+        blockTimeSeconds: 1,
     },
     {
         asset: "USDT0-HBAR",
@@ -166,6 +170,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x00000000000000000000000000000000009Ce723",
         blockExplorerUrl: "https://hashscan.io/mainnet",
         rpcUrls: ["https://mainnet.hashio.io/api"],
+        blockTimeSeconds: 2,
     },
     {
         asset: "USDT0-INK",
@@ -189,6 +194,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://mantlescan.xyz",
         rpcUrls: ["https://rpc.mantle.xyz"],
+        blockTimeSeconds: 2,
     },
     {
         asset: "USDT0-MEGAETH",
@@ -200,6 +206,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
         blockExplorerUrl: "https://mega.etherscan.io/",
         rpcUrls: ["https://mainnet.megaeth.com/rpc"],
+        blockTimeSeconds: 1,
     },
     {
         asset: "USDT0-MON",
@@ -213,6 +220,7 @@ const usdt0Variants: Usdt0Variant[] = [
             "https://rpc3.monad.xyz",
             "https://rpc-mainnet.monadinfra.com",
         ],
+        blockTimeSeconds: 0.4,
     },
     {
         asset: "USDT0-MORPH",
@@ -224,6 +232,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
         blockExplorerUrl: "https://explorer.morph.network",
         rpcUrls: ["https://rpc.morph.network"],
+        blockTimeSeconds: 3.7,
     },
     {
         asset: "USDT0-OP",
@@ -248,6 +257,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
         blockExplorerUrl: "https://plasmascan.to",
         rpcUrls: ["https://rpc.plasma.to"],
+        blockTimeSeconds: 1,
     },
     {
         asset: "USDT0-POL",
@@ -270,6 +280,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
         blockExplorerUrl: "https://rootstock.blockscout.com",
         rpcUrls: rskRpcUrls,
+        blockTimeSeconds: 24.9,
     },
     {
         asset: "USDT0-SEI",
@@ -296,6 +307,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://stablescan.xyz",
         rpcUrls: ["https://rpc.stable.xyz"],
+        blockTimeSeconds: 0.7,
     },
     {
         asset: "USDT0-UNI",
@@ -338,6 +350,7 @@ const usdt0Variants: Usdt0Variant[] = [
         blockExplorerUrl: "https://tronscan.org/#",
         rpcUrls: ["https://api.trongrid.io"],
         mesh: Usdt0Kind.Legacy,
+        blockTimeSeconds: 3,
     },
     {
         asset: "USDT0-XLAYER",
@@ -349,6 +362,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://www.oklink.com/x-layer",
         rpcUrls: ["https://xlayerrpc.okx.com"],
+        blockTimeSeconds: 1,
     },
     {
         asset: "USDT0-TEMPO",
@@ -360,6 +374,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x20C00000000000000000000014f22CA97301EB73",
         blockExplorerUrl: "https://explore.mainnet.tempo.xyz",
         rpcUrls: ["https://rpc.tempo.xyz"],
+        blockTimeSeconds: 0.5,
     },
 ];
 
