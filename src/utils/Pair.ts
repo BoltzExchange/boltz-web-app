@@ -14,7 +14,7 @@ import {
     isUsdt0Asset,
     isUsdt0Variant,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import {
     type ChainPairTypeTaproot,
     type Pairs,
@@ -64,11 +64,6 @@ const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
         ? BigNumber(amount.toString())
         : BigNumber(assetAmountToSats(amount, asset).toString());
 
-export const enum HopsPosition {
-    Before = "before",
-    After = "after",
-}
-
 export const enum RequiredInput {
     Address,
     Invoice,
@@ -106,7 +101,7 @@ export type CreationData = {
     to: string;
     pairHash: string;
     hops: EncodedHop[];
-    hopsPosition: HopsPosition | undefined;
+    hopsPosition: SwapPosition | undefined;
 };
 
 const toEncodedHop = (hop: Hop): EncodedHop => {
@@ -1415,8 +1410,8 @@ export default class Pair {
             hopsPosition:
                 dexHops.length > 0
                     ? this.route.indexOf(dexHops[0]) < boltzIndex
-                        ? HopsPosition.Before
-                        : HopsPosition.After
+                        ? SwapPosition.Pre
+                        : SwapPosition.Post
                     : undefined,
         };
     };

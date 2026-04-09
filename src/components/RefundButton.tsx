@@ -29,7 +29,7 @@ import {
     isEvmAsset,
     requireTokenConfig,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -38,7 +38,6 @@ import {
     createRouterContract,
     useWeb3Signer,
 } from "../context/Web3";
-import { HopsPosition } from "../utils/Pair";
 import {
     encodeDexQuote,
     getEipRefundSignature,
@@ -74,7 +73,6 @@ import {
     type DexDetail,
     GasAbstractionType,
     type OftDetail,
-    OftPosition,
     type SubmarineSwap,
     getLockupGasAbstraction,
 } from "../utils/swapCreator";
@@ -133,14 +131,14 @@ const buildRefundFollowUpCalls = async (
 ) => {
     let resolvedDestination = destination;
 
-    if (oft?.position === OftPosition.Pre) {
+    if (oft?.position === SwapPosition.Pre) {
         if (oft.txHash === undefined) {
             throw new Error("missing OFT transaction hash for pre-OFT refund");
         }
 
         if (
             dexDetails === undefined ||
-            dexDetails.position !== HopsPosition.Before
+            dexDetails.position !== SwapPosition.Pre
         ) {
             throw new Error("missing reverse DEX details for pre-OFT refund");
         }
@@ -158,10 +156,7 @@ const buildRefundFollowUpCalls = async (
         resolvedDestination = sender;
     }
 
-    if (
-        dexDetails === undefined ||
-        dexDetails.position !== HopsPosition.Before
-    ) {
+    if (dexDetails === undefined || dexDetails.position !== SwapPosition.Pre) {
         return undefined;
     }
 
@@ -184,17 +179,17 @@ const buildRefundFollowUpCalls = async (
     const quoteAmount = BigInt(quote.quote);
     const amountOutMin = calculateAmountOutMin(quoteAmount, slippage);
     const dexRecipient =
-        oft?.position === OftPosition.Pre
+        oft?.position === SwapPosition.Pre
             ? refundData.refundAddress
             : resolvedDestination;
 
     log.debug(
-        oft?.position === OftPosition.Pre
+        oft?.position === SwapPosition.Pre
             ? `Refunding via DEX and OFT to ${resolvedDestination}`
             : `Refunding via DEX to ${desiredToken}`,
     );
 
-    if (oft?.position !== OftPosition.Pre) {
+    if (oft?.position !== SwapPosition.Pre) {
         const calldata = await encodeDexQuote(
             quoteChain,
             dexRecipient,

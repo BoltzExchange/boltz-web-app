@@ -11,7 +11,7 @@ import {
 import { config } from "../config";
 import { NetworkTransport } from "../configs/base";
 import { getNetworkTransport, getTokenAddress } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -20,7 +20,6 @@ import {
     createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
-import { HopsPosition } from "../utils/Pair";
 import {
     encodeDexQuote,
     getCommitmentLockupDetails,
@@ -47,7 +46,6 @@ import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     GasAbstractionType,
-    OftPosition,
     type SomeSwap,
     type SubmarineSwap,
     getLockupGasAbstraction,
@@ -82,7 +80,7 @@ const isPendingCommitmentStatus = (status?: string) =>
     status === swapStatusPending.SwapCreated;
 
 const getCommitmentChainAsset = (swap: SomeSwap) =>
-    swap.oft?.position === OftPosition.Pre
+    swap.oft?.position === SwapPosition.Pre
         ? swap.oft.destinationAsset
         : swap.assetSend;
 
@@ -109,12 +107,12 @@ const getSwapPreimageHash = (swap: SomeSwap): string => {
 const needsPreOftLockup = (swap: SomeSwap | null | undefined) =>
     swap !== undefined &&
     swap !== null &&
-    swap.oft?.position === OftPosition.Pre &&
+    swap.oft?.position === SwapPosition.Pre &&
     swap.oft.txHash !== undefined &&
     swap.commitmentLockupTxHash === undefined &&
     isPendingCommitmentStatus(swap.status) &&
     swap.dex !== undefined &&
-    swap.dex.position === HopsPosition.Before &&
+    swap.dex.position === SwapPosition.Pre &&
     swap.dex.hops.length > 0;
 
 const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
@@ -915,7 +913,7 @@ export const SwapExecutionWorker = () => {
             void runTask(currentSwap.id, "commitment", async (storedSwap) => {
                 const commitmentAsset = getCommitmentChainAsset(storedSwap);
                 const transactionSigner =
-                    storedSwap.oft?.position === OftPosition.Pre
+                    storedSwap.oft?.position === SwapPosition.Pre
                         ? getGasAbstractionSigner(
                               storedSwap.oft.destinationAsset,
                           )

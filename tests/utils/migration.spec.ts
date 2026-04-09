@@ -1,12 +1,11 @@
 import { LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
+import { SwapPosition, SwapType } from "../../src/consts/Enums";
 import {
     latestStorageVersion,
     migrateBackupFile,
 } from "../../src/utils/migration";
 import {
     GasAbstractionType,
-    OftPosition,
     createUniformGasAbstraction,
 } from "../../src/utils/swapCreator";
 
@@ -130,7 +129,7 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    position: OftPosition.Post,
+                    position: SwapPosition.Post,
                 },
             },
         ]);
@@ -167,7 +166,7 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: "USDT0-POL",
                     destinationAsset: USDT0,
-                    position: OftPosition.Pre,
+                    position: SwapPosition.Pre,
                 },
             },
             {
@@ -178,7 +177,47 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    position: OftPosition.Post,
+                    position: SwapPosition.Post,
+                },
+            },
+        ]);
+    });
+
+    test("should migrate legacy dex hop position wording", () => {
+        const swaps = [
+            {
+                id: "dex-pre",
+                dex: {
+                    position: "before",
+                    hops: [],
+                    quoteAmount: "123",
+                },
+            },
+            {
+                id: "dex-post",
+                dex: {
+                    position: "after",
+                    hops: [],
+                    quoteAmount: "456",
+                },
+            },
+        ];
+
+        expect(migrateBackupFile(5, swaps)).toEqual([
+            {
+                id: "dex-pre",
+                dex: {
+                    position: "pre",
+                    hops: [],
+                    quoteAmount: "123",
+                },
+            },
+            {
+                id: "dex-post",
+                dex: {
+                    position: "post",
+                    hops: [],
+                    quoteAmount: "456",
                 },
             },
         ]);

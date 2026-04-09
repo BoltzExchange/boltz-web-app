@@ -3,8 +3,8 @@ import { Show, createMemo } from "solid-js";
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
+import { SwapPosition } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
-import { HopsPosition } from "../utils/Pair";
 import { decodeInvoice } from "../utils/invoice";
 import {
     type SubmarineSwap,
@@ -42,7 +42,7 @@ const InvoiceSet = () => {
                 timeoutBlockHeight={submarine.timeoutBlockHeight}
                 asset={submarine.assetSend}
                 hops={
-                    submarine.dex?.position === HopsPosition.Before
+                    submarine.dex?.position === SwapPosition.Pre
                         ? submarine.dex.hops
                         : undefined
                 }

@@ -7,10 +7,9 @@ import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { HopsPosition } from "../utils/Pair";
 import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -92,7 +91,7 @@ const TransactionClaimed = () => {
                     {t("successfully_swapped", {
                         amount: formatAmount(
                             BigNumber(
-                                (swap().dex?.position === HopsPosition.After
+                                (swap().dex?.position === SwapPosition.Post
                                     ? swap().dex?.quoteAmount
                                     : swap().receiveAmount) ?? 0,
                             ),

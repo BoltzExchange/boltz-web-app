@@ -3,15 +3,14 @@ import log from "loglevel";
 import { createSignal } from "solid-js";
 
 import { LN, RBTC, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import {
     GasAbstractionType,
     type OftDetail,
-    OftPosition,
     type SomeSwap,
 } from "./swapCreator";
 
-export const latestStorageVersion = 5;
+export const latestStorageVersion = 6;
 
 const storageVersionKey = "version";
 
@@ -186,6 +185,30 @@ const migrateSwapGasAbstractionShape = (
     } as SomeSwap;
 };
 
+const normalizeSwapPosition = (position: unknown): SwapPosition | undefined => {
+    switch (position) {
+        case "before":
+        case "pre":
+            return SwapPosition.Pre;
+
+        case "after":
+        case "post":
+            return SwapPosition.Post;
+
+        default:
+            return undefined;
+    }
+};
+
+const migrateSwapDexPositionShape = (swap: SomeSwap): SomeSwap => {
+    const position = normalizeSwapPosition(swap.dex?.position);
+    if (position === undefined) {
+        return swap as SomeSwap;
+    }
+    swap.dex.position = position;
+    return swap as SomeSwap;
+};
+
 const migrateStorageGasAbstraction = async (swapsForage: LocalForage) => {
     const swaps = await swapsForage.keys();
 
@@ -203,6 +226,20 @@ const migrateStorageGasAbstractionShape = async (swapsForage: LocalForage) => {
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
         await swapsForage.setItem(swapId, migrateSwapGasAbstractionShape(swap));
+    }
+
+    return swaps.length;
+};
+
+const migrateStorageDexPositionShape = async (swapsForage: LocalForage) => {
+    const swaps = await swapsForage.keys();
+
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        await swapsForage.setItem(
+            swapId,
+            migrateSwapDexPositionShape(swap as SomeSwap),
+        );
     }
 
     return swaps.length;
@@ -226,7 +263,7 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
 
     const toOftDetail = (
         detail: Record<string, unknown> | undefined,
-        position: OftPosition,
+        position: SwapPosition,
     ): OftDetail | undefined => {
         if (
             detail === undefined ||
@@ -250,12 +287,12 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
                   sourceAsset: oft.sourceAsset,
                   destinationAsset: oft.destinationAsset,
                   position:
-                      oft.position === OftPosition.Pre
-                          ? OftPosition.Pre
-                          : OftPosition.Post,
+                      oft.position === SwapPosition.Pre
+                          ? SwapPosition.Pre
+                          : SwapPosition.Post,
               }
-            : (toOftDetail(oft.pre, OftPosition.Pre) ??
-              toOftDetail(oft.post, OftPosition.Post));
+            : (toOftDetail(oft.pre, SwapPosition.Pre) ??
+              toOftDetail(oft.post, SwapPosition.Post));
 
     return {
         ...swap,
@@ -340,6 +377,19 @@ const migrateLocalForage = async (
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }
+
+        case 5: {
+            log.info(`Migrating DEX hop position wording`);
+            const migratedSwaps =
+                await migrateStorageDexPositionShape(swapsForage);
+            log.info(
+                `Migrated DEX hop position wording for ${migratedSwaps} swaps`,
+            );
+
+            await paramsForage.setItem(storageVersionKey, 6);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
     }
 };
 
@@ -383,6 +433,14 @@ export const migrateBackupFile = (
             return migrateBackupFile(
                 version + 1,
                 swaps.map((swap) => migrateSwapGasAbstractionShape(swap)),
+            );
+
+        case 5:
+            return migrateBackupFile(
+                version + 1,
+                swaps.map((swap) =>
+                    migrateSwapDexPositionShape(swap as SomeSwap),
+                ),
             );
 
         default:
