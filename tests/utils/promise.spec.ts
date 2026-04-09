@@ -213,9 +213,7 @@ describe("promise", () => {
         it("should work with maxRetries of 0 (single attempt, no retries)", async () => {
             const fn = vi.fn().mockRejectedValue(new Error("fail"));
 
-            await expect(retryWithBackoff(fn, 0, 1000)).rejects.toThrow(
-                "fail",
-            );
+            await expect(retryWithBackoff(fn, 0, 1000)).rejects.toThrow("fail");
             expect(fn).toHaveBeenCalledTimes(1);
         });
 
