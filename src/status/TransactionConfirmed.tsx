@@ -30,7 +30,7 @@ import {
     getTokenAddress,
     isEvmAsset,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -40,7 +40,7 @@ import {
     useWeb3Signer,
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
-import { type EncodedHop, HopsPosition } from "../utils/Pair";
+import type { EncodedHop } from "../utils/Pair";
 import {
     encodeDexQuote,
     quoteDexAmountIn,
@@ -1213,7 +1213,7 @@ const TransactionConfirmed = () => {
     const reverse = swap() as ReverseSwap;
 
     const dexToClaim = (dex?: DexDetail) => {
-        if (dex?.position === HopsPosition.After) {
+        if (dex?.position === SwapPosition.Post) {
             return dex;
         }
 

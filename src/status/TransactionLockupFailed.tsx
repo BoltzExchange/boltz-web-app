@@ -14,12 +14,12 @@ import { isRefundableSwapType } from "src/utils/rescue";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton, { incorrectAssetError } from "../components/RefundButton";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
-import Pair, { HopsPosition } from "../utils/Pair";
+import Pair from "../utils/Pair";
 import {
     acceptChainSwapNewQuote,
     getChainSwapNewQuote,
@@ -130,7 +130,7 @@ const TransactionLockupFailed = (props: {
 
             let sentAmountSource = "swap.sendAmount";
             const outputAmount =
-                chainSwap.dex?.position === HopsPosition.Before
+                chainSwap.dex?.position === SwapPosition.Pre
                     ? ((sentAmountSource = "dex.quoteAmount"),
                       Number(chainSwap.dex.quoteAmount))
                     : !isEvmAsset(chainSwap.assetSend) &&
@@ -228,7 +228,7 @@ const TransactionLockupFailed = (props: {
         currentSwap.claimDetails.amount = quoteData.quote;
         if (currentSwap.dex !== undefined) {
             currentSwap.dex.quoteAmount =
-                currentSwap.dex.position === HopsPosition.Before
+                currentSwap.dex.position === SwapPosition.Pre
                     ? quoteData.sentAmount
                     : quoteData.receiveAmount;
         }
@@ -257,7 +257,7 @@ const TransactionLockupFailed = (props: {
             currentSwap === null ||
             currentSwap.type !== SwapType.Chain ||
             currentSwap.dex === undefined ||
-            currentSwap.dex.position !== HopsPosition.Before ||
+            currentSwap.dex.position !== SwapPosition.Pre ||
             quoteData === undefined ||
             quoteRejected() ||
             loading() ||
@@ -346,7 +346,7 @@ const TransactionLockupFailed = (props: {
                             amount={newQuote().sentAmount}
                             asset={
                                 (swap() as ChainSwap).dex?.position ===
-                                HopsPosition.Before
+                                SwapPosition.Pre
                                     ? getFinalAssetSend(swap() as ChainSwap)
                                     : swap().assetSend
                             }

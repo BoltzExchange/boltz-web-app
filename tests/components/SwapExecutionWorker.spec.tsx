@@ -116,13 +116,6 @@ vi.mock("../../src/context/Web3", () => ({
     }),
 }));
 
-vi.mock("../../src/utils/Pair", () => ({
-    HopsPosition: {
-        Before: "before",
-        After: "after",
-    },
-}));
-
 vi.mock("../../src/utils/boltzClient", () => ({
     encodeDexQuote: vi.fn().mockResolvedValue({
         calls: [
@@ -258,7 +251,7 @@ describe("SwapExecutionWorker", () => {
                 claimAddress: "0xc000000000000000000000000000000000000000",
             },
             dex: {
-                position: "before",
+                position: "pre",
                 hops: [
                     {
                         dexDetails: {

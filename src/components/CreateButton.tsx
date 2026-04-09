@@ -17,7 +17,7 @@ import {
     isUsdt0Asset,
     isUsdt0Variant,
 } from "../consts/Assets";
-import { InvoiceValidation, SwapType } from "../consts/Enums";
+import { InvoiceValidation, SwapPosition, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -25,7 +25,7 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop, HopsPosition } from "../utils/Pair";
+import Pair, { type EncodedHop } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
@@ -57,7 +57,6 @@ import {
     type GasAbstraction,
     GasAbstractionType,
     type OftDetail,
-    OftPosition,
     type SomeSwap,
     createChain,
     createReverse,
@@ -73,7 +72,7 @@ const invoiceFetchTimeout = 25_000;
 const buildOftDetail = (
     sourceAsset: string,
     destinationAsset: string,
-    position: OftPosition,
+    position: SwapPosition,
 ): OftDetail | undefined => {
     if (config.assets?.[destinationAsset] === undefined) {
         return undefined;
@@ -475,7 +474,7 @@ const CreateButton = () => {
         try {
             let data: SomeSwap;
             let hops: EncodedHop[];
-            let hopsPosition: HopsPosition | undefined;
+            let hopsPosition: SwapPosition | undefined;
 
             switch (swapType()) {
                 case SwapType.Submarine: {
@@ -708,7 +707,7 @@ const CreateButton = () => {
                               hops,
                               position: hopsPosition,
                               quoteAmount:
-                                  hopsPosition === HopsPosition.After
+                                  hopsPosition === SwapPosition.Post
                                       ? Number(receiveAmount())
                                       : Number(sendAmount()),
                           }
@@ -717,13 +716,13 @@ const CreateButton = () => {
                     ? buildOftDetail(
                           assetSend(),
                           getCanonicalAsset(assetSend()),
-                          OftPosition.Pre,
+                          SwapPosition.Pre,
                       )
                     : isUsdt0Variant(assetReceive())
                       ? buildOftDetail(
                             getCanonicalAsset(assetReceive()),
                             assetReceive(),
-                            OftPosition.Post,
+                            SwapPosition.Post,
                         )
                       : undefined,
                 signer:

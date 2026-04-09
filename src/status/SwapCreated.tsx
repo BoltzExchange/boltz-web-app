@@ -6,9 +6,8 @@ import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
-import { HopsPosition } from "../utils/Pair";
 import {
     type ChainSwap,
     type ReverseSwap,
@@ -54,7 +53,7 @@ const SwapCreated = () => {
                     )}
                     asset={chain.assetSend}
                     hops={
-                        chain.dex?.position === HopsPosition.Before
+                        chain.dex?.position === SwapPosition.Pre
                             ? chain.dex.hops
                             : undefined
                     }

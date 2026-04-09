@@ -1,15 +1,15 @@
 import { useNavigate } from "@solidjs/router";
 
 import BlockExplorer, { ExplorerKind } from "../components/BlockExplorer";
+import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { OftPosition } from "../utils/swapCreator";
 
 const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
     const { t } = useGlobalContext();
-    const isPreOft = () => swap().oft?.position === OftPosition.Pre;
+    const isPreOft = () => swap().oft?.position === SwapPosition.Pre;
 
     return (
         <div>

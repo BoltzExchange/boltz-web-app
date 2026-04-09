@@ -5,9 +5,9 @@ import { OutputType } from "boltz-core";
 
 import { type AssetType } from "../consts/Assets";
 import { LN, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { SwapPosition, SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
-import { type EncodedHop, HopsPosition } from "./Pair";
+import type { EncodedHop } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     ReverseCreatedResponse,
@@ -23,12 +23,12 @@ import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 export type DexDetail = {
     hops: EncodedHop[];
 
-    // Whether hops run before or after the Boltz swap
-    position: HopsPosition;
+    // Whether hops run pre or post the Boltz swap
+    position: SwapPosition;
 
     // Expected DEX amount at creation; updated with actual amount after execution.
-    // For hops after Boltz: expected output amount from the DEX.
-    // For hops before Boltz: expected input amount to the DEX.
+    // For post-swap hops: expected output amount from the DEX.
+    // For pre-swap hops: expected input amount to the DEX.
     quoteAmount: number | string;
 };
 
@@ -37,13 +37,8 @@ export type OftStageDetail = {
     destinationAsset: string;
 };
 
-export const enum OftPosition {
-    Pre = "pre",
-    Post = "post",
-}
-
 export type OftDetail = OftStageDetail & {
-    position: OftPosition;
+    position: SwapPosition;
     txHash?: string;
 };
 
@@ -157,13 +152,13 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.oft?.position === OftPosition.Pre) {
+    if (swap.oft?.position === SwapPosition.Pre) {
         return swap.oft.sourceAsset;
     }
 
     if (
         swap.dex !== undefined &&
-        swap.dex.position === HopsPosition.Before &&
+        swap.dex.position === SwapPosition.Pre &&
         swap.dex.hops.length > 0
     ) {
         return swap.dex.hops[0].from;
@@ -176,13 +171,13 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.oft?.position === OftPosition.Post) {
+    if (swap.oft?.position === SwapPosition.Post) {
         return swap.oft.destinationAsset;
     }
 
     if (
         swap.dex !== undefined &&
-        swap.dex.position === HopsPosition.After &&
+        swap.dex.position === SwapPosition.Post &&
         swap.dex.hops.length > 0
     ) {
         return swap.dex.hops[swap.dex.hops.length - 1].to;
@@ -197,10 +192,10 @@ export const isEvmSwap = (swap: SomeSwap) =>
     isEvmAsset(getRelevantAssetForSwap(swap));
 
 export const getPreOftDetail = (oft?: OftDetail): OftDetail | undefined =>
-    oft?.position === OftPosition.Pre ? oft : undefined;
+    oft?.position === SwapPosition.Pre ? oft : undefined;
 
 export const getPostOftDetail = (oft?: OftDetail): OftDetail | undefined =>
-    oft?.position === OftPosition.Post ? oft : undefined;
+    oft?.position === SwapPosition.Post ? oft : undefined;
 
 const generatePreimage = ({
     asset,
