@@ -42,7 +42,7 @@ const WaitForOft = (props: {
             return t("oft_arriving_soon");
         }
 
-        return `${t("oft_eta")} ~${secs}s`;
+        return t("oft_eta", { seconds: secs });
     };
 
     return (
