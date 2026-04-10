@@ -191,6 +191,17 @@ export const getBlockTipHeight = async (asset: string) => {
     return height;
 };
 
+export const getTransactionOutSpend = async (
+    asset: string,
+    txid: string,
+    vout: number,
+) => {
+    return await fetchBlockExplorer<{ spent: boolean; txid?: string }>(
+        asset,
+        `/tx/${txid}/outspend/${vout}`,
+    );
+};
+
 export const broadcastToExplorer = async (
     asset: string,
     txHex: string,

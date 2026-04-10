@@ -320,6 +320,53 @@ const claimChainSwap = async (
     }
 };
 
+export const findSwapOutputVout = (
+    deriveKey: deriveKeyFn,
+    swap: ReverseSwap | ChainSwap,
+    lockupTx: TransactionInterface,
+): number | undefined => {
+    let privateKey: ReturnType<typeof parsePrivateKey>;
+    let boltzPublicKey: Uint8Array;
+    let tree: ReturnType<typeof SwapTreeSerializer.deserializeSwapTree>;
+
+    switch (swap.type) {
+        case SwapType.Reverse: {
+            const reverseSwap = swap as ReverseSwap;
+            privateKey = parsePrivateKey(
+                deriveKey,
+                reverseSwap.assetReceive as AssetType,
+                reverseSwap.claimPrivateKeyIndex,
+                reverseSwap.claimPrivateKey,
+            );
+            boltzPublicKey = hex.decode(reverseSwap.refundPublicKey);
+            tree = SwapTreeSerializer.deserializeSwapTree(reverseSwap.swapTree);
+            break;
+        }
+
+        case SwapType.Chain: {
+            const chainSwap = swap as ChainSwap;
+            privateKey = parsePrivateKey(
+                deriveKey,
+                chainSwap.assetReceive as AssetType,
+                chainSwap.claimPrivateKeyIndex,
+                chainSwap.claimPrivateKey,
+            );
+            boltzPublicKey = hex.decode(chainSwap.claimDetails.serverPublicKey);
+            tree = SwapTreeSerializer.deserializeSwapTree(
+                chainSwap.claimDetails.swapTree,
+            );
+            break;
+        }
+
+        default:
+            throw new Error(`unhandled swap type: ${swap.type as string}`);
+    }
+
+    const keyAgg = createMusig(privateKey, boltzPublicKey);
+    const tweaked = tweakMusig(swap.assetReceive, keyAgg, tree.tree);
+    return detectSwap(tweaked.aggPubkey, lockupTx)?.vout;
+};
+
 export const claim = async <T extends ReverseSwap | ChainSwap>(
     deriveKey: deriveKeyFn,
     swap: T,
