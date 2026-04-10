@@ -151,11 +151,13 @@ const defaults = {
     },
 };
 
-const isTor = () => window?.location.hostname.endsWith(".onion");
+const isTor = () =>
+    typeof window !== "undefined" &&
+    window.location.hostname.endsWith(".onion");
 
 const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
 const baseConfig: Config = defaults;
 
-export { baseConfig, chooseUrl };
+export { baseConfig, chooseUrl, isTor };

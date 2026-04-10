@@ -2,13 +2,14 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 
 import { config } from "../config";
+import { isTor } from "../configs/base";
 import { BTC } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { satToBtc } from "./denomination";
 import { formatError } from "./errors";
 import { constructRequestOptions } from "./helper";
 
-const requestTimeoutDuration = 6_000;
+const requestTimeoutDuration = isTor() ? 25_000 : 6_000;
 const weiPerEther = BigNumber(10).pow(18);
 
 type KrakenTickerResponse = {
