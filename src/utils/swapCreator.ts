@@ -33,11 +33,6 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
-export const enum OftPosition {
-    Pre = "pre",
-    Post = "post",
-}
-
 export type OftDetail = OftRoute & {
     position: SwapPosition;
     txHash?: string;
