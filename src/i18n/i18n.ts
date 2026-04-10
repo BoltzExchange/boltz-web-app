@@ -701,7 +701,9 @@ const dict = {
         gas_topup_label: "Ziel-Gas ({{ gasToken }}) enthalten",
         layer_zero_fee: "LayerZero-Gebuehr",
         legacy_mesh_fee_label: "Legacy-Mesh-Gebuehr",
-        retry: "Wiederholen",
+        retry: "Erneut versuchen",
+        error_no_quote:
+            "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
         waiting_for_oft: "Warte auf OFT",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
@@ -1202,6 +1204,8 @@ const dict = {
         layer_zero_fee: "Tarifa LayerZero",
         legacy_mesh_fee_label: "Tarifa Legacy Mesh",
         retry: "Reintentar",
+        error_no_quote:
+            "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
         waiting_for_oft: "Esperando OFT",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
@@ -1697,6 +1701,8 @@ const dict = {
         layer_zero_fee: "Taxa LayerZero",
         legacy_mesh_fee_label: "Taxa Legacy Mesh",
         retry: "Tentar novamente",
+        error_no_quote:
+            "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
         waiting_for_oft: "Aguardando OFT",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
@@ -2169,6 +2175,7 @@ const dict = {
         layer_zero_fee: "LayerZero 费用",
         legacy_mesh_fee_label: "Legacy Mesh 费用",
         retry: "重试",
+        error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
         waiting_for_oft: "等待 OFT",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
@@ -2636,6 +2643,8 @@ const dict = {
         layer_zero_fee: "LayerZero手数料",
         legacy_mesh_fee_label: "Legacy Mesh手数料",
         retry: "再試行",
+        error_no_quote:
+            "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
         waiting_for_oft: "OFTを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
