@@ -2,6 +2,7 @@ import { hex } from "@scure/base";
 import { Buffer } from "buffer";
 
 import { chooseUrl, config } from "../config";
+import { isTor } from "../configs/base";
 import { type AssetType, BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -22,7 +23,7 @@ import {
     isEvmSwap,
 } from "./swapCreator";
 
-export const defaultTimeoutDuration = 15_000;
+export const defaultTimeoutDuration = isTor() ? 45_000 : 15_000;
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;

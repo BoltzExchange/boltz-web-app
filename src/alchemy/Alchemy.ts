@@ -5,6 +5,7 @@ import {
     toBeHex,
 } from "ethers";
 
+import { isTor } from "../configs/base";
 import { formatError } from "../utils/errors";
 import { constructRequestOptions } from "../utils/helper";
 
@@ -71,16 +72,19 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     params: unknown[],
 ): Promise<T> => {
     let response: Response;
-    const { opts, requestTimeout } = constructRequestOptions({
-        method: "POST",
-        headers: alchemyHeaders,
-        body: JSON.stringify({
-            id: jsonRpcId,
-            jsonrpc: jsonRpcVersion,
-            method,
-            params,
-        }),
-    });
+    const { opts, requestTimeout } = constructRequestOptions(
+        {
+            method: "POST",
+            headers: alchemyHeaders,
+            body: JSON.stringify({
+                id: jsonRpcId,
+                jsonrpc: jsonRpcVersion,
+                method,
+                params,
+            }),
+        },
+        isTor() ? 60_000 : undefined,
+    );
 
     try {
         response = await fetch(alchemyUrl(), opts);
