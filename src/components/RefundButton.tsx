@@ -206,10 +206,10 @@ const buildRefundFollowUpCalls = async (
     }
 
     const route = {
-        from: oft.destinationAsset,
-        to: oft.sourceAsset,
+        sourceAsset: oft.destinationAsset,
+        destinationAsset: oft.sourceAsset,
     };
-    const router = createRouterContract(route.from, transactionSigner);
+    const router = createRouterContract(route.sourceAsset, transactionSigner);
     const [routerAddress, oftContract, quotedOft] = await Promise.all([
         router.getAddress(),
         getOftContract(route),
@@ -312,7 +312,7 @@ const buildRefundFollowUpCalls = async (
         tradeAmountOutMin,
     );
     const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
-    const tokenAddress = requireTokenConfig(route.from).address;
+    const tokenAddress = requireTokenConfig(route.sourceAsset).address;
     const executeOftData = router.interface.encodeFunctionData("executeOft", [
         routerCalls,
         tokenAddress,

@@ -86,8 +86,8 @@ const expectTransportAddressFormat = (
 const getOftRoute = (asset: string) => ({
     // The self-route is intentional here: we are validating that a chain's
     // own OFT deployment can be resolved, not modeling a cross-chain transfer.
-    from: asset,
-    to: asset,
+    sourceAsset: asset,
+    destinationAsset: asset,
 });
 
 const expectDirectSendTargetKind = <TKind extends OftDirectSendTargetKind>(

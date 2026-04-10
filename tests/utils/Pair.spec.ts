@@ -492,14 +492,16 @@ describe("Pair", () => {
             recipient,
         );
 
+        const route = {
+            sourceAsset: USDT0,
+            destinationAsset: "USDT0-POL",
+        };
+
         expect(receiveAmount.toNumber()).toBe(900);
         expect(quoteOftReceiveAmountMock).toHaveBeenCalledTimes(2);
         expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
             1,
-            {
-                from: USDT0,
-                to: "USDT0-POL",
-            },
+            route,
             1000n,
             {
                 recipient,
@@ -511,10 +513,7 @@ describe("Pair", () => {
         );
         expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
             2,
-            {
-                from: USDT0,
-                to: "USDT0-POL",
-            },
+            route,
             900n,
             {
                 recipient,

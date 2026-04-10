@@ -7,7 +7,7 @@ import { type AssetType } from "../consts/Assets";
 import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
-import type { EncodedHop } from "./Pair";
+import { type EncodedHop } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     ReverseCreatedResponse,
@@ -18,6 +18,7 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
+import type { OftRoute } from "./oft/types";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
 export type DexDetail = {
@@ -32,12 +33,7 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
-export type OftStageDetail = {
-    sourceAsset: string;
-    destinationAsset: string;
-};
-
-export type OftDetail = OftStageDetail & {
+export type OftDetail = OftRoute & {
     position: SwapPosition;
     txHash?: string;
 };
