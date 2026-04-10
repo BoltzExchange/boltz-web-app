@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.0.1](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.0..v2.0.1) - 2026-04-10
+
+### Bug Fixes
+
+- Dockerfile for builds (#1323) - ([731fc8b](https://github.com/BoltzExchange/boltz-web-app/commit/731fc8b07f6a407665b2870cb44344e8e7494c82))
+- increase request timeout value for Tor (#1326) - ([d6cd0ec](https://github.com/BoltzExchange/boltz-web-app/commit/d6cd0ec0084bcad1f823ec1444a9b8b029c3f263))
+
+### Features
+
+- retry gas abstracted claims (#1324) - ([352bc31](https://github.com/BoltzExchange/boltz-web-app/commit/352bc3133a3d106b0ed5fb17128aa0612a38fcc8))
+
+### Refactoring
+
+- unify OFT route types (#1325) - ([e5dd037](https://github.com/BoltzExchange/boltz-web-app/commit/e5dd037cb70f382f229b7aadea1905314dae02d5))
+
+---
 ## [2.0.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.18..v2.0.0) - 2026-04-09
 
 ### Bug Fixes
@@ -111,6 +127,7 @@ All notable changes to this project will be documented in this file. See [conven
 - run npm audit fix - ([e24de27](https://github.com/BoltzExchange/boltz-web-app/commit/e24de27e8d0682def15152682f1ce657645662b4))
 - update USDT icon (#1313) - ([6036303](https://github.com/BoltzExchange/boltz-web-app/commit/60363032b110e16d3d77527c92ef898b14ef2319))
 - update to boltz-core v4.0.3 - ([29dec54](https://github.com/BoltzExchange/boltz-web-app/commit/29dec54b23265b1e762555f77f21f4744ead5e88))
+- bump version to v2.0.0 (#1322) - ([2108dd3](https://github.com/BoltzExchange/boltz-web-app/commit/2108dd3308c673a6d81ef30706237626dfdac0ba))
 
 ### Refactoring
 
