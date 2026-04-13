@@ -36,12 +36,79 @@ import type { ChainSwap, ReverseSwap, SubmarineSwap } from "./swapCreator";
 import { getRelevantAssetForSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
+type ClaimSwap = ReverseSwap | ChainSwap;
+type ClaimPrivateKey = ReturnType<typeof parsePrivateKey>;
+type ClaimSwapTree = ReturnType<typeof SwapTreeSerializer.deserializeSwapTree>;
+type ClaimKeyAgg = ReturnType<typeof createMusig>;
+type ClaimTweaked = ReturnType<typeof tweakMusig>;
+
+type ClaimTaprootContext = {
+    privateKey: ClaimPrivateKey;
+    boltzPublicKey: Uint8Array;
+    tree: ClaimSwapTree;
+    keyAgg: ClaimKeyAgg;
+    tweaked: ClaimTweaked;
+};
+
+const getClaimTaprootContext = (
+    deriveKey: deriveKeyFn,
+    swap: ClaimSwap,
+): ClaimTaprootContext => {
+    const privateKey = parsePrivateKey(
+        deriveKey,
+        swap.assetReceive as AssetType,
+        swap.claimPrivateKeyIndex,
+        swap.claimPrivateKey,
+    );
+
+    let boltzPublicKey: Uint8Array;
+    let tree: ClaimSwapTree;
+
+    switch (swap.type) {
+        case SwapType.Reverse: {
+            const reverseSwap = swap as ReverseSwap;
+            boltzPublicKey = hex.decode(reverseSwap.refundPublicKey);
+            tree = SwapTreeSerializer.deserializeSwapTree(reverseSwap.swapTree);
+            break;
+        }
+
+        case SwapType.Chain: {
+            const chainSwap = swap as ChainSwap;
+            boltzPublicKey = hex.decode(chainSwap.claimDetails.serverPublicKey);
+            tree = SwapTreeSerializer.deserializeSwapTree(
+                chainSwap.claimDetails.swapTree,
+            );
+            break;
+        }
+
+        default: {
+            throw new Error(`unhandled swap type: ${swap.type as string}`);
+        }
+    }
+
+    const keyAgg = createMusig(privateKey, boltzPublicKey);
+    const tweaked = tweakMusig(swap.assetReceive, keyAgg, tree.tree);
+
+    return {
+        privateKey,
+        boltzPublicKey,
+        tree,
+        keyAgg,
+        tweaked,
+    };
+};
+
+const findSwapOutput = (
+    tweaked: ClaimTweaked,
+    lockupTx: TransactionInterface,
+) => detectSwap(tweaked.aggPubkey, lockupTx);
+
 const createAdjustedClaim = async <
     T extends
         | (ClaimDetails & { blindingPrivateKey?: Uint8Array })
         | LiquidClaimDetails,
 >(
-    swap: ReverseSwap | ChainSwap,
+    swap: ClaimSwap,
     claimDetails: T[],
     destination: Uint8Array,
     liquidNetwork?: LiquidNetwork,
@@ -86,20 +153,12 @@ const claimReverseSwap = async (
     log.info(`Claiming Taproot swap cooperatively: ${cooperative}`);
     const asset = getRelevantAssetForSwap(swap);
 
-    const privateKey = parsePrivateKey(
-        deriveKey,
-        swap.assetReceive as AssetType,
-        swap.claimPrivateKeyIndex,
-        swap.claimPrivateKey,
-    );
+    const { privateKey, boltzPublicKey, tree, keyAgg, tweaked } =
+        getClaimTaprootContext(deriveKey, swap);
     const preimage = hex.decode(swap.preimage);
 
     const decodedAddress = decodeAddress(asset, swap.claimAddress);
-    const boltzPublicKey = hex.decode(swap.refundPublicKey);
-    const keyAgg = createMusig(privateKey, boltzPublicKey);
-    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
-    const tweaked = tweakMusig(asset, keyAgg, tree.tree);
-    const swapOutput = detectSwap(tweaked.aggPubkey, lockupTx);
+    const swapOutput = findSwapOutput(tweaked, lockupTx);
 
     if (swapOutput === undefined) {
         throw new Error("Swap output is undefined");
@@ -230,24 +289,15 @@ const claimChainSwap = async (
     cooperative = true,
 ): Promise<TransactionInterface> => {
     log.info(`Claiming Chain swap cooperatively: ${cooperative}`);
-    const boltzRefundPublicKey = hex.decode(swap.claimDetails.serverPublicKey);
-    const claimPrivateKey = parsePrivateKey(
-        deriveKey,
-        swap.assetReceive as AssetType,
-        swap.claimPrivateKeyIndex,
-        swap.claimPrivateKey,
-    );
-    const ourClaimKeyAgg = createMusig(claimPrivateKey, boltzRefundPublicKey);
-    const claimTree = SwapTreeSerializer.deserializeSwapTree(
-        swap.claimDetails.swapTree,
-    );
-    const tweaked = tweakMusig(
-        swap.assetReceive,
-        ourClaimKeyAgg,
-        claimTree.tree,
-    );
+    const {
+        privateKey: claimPrivateKey,
+        boltzPublicKey: boltzRefundPublicKey,
+        tree: claimTree,
+        keyAgg: ourClaimKeyAgg,
+        tweaked,
+    } = getClaimTaprootContext(deriveKey, swap);
 
-    const swapOutput = detectSwap(tweaked.aggPubkey, lockupTx);
+    const swapOutput = findSwapOutput(tweaked, lockupTx);
 
     const details = [
         {
@@ -322,49 +372,11 @@ const claimChainSwap = async (
 
 export const findSwapOutputVout = (
     deriveKey: deriveKeyFn,
-    swap: ReverseSwap | ChainSwap,
+    swap: ClaimSwap,
     lockupTx: TransactionInterface,
 ): number | undefined => {
-    let privateKey: ReturnType<typeof parsePrivateKey>;
-    let boltzPublicKey: Uint8Array;
-    let tree: ReturnType<typeof SwapTreeSerializer.deserializeSwapTree>;
-
-    switch (swap.type) {
-        case SwapType.Reverse: {
-            const reverseSwap = swap as ReverseSwap;
-            privateKey = parsePrivateKey(
-                deriveKey,
-                reverseSwap.assetReceive as AssetType,
-                reverseSwap.claimPrivateKeyIndex,
-                reverseSwap.claimPrivateKey,
-            );
-            boltzPublicKey = hex.decode(reverseSwap.refundPublicKey);
-            tree = SwapTreeSerializer.deserializeSwapTree(reverseSwap.swapTree);
-            break;
-        }
-
-        case SwapType.Chain: {
-            const chainSwap = swap as ChainSwap;
-            privateKey = parsePrivateKey(
-                deriveKey,
-                chainSwap.assetReceive as AssetType,
-                chainSwap.claimPrivateKeyIndex,
-                chainSwap.claimPrivateKey,
-            );
-            boltzPublicKey = hex.decode(chainSwap.claimDetails.serverPublicKey);
-            tree = SwapTreeSerializer.deserializeSwapTree(
-                chainSwap.claimDetails.swapTree,
-            );
-            break;
-        }
-
-        default:
-            throw new Error(`unhandled swap type: ${swap.type as string}`);
-    }
-
-    const keyAgg = createMusig(privateKey, boltzPublicKey);
-    const tweaked = tweakMusig(swap.assetReceive, keyAgg, tree.tree);
-    return detectSwap(tweaked.aggPubkey, lockupTx)?.vout;
+    const { tweaked } = getClaimTaprootContext(deriveKey, swap);
+    return findSwapOutput(tweaked, lockupTx)?.vout;
 };
 
 export const claim = async <T extends ReverseSwap | ChainSwap>(

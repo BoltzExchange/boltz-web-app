@@ -271,31 +271,44 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     );
 
                     if (vout !== undefined) {
-                        const outspend = await getTransactionOutSpend(
-                            currentSwap.assetReceive,
-                            data.transaction.id,
-                            vout,
-                        );
-
-                        if (outspend?.spent && outspend.txid) {
+                        try {
                             log.debug(
-                                `tx ${data.transaction.id}:${vout} was already claimed, updating claimTx id to ${outspend.txid}`,
+                                `checking for spent status of tx ${data.transaction.id}:${vout} from swap ${currentSwap.id}`,
                             );
-                            currentSwap.claimTx = outspend.txid;
-                            await setSwapStorage(currentSwap);
-                            return;
+                            const outspend = await getTransactionOutSpend(
+                                currentSwap.assetReceive,
+                                data.transaction.id,
+                                vout,
+                            );
+
+                            if (outspend?.spent && outspend.txid) {
+                                log.debug(
+                                    `lockup tx from swap ${currentSwap.id} was already claimed, updating claimTx id to ${outspend.txid}`,
+                                );
+                                currentSwap.claimTx = outspend.txid;
+                                await setSwapStorage(currentSwap);
+
+                                if (currentSwap.id === swap()?.id) {
+                                    setSwap(currentSwap);
+                                }
+
+                                return;
+                            }
+                            log.debug(
+                                `got bad-txns-inputs-missingorspent when claiming swap ${currentSwap.id} but tx ${data.transaction.id} is not spent`,
+                            );
+                        } catch (e) {
+                            log.error(
+                                `could not check if lockup tx from swap ${currentSwap.id} is spent: ${formatError(e)}`,
+                            );
                         }
                     }
-
-                    log.debug(
-                        `got bad-txns-inputs-missingorspent when claiming swap ${currentSwap.id} but tx ${data.transaction.id} is not spent`,
-                    );
                 }
 
                 const msg = t("claim_fail", {
                     id: privacyMode() ? hiddenInformation : currentSwap.id,
                 });
-                log.warn(msg, e);
+                log.error(msg, e);
                 notify("error", msg);
             } finally {
                 claimingSwaps.delete(swapId);
