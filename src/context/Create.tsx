@@ -12,13 +12,16 @@ import {
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
+import { isTor } from "../configs/base";
 import {
     type AssetType,
     BTC,
     LBTC,
     LN,
+    TBTC,
     assets,
     isBitcoinOnlyPair,
+    isUsdt0Asset,
 } from "../consts/Assets";
 import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
@@ -135,7 +138,9 @@ const setDestination = (
 };
 
 const isValidAsset = (asset: string) =>
-    urlParamIsSet(asset) && assets.includes(asset);
+    urlParamIsSet(asset) &&
+    assets.includes(asset) &&
+    !(isTor() && (asset === TBTC || isUsdt0Asset(asset)));
 
 const parseAmount = (amount: string): BigNumber | undefined => {
     if (!urlParamIsSet(amount)) {
