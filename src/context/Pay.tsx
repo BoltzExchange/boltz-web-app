@@ -259,7 +259,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
             } catch (e) {
                 if (
                     typeof e === "string" &&
-                    e.includes("bad-txns-inputs-missingorspent")
+                    (e.includes("bad-txns-inputs-missingorspent") ||
+                        e.includes("Transaction outputs already in utxo set") ||
+                        e.includes("Inputs missing or spent"))
                 ) {
                     const lockupTx = getTransaction(
                         currentSwap.assetReceive,
