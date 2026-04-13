@@ -3,10 +3,12 @@ import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
+import { isTor } from "../configs/base";
 import {
     AssetKind,
     BTC,
     LN,
+    TBTC,
     USDT0,
     getCanonicalAsset,
     getUsdt0Mesh,
@@ -140,6 +142,17 @@ export default class Pair {
     ) {
         if (config.assets[from]?.canSend === false) {
             log.info(`Send asset ${from} is not allowed`);
+            return;
+        }
+
+        if (
+            isTor() &&
+            (from === TBTC ||
+                to === TBTC ||
+                isUsdt0Asset(from) ||
+                isUsdt0Asset(to))
+        ) {
+            log.info("TBTC and USDT0 pairs are disabled on Tor");
             return;
         }
 
