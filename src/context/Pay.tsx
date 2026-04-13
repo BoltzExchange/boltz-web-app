@@ -275,7 +275,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     if (vout !== undefined) {
                         try {
                             log.debug(
-                                `checking for spent status of tx ${data.transaction.id}:${vout} from swap ${currentSwap.id}`,
+                                `swap ${currentSwap.id}: checking for spent status of tx output ${data.transaction.id}:${vout}`,
                             );
                             const outspend = await getTransactionOutSpend(
                                 currentSwap.assetReceive,
@@ -285,7 +285,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
 
                             if (outspend?.spent && outspend.txid) {
                                 log.debug(
-                                    `lockup tx from swap ${currentSwap.id} was already claimed, updating claimTx id to ${outspend.txid}`,
+                                    `swap ${currentSwap.id}: lockup tx was already claimed, updating claimTx id to ${outspend.txid}`,
                                 );
                                 currentSwap.claimTx = outspend.txid;
                                 await setSwapStorage(currentSwap);
