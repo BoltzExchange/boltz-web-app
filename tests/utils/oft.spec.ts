@@ -459,6 +459,62 @@ describe("oft", () => {
         expect(sendParam[4]).toContain("000301002101");
     });
 
+    test("should encode legacy mesh native drops for Solana recipients", async () => {
+        const rpcFetchSpy = vi
+            .fn()
+            .mockResolvedValue(
+                createOkFetchResponse({ result: { value: {} } }),
+            );
+        vi.stubGlobal(
+            "fetch",
+            createFetchWithDeployments(
+                {
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Ethereum",
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [createSolanaLegacyMeshDeployment()],
+                    },
+                },
+                rpcFetchSpy,
+            ),
+        );
+
+        const oft = {
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
+        };
+
+        const { sendParam } = await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0-ETH", "USDT0-SOL"),
+            validSolanaRecipient,
+            100n,
+            {
+                nativeDrop: {
+                    amount: 7n,
+                    receiver: validSolanaRecipient,
+                },
+            },
+        );
+
+        expect(sendParam[4]).toContain(
+            hex.encode(base58.decode(validSolanaRecipient)),
+        );
+    });
+
     test("should reject invalid hex-prefixed Solana recipients", async () => {
         vi.stubGlobal(
             "fetch",

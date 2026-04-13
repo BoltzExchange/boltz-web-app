@@ -383,6 +383,7 @@ const appendExecutorOption = (
     );
 
 const buildOftExtraOptions = (
+    destinationAsset: string,
     nativeDrop: OftNativeDrop | undefined,
     createSolanaTokenAccount: boolean,
 ): string => {
@@ -400,9 +401,14 @@ const buildOftExtraOptions = (
         return options;
     }
 
+    const nativeDropReceiver = encodeOftRecipient(
+        destinationAsset,
+        nativeDrop.receiver,
+    );
+
     const option = solidityPacked(
         ["uint128", "bytes32"],
-        [nativeDrop.amount, zeroPadValue(nativeDrop.receiver, 32)],
+        [nativeDrop.amount, nativeDropReceiver],
     );
 
     return appendExecutorOption(options, optionTypeNativeDrop, option);
@@ -478,7 +484,11 @@ export const quoteOftSend = async (
         recipient,
         amount,
         oftName,
-        buildOftExtraOptions(nativeDrop, createSolanaTokenAccount),
+        buildOftExtraOptions(
+            route.destinationAsset,
+            nativeDrop,
+            createSolanaTokenAccount,
+        ),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] = await oft.quoteOFT(sendParam);
     const quotedSendParam: SendParam = [...sendParam];

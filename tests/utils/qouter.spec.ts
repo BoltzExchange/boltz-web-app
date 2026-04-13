@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type * as ConfigModule from "../../src/config";
+import { NetworkTransport, Usdt0Kind } from "../../src/configs/base";
 import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
@@ -62,6 +63,24 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                 },
+                "USDT0-SOL": {
+                    ...actual.config.assets.USDT0,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Solana",
+                        symbol: "SOL",
+                        gasToken: "SOL",
+                        transport: NetworkTransport.Solana,
+                        mesh: Usdt0Kind.Legacy,
+                        rpcUrls: ["https://api.mainnet.solana.com"],
+                        nativeCurrency: {
+                            name: "SOL",
+                            symbol: "SOL",
+                            decimals: 9,
+                            minGas: 1_500_000n,
+                        },
+                    },
+                },
             },
         },
     };
@@ -75,6 +94,9 @@ describe("qouter gas top-up", () => {
     test("should disable gas top-up for USDT0 destinations without price support", () => {
         expect(getGasTopUpToken("USDT0-POL")).toBe("POL");
         expect(gasTopUpSupported("USDT0-POL")).toBe(true);
+
+        expect(getGasTopUpToken("USDT0-SOL")).toBe("SOL");
+        expect(gasTopUpSupported("USDT0-SOL")).toBe(true);
 
         expect(getGasTopUpToken("USDT0-CORN")).toBe("BTCN");
         expect(gasTopUpSupported("USDT0-CORN")).toBe(false);
@@ -92,6 +114,18 @@ describe("qouter gas top-up", () => {
 
         await expect(getGasTopUpNativeAmount("USDT0-POL")).resolves.toBe(
             200_000_000_000_000_000n,
+        );
+    });
+
+    test("should apply the configured minGas floor for Solana top-ups", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                solana: { usd: 100 },
+            }),
+        } as unknown as Response);
+
+        await expect(getGasTopUpNativeAmount("USDT0-SOL")).resolves.toBe(
+            1_500_000n,
         );
     });
 

@@ -21,6 +21,7 @@ export type Usdt0Variant = {
     chainName: string;
     symbol: string;
     nativeDecimals?: number;
+    minGas?: bigint;
     gasToken?: string;
     transport?: NetworkTransport;
     chainId?: number;
@@ -57,6 +58,7 @@ export type Asset = {
             name: string;
             symbol: string;
             decimals: number;
+            minGas?: bigint;
         };
         mesh?: Usdt0Kind;
     };

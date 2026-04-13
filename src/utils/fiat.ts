@@ -10,7 +10,6 @@ import { formatError } from "./errors";
 import { constructRequestOptions } from "./helper";
 
 const requestTimeoutDuration = isTor() ? 25_000 : 6_000;
-const weiPerEther = BigNumber(10).pow(18);
 
 type KrakenTickerResponse = {
     result: Record<
@@ -325,27 +324,36 @@ export const convertToFiat = (amount: BigNumber, rate: BigNumber) => {
     return btcAmount.multipliedBy(BigNumber(rate));
 };
 
-export const usdCentsToWei = (
+export const usdCentsToBaseUnits = (
     usdCents: BigNumber.Value,
-    ethUsdPrice: BigNumber,
+    assetUsdPrice: BigNumber,
+    decimals: number,
 ): bigint => {
     const cents = BigNumber(usdCents);
+    const baseUnits = BigNumber(10).pow(decimals);
 
     if (
         cents.isNaN() ||
-        ethUsdPrice.isNaN() ||
+        assetUsdPrice.isNaN() ||
+        !Number.isInteger(decimals) ||
+        decimals < 0 ||
         cents.lte(0) ||
-        ethUsdPrice.lte(0)
+        assetUsdPrice.lte(0)
     ) {
         return 0n;
     }
 
     return BigInt(
         cents
-            .multipliedBy(weiPerEther)
+            .multipliedBy(baseUnits)
             .dividedBy(100)
-            .dividedBy(ethUsdPrice)
+            .dividedBy(assetUsdPrice)
             .integerValue(BigNumber.ROUND_FLOOR)
             .toFixed(0),
     );
 };
+
+export const usdCentsToWei = (
+    usdCents: BigNumber.Value,
+    ethUsdPrice: BigNumber,
+): bigint => usdCentsToBaseUnits(usdCents, ethUsdPrice, 18);

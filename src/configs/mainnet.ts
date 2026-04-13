@@ -71,6 +71,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
         name: variant.gasToken ?? variant.symbol,
         symbol: variant.gasToken ?? variant.symbol,
         decimals: variant.nativeDecimals ?? 18,
+        minGas: variant.minGas,
     };
     return asset;
 };
@@ -292,6 +293,7 @@ const usdt0Variants: Usdt0Variant[] = [
         gasToken: "SOL",
         transport: NetworkTransport.Solana,
         nativeDecimals: 9,
+        minGas: 1_500_000n,
         oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",

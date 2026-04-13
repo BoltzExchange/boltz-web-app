@@ -1,13 +1,14 @@
 import { ZeroAddress } from "ethers";
 import log from "loglevel";
+import { NetworkTransport } from "src/configs/base";
 
 import { config } from "../config";
-import { AssetKind, isEvmAsset } from "../consts/Assets";
+import { AssetKind, getNetworkTransport } from "../consts/Assets";
 import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
 import {
     getGasTokenPriceFailover,
     hasGasTokenPriceLookup,
-    usdCentsToWei,
+    usdCentsToBaseUnits,
 } from "./fiat";
 
 const enum Direction {
@@ -22,11 +23,16 @@ export const getGasTopUpToken = (asset: string): string | undefined =>
 
 const gasDropsDisabled = (gasToken: string | undefined) => gasToken === "USDT0";
 
-export const gasTopUpSupported = (asset: string) =>
-    config.assets?.[asset]?.type === AssetKind.ERC20 &&
-    isEvmAsset(asset) &&
-    !gasDropsDisabled(getGasTopUpToken(asset)) &&
-    hasGasTokenPriceLookup(getGasTopUpToken(asset) ?? "");
+export const gasTopUpSupported = (asset: string) => {
+    const transport = getNetworkTransport(asset);
+    return (
+        (transport === NetworkTransport.Solana ||
+            transport === NetworkTransport.Evm) &&
+        config.assets?.[asset]?.type === AssetKind.ERC20 &&
+        !gasDropsDisabled(getGasTopUpToken(asset)) &&
+        hasGasTokenPriceLookup(getGasTopUpToken(asset) ?? "")
+    );
+};
 
 export const getGasTopUpNativeAmount = async (
     asset: string,
@@ -39,16 +45,38 @@ export const getGasTopUpNativeAmount = async (
         throw new Error(`gas drops are disabled for gas token ${gasToken}`);
     }
 
+    const nativeCurrency = config.assets?.[asset]?.network?.nativeCurrency;
+    const nativeDecimals = nativeCurrency?.decimals;
+    const minGasAmount = nativeCurrency?.minGas;
+    if (
+        nativeDecimals === undefined ||
+        !Number.isInteger(nativeDecimals) ||
+        nativeDecimals < 0
+    ) {
+        throw new Error(`missing native decimals for top-up asset ${asset}`);
+    }
+
     const gasTokenPrice = await getGasTokenPriceFailover(gasToken);
-    const gasTokenAmount = usdCentsToWei(gasTokenToGetUsdCents, gasTokenPrice);
+    const gasTokenAmount = usdCentsToBaseUnits(
+        gasTokenToGetUsdCents,
+        gasTokenPrice,
+        nativeDecimals,
+    );
+    const gasTopUpAmount =
+        minGasAmount !== undefined && minGasAmount > gasTokenAmount
+            ? minGasAmount
+            : gasTokenAmount;
     log.info("Calculated gas top-up native amount", {
         asset,
         gasToken,
+        nativeDecimals,
+        minGasAmount: minGasAmount?.toString(),
         gasTokenPrice: gasTokenPrice.toString(),
         gasTokenAmount: gasTokenAmount.toString(),
+        gasTopUpAmount: gasTopUpAmount.toString(),
         usdCents: gasTokenToGetUsdCents,
     });
-    return gasTokenAmount;
+    return gasTopUpAmount;
 };
 
 export type DexQuote = {
