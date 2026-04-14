@@ -219,6 +219,7 @@ const dict = {
         on: "on",
         off: "off",
         invalid_pair: "Invalid pair",
+        invalid_send_asset: "Invalid send asset",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
         insufficient_balance: "Insufficient balance",
@@ -712,6 +713,7 @@ const dict = {
         on: "an",
         off: "aus",
         invalid_pair: "Ungültiges Paar",
+        invalid_send_asset: "Ungültiges Sende-Asset",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
         insufficient_balance: "Unzureichendes Guthaben",
@@ -1214,6 +1216,7 @@ const dict = {
         on: "on",
         off: "off",
         invalid_pair: "Par no válido",
+        invalid_send_asset: "Activo de envío no válido",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor comprueba los permisos!",
         insufficient_balance: "Saldo insuficiente",
@@ -1711,6 +1714,7 @@ const dict = {
         on: "on",
         off: "off",
         invalid_pair: "Par inválido",
+        invalid_send_asset: "Ativo de envio inválido",
         error_starting_qr_scanner:
             "Não foi possível acessar a câmera, verifique as permissões!",
         insufficient_balance: "Saldo insuficiente",
@@ -2183,6 +2187,7 @@ const dict = {
         on: "开",
         off: "关",
         invalid_pair: "无效交换对",
+        invalid_send_asset: "无效发送资产",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
@@ -2652,6 +2657,7 @@ const dict = {
         on: "オン",
         off: "オフ",
         invalid_pair: "無効なペア",
+        invalid_send_asset: "無効な送信アセット",
         error_starting_qr_scanner:
             "カメラにアクセスできませんでした。権限を確認してください！",
         insufficient_balance: "残高不足",

@@ -53,6 +53,7 @@ import {
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/qouter";
+import { canSendAsset } from "../utils/selectableAsset";
 import {
     type GasAbstraction,
     GasAbstractionType,
@@ -280,7 +281,11 @@ const CreateButton = () => {
                     return;
                 }
                 if (!pair().isRoutable) {
-                    setButtonLabel({ key: "invalid_pair" });
+                    if (!canSendAsset(pair().fromAsset)) {
+                        setButtonLabel({ key: "invalid_send_asset" });
+                    } else {
+                        setButtonLabel({ key: "invalid_pair" });
+                    }
                     return;
                 }
 
