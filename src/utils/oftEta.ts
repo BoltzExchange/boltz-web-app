@@ -1,33 +1,35 @@
-import { config } from "../config";
-
-const bufferSeconds = 10;
-const dstBlocks = 3;
-
-const getBlockTimeSeconds = (asset: string): number | undefined =>
-    config.assets?.[asset]?.network?.blockTimeSeconds;
-
-const getLzConfirmations = (asset: string): number | undefined =>
-    config.assets?.[asset]?.network?.lzConfirmations;
+const preOftEtaSecondsToUsdt0: Record<string, number> = {
+    "USDT0-BERA": 2 * 60 + 11,
+    "USDT0-CFX": 58 * 60 + 18,
+    "USDT0-CORN": 25 * 60 * 60,
+    "USDT0-ETH": 3 * 60 + 24,
+    "USDT0-FLR": 15 * 60 + 49,
+    "USDT0-HYPE": 12 * 60 * 60,
+    "USDT0-INK": 7 * 60 + 42,
+    "USDT0-MEGAETH": 90 * 60,
+    "USDT0-MNT": 67 * 60,
+    "USDT0-MON": 24 * 60 + 17,
+    "USDT0-MORPH": 55 * 60 + 28,
+    "USDT0-OP": 15 * 60 + 13,
+    "USDT0-PLASMA": 30 * 60 + 12,
+    "USDT0-POL": 1 * 60 + 22,
+    "USDT0-RBTC": 46 * 60 + 54,
+    "USDT0-SEI": 16 * 60 + 36,
+    "USDT0-SOL": 26,
+    "USDT0-STABLE": 43 * 60 + 2,
+    "USDT0-TEMPO": 27 * 60 + 8,
+    "USDT0-TRON": 3 * 60 + 41,
+    "USDT0-UNI": 7 * 60 + 42,
+    "USDT0-XLAYER": 150 * 60,
+};
 
 export const computeOftEtaSeconds = (
     sourceAsset: string,
     destinationAsset: string,
 ): number | undefined => {
-    const srcBlockTime = getBlockTimeSeconds(sourceAsset);
-    const dstBlockTime = getBlockTimeSeconds(destinationAsset);
-    const confirmations = getLzConfirmations(sourceAsset);
-
-    if (
-        srcBlockTime === undefined ||
-        dstBlockTime === undefined ||
-        confirmations === undefined
-    ) {
+    if (destinationAsset !== "USDT0") {
         return undefined;
     }
 
-    return (
-        (confirmations + 1) * srcBlockTime +
-        dstBlocks * dstBlockTime +
-        bufferSeconds
-    );
+    return preOftEtaSecondsToUsdt0[sourceAsset];
 };

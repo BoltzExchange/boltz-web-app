@@ -11,6 +11,38 @@ const WaitForOft = (props: {
     transactionHash: string;
 }) => {
     const { t } = useGlobalContext();
+    const formatEta = (seconds: number): string => {
+        const days = Math.floor(seconds / (24 * 60 * 60));
+        const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+        const minutes = Math.floor((seconds % (60 * 60)) / 60);
+        const remainingSeconds = seconds % 60;
+
+        if (days > 0) {
+            return [
+                t("oft_eta_day_unit", { value: days }),
+                t("oft_eta_hour_unit", { value: hours }),
+                t("oft_eta_minute_unit", { value: minutes }),
+                t("oft_eta_second_unit", { value: remainingSeconds }),
+            ].join(" ");
+        }
+
+        if (hours > 0) {
+            return [
+                t("oft_eta_hour_unit", { value: hours }),
+                t("oft_eta_minute_unit", { value: minutes }),
+                t("oft_eta_second_unit", { value: remainingSeconds }),
+            ].join(" ");
+        }
+
+        if (minutes > 0) {
+            return [
+                t("oft_eta_minute_unit", { value: minutes }),
+                t("oft_eta_second_unit", { value: remainingSeconds }),
+            ].join(" ");
+        }
+
+        return t("oft_eta_second_unit", { value: remainingSeconds });
+    };
 
     const [remaining, setRemaining] = createSignal<number | undefined>();
 
@@ -42,7 +74,7 @@ const WaitForOft = (props: {
             return t("oft_arriving_soon");
         }
 
-        return t("oft_eta", { seconds: secs });
+        return t("oft_eta", { time: formatEta(secs) });
     };
 
     return (
