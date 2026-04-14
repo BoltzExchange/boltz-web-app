@@ -6,7 +6,7 @@ import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
     getGasTopUpToken,
-} from "../../src/utils/qouter";
+} from "../../src/utils/quoter";
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -86,7 +86,7 @@ vi.mock("../../src/config", async () => {
     };
 });
 
-describe("qouter gas top-up", () => {
+describe("quoter gas top-up", () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });

@@ -54,7 +54,7 @@ import {
 import { isMobile } from "../utils/helper";
 import { decodeInvoice, isLnurl } from "../utils/invoice";
 import { getRpcUrls } from "../utils/provider";
-import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
+import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated

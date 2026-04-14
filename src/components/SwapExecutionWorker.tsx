@@ -41,7 +41,7 @@ import {
 import { getOftContract } from "../utils/oft/registry";
 import { getSolanaOftGuidFromLogs } from "../utils/oft/solana";
 import { createAssetProvider } from "../utils/provider";
-import { fetchDexQuote } from "../utils/qouter";
+import { fetchDexQuote } from "../utils/quoter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,

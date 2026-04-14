@@ -8,7 +8,7 @@ import {
 } from "../../src/status/TransactionConfirmed";
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
 import { claimAsset } from "../../src/utils/evmTransaction";
-import type * as QouterModule from "../../src/utils/qouter";
+import type * as QouterModule from "../../src/utils/quoter";
 import { satsToAssetAmount } from "../../src/utils/rootstock";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
@@ -31,9 +31,9 @@ vi.mock("../../src/rif/Signer", () => ({
         mockRelayClaimTransaction(...args),
 }));
 
-vi.mock("../../src/utils/qouter", async () => {
+vi.mock("../../src/utils/quoter", async () => {
     const actual = await vi.importActual<typeof QouterModule>(
-        "../../src/utils/qouter",
+        "../../src/utils/quoter",
     );
 
     return {

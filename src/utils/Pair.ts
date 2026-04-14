@@ -44,7 +44,7 @@ import {
     fetchGasTokenQuote,
     gasTopUpSupported,
     getGasTopUpNativeAmount,
-} from "./qouter";
+} from "./quoter";
 import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
 
 /**

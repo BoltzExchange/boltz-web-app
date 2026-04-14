@@ -75,7 +75,7 @@ import {
     fetchGasTokenQuote,
     gasTopUpSupported,
     getGasTopUpNativeAmount,
-} from "../utils/qouter";
+} from "../utils/quoter";
 import {
     assetAmountToSats,
     prefix0x,
