@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
-import type { ClaimDetails } from "boltz-core";
+import type { ClaimDetails, Musig, Types } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
 import type { LiquidClaimDetails } from "boltz-core/liquid";
 import { type Buffer } from "buffer";
@@ -30,29 +30,26 @@ import {
     txToHex,
     txToId,
 } from "./compat";
+import type { ECKeys } from "./ecpair";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import type { ChainSwap, ReverseSwap, SubmarineSwap } from "./swapCreator";
 import { getRelevantAssetForSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
-type ClaimSwap = ReverseSwap | ChainSwap;
-type ClaimPrivateKey = ReturnType<typeof parsePrivateKey>;
-type ClaimSwapTree = ReturnType<typeof SwapTreeSerializer.deserializeSwapTree>;
-type ClaimKeyAgg = ReturnType<typeof createMusig>;
-type ClaimTweaked = ReturnType<typeof tweakMusig>;
+type ClaimableSwap = ReverseSwap | ChainSwap;
 
 type ClaimTaprootContext = {
-    privateKey: ClaimPrivateKey;
+    privateKey: ECKeys;
     boltzPublicKey: Uint8Array;
-    tree: ClaimSwapTree;
-    keyAgg: ClaimKeyAgg;
-    tweaked: ClaimTweaked;
+    tree: Types.SwapTree;
+    keyAgg: Musig.MusigKeyAgg;
+    tweaked: Musig.MusigKeyAgg;
 };
 
 const getClaimTaprootContext = (
     deriveKey: deriveKeyFn,
-    swap: ClaimSwap,
+    swap: ClaimableSwap,
 ): ClaimTaprootContext => {
     const privateKey = parsePrivateKey(
         deriveKey,
@@ -62,7 +59,7 @@ const getClaimTaprootContext = (
     );
 
     let boltzPublicKey: Uint8Array;
-    let tree: ClaimSwapTree;
+    let tree: ClaimTaprootContext["tree"];
 
     switch (swap.type) {
         case SwapType.Reverse: {
@@ -99,7 +96,7 @@ const getClaimTaprootContext = (
 };
 
 const findSwapOutput = (
-    tweaked: ClaimTweaked,
+    tweaked: ClaimTaprootContext["tweaked"],
     lockupTx: TransactionInterface,
 ) => detectSwap(tweaked.aggPubkey, lockupTx);
 
@@ -108,7 +105,7 @@ const createAdjustedClaim = async <
         | (ClaimDetails & { blindingPrivateKey?: Uint8Array })
         | LiquidClaimDetails,
 >(
-    swap: ClaimSwap,
+    swap: ClaimableSwap,
     claimDetails: T[],
     destination: Uint8Array,
     liquidNetwork?: LiquidNetwork,
@@ -372,7 +369,7 @@ const claimChainSwap = async (
 
 export const findSwapOutputVout = (
     deriveKey: deriveKeyFn,
-    swap: ClaimSwap,
+    swap: ClaimableSwap,
     lockupTx: TransactionInterface,
 ): number | undefined => {
     const { tweaked } = getClaimTaprootContext(deriveKey, swap);
