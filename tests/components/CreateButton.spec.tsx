@@ -580,7 +580,7 @@ describe("CreateButton", () => {
         await waitFor(() => {
             expect(signals.valid()).toBe(false);
             expect(btn.disabled).toBe(true);
-            expect(btn.textContent).toBe(i18n.en.invalid_pair);
+            expect(btn.textContent).toBe(i18n.en.invalid_send_asset);
         });
     });
 
