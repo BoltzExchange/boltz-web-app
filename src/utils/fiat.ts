@@ -330,18 +330,16 @@ export const usdCentsToBaseUnits = (
     decimals: number,
 ): bigint => {
     const cents = BigNumber(usdCents);
-    const baseUnits = BigNumber(10).pow(decimals);
 
-    if (
-        cents.isNaN() ||
-        assetUsdPrice.isNaN() ||
-        !Number.isInteger(decimals) ||
-        decimals < 0 ||
-        cents.lte(0) ||
-        assetUsdPrice.lte(0)
-    ) {
+    if (!Number.isInteger(decimals) || decimals < 0) {
+        throw new Error(`invalid base unit decimals: ${decimals}`);
+    }
+
+    if (cents.isNaN() || assetUsdPrice.isNaN() || assetUsdPrice.lte(0)) {
         return 0n;
     }
+
+    const baseUnits = BigNumber(10).pow(decimals);
 
     return BigInt(
         cents

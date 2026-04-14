@@ -1,8 +1,8 @@
 import { ZeroAddress } from "ethers";
 import log from "loglevel";
-import { NetworkTransport } from "src/configs/base";
 
 import { config } from "../config";
+import { NetworkTransport } from "../configs/base";
 import { AssetKind, getNetworkTransport } from "../consts/Assets";
 import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
 import {

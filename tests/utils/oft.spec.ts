@@ -25,6 +25,8 @@ const getOftRoute = (from: string, to = from) => ({
 });
 
 const validSolanaRecipient = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
+const expectedLegacyMeshSolanaNativeDropOptions =
+    "0x000301003102000000000000000000000000000000079cf92493ad22afbeb6a541bd811c7fc83e1fc0800384cf03ef7f2c2e888bcfb1";
 const solanaOftProgramContract = {
     name: "OFT Program",
     address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
@@ -510,9 +512,7 @@ describe("oft", () => {
             },
         );
 
-        expect(sendParam[4]).toContain(
-            hex.encode(base58.decode(validSolanaRecipient)),
-        );
+        expect(sendParam[4]).toBe(expectedLegacyMeshSolanaNativeDropOptions);
     });
 
     test("should reject invalid hex-prefixed Solana recipients", async () => {
