@@ -12,11 +12,14 @@ import { hiddenInformation } from "src/components/settings/PrivacyMode";
 import { BTC, LBTC } from "src/consts/Assets";
 import { SwapType } from "src/consts/Enums";
 import { swapStatusPending, swapStatusSuccess } from "src/consts/SwapStatus";
+import { getTransactionOutSpend } from "src/utils/blockchain";
 import {
     claim,
     createSubmarineSignature,
     createTheirPartialChainSwapSignature,
+    findSwapOutputVout,
 } from "src/utils/claim";
+import { getTransaction } from "src/utils/compat";
 import { getPair } from "src/utils/helper";
 
 import {
@@ -254,10 +257,60 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     }),
                 );
             } catch (e) {
+                if (
+                    typeof e === "string" &&
+                    (e.includes("bad-txns-inputs-missingorspent") ||
+                        e.includes("Transaction outputs already in utxo set") ||
+                        e.includes("Inputs missing or spent"))
+                ) {
+                    const lockupTx = getTransaction(
+                        currentSwap.assetReceive,
+                    ).fromHex(data.transaction.hex);
+                    const vout = findSwapOutputVout(
+                        deriveKey,
+                        currentSwap as ReverseSwap | ChainSwap,
+                        lockupTx,
+                    );
+
+                    if (vout !== undefined) {
+                        try {
+                            log.debug(
+                                `swap ${currentSwap.id}: checking for spent status of tx output ${data.transaction.id}:${vout}`,
+                            );
+                            const outspend = await getTransactionOutSpend(
+                                currentSwap.assetReceive,
+                                data.transaction.id,
+                                vout,
+                            );
+
+                            if (outspend?.spent && outspend.txid) {
+                                log.debug(
+                                    `swap ${currentSwap.id}: lockup tx was already claimed, updating claimTx id to ${outspend.txid}`,
+                                );
+                                currentSwap.claimTx = outspend.txid;
+                                await setSwapStorage(currentSwap);
+
+                                if (currentSwap.id === swap()?.id) {
+                                    setSwap(currentSwap);
+                                }
+
+                                return;
+                            }
+                            log.debug(
+                                `got bad-txns-inputs-missingorspent when claiming swap ${currentSwap.id} but tx ${data.transaction.id} is not spent`,
+                            );
+                        } catch (e) {
+                            log.error(
+                                `could not check if lockup tx from swap ${currentSwap.id} is spent: ${formatError(e)}`,
+                            );
+                        }
+                    }
+                }
+
                 const msg = t("claim_fail", {
                     id: privacyMode() ? hiddenInformation : currentSwap.id,
                 });
-                log.warn(msg, e);
+                log.error(msg, e);
                 notify("error", msg);
             } finally {
                 claimingSwaps.delete(swapId);
