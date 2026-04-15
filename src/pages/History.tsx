@@ -14,12 +14,6 @@ import { isMobile } from "../utils/helper";
 import { latestStorageVersion } from "../utils/migration";
 import type { SomeSwap } from "../utils/swapCreator";
 
-export type HistoryExport = {
-    version: number;
-    swaps: SomeSwap[];
-    rdns: { address: string; rdns: string }[];
-};
-
 const History = () => {
     const navigate = useNavigate();
 
@@ -37,7 +31,7 @@ const History = () => {
     };
 
     const exportLocalStorage = async () => {
-        downloadJson<HistoryExport>(getExportFileName(), {
+        downloadJson(getExportFileName(), {
             version: latestStorageVersion,
             swaps: await getSwaps(),
             rdns: await getRdnsAll(),
@@ -90,18 +84,14 @@ const History = () => {
                                 : desktopItemsPerPage
                         }
                     />
-                    <Show when={swaps().length > 0}>
-                        <button
-                            class="btn btn-success"
-                            onClick={exportLocalStorage}>
-                            {t("history_export")}
-                        </button>
-                        <button
-                            class="btn btn-danger"
-                            onClick={deleteLocalStorage}>
-                            {t("refund_clear")}
-                        </button>
-                    </Show>
+                    <button
+                        class="btn btn-success"
+                        onClick={exportLocalStorage}>
+                        {t("history_export")}
+                    </button>
+                    <button class="btn btn-danger" onClick={deleteLocalStorage}>
+                        {t("refund_clear")}
+                    </button>
                 </Show>
                 <SettingsMenu />
             </div>

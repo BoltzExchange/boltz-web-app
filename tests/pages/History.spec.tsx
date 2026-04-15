@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { BTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import dict from "../../src/i18n/i18n";
-import type { HistoryExport } from "../../src/pages/History";
 import History from "../../src/pages/History";
 import { latestStorageVersion } from "../../src/utils/migration";
 import {
@@ -141,7 +140,7 @@ describe("History", () => {
         ).toBeInTheDocument();
     });
 
-    test("should export swaps without mnemonic or key indexes", async () => {
+    test("should export swaps and rdns without mnemonic data", async () => {
         const user = userEvent.setup();
         storedSwaps = [sampleSwap];
         storedRdns = [{ address: "0xabc", rdns: "wallet.example" }];
@@ -158,24 +157,17 @@ describe("History", () => {
             expect(downloadJsonMock).toHaveBeenCalledOnce();
         });
 
-        const exportPayload = downloadJsonMock.mock.calls[0]?.[1] as
-            | HistoryExport
-            | undefined;
+        const exportPayload = downloadJsonMock.mock.calls[0]?.[1];
 
         expect(downloadJsonMock).toHaveBeenCalledWith(
             "history-export",
             expect.any(Object),
         );
-        expect(exportPayload).toBeDefined();
-        expect(exportPayload).toMatchObject({
+        expect(exportPayload).toEqual({
             version: latestStorageVersion,
+            swaps: [sampleSwap],
             rdns: storedRdns,
         });
         expect(exportPayload).not.toHaveProperty("mnemonic");
-        expect(exportPayload?.swaps[0]).toMatchObject({
-            id: sampleSwap.id,
-            assetSend: sampleSwap.assetSend,
-            assetReceive: sampleSwap.assetReceive,
-        });
     });
 });
