@@ -26,6 +26,7 @@
         "prettier": "npx prettier src public tests e2e docs .github *.ts *.mjs *.json *.html README.md",
         "prettier:write": "npm run prettier -- --write",
         "prettier:check": "npm run prettier -- --check",
+        "check": "npm run prettier:write && npm run lint -- --fix && npm run tsc",
         "tsc": "tsc",
         "lint": "eslint --max-warnings 0 --concurrency auto .",
         "changelog": "git-cliff -o CHANGELOG.md",
