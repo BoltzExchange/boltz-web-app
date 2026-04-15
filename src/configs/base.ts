@@ -21,7 +21,6 @@ export type Usdt0Variant = {
     chainName: string;
     symbol: string;
     nativeDecimals?: number;
-    // Minimum native token balance, in base units, to target for gas top-ups.
     minGas?: bigint;
     gasToken?: string;
     transport?: NetworkTransport;
