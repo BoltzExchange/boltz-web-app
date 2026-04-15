@@ -17,6 +17,7 @@
         "outDir": "ts-out",
         "noImplicitReturns": true,
         "noUnusedLocals": true,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "stableTypeOrdering": true
     }
 }
