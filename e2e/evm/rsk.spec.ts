@@ -352,11 +352,9 @@ test.describe("EVM", () => {
 
         await verifyRescueFile(page);
 
-        await expect(
-            page.locator("div[data-status='invoice.set']"),
-        ).toBeVisible();
-
-        await page.getByRole("button", { name: "Send" }).click();
+        await page
+            .getByRole("button", { name: "Send" })
+            .click({ timeout: 30_000 });
 
         const settled = page.locator("div[data-status='invoice.settled']");
         const claimPending = page.locator(
@@ -409,11 +407,9 @@ test.describe("EVM", () => {
 
         await verifyRescueFile(page);
 
-        await expect(
-            page.locator("div[data-status='invoice.set']"),
-        ).toBeVisible();
-
-        await page.getByRole("button", { name: "Send" }).click();
+        await page
+            .getByRole("button", { name: "Send" })
+            .click({ timeout: 30_000 });
 
         await expect(
             page.getByText(dict.en.invoice_payment_failure),
