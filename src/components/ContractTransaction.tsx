@@ -59,7 +59,8 @@ const ContractTransaction = (props: {
                 walletAddress() !== undefined &&
                 walletTransport() === expectedTransport() &&
                 (allowAnyAddress() ||
-                    props.address?.address === walletAddress())
+                    props.address?.address?.toLowerCase() ===
+                        walletAddress()?.toLowerCase())
             }
             fallback={
                 <Show
