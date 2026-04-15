@@ -28,9 +28,9 @@ import {
 } from "../utils/oft/directSend";
 import {
     createOftContract,
-    getBufferedOftNativeFee,
     getOftTransport,
     getQuotedOftContract,
+    getRequiredSolanaOftNativeBalance,
     getSolanaOftTokenBalance,
     quoteOftSend,
 } from "../utils/oft/oft";
@@ -247,11 +247,15 @@ const SendToOft = (props: {
 
     const refreshSolanaOftSendState = async (walletAddress: string) => {
         const { oftRoute, msgFee } = await quoteOftSendState(getOftRecipient());
-        const [balance, nativeBalance] = await Promise.all([
-            getSolanaOftTokenBalance(oftRoute, walletAddress),
-            getSolanaBalance(props.oft.sourceAsset, walletAddress),
-        ]);
-        const requiredNativeBalance = getBufferedOftNativeFee(msgFee[0]);
+        const [balance, nativeBalance, requiredNativeBalance] =
+            await Promise.all([
+                getSolanaOftTokenBalance(oftRoute, walletAddress),
+                getSolanaBalance(props.oft.sourceAsset, walletAddress),
+                getRequiredSolanaOftNativeBalance(
+                    props.oft.sourceAsset,
+                    msgFee[0],
+                ),
+            ]);
         const hasEnoughTokenBalance = balance >= props.amount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;

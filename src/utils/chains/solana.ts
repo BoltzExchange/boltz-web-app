@@ -12,11 +12,13 @@ import { constructRequestOptions } from "../helper";
 import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
+export const solanaTokenAccountSize = 165;
 export const solanaAtaRentExemptLamports = 2_039_280n;
 const solanaGetAccountInfoMethod = "getAccountInfo";
 const solanaRpcProbeTimeout = 5_000;
 const solanaTokenAccountExistsCache = new Set<string>();
 const solanaConnectionCache = new Map<string, Promise<Connection>>();
+const solanaRentExemptBalanceCache = new Map<string, Promise<bigint>>();
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -48,6 +50,10 @@ export const clearSolanaTokenAccountCreationCache = () => {
 
 export const clearSolanaConnectionCache = () => {
     solanaConnectionCache.clear();
+};
+
+export const clearSolanaRentExemptBalanceCache = () => {
+    solanaRentExemptBalanceCache.clear();
 };
 
 export const getConnectedSolanaWalletAddress = async (
@@ -171,6 +177,34 @@ export const getSolanaNativeBalance = async (
     return BigInt(
         await connection.getBalance(new web3.PublicKey(ownerAddress)),
     );
+};
+
+export const getSolanaRentExemptMinimumBalance = async (
+    sourceAsset: string,
+    accountSize: number,
+): Promise<bigint> => {
+    const cacheKey = `${sourceAsset}:${accountSize}`;
+    const cached = solanaRentExemptBalanceCache.get(cacheKey);
+    if (cached !== undefined) {
+        return await cached;
+    }
+
+    const created = getSolanaConnection(sourceAsset)
+        .then(async (connection) =>
+            BigInt(
+                await connection.getMinimumBalanceForRentExemption(
+                    accountSize,
+                    "confirmed",
+                ),
+            ),
+        )
+        .catch((error: unknown) => {
+            solanaRentExemptBalanceCache.delete(cacheKey);
+            throw error;
+        });
+    solanaRentExemptBalanceCache.set(cacheKey, created);
+
+    return await created;
 };
 
 const queryShouldCreateSolanaTokenAccount = async (

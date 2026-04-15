@@ -22,8 +22,10 @@ import {
     clearSolanaTokenAccountCreationCache,
     encodeSolanaAtaCreationOption,
     encodeSolanaRecipient,
+    getSolanaRentExemptMinimumBalance,
     getSolanaTransactionSender,
     shouldCreateSolanaTokenAccount,
+    solanaTokenAccountSize,
 } from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
 import {
@@ -429,6 +431,19 @@ const getLegacyMeshSourceAmount = (destinationAmount: bigint): bigint => {
 
 export const getBufferedOftNativeFee = (nativeFee: bigint): bigint =>
     (nativeFee * 110n) / 100n;
+
+export const getRequiredSolanaOftNativeBalance = async (
+    sourceAsset: string,
+    nativeFee: bigint,
+): Promise<bigint> => {
+    const bufferedFee = getBufferedOftNativeFee(nativeFee);
+    const rentExemptMinimum = await getSolanaRentExemptMinimumBalance(
+        sourceAsset,
+        solanaTokenAccountSize,
+    );
+
+    return bufferedFee > rentExemptMinimum ? bufferedFee : rentExemptMinimum;
+};
 
 const createOftSendParam = async (
     route: OftRoute,
