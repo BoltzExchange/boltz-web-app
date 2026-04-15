@@ -498,6 +498,12 @@ const Create = () => {
             return;
         }
 
+        if (amount > 0 && receiveAmount().isZero()) {
+            setCustomValidity(t("error_zero_quote"), false);
+            setAmountValid(false);
+            return;
+        }
+
         const lessThanMin = amount < minimum();
 
         if (lessThanMin || amount > maximum()) {

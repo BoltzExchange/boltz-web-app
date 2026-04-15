@@ -350,6 +350,66 @@ describe("Create", () => {
         }
     });
 
+    test("should block creation when a routed quote resolves to zero", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            globalSignals.setOnline(true);
+            globalSignals.setPairs(pairs);
+            setPairAssets("USDT0-SOL", BTC);
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => Promise.resolve(BigNumber(0)))
+                .mockName("calculateReceiveAmount");
+
+            signals.setAddressValid(true);
+            signals.setOnchainAddress(
+                "bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3",
+            );
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
+            });
+
+            const button = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            vi.useRealTimers();
+
+            await waitFor(() => {
+                expect(signals.amountValid()).toBe(false);
+                expect(button.disabled).toBe(true);
+                expect(button.textContent).toBe(i18n.en.error_zero_quote);
+            });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("should update receive amount on asset change", async () => {
         render(
             () => (
@@ -626,9 +686,7 @@ describe("Create", () => {
 
         await waitFor(() => {
             expect(createButton.disabled).toEqual(true);
-            expect(createButton.textContent).toEqual(
-                "Minimum amount is 50 000 sats",
-            );
+            expect(createButton.textContent).toEqual(i18n.en.error_zero_quote);
         });
     });
 

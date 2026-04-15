@@ -306,6 +306,14 @@ const CreateButton = () => {
                         swapType() !== SwapType.Submarine);
 
                 if (shouldShowAmountError()) {
+                    if (
+                        sendAmount().isGreaterThan(0) &&
+                        receiveAmount().isZero()
+                    ) {
+                        setButtonLabel({ key: "error_zero_quote" });
+                        return;
+                    }
+
                     const lessThanMin = Number(sendAmount()) < minimum();
                     setButtonLabel({
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",
