@@ -52,7 +52,7 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
-import { gasTopUpSupported } from "../utils/qouter";
+import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
     type GasAbstraction,

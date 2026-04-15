@@ -12,6 +12,7 @@ import {
     getGasTokenPriceCoinGecko,
     getGasTokenPriceFailover,
     hasGasTokenPriceLookup,
+    usdCentsToBaseUnits,
     usdCentsToWei,
 } from "../../src/utils/fiat";
 
@@ -163,4 +164,13 @@ describe("fiat", () => {
             expect(usdCentsToWei(cents, ethUsdPrice)).toBe(expected);
         },
     );
+
+    test("should throw when base unit decimals are misconfigured", () => {
+        expect(() =>
+            usdCentsToBaseUnits(100, BigNumber(3_500), Number.NaN),
+        ).toThrow("invalid base unit decimals");
+        expect(() => usdCentsToBaseUnits(100, BigNumber(3_500), -1)).toThrow(
+            "invalid base unit decimals",
+        );
+    });
 });

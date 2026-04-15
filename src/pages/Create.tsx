@@ -43,6 +43,7 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
+import { getAssetNativeBalance } from "../utils/chains/balance";
 import {
     calculateDigits,
     convertAmount,
@@ -52,8 +53,8 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import { decodeInvoice, isLnurl } from "../utils/invoice";
-import { createAssetProvider, getRpcUrls } from "../utils/provider";
-import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
+import { getRpcUrls } from "../utils/provider";
+import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated
@@ -205,8 +206,7 @@ const Create = () => {
                     hasPostOft,
                     rpcUrlCount: rpcUrls.length,
                 });
-                const balance =
-                    await createAssetProvider(asset).getBalance(address);
+                const balance = await getAssetNativeBalance(asset, address);
                 const gasTokenCostWei = await getGasTopUpNativeAmount(asset);
                 log.info("Gas top-up balance check", {
                     asset,

@@ -193,7 +193,7 @@ vi.mock("../../src/utils/oft/oft", () => ({
     }),
 }));
 
-vi.mock("../../src/utils/qouter", () => ({
+vi.mock("../../src/utils/quoter", () => ({
     fetchDexQuote: vi.fn().mockResolvedValue({
         trade: {
             amountOut: 150n,

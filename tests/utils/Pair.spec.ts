@@ -8,7 +8,7 @@ import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
 import type * as SolanaModule from "../../src/utils/chains/solana";
 import type * as OftModule from "../../src/utils/oft/oft";
-import type * as QouterModule from "../../src/utils/qouter";
+import type * as QouterModule from "../../src/utils/quoter";
 
 const {
     quoteDexAmountInMock,
@@ -131,7 +131,7 @@ vi.mock("../../src/utils/chains/solana", async () => {
     };
 });
 
-vi.mock("../../src/utils/qouter", () => ({
+vi.mock("../../src/utils/quoter", () => ({
     fetchDexQuote: fetchDexQuoteMock,
     fetchGasTokenQuote: fetchGasTokenQuoteMock,
     gasTopUpSupported: gasTopUpSupportedMock,

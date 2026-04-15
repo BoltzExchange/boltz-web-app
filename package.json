@@ -10,7 +10,7 @@
         "test": "npm run regtest && vitest ./tests",
         "test:e2e": "npm run regtest && playwright test",
         "playwright:install": "playwright install --with-deps chromium",
-        "dev": "npm run regtest && vite",
+        "dev": "vite",
         "preview": "vite preview",
         "build": "./build.py && vite build; cp dist/index.html dist/404.html",
         "build:regular": "node index-template-vars.mjs --regular && npm run build",

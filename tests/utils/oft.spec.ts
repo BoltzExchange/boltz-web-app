@@ -25,6 +25,8 @@ const getOftRoute = (from: string, to = from) => ({
 });
 
 const validSolanaRecipient = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
+const expectedLegacyMeshSolanaNativeDropOptions =
+    "0x000301003102000000000000000000000000000000079cf92493ad22afbeb6a541bd811c7fc83e1fc0800384cf03ef7f2c2e888bcfb1";
 const solanaOftProgramContract = {
     name: "OFT Program",
     address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
@@ -457,6 +459,60 @@ describe("oft", () => {
         );
 
         expect(sendParam[4]).toContain("000301002101");
+    });
+
+    test("should encode legacy mesh native drops for Solana recipients", async () => {
+        const rpcFetchSpy = vi
+            .fn()
+            .mockResolvedValue(
+                createOkFetchResponse({ result: { value: {} } }),
+            );
+        vi.stubGlobal(
+            "fetch",
+            createFetchWithDeployments(
+                {
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Ethereum",
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [createSolanaLegacyMeshDeployment()],
+                    },
+                },
+                rpcFetchSpy,
+            ),
+        );
+
+        const oft = {
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
+        };
+
+        const { sendParam } = await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0-ETH", "USDT0-SOL"),
+            validSolanaRecipient,
+            100n,
+            {
+                nativeDrop: {
+                    amount: 7n,
+                    receiver: validSolanaRecipient,
+                },
+            },
+        );
+
+        expect(sendParam[4]).toBe(expectedLegacyMeshSolanaNativeDropOptions);
     });
 
     test("should reject invalid hex-prefixed Solana recipients", async () => {
