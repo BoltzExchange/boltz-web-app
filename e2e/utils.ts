@@ -256,16 +256,29 @@ export const getBolt12Offer = async (): Promise<string> => {
 };
 
 export const verifyRescueFile = async (page: Page) => {
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+    let fileName: string | undefined;
 
-    const fileName = "rescue-file.json";
-    await (await downloadPromise).saveAs(fileName);
+    try {
+        const downloadButton = page.getByRole("button", {
+            name: dict.en.download_new_key,
+        });
+        await expect(downloadButton).toBeVisible({ timeout: 60_000 });
 
-    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
+        const downloadPromise = page.waitForEvent("download");
+        await downloadButton.click();
 
-    if (fs.existsSync(fileName)) {
-        fs.unlinkSync(fileName);
+        fileName = `rescue-file-${randomBytes(4).toString("hex")}.json`;
+        await (await downloadPromise).saveAs(fileName);
+
+        const rescueFileUpload = page.getByTestId("rescueFileUpload");
+        await expect(rescueFileUpload).toBeVisible({ timeout: 30_000 });
+        await rescueFileUpload.setInputFiles(fileName);
+
+        await expect(rescueFileUpload).toBeHidden({ timeout: 30_000 });
+    } finally {
+        if (fileName !== undefined && fs.existsSync(fileName)) {
+            fs.unlinkSync(fileName);
+        }
     }
 };
 

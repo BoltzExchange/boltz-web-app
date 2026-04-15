@@ -4,9 +4,24 @@ import { base58, hex } from "@scure/base";
 import { config as runtimeConfig } from "../../src/config";
 import { NetworkTransport } from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
+import type * as SolanaChainsModule from "../../src/utils/chains/solana";
+
+vi.mock("../../src/utils/chains/solana", async () => {
+    const actual = await vi.importActual<typeof SolanaChainsModule>(
+        "../../src/utils/chains/solana",
+    );
+
+    return {
+        ...actual,
+        getSolanaRentExemptMinimumBalance: vi.fn(
+            actual.getSolanaRentExemptMinimumBalance,
+        ),
+    };
+});
 
 const {
     decodeExecutorNativeAmountExceedsCapError,
+    getRequiredSolanaOftNativeBalance,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftAmountInForAmountOut,
@@ -16,7 +31,7 @@ const {
 const { getOftContract } = await import("../../src/utils/oft/registry");
 const { getSolanaOftGuidFromLogs: getSolanaOftSentEventFromTransaction } =
     await import("../../src/utils/oft/solana");
-const { shouldCreateSolanaTokenAccount } =
+const { getSolanaRentExemptMinimumBalance, shouldCreateSolanaTokenAccount } =
     await import("../../src/utils/chains/solana");
 
 const getOftRoute = (from: string, to = from) => ({
@@ -221,6 +236,22 @@ describe("oft", () => {
 
         msgFee[0] = 6n;
         expect(msgFee[0]).toBe(6n);
+    });
+
+    test("should use the higher of the buffered Solana OFT fee or ATA rent", async () => {
+        vi.mocked(getSolanaRentExemptMinimumBalance).mockResolvedValue(
+            2_039_280n,
+        );
+        await expect(
+            getRequiredSolanaOftNativeBalance("USDT0-SOL", 1_000_000n),
+        ).resolves.toBe(2_039_280n);
+        await expect(
+            getRequiredSolanaOftNativeBalance("USDT0-SOL", 3_000_000n),
+        ).resolves.toBe(3_300_000n);
+        expect(getSolanaRentExemptMinimumBalance).toHaveBeenCalledWith(
+            "USDT0-SOL",
+            165,
+        );
     });
 
     test("should resolve legacy mesh assets by configured endpoint id", async () => {

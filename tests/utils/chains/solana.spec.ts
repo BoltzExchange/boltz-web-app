@@ -5,8 +5,11 @@ import { config as runtimeConfig } from "../../../src/config";
 import { config as mainnetConfig } from "../../../src/configs/mainnet";
 import lazySolana from "../../../src/lazy/solana";
 import {
+    clearSolanaConnectionCache,
+    clearSolanaRentExemptBalanceCache,
     clearSolanaTokenAccountCreationCache,
     decodeSolanaAddress,
+    getSolanaRentExemptMinimumBalance,
     isValidSolanaAddress,
     shouldCreateSolanaTokenAccount,
 } from "../../../src/utils/chains/solana";
@@ -28,6 +31,8 @@ beforeAll(() => {
 afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    clearSolanaConnectionCache();
+    clearSolanaRentExemptBalanceCache();
     clearSolanaTokenAccountCreationCache();
 });
 
@@ -118,6 +123,39 @@ test("should not cache true ATA creation results", async () => {
     ).resolves.toBe(true);
 
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+});
+
+test("should query and cache Solana rent-exempt minimum balances", async () => {
+    const mockGetMinimumBalanceForRentExemption = vi
+        .fn()
+        .mockResolvedValue(2_039_280);
+    const mockGetVersion = vi
+        .fn()
+        .mockResolvedValue({ "solana-core": "2.1.0" });
+
+    vi.spyOn(lazySolana, "get").mockResolvedValue({
+        web3: {
+            Connection: class {
+                getVersion = mockGetVersion;
+                getMinimumBalanceForRentExemption =
+                    mockGetMinimumBalanceForRentExemption;
+            },
+        },
+    } as never);
+
+    await expect(
+        getSolanaRentExemptMinimumBalance("USDT0-SOL", 165),
+    ).resolves.toBe(2_039_280n);
+    await expect(
+        getSolanaRentExemptMinimumBalance("USDT0-SOL", 165),
+    ).resolves.toBe(2_039_280n);
+
+    expect(mockGetVersion).toHaveBeenCalledTimes(1);
+    expect(mockGetMinimumBalanceForRentExemption).toHaveBeenCalledTimes(1);
+    expect(mockGetMinimumBalanceForRentExemption).toHaveBeenCalledWith(
+        165,
+        "confirmed",
+    );
 });
 
 test("should detect live Solana USDT ATA creation requirements on mainnet", async () => {
