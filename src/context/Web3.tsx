@@ -414,6 +414,25 @@ const Web3SignerProvider = (props: {
         }
     };
 
+    const setEvmWallet = async (
+        provider: EIP1193Provider,
+        address: string,
+        rdns: string,
+        chainId?: string,
+    ) => {
+        await setRdns(address, rdns);
+        const signer = createConnectedSigner(provider, address, rdns);
+        setConnectedWallet({
+            address: signer.address,
+            rdns,
+            transport: NetworkTransport.Evm,
+            chainId: parseChainId(chainId),
+            signer,
+        });
+        setWalletConnected(true);
+        void logSignerNetwork(signer);
+    };
+
     const refreshConnectedSigner = async (
         provider: EIP1193Provider,
         rdns: string,
@@ -448,15 +467,7 @@ const Web3SignerProvider = (props: {
         log.info(
             `Refreshing signer for ${rdns} after network switch to ${chainId ?? "unknown chain"} using ${nextAddress}`,
         );
-        await setRdns(nextAddress, rdns);
-        setConnectedWallet({
-            address: nextAddress,
-            rdns,
-            transport: NetworkTransport.Evm,
-            chainId: parseChainId(chainId),
-            signer: createConnectedSigner(provider, nextAddress, rdns),
-        });
-        setWalletConnected(true);
+        await setEvmWallet(provider, nextAddress, rdns, chainId);
     };
 
     const connectProvider = async (
@@ -526,20 +537,7 @@ const Web3SignerProvider = (props: {
         }
         setRawProvider(wallet.provider);
 
-        await setRdns(addresses[0], wallet.info.rdns);
-
-        const signer = createConnectedSigner(
-            wallet.provider,
-            addresses[0],
-            wallet.info.rdns,
-        );
-        setConnectedWallet({
-            address: signer.address,
-            rdns: wallet.info.rdns,
-            transport: NetworkTransport.Evm,
-            signer,
-        });
-        void logSignerNetwork(signer);
+        await setEvmWallet(wallet.provider, addresses[0], wallet.info.rdns);
     };
 
     const switchNetwork = async (asset: string) => {
