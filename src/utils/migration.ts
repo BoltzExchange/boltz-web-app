@@ -393,61 +393,6 @@ const migrateLocalForage = async (
     }
 };
 
-export const migrateBackupFile = (
-    version: number,
-    swaps: Record<string, unknown>[],
-): SomeSwap[] => {
-    switch (version) {
-        case latestStorageVersion:
-            log.debug(
-                `Backup file already at latest version: ${latestStorageVersion}`,
-            );
-            return swaps as SomeSwap[];
-
-        case 0: {
-            log.debug(
-                `Migrating backup file to chain swap version: ${version + 1}`,
-            );
-            return migrateBackupFile(
-                version + 1,
-                swaps.map((swap) => migrateSwapToChainSwapFormat(swap)),
-            );
-        }
-
-        case 1:
-            return migrateBackupFile(version + 1, swaps);
-
-        case 2:
-            return migrateBackupFile(
-                version + 1,
-                swaps.map((swap) => migrateSwapGasAbstraction(swap)),
-            );
-
-        case 3:
-            return migrateBackupFile(
-                version + 1,
-                swaps.map((swap) => migrateSwapOftShape(swap)),
-            );
-
-        case 4:
-            return migrateBackupFile(
-                version + 1,
-                swaps.map((swap) => migrateSwapGasAbstractionShape(swap)),
-            );
-
-        case 5:
-            return migrateBackupFile(
-                version + 1,
-                swaps.map((swap) =>
-                    migrateSwapDexPositionShape(swap as SomeSwap),
-                ),
-            );
-
-        default:
-            throw `invalid backup file version: ${version}`;
-    }
-};
-
 export const migrateStorage = async (
     paramsForage: LocalForage,
     swapsForage: LocalForage,

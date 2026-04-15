@@ -144,11 +144,6 @@ export type GlobalContextType = {
     setRescueFile: Setter<RescueFile | null>;
     rescueFileBackupDone: Accessor<boolean>;
     setRescueFileBackupDone: Setter<boolean>;
-
-    // UNIX timestamp when a backup file was last imported
-    // Used to prevent auto-claiming swaps that were created before the backup
-    backupImportTimestamp: Accessor<number | undefined>;
-    setBackupImportTimestamp: Setter<number | undefined>;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -423,7 +418,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const clearSwaps = async () => {
         await swapsForage.clear();
-        setBackupImportTimestamp(undefined);
     };
 
     const rdnsForage = localforage.createInstance({
@@ -535,14 +529,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         createSignal<boolean>(false),
         {
             name: "bitcoinOnly",
-        },
-    );
-
-    const [backupImportTimestamp, setBackupImportTimestamp] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal<number>(),
-        {
-            name: "backupImportTimestamp",
         },
     );
 
@@ -664,9 +650,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
                 rescueFileBackupDone,
                 setRescueFileBackupDone,
-
-                backupImportTimestamp,
-                setBackupImportTimestamp,
             }}>
             {props.children}
         </GlobalContext.Provider>

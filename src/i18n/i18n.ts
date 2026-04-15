@@ -74,7 +74,6 @@ const dict = {
         onchain_address: "Enter {{ asset }} address to receive funds",
         onchain_address_no_asset: "Enter address",
         invalid_refund_file: "Invalid rescue key",
-        invalid_backup_file: "Invalid backup file",
         invalid_invoice:
             "Please provide a valid Lightning invoice, BOLT12 or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
@@ -104,8 +103,7 @@ const dict = {
             "Enter a {{ asset }} address to receive your refund on:",
         refund_address_header_no_asset:
             "Enter an address to receive your refund on:",
-        refund_backup: "Backup",
-        refund_import: "Import Backup",
+        history_export: "Export",
         refund_clear: "Delete storage",
         delete_storage:
             "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
@@ -563,7 +561,6 @@ const dict = {
         onchain_address: "Gib eine {{ asset }} Empfangsadresse ein",
         onchain_address_no_asset: "Adresse",
         invalid_refund_file: "Ungültiger Rettungsschlüssel",
-        invalid_backup_file: "Ungültige Backupdatei",
         invalid_invoice:
             "Bitte eine gültige Lightning-Rechnung, BOLT12 oder LNURL eingeben",
         invalid_0_amount: "Lightning-Rechnungen ohne Betrag nicht unterstützt",
@@ -593,8 +590,7 @@ const dict = {
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
         refund_address_header_no_asset: "Adresse deines Wallets eingeben",
-        refund_backup: "Backup",
-        refund_import: "Backup importieren",
+        history_export: "Exportieren",
         refund_clear: "Speicher löschen",
         delete_storage:
             "Bist du sicher, dass du deinen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
@@ -1065,7 +1061,6 @@ const dict = {
             "Ingrese una dirección {{ asset }} para recibir los fondos",
         onchain_address_no_asset: "Ingrese la dirección",
         invalid_refund_file: "'Clave de rescate no válido",
-        invalid_backup_file: "Archivo de backup no válido",
         invalid_invoice:
             "Por favor, pegue una factura Lightning, BOLT12 o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
@@ -1096,8 +1091,7 @@ const dict = {
             "Introduce la dirección de tu monedero {{ asset }} para reembolsar",
         refund_address_header_no_asset:
             "Introduce la dirección de tu monedero para reembolsar",
-        refund_backup: "Backup",
-        refund_import: "Importar Backup",
+        history_export: "Exportar",
         refund_clear: "Borrar almacenamiento",
         delete_storage:
             "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves de reembolso.",
@@ -1566,7 +1560,6 @@ const dict = {
             "Digite um endereço {{ asset }} para receber os fundos",
         onchain_address_no_asset: "Digite o endereço",
         invalid_refund_file: "Chave de resgate inválida",
-        invalid_backup_file: "Arquivo de backup inválido",
         invalid_invoice:
             "Por favor, forneça um invoice Lightning, BOLT12 ou LNURL válido",
         invalid_0_amount: "Invoices sem valor não são suportadas",
@@ -1597,8 +1590,7 @@ const dict = {
             "Informe um endereço {{ asset }} para receber seu reembolso:",
         refund_address_header_no_asset:
             "Informe um endereço para receber seu reembolso:",
-        refund_backup: "Backup",
-        refund_import: "Importar backup",
+        history_export: "Exportar",
         refund_clear: "Apagar armazenamento",
         delete_storage:
             "Tem certeza de que deseja limpar seu armazenamento?\nAs informações das suas trocas e as chaves privadas de reembolso/recebimento serão perdidas.",
@@ -2058,7 +2050,6 @@ const dict = {
         onchain_address: "输入{{ asset }}地址以接收资金",
         onchain_address_no_asset: "地址",
         invalid_refund_file: "无效的救援钥匙",
-        invalid_backup_file: "无效的备份文件",
         invalid_invoice: "请提供有效的发票,BOLT12或LNURL",
         invalid_0_amount: "不支持没有金额的发票",
         copy_invoice: "闪电网络发票",
@@ -2083,8 +2074,7 @@ const dict = {
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
-        refund_backup: "备份",
-        refund_import: "导入备份",
+        history_export: "导出",
         refund_clear: "删除本地存储",
         delete_storage:
             "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
@@ -2512,7 +2502,6 @@ const dict = {
             "資金を受け取るために、{{ asset }}アドレスを入力してください",
         onchain_address_no_asset: "アドレスを入力してください",
         invalid_refund_file: "無効なレスキューキー",
-        invalid_backup_file: "無効なバックアップファイル",
         invalid_invoice: "有効なインボイス、BOLT12、LNURLを入力してください",
         invalid_0_amount: "金額のない空インボイスは対応していません",
         copy_invoice: "インボイスをコピー",
@@ -2540,8 +2529,7 @@ const dict = {
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
         refund_address_header_no_asset: "返金用のウォレットのアドレスを入力",
-        refund_backup: "バックアップ",
-        refund_import: "バックアップをインポート",
+        history_export: "エクスポート",
         refund_clear: "ローカルストレージを削除",
         delete_storage:
             "ストレージを削除しても本当にいいですか？\n スワップ情報と、返金、クレーム用の秘密鍵は失われます",
