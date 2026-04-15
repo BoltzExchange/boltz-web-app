@@ -455,6 +455,7 @@ const SendToOft = (props: {
                 <WaitForOft
                     sourceAsset={props.oft.sourceAsset}
                     destinationAsset={props.oft.destinationAsset}
+                    txHash={txSent()}
                 />
             }>
             <Show

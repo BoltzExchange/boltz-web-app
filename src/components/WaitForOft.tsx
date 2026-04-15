@@ -1,12 +1,16 @@
+import log from "loglevel";
 import { createEffect, createSignal, onCleanup } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
+import { formatError } from "../utils/errors";
+import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
 import LoadingSpinner from "./LoadingSpinner";
 
 const WaitForOft = (props: {
     sourceAsset: string;
     destinationAsset: string;
+    txHash?: string;
 }) => {
     const { t } = useGlobalContext();
     const formatEta = (seconds: number): string => {
@@ -49,7 +53,37 @@ const WaitForOft = (props: {
             props.sourceAsset,
             props.destinationAsset,
         );
-        setRemaining(eta !== undefined ? Math.ceil(eta) : undefined);
+        if (eta === undefined) {
+            setRemaining(undefined);
+            return;
+        }
+
+        const txHash = props.txHash;
+        const sourceAsset = props.sourceAsset;
+
+        if (txHash === undefined) {
+            setRemaining(Math.ceil(eta));
+            return;
+        }
+
+        getOftTransactionConfirmationTimestamp(sourceAsset, txHash)
+            .then((confirmationTimeSecs) => {
+                if (confirmationTimeSecs === undefined) {
+                    setRemaining(Math.ceil(eta));
+                    return;
+                }
+
+                const elapsedSecs = Date.now() / 1_000 - confirmationTimeSecs;
+                setRemaining(Math.max(Math.ceil(eta - elapsedSecs), 0));
+            })
+            .catch((e) => {
+                log.warn("Failed to fetch OFT tx confirmation time", {
+                    sourceAsset,
+                    txHash,
+                    error: formatError(e),
+                });
+                setRemaining(Math.ceil(eta));
+            });
     });
 
     const timer = setInterval(() => {

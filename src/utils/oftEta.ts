@@ -1,9 +1,12 @@
-const preOftEtaSecondsToUsdt0: Record<string, number> = {
+import type { Usdt0VariantAsset } from "../configs/mainnet";
+
+const preOftEtaSecondsToUsdt0: Record<Usdt0VariantAsset, number | undefined> = {
     "USDT0-BERA": 2 * 60 + 11,
     "USDT0-CFX": 58 * 60 + 18,
     "USDT0-CORN": 25 * 60 * 60,
     "USDT0-ETH": 3 * 60 + 24,
     "USDT0-FLR": 15 * 60 + 49,
+    "USDT0-HBAR": 2 * 60 + 13,
     "USDT0-HYPE": 12 * 60 * 60,
     "USDT0-INK": 7 * 60 + 42,
     "USDT0-MEGAETH": 90 * 60,
@@ -23,11 +26,17 @@ const preOftEtaSecondsToUsdt0: Record<string, number> = {
     "USDT0-XLAYER": 150 * 60,
 };
 
+const isUsdt0VariantAsset = (asset: string): asset is Usdt0VariantAsset =>
+    asset in preOftEtaSecondsToUsdt0;
+
 export const computeOftEtaSeconds = (
     sourceAsset: string,
     destinationAsset: string,
 ): number | undefined => {
     if (destinationAsset !== "USDT0") {
+        return undefined;
+    }
+    if (!isUsdt0VariantAsset(sourceAsset)) {
         return undefined;
     }
 

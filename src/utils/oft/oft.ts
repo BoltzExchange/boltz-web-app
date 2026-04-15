@@ -22,6 +22,7 @@ import { clearCache, getCachedValue } from "../cache";
 import {
     encodeSolanaAtaCreationOption,
     encodeSolanaRecipient,
+    getSolanaConnection,
     getSolanaRentExemptMinimumBalance,
     getSolanaTransactionSender,
     shouldCreateSolanaTokenAccount,
@@ -667,5 +668,34 @@ export const getOftTransactionSender = async (
                 `Unhandled OFT transport: ${String(exhaustiveCheck)}`,
             );
         }
+    }
+};
+
+export const getOftTransactionConfirmationTimestamp = async (
+    sourceAsset: string,
+    txHash: string,
+): Promise<number | undefined> => {
+    switch (getOftTransport(sourceAsset)) {
+        case NetworkTransport.Evm: {
+            const provider = getOftProvider(sourceAsset);
+            const tx = await provider.getTransaction(txHash);
+            if (tx?.blockNumber === undefined || tx.blockNumber === null) {
+                return undefined;
+            }
+            const block = await provider.getBlock(tx.blockNumber);
+            return block?.timestamp;
+        }
+
+        case NetworkTransport.Solana: {
+            const connection = await getSolanaConnection(sourceAsset);
+            const tx = await connection.getParsedTransaction(txHash, {
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0,
+            });
+            return tx?.blockTime ?? undefined;
+        }
+
+        case NetworkTransport.Tron:
+            return undefined;
     }
 };
