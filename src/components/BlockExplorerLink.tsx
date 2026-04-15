@@ -48,71 +48,88 @@ const BlockExplorerLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
+    const oftSendPending = () => {
+        const s = props.swap();
+        return s.oft?.txHash !== undefined && s.lockupTx === undefined;
+    };
+
     return (
         <Show
-            when={props.swap().type !== SwapType.Chain}
+            when={!oftSendPending()}
             fallback={
-                <ChainSwapLink
-                    swap={props.swap}
-                    swapStatus={props.swapStatus}
+                <BlockExplorer
+                    asset={props.swap().assetSend}
+                    txId={props.swap().oft?.txHash}
+                    explorer={ExplorerKind.LayerZero}
+                    typeLabel={"lockup_tx"}
                 />
             }>
-            <Switch>
-                <Match when={!isEvmSwap(props.swap())}>
-                    {/* Refund transactions are handled in SwapRefunded */}
-                    <Show
-                        when={
-                            getRelevantAssetForSwap(props.swap()) &&
-                            props.swapStatus() !== null &&
-                            props.swapStatus() !== "invoice.set" &&
-                            props.swapStatus() !== "swap.created"
-                        }>
-                        <BlockExplorer
-                            asset={getRelevantAssetForSwap(props.swap())}
-                            txId={props.swap().claimTx}
-                            explorer={
-                                props.swap().oft !== undefined
-                                    ? ExplorerKind.LayerZero
-                                    : undefined
-                            }
-                            address={
-                                props.swap().type === SwapType.Submarine
-                                    ? (props.swap() as SubmarineSwap).address
-                                    : (props.swap() as ReverseSwap)
-                                          .lockupAddress
-                            }
-                        />
-                    </Show>
-                </Match>
+            <Show
+                when={props.swap().type !== SwapType.Chain}
+                fallback={
+                    <ChainSwapLink
+                        swap={props.swap}
+                        swapStatus={props.swapStatus}
+                    />
+                }>
+                <Switch>
+                    <Match when={!isEvmSwap(props.swap())}>
+                        {/* Refund transactions are handled in SwapRefunded */}
+                        <Show
+                            when={
+                                getRelevantAssetForSwap(props.swap()) &&
+                                props.swapStatus() !== null &&
+                                props.swapStatus() !== "invoice.set" &&
+                                props.swapStatus() !== "swap.created"
+                            }>
+                            <BlockExplorer
+                                asset={getRelevantAssetForSwap(props.swap())}
+                                txId={props.swap().claimTx}
+                                explorer={
+                                    props.swap().oft !== undefined
+                                        ? ExplorerKind.LayerZero
+                                        : undefined
+                                }
+                                address={
+                                    props.swap().type === SwapType.Submarine
+                                        ? (props.swap() as SubmarineSwap)
+                                              .address
+                                        : (props.swap() as ReverseSwap)
+                                              .lockupAddress
+                                }
+                            />
+                        </Show>
+                    </Match>
 
-                {/* Showing addresses makes no sense for EVM based chains */}
-                <Match when={isEvmSwap(props.swap())}>
-                    <Show
-                        when={props.swap().claimTx !== undefined}
-                        fallback={
-                            <Show when={props.swap().lockupTx}>
-                                <BlockExplorer
-                                    asset={getRelevantAssetForSwap(
-                                        props.swap(),
-                                    )}
-                                    txId={props.swap().lockupTx}
-                                    typeLabel={"lockup_tx"}
-                                />
-                            </Show>
-                        }>
-                        <BlockExplorer
-                            asset={getRelevantAssetForSwap(props.swap())}
-                            txId={props.swap().claimTx}
-                            explorer={
-                                props.swap().oft !== undefined
-                                    ? ExplorerKind.LayerZero
-                                    : undefined
-                            }
-                            typeLabel={"claim_tx"}
-                        />
-                    </Show>
-                </Match>
-            </Switch>
+                    {/* Showing addresses makes no sense for EVM based chains */}
+                    <Match when={isEvmSwap(props.swap())}>
+                        <Show
+                            when={props.swap().claimTx !== undefined}
+                            fallback={
+                                <Show when={props.swap().lockupTx}>
+                                    <BlockExplorer
+                                        asset={getRelevantAssetForSwap(
+                                            props.swap(),
+                                        )}
+                                        txId={props.swap().lockupTx}
+                                        typeLabel={"lockup_tx"}
+                                    />
+                                </Show>
+                            }>
+                            <BlockExplorer
+                                asset={getRelevantAssetForSwap(props.swap())}
+                                txId={props.swap().claimTx}
+                                explorer={
+                                    props.swap().oft !== undefined
+                                        ? ExplorerKind.LayerZero
+                                        : undefined
+                                }
+                                typeLabel={"claim_tx"}
+                            />
+                        </Show>
+                    </Match>
+                </Switch>
+            </Show>
         </Show>
     );
 };

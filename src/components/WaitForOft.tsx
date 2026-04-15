@@ -2,13 +2,11 @@ import { createEffect, createSignal, onCleanup } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { computeOftEtaSeconds } from "../utils/oftEta";
-import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 import LoadingSpinner from "./LoadingSpinner";
 
 const WaitForOft = (props: {
     sourceAsset: string;
     destinationAsset: string;
-    transactionHash: string;
 }) => {
     const { t } = useGlobalContext();
     const formatEta = (seconds: number): string => {
@@ -82,12 +80,6 @@ const WaitForOft = (props: {
             <h2>{t("waiting_for_oft")}</h2>
             <LoadingSpinner />
             <p>{countdownLabel()}</p>
-            <BlockExplorer
-                asset={props.sourceAsset}
-                txId={props.transactionHash}
-                explorer={ExplorerKind.LayerZero}
-                typeLabel={"lockup_tx"}
-            />
         </>
     );
 };
