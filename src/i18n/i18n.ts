@@ -209,6 +209,7 @@ const dict = {
         retry: "Retry",
         error_no_quote:
             "A quote could not be obtained. Please check your connection and try again.",
+        error_zero_quote: "Increase send amount",
         waiting_for_oft: "Waiting for OFT",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
@@ -701,6 +702,7 @@ const dict = {
         retry: "Erneut versuchen",
         error_no_quote:
             "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
+        error_zero_quote: "Sendebetrag erhöhen",
         waiting_for_oft: "Warte auf OFT",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
@@ -1202,6 +1204,7 @@ const dict = {
         retry: "Reintentar",
         error_no_quote:
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
+        error_zero_quote: "Aumenta la cantidad a enviar",
         waiting_for_oft: "Esperando OFT",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
@@ -1698,6 +1701,7 @@ const dict = {
         retry: "Tentar novamente",
         error_no_quote:
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
+        error_zero_quote: "Aumente o valor a enviar",
         waiting_for_oft: "Aguardando OFT",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
@@ -2170,6 +2174,7 @@ const dict = {
         legacy_mesh_fee_label: "Legacy Mesh 费用",
         retry: "重试",
         error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
+        error_zero_quote: "提高发送金额",
         waiting_for_oft: "等待 OFT",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
@@ -2638,6 +2643,7 @@ const dict = {
         retry: "再試行",
         error_no_quote:
             "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
+        error_zero_quote: "送信額を増やす",
         waiting_for_oft: "OFTを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
