@@ -12,6 +12,7 @@ import { AssetKind } from "src/consts/AssetKind";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
 const polygonRpcEndpoint = import.meta.env.VITE_POLYGON_RPC_ENDPOINT;
+const solanaRpcEndpoint = import.meta.env.VITE_SOLANA_RPC_ENDPOINT;
 
 const rskRpcUrls = ["https://public-node.rsk.co"];
 if (rskFallback) {
@@ -24,6 +25,14 @@ const polygonRpcUrls = [
 ];
 if (polygonRpcEndpoint) {
     polygonRpcUrls.unshift(polygonRpcEndpoint);
+}
+
+const solanaRpcUrls = [
+    "https://api.mainnet.solana.com",
+    "https://solana-rpc.publicnode.com",
+];
+if (solanaRpcEndpoint) {
+    solanaRpcUrls.unshift(solanaRpcEndpoint);
 }
 
 const getExplorerId = (transport: NetworkTransport): Explorer => {
@@ -297,10 +306,7 @@ const usdt0Variants: Usdt0Variant[] = [
         oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
-        rpcUrls: [
-            "https://api.mainnet.solana.com",
-            "https://solana-rpc.publicnode.com",
-        ],
+        rpcUrls: solanaRpcUrls,
         mesh: Usdt0Kind.Legacy,
     },
     {
