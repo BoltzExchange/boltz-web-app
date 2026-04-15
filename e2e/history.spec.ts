@@ -99,19 +99,18 @@ test.describe("History", () => {
         await expect(swapListItems).toHaveCount(1);
     });
 
-    test("Create two swaps, backup, delete storage, and import", async ({
-        page,
-    }) => {
+    test("Create two swaps, export, and delete storage", async ({ page }) => {
         const { swap1Item, swap2Item } = await createTwoSwaps(page);
 
-        // Backup the swaps
-        const backupFileName = path.join(__dirname, "backup.json");
+        const exportFileName = path.join(__dirname, "export.json");
         const downloadPromise = page.waitForEvent("download");
-        await page.getByRole("button", { name: dict.en.refund_backup }).click();
+        await page
+            .getByRole("button", { name: dict.en.history_export })
+            .click();
         const download = await downloadPromise;
-        await download.saveAs(backupFileName);
+        await download.saveAs(exportFileName);
 
-        expect(fs.existsSync(backupFileName)).toBe(true);
+        expect(fs.existsSync(exportFileName)).toBe(true);
 
         page.on("dialog", async (dialog) => {
             expect(dialog.type()).toBe("confirm");
@@ -125,17 +124,8 @@ test.describe("History", () => {
 
         await expect(page.getByText(dict.en.history_no_swaps)).toBeVisible();
 
-        // Import the backup
-        const fileInput = page.locator(
-            'input[type="file"][accept="application/json"]',
-        );
-        await fileInput.setInputFiles(backupFileName);
-
-        await expect(swap1Item).toBeVisible({ timeout: 1000 });
-        await expect(swap2Item).toBeVisible({ timeout: 1000 });
-
-        if (fs.existsSync(backupFileName)) {
-            fs.unlinkSync(backupFileName);
+        if (fs.existsSync(exportFileName)) {
+            fs.unlinkSync(exportFileName);
         }
     });
 });

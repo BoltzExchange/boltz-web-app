@@ -79,7 +79,6 @@ const coopClaimableSymbols = [BTC, LBTC];
 const PayProvider = (props: { children: JSX.Element }) => {
     const {
         t,
-        backupImportTimestamp,
         deriveKey,
         getSwap,
         privacyMode,
@@ -229,8 +228,6 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 status: data.status,
                 type: currentSwap.type,
                 includeSuccess: true,
-                swapDate: currentSwap.date,
-                backupImportTimestamp: backupImportTimestamp(),
                 zeroConf: zeroConf(),
             })
         ) {
