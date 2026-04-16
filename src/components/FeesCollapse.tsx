@@ -234,20 +234,28 @@ const FeesCollapse = () => {
         switch (view.status) {
             case FeeUsdViewStatus.Ok:
                 return (
-                    <>
-                        ≈{" "}
+                    <span class="fees-toggle-value">
+                        ≈&nbsp;
                         <span data-testid="fees-total-amount">
                             {view.amount.toFixed(2)}
-                        </span>{" "}
-                        {Currency.USD}
-                    </>
+                        </span>
+                        &nbsp;{Currency.USD}
+                    </span>
                 );
 
             case FeeUsdViewStatus.Loading:
-                return <span class="skeleton" />;
+                return (
+                    <span class="fees-toggle-value">
+                        <span class="skeleton" />
+                    </span>
+                );
 
             case FeeUsdViewStatus.Error:
-                return t("fiat_rate_not_available");
+                return (
+                    <span class="fees-toggle-value">
+                        {t("fiat_rate_not_available")}
+                    </span>
+                );
 
             default: {
                 const exhaustiveCheck: never = view;
@@ -279,10 +287,13 @@ const FeesCollapse = () => {
                 data-testid="fees-toggle"
                 aria-expanded={feesExpanded()}
                 onClick={() => setFeesExpanded(!feesExpanded())}>
-                <span class="fees-toggle-icon">
-                    <VsChevronRight />
+                <span class="fees-toggle-label">
+                    <span class="fees-toggle-icon">
+                        <VsChevronRight />
+                    </span>
+                    {t("swap_fees")}:
                 </span>
-                {t("swap_fees")}: {renderTotalCollapsibleFeesUsdView()}
+                {renderTotalCollapsibleFeesUsdView()}
             </button>
             <div
                 class="fees-details-shell"

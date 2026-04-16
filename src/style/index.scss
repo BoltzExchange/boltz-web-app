@@ -118,13 +118,18 @@ hr.spacer {
 
 .fees-dyn {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr;
     align-items: start;
+    gap: 0.5rem;
 }
 
 .fees-dyn > .fees-dyn-denom {
     display: flex;
     align-items: center;
+}
+
+.fees-dyn > .fees-dyn-right {
+    min-width: 0;
 }
 
 .fees-dyn-right {
@@ -161,9 +166,10 @@ hr.spacer {
 
 .fees-toggle {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.2rem;
+    gap: 0.2rem 0.35rem;
     border: none;
     background: none;
     margin: 0;
@@ -173,6 +179,14 @@ hr.spacer {
     color: inherit;
     text-align: right;
     transition: color 0.18s ease-out;
+}
+
+.fees-toggle-label,
+.fees-toggle-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
 }
 
 @media (hover: hover) {
@@ -1326,7 +1340,9 @@ header {
 
 .swap-limits {
     display: inline-flex;
-    gap: 0.8rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem 0.8rem;
 
     .denominator-text {
         margin-left: 0.5rem;
@@ -1337,6 +1353,19 @@ header {
         align-items: center;
         padding: 0 6px;
     }
+}
+
+.swap-limit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.swap-limit-amount {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .text-bold {
