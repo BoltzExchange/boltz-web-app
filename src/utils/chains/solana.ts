@@ -7,6 +7,7 @@ import log from "loglevel";
 import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolana from "../../lazy/solana";
+import { getCachedValue } from "../cache";
 import { formatError } from "../errors";
 import { requireRpcUrls } from "../provider";
 
@@ -16,75 +17,11 @@ export const solanaAtaRentExemptLamports = 2_039_280n;
 const rpcProbeTimeout = 5_000;
 
 type AccountInfo = Awaited<ReturnType<Connection["getAccountInfo"]>>;
-
-type CacheOptions<T> = {
-    shouldCache?: (value: T) => boolean;
-};
-
-const connectionPrefix = "connection:";
-const rentExemptBalancePrefix = "rent:";
-const tokenAccountExistsPrefix = "token-account-exists:";
-const accountInfoPrefix = "account-info:";
-
-const createCache = () => {
-    const entries = new Map<string, Promise<unknown>>();
-    const getCacheKey = (prefix: string, key: string): string =>
-        `${prefix}${key}`;
-
-    const set = <T>(
-        key: string,
-        value: Promise<T>,
-        { shouldCache }: CacheOptions<T> = {},
-    ): Promise<T> => {
-        const cached = value
-            .then((resolved) => {
-                if (shouldCache !== undefined && !shouldCache(resolved)) {
-                    entries.delete(key);
-                }
-
-                return resolved;
-            })
-            .catch((error: unknown) => {
-                entries.delete(key);
-                throw error;
-            });
-        entries.set(key, cached as Promise<unknown>);
-
-        return cached;
-    };
-
-    return {
-        clear: () => {
-            entries.clear();
-        },
-        delete: (key: string) => {
-            entries.delete(key);
-        },
-        getOrCreate: <T>(
-            prefix: string,
-            key: string,
-            create: () => Promise<T>,
-            options: CacheOptions<T> = {},
-        ): Promise<T> => {
-            const cacheKey = getCacheKey(prefix, key);
-            const cached = entries.get(cacheKey);
-            if (cached !== undefined) {
-                return cached as Promise<T>;
-            }
-
-            return set(cacheKey, create(), options);
-        },
-    };
-};
-
-const cache = createCache();
-
-export const getCachedSolanaValue = <T>(
-    prefix: string,
-    key: string,
-    create: () => Promise<T>,
-    options: CacheOptions<T> = {},
-): Promise<T> => cache.getOrCreate(prefix, key, create, options);
+const cachePrefix = "solana:";
+const connectionPrefix = `${cachePrefix}connection:`;
+const rentExemptBalancePrefix = `${cachePrefix}rent:`;
+const tokenAccountExistsPrefix = `${cachePrefix}token-account-exists:`;
+const accountInfoPrefix = `${cachePrefix}account-info:`;
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -109,10 +46,6 @@ export const encodeSolanaRecipient = (recipient: string): string =>
 
 export const encodeSolanaAtaCreationOption = (): string =>
     solidityPacked(["uint128", "uint128"], [0n, solanaAtaRentExemptLamports]);
-
-export const clearSolanaCache = () => {
-    cache.clear();
-};
 
 export const getConnectedSolanaWalletAddress = async (
     walletProvider: SolanaWalletProvider,
@@ -167,7 +100,7 @@ const createSolanaConnection = async (rpcUrl: string): Promise<Connection> => {
 const getOrCreateSolanaConnection = async (
     rpcUrl: string,
 ): Promise<Connection> =>
-    await cache.getOrCreate(connectionPrefix, rpcUrl, () =>
+    await getCachedValue(connectionPrefix, rpcUrl, () =>
         createSolanaConnection(rpcUrl),
     );
 
@@ -231,9 +164,9 @@ export const getSolanaRentExemptMinimumBalance = async (
     asset: string,
     accountSize: number,
 ): Promise<bigint> =>
-    await cache.getOrCreate(
+    await getCachedValue(
         rentExemptBalancePrefix,
-        accountSize.toString(),
+        `${asset}:${accountSize}`,
         async () => {
             const connection = await getSolanaConnection(asset);
             return BigInt(
@@ -248,20 +181,22 @@ export const getSolanaRentExemptMinimumBalance = async (
 export const getSolanaAccountInfo = async (
     asset: string,
     accountAddress: string,
+    connection?: Connection,
 ): Promise<AccountInfo> => {
     const { web3 } = await lazySolana.get();
     const publicKey = new web3.PublicKey(accountAddress);
     const normalizedAddress = publicKey.toBase58();
 
-    return await cache.getOrCreate(
+    if (connection === undefined) {
+        connection = await getSolanaConnection(asset);
+    }
+
+    return await getCachedValue(
         accountInfoPrefix,
-        normalizedAddress,
-        async () => {
-            const connection = await getSolanaConnection(asset);
-            return await connection.getAccountInfo(publicKey, "confirmed");
-        },
+        `${asset}:${normalizedAddress}`,
+        async () => await connection.getAccountInfo(publicKey, "confirmed"),
         {
-            shouldCache: (accountInfo) => accountInfo !== null,
+            shouldRetain: (accountInfo) => accountInfo !== null,
         },
     );
 };
@@ -316,20 +251,17 @@ export const shouldCreateSolanaTokenAccount = (
         );
     }
 
-    return cache
-        .getOrCreate(
-            tokenAccountExistsPrefix,
-            `${mintAddress}:${recipient}`,
-            async () => {
-                return !(await queryShouldCreateSolanaTokenAccount(
-                    destinationAsset,
-                    recipient,
-                    mintAddress,
-                ));
-            },
-            {
-                shouldCache: (exists) => exists,
-            },
-        )
-        .then((exists) => !exists);
+    return getCachedValue(
+        tokenAccountExistsPrefix,
+        `${destinationAsset}:${mintAddress}:${recipient}`,
+        async () =>
+            await queryShouldCreateSolanaTokenAccount(
+                destinationAsset,
+                recipient,
+                mintAddress,
+            ),
+        {
+            shouldRetain: (shouldCreate) => !shouldCreate,
+        },
+    );
 };

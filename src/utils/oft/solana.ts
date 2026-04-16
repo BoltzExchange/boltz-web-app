@@ -14,8 +14,8 @@ import log from "loglevel";
 import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolanaOft from "../../lazy/solanaOft";
+import { getCachedValue } from "../cache";
 import {
-    getCachedSolanaValue,
     getConnectedSolanaWalletAddress,
     getSolanaAccountInfo,
     getSolanaAssociatedTokenAddress,
@@ -249,7 +249,11 @@ export const getSolanaLegacyMeshContext = async ({
     const modules = await lazySolanaOft.get();
     try {
         const connection = await getSolanaConnection(asset);
-        const accountInfo = await getSolanaAccountInfo(asset, storeAddress);
+        const accountInfo = await getSolanaAccountInfo(
+            asset,
+            storeAddress,
+            connection,
+        );
         if (accountInfo === null) {
             throw new Error(`missing Solana OFT store account ${storeAddress}`);
         }
@@ -370,7 +374,7 @@ const getLegacyPeerReceiver = async (
     context: Context,
     dstEid: number,
 ): Promise<Uint8Array> =>
-    await getCachedSolanaValue(
+    await getCachedValue(
         peerReceiverCachePrefix,
         `${getCacheScope(context)}:${dstEid}`,
         async () => {
@@ -383,6 +387,7 @@ const getLegacyPeerReceiver = async (
             const peerInfo = await getSolanaAccountInfo(
                 context.asset,
                 peerAddress,
+                context.connection,
             );
             if (peerInfo === null) {
                 throw new Error(
@@ -405,7 +410,7 @@ const getRemainingAccounts = async (
     receiver: Uint8Array,
 ) => {
     const { modules } = context;
-    return await getCachedSolanaValue(
+    return await getCachedValue(
         remainingAccountsCachePrefix,
         `${getCacheScope(context)}:${kind}:${payer}:${dstEid}:${hex.encode(receiver)}`,
         async (): Promise<AccountMeta[]> => {
@@ -499,6 +504,7 @@ const createTransaction = async (
         const lookupTableAccount = await getSolanaAccountInfo(
             context.asset,
             context.addressLookupTableAddress,
+            context.connection,
         );
         if (lookupTableAccount === null) {
             throw new Error(

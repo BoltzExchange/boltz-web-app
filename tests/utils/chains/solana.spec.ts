@@ -4,8 +4,8 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { config as runtimeConfig } from "../../../src/config";
 import { config as mainnetConfig } from "../../../src/configs/mainnet";
 import lazySolana from "../../../src/lazy/solana";
+import { clearCache } from "../../../src/utils/cache";
 import {
-    clearSolanaCache,
     decodeSolanaAddress,
     getSolanaAccountInfo,
     getSolanaRentExemptMinimumBalance,
@@ -30,7 +30,7 @@ beforeAll(() => {
 afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    clearSolanaCache();
+    clearCache();
 });
 
 afterAll(() => {
@@ -90,7 +90,7 @@ const stubSolanaAtaLookup = (
 };
 
 test("should cache false ATA creation results", async () => {
-    clearSolanaCache();
+    clearCache();
     const { mockGetAccountInfo } = stubSolanaAtaLookup({
         data: ["", "base64"],
     });
@@ -106,7 +106,7 @@ test("should cache false ATA creation results", async () => {
 });
 
 test("should not cache true ATA creation results", async () => {
-    clearSolanaCache();
+    clearCache();
     const { mockGetAccountInfo } = stubSolanaAtaLookup(null);
 
     await expect(

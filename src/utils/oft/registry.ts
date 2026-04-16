@@ -3,6 +3,7 @@ import { getUsdt0Mesh } from "src/consts/Assets";
 
 import { config } from "../../config";
 import { Usdt0Kind } from "../../configs/base";
+import { getCachedValue } from "../cache";
 import { formatError } from "../errors";
 import type { OftRoute } from "./types";
 
@@ -30,15 +31,11 @@ type OftRegistry = Record<string, OftTokenConfig>;
 const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
 export const defaultOftName = "usdt0";
 const primaryOftContractNames = ["OFT", "OFT Adapter", "OFT Program"] as const;
-
-let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
+const oftPrefix = "oft:";
+const deploymentsKey = "deployments";
 
 export const formatRoute = (route: OftRoute) =>
     `${route.sourceAsset} -> ${route.destinationAsset}`;
-
-export const clearOftRegistry = () => {
-    oftDeploymentsPromise = undefined;
-};
 
 const fetchOftDeployments = async (): Promise<OftRegistry> => {
     const response = await fetch(oftDeploymentsEndpoint);
@@ -52,22 +49,15 @@ const fetchOftDeployments = async (): Promise<OftRegistry> => {
     return data as OftRegistry;
 };
 
-export const getOftDeployments = (): Promise<OftRegistry> => {
-    if (!oftDeploymentsPromise) {
-        oftDeploymentsPromise = fetchOftDeployments().catch(
-            (error: unknown) => {
-                log.error(
-                    "Failed to fetch OFT deployments",
-                    formatError(error),
-                );
-                oftDeploymentsPromise = undefined;
-                throw error;
-            },
-        );
-    }
-
-    return oftDeploymentsPromise;
-};
+export const getOftDeployments = (): Promise<OftRegistry> =>
+    getCachedValue(oftPrefix, deploymentsKey, async () => {
+        try {
+            return await fetchOftDeployments();
+        } catch (error) {
+            log.error("Failed to fetch OFT deployments", formatError(error));
+            throw error;
+        }
+    });
 
 export const getOftChain = async (
     asset: string,
