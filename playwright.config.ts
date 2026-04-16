@@ -53,8 +53,8 @@ export default defineConfig({
 
     webServer: {
         command: process.env.CI
-            ? "npm run regtest && npm run build && npx vite preview"
-            : "npm run dev",
+            ? "bun run regtest && bun run build && bunx vite preview"
+            : "bun run dev",
         port: process.env.CI ? 4173 : 5173,
         timeout: 180_000,
         reuseExistingServer: !process.env.CI,

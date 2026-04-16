@@ -14,9 +14,9 @@ then
     exit 1
 fi
 
-if ! command -v npx git-cliff &> /dev/null
+if ! command -v bun &> /dev/null
 then
-    echo "npx git-cliff could not be found"
+    echo "bun could not be found"
     exit 1
 fi
 
@@ -37,13 +37,14 @@ version=${tag#v}
 
 git checkout -b $tag
 
-npm version "$version" --no-git-tag-version --allow-same-version
-npm i
+# Bump version in package.json
+bun pm version "$version" --no-git-tag-version
+bun install
 
 # Generate changelog after we updated the version
-npx git-cliff -o CHANGELOG.md -t $tag
+bunx git-cliff -o CHANGELOG.md -t $tag
 
-git add package.json package-lock.json LICENSE CHANGELOG.md
+git add package.json bun.lock LICENSE CHANGELOG.md
 
 # Commit and create pull request
 commit_message="chore: bump version to $tag"

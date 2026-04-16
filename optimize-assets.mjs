@@ -4,6 +4,8 @@ import { execSync } from "child_process";
 import fs from "fs";
 import process from "process";
 
+const svgoCommand = "bunx svgo -r src/assets";
+
 // Check if cwebp is installed
 function checkCwebp() {
     try {
@@ -14,7 +16,7 @@ function checkCwebp() {
     }
 }
 
-execSync("npx svgo -r src/assets", { stdio: "inherit" });
+execSync(svgoCommand, { stdio: "inherit" });
 
 const pngFiles = fs
     .readdirSync("src/assets")

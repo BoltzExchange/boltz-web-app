@@ -1,16 +1,19 @@
-FROM node:24 AS builder
+FROM oven/bun:1.3.12 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --ignore-scripts
 COPY . .
 
 ARG NETWORK=mainnet
 
-RUN npm run generate
-RUN npm run $NETWORK
-RUN if [ "$NETWORK" = "pro" ]; then npm run build:pro; else npm run build:regular; fi
+RUN bun run generate
+RUN bun run $NETWORK
+RUN if [ "$NETWORK" = "pro" ]; then bun run build:pro; else bun run build:regular; fi
 
 FROM nginx:alpine AS final
 
