@@ -26,29 +26,27 @@ export function getCachedValue<T>(
     prefix: string,
     key: string,
     create: () => T,
-    options?: CacheOptions<T>,
-): T;
-export function getCachedValue<T>(
-    prefix: string,
-    key: string,
-    create: () => T | Promise<T>,
-    options: CacheOptions<T> = {},
-): T | Promise<T> {
+    options: CacheOptions<Awaited<T>> = {},
+): T {
     const entryKey = `${prefix}${key}`;
 
     if (entries.has(entryKey)) {
-        return entries.get(entryKey) as T | Promise<T>;
+        return entries.get(entryKey) as T;
     }
 
     const created = create();
     if (created instanceof Promise) {
-        const cached = cacheAsyncValue(entryKey, created, options);
+        const cached = cacheAsyncValue(
+            entryKey,
+            created as Promise<Awaited<T>>,
+            options,
+        ) as T;
         entries.set(entryKey, cached);
 
         return cached;
     }
 
-    if (options.shouldRetain?.(created) === false) {
+    if (options.shouldRetain?.(created as Awaited<T>) === false) {
         return created;
     }
 
