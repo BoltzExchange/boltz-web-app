@@ -36,28 +36,11 @@ import {
 } from "../utils/oft/oft";
 import type { OftDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
-import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
-
-const WaitForOft = (props: { asset: string; transactionHash: string }) => {
-    const { t } = useGlobalContext();
-
-    return (
-        <>
-            <h2>{t("waiting_for_oft")}</h2>
-            <LoadingSpinner />
-            <BlockExplorer
-                asset={props.asset}
-                txId={props.transactionHash}
-                explorer={ExplorerKind.LayerZero}
-                typeLabel={"lockup_tx"}
-            />
-        </>
-    );
-};
+import WaitForOft from "./WaitForOft";
 
 const SendToOft = (props: {
     oft: OftDetail;
@@ -470,8 +453,9 @@ const SendToOft = (props: {
             when={txSent() === undefined}
             fallback={
                 <WaitForOft
-                    asset={props.oft.sourceAsset}
-                    transactionHash={txSent()}
+                    sourceAsset={props.oft.sourceAsset}
+                    destinationAsset={props.oft.destinationAsset}
+                    txHash={txSent()}
                 />
             }>
             <Show

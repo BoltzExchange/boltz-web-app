@@ -85,7 +85,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     return asset;
 };
 
-const usdt0Variants: Usdt0Variant[] = [
+export const usdt0Variants = [
     {
         asset: "USDT0-ETH",
         canSend: true,
@@ -343,7 +343,9 @@ const usdt0Variants: Usdt0Variant[] = [
         blockExplorerUrl: "https://explore.mainnet.tempo.xyz",
         rpcUrls: ["https://rpc.tempo.xyz"],
     },
-];
+] as const satisfies readonly Usdt0Variant[];
+
+export type Usdt0VariantAsset = (typeof usdt0Variants)[number]["asset"];
 
 const usdt0VariantAssets = Object.fromEntries(
     usdt0Variants.map((variant) => [
