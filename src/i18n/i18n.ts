@@ -1033,7 +1033,7 @@ const dict = {
         blockexplorer_refund_tx: "Transacción de Reembolso",
         help: "Ayuda",
         network_fee: "Comisión de red",
-        swap_fees: "Comisiones del intercambio",
+        swap_fees: "Comisiones intercambio",
         fee: "Comisión de Boltz",
         denomination: "Denominación",
         send: "Enviar",
