@@ -29,12 +29,10 @@ jobs:
                   fetch-depth: 0
             - name: Setup Bun
               uses: oven-sh/setup-bun@v2
-              with:
-                  bun-version-file: ".bun-version"
             - name: Setup Pages
               uses: actions/configure-pages@v6
             - name: Install dependencies
-              run: bun install --frozen-lockfile
+              run: bun ci
             - name: Build with VitePress
               run: bun run docs:build
             - name: Upload artifact

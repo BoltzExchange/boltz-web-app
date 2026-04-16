@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 \
 WORKDIR /app
 
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun ci --ignore-scripts
 COPY . .
 
 ARG NETWORK=mainnet
