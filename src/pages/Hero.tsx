@@ -147,10 +147,7 @@ export const Hero = () => {
                         />
                     </div>
                     <div>
-                        <ExternalLink
-                            href="https://aquawallet.io/"
-                            class="aqua"
-                        />
+                        <ExternalLink href="https://aqua.net/" class="aqua" />
                     </div>
                     <div>
                         <ExternalLink
