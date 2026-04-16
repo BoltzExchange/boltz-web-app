@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.0.2](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.1..v2.0.2) - 2026-04-16
+
+### Bug Fixes
+
+- handle auto-claim of already claimed swap (#1328) - ([acee3b8](https://github.com/BoltzExchange/boltz-web-app/commit/acee3b82dae9021f3a13ef52295c59a9adcc75cf))
+- check for Solana rent exempt balance (#1339) - ([62d683f](https://github.com/BoltzExchange/boltz-web-app/commit/62d683f9478576281d96a60316333d9daa2b59c7))
+- make EVM address comparison case insensitive (#1338) - ([63ac7b9](https://github.com/BoltzExchange/boltz-web-app/commit/63ac7b9c2afa1c97999169414d32081b82edfff4))
+- block 0 amount receive (#1343) - ([4ca8615](https://github.com/BoltzExchange/boltz-web-app/commit/4ca861566ea9885f135db356210c10e5d80d0dab))
+
+### Features
+
+- show "invalid send asset" error in button (#1335) - ([d3d6271](https://github.com/BoltzExchange/boltz-web-app/commit/d3d627127eb8443f88bbc8b1c0c60705e6dce918))
+- Solana native gas drop (#1330) - ([63be52e](https://github.com/BoltzExchange/boltz-web-app/commit/63be52ea80df12ca4b356493b6def8b29534722d))
+- show ETA for OFT sends (#1319) - ([caf5ddd](https://github.com/BoltzExchange/boltz-web-app/commit/caf5ddd6db2a4431cce82df6c32d0e1505d0c11b))
+
+### Miscellaneous Chores
+
+- bump package.json version to v2.0.1 - ([6928f71](https://github.com/BoltzExchange/boltz-web-app/commit/6928f711a8169d20a3bdbb539ea6a840860a6a4c))
+- disable USDT0 swaps on Tor (#1334) - ([43caf3c](https://github.com/BoltzExchange/boltz-web-app/commit/43caf3cbfbdac7139776e7665ae693bdca4124ed))
+- bump dependencies (#1340) - ([23fad03](https://github.com/BoltzExchange/boltz-web-app/commit/23fad03c9d19bf45b488a642dc3cb13a15e5a998))
+- npm check helper (#1342) - ([0d1dc37](https://github.com/BoltzExchange/boltz-web-app/commit/0d1dc37ec8be19fcf80471a9bd87ccb3fb657996))
+- env variable for Solana RPC (#1344) - ([6d2123c](https://github.com/BoltzExchange/boltz-web-app/commit/6d2123ca0fc7f9a6792cb6c6d6d3349b244bdcb2))
+- optimize Solana RPC calls (#1346) - ([62a52fc](https://github.com/BoltzExchange/boltz-web-app/commit/62a52fcc48fcc43eb2f805d84a096405acbd1263))
+- update canSend OFT list (#1347) - ([a85b1f6](https://github.com/BoltzExchange/boltz-web-app/commit/a85b1f636e68bf0f198c182f242bf9de9dc7946d))
+
+### Refactoring
+
+- make history export-only (#1341) - ([c23cf94](https://github.com/BoltzExchange/boltz-web-app/commit/c23cf941fb319ee592c74cf500caee8fd145155f))
+
+---
 ## [2.0.1](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.0..v2.0.1) - 2026-04-10
 
 ### Bug Fixes
@@ -13,6 +43,10 @@ All notable changes to this project will be documented in this file. See [conven
 ### Features
 
 - retry gas abstracted claims (#1324) - ([352bc31](https://github.com/BoltzExchange/boltz-web-app/commit/352bc3133a3d106b0ed5fb17128aa0612a38fcc8))
+
+### Miscellaneous Chores
+
+- bump version to v2.0.1 (#1327) - ([77e2d46](https://github.com/BoltzExchange/boltz-web-app/commit/77e2d460eb00dc530097d9ca2ea4d9f36d8b1d84))
 
 ### Refactoring
 
