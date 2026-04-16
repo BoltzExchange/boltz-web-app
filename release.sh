@@ -37,7 +37,7 @@ version=${tag#v}
 
 git checkout -b $tag
 
-sed -i "s/\"version\": \".*\"/\"version\": \"$version\"/" package.json
+npm version "$version" --no-git-tag-version --allow-same-version
 npm i
 
 # Generate changelog after we updated the version
