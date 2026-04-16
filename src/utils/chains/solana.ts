@@ -8,17 +8,83 @@ import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolana from "../../lazy/solana";
 import { formatError } from "../errors";
-import { constructRequestOptions } from "../helper";
 import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
 export const solanaTokenAccountSize = 165;
 export const solanaAtaRentExemptLamports = 2_039_280n;
-const solanaGetAccountInfoMethod = "getAccountInfo";
-const solanaRpcProbeTimeout = 5_000;
-const solanaTokenAccountExistsCache = new Set<string>();
-const solanaConnectionCache = new Map<string, Promise<Connection>>();
-const solanaRentExemptBalanceCache = new Map<string, Promise<bigint>>();
+const rpcProbeTimeout = 5_000;
+
+type AccountInfo = Awaited<ReturnType<Connection["getAccountInfo"]>>;
+
+type CacheOptions<T> = {
+    shouldCache?: (value: T) => boolean;
+};
+
+const connectionPrefix = "connection:";
+const rentExemptBalancePrefix = "rent:";
+const tokenAccountExistsPrefix = "token-account-exists:";
+const accountInfoPrefix = "account-info:";
+
+const createCache = () => {
+    const entries = new Map<string, Promise<unknown>>();
+    const getCacheKey = (prefix: string, key: string): string =>
+        `${prefix}${key}`;
+
+    const set = <T>(
+        key: string,
+        value: Promise<T>,
+        { shouldCache }: CacheOptions<T> = {},
+    ): Promise<T> => {
+        const cached = value
+            .then((resolved) => {
+                if (shouldCache !== undefined && !shouldCache(resolved)) {
+                    entries.delete(key);
+                }
+
+                return resolved;
+            })
+            .catch((error: unknown) => {
+                entries.delete(key);
+                throw error;
+            });
+        entries.set(key, cached as Promise<unknown>);
+
+        return cached;
+    };
+
+    return {
+        clear: () => {
+            entries.clear();
+        },
+        delete: (key: string) => {
+            entries.delete(key);
+        },
+        getOrCreate: <T>(
+            prefix: string,
+            key: string,
+            create: () => Promise<T>,
+            options: CacheOptions<T> = {},
+        ): Promise<T> => {
+            const cacheKey = getCacheKey(prefix, key);
+            const cached = entries.get(cacheKey);
+            if (cached !== undefined) {
+                return cached as Promise<T>;
+            }
+
+            return set(cacheKey, create(), options);
+        },
+    };
+};
+
+const cache = createCache();
+
+export const getCachedSolanaValue = <T>(
+    prefix: string,
+    key: string,
+    create: () => Promise<T>,
+    options: CacheOptions<T> = {},
+): Promise<T> => cache.getOrCreate(prefix, key, create, options);
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -44,16 +110,8 @@ export const encodeSolanaRecipient = (recipient: string): string =>
 export const encodeSolanaAtaCreationOption = (): string =>
     solidityPacked(["uint128", "uint128"], [0n, solanaAtaRentExemptLamports]);
 
-export const clearSolanaTokenAccountCreationCache = () => {
-    solanaTokenAccountExistsCache.clear();
-};
-
-export const clearSolanaConnectionCache = () => {
-    solanaConnectionCache.clear();
-};
-
-export const clearSolanaRentExemptBalanceCache = () => {
-    solanaRentExemptBalanceCache.clear();
+export const clearSolanaCache = () => {
+    cache.clear();
 };
 
 export const getConnectedSolanaWalletAddress = async (
@@ -91,10 +149,10 @@ const createSolanaConnection = async (rpcUrl: string): Promise<Connection> => {
                 timeoutHandle = setTimeout(() => {
                     reject(
                         new Error(
-                            `Solana RPC request timed out after ${solanaRpcProbeTimeout}ms`,
+                            `Solana RPC request timed out after ${rpcProbeTimeout}ms`,
                         ),
                     );
-                }, solanaRpcProbeTimeout);
+                }, rpcProbeTimeout);
             }),
         ]);
     } finally {
@@ -108,25 +166,15 @@ const createSolanaConnection = async (rpcUrl: string): Promise<Connection> => {
 
 const getOrCreateSolanaConnection = async (
     rpcUrl: string,
-): Promise<Connection> => {
-    const cached = solanaConnectionCache.get(rpcUrl);
-    if (cached !== undefined) {
-        return await cached;
-    }
-
-    const created = createSolanaConnection(rpcUrl).catch((error: unknown) => {
-        solanaConnectionCache.delete(rpcUrl);
-        throw error;
-    });
-    solanaConnectionCache.set(rpcUrl, created);
-
-    return await created;
-};
+): Promise<Connection> =>
+    await cache.getOrCreate(connectionPrefix, rpcUrl, () =>
+        createSolanaConnection(rpcUrl),
+    );
 
 export const getSolanaConnection = async (
-    sourceAsset: string,
+    asset: string,
 ): Promise<Connection> => {
-    const rpcUrls = requireRpcUrls(sourceAsset);
+    const rpcUrls = requireRpcUrls(asset);
     let lastError: unknown;
 
     for (const rpcUrl of rpcUrls) {
@@ -135,7 +183,7 @@ export const getSolanaConnection = async (
         } catch (error) {
             lastError = error;
             log.warn("Failed to create Solana connection", {
-                sourceAsset,
+                asset,
                 rpcUrl,
                 error: formatError(lastError),
             });
@@ -143,15 +191,15 @@ export const getSolanaConnection = async (
     }
 
     throw new Error(
-        `Failed to connect to Solana RPC for ${sourceAsset}: ${formatError(lastError)}`,
+        `Failed to connect to Solana RPC for ${asset}: ${formatError(lastError)}`,
     );
 };
 
 export const getSolanaTransactionSender = async (
-    sourceAsset: string,
+    asset: string,
     txHash: string,
 ): Promise<string | undefined> => {
-    const connection = await getSolanaConnection(sourceAsset);
+    const connection = await getSolanaConnection(asset);
     const transaction = await connection.getParsedTransaction(txHash, {
         commitment: "confirmed",
         maxSupportedTransactionVersion: 0,
@@ -166,12 +214,12 @@ export const getSolanaTransactionSender = async (
 };
 
 export const getSolanaNativeBalance = async (
-    sourceAsset: string,
+    asset: string,
     ownerAddress: string,
 ): Promise<bigint> => {
     const [{ web3 }, connection] = await Promise.all([
         lazySolana.get(),
-        getSolanaConnection(sourceAsset),
+        getSolanaConnection(asset),
     ]);
 
     return BigInt(
@@ -180,132 +228,66 @@ export const getSolanaNativeBalance = async (
 };
 
 export const getSolanaRentExemptMinimumBalance = async (
-    sourceAsset: string,
+    asset: string,
     accountSize: number,
-): Promise<bigint> => {
-    const cacheKey = `${sourceAsset}:${accountSize}`;
-    const cached = solanaRentExemptBalanceCache.get(cacheKey);
-    if (cached !== undefined) {
-        return await cached;
-    }
-
-    const created = getSolanaConnection(sourceAsset)
-        .then(async (connection) =>
-            BigInt(
+): Promise<bigint> =>
+    await cache.getOrCreate(
+        rentExemptBalancePrefix,
+        accountSize.toString(),
+        async () => {
+            const connection = await getSolanaConnection(asset);
+            return BigInt(
                 await connection.getMinimumBalanceForRentExemption(
                     accountSize,
                     "confirmed",
                 ),
-            ),
-        )
-        .catch((error: unknown) => {
-            solanaRentExemptBalanceCache.delete(cacheKey);
-            throw error;
-        });
-    solanaRentExemptBalanceCache.set(cacheKey, created);
+            );
+        },
+    );
 
-    return await created;
+export const getSolanaAccountInfo = async (
+    asset: string,
+    accountAddress: string,
+): Promise<AccountInfo> => {
+    const { web3 } = await lazySolana.get();
+    const publicKey = new web3.PublicKey(accountAddress);
+    const normalizedAddress = publicKey.toBase58();
+
+    return await cache.getOrCreate(
+        accountInfoPrefix,
+        normalizedAddress,
+        async () => {
+            const connection = await getSolanaConnection(asset);
+            return await connection.getAccountInfo(publicKey, "confirmed");
+        },
+        {
+            shouldCache: (accountInfo) => accountInfo !== null,
+        },
+    );
 };
 
 const queryShouldCreateSolanaTokenAccount = async (
     destinationAsset: string,
     recipient: string,
+    mintAddress: string,
 ): Promise<boolean> => {
-    const destinationConfig = config.assets?.[destinationAsset];
-    const mintAddress = destinationConfig.token?.address;
-    if (mintAddress === undefined || mintAddress === "") {
-        throw new Error(
-            `Missing Solana token mint address for asset: ${destinationAsset}`,
-        );
-    }
-
     decodeSolanaAddress(recipient);
     const { web3, splToken } = await lazySolana.get();
 
     const recipientPublicKey = new web3.PublicKey(recipient);
-    const associatedTokenAddress = splToken.getAssociatedTokenAddressSync(
-        new web3.PublicKey(mintAddress),
-        recipientPublicKey,
-        true,
-    );
+    const associatedTokenAddress = splToken
+        .getAssociatedTokenAddressSync(
+            new web3.PublicKey(mintAddress),
+            recipientPublicKey,
+            true,
+        )
+        .toBase58();
 
-    const rpcUrls = requireRpcUrls(destinationAsset);
-    let lastError: unknown;
-    for (const rpcUrl of rpcUrls) {
-        const { opts, requestTimeout } = constructRequestOptions(
-            {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: solanaGetAccountInfoMethod,
-                    params: [
-                        associatedTokenAddress.toBase58(),
-                        {
-                            encoding: "base64",
-                        },
-                    ],
-                }),
-            },
-            solanaRpcProbeTimeout,
-        );
-
-        try {
-            const response = await fetch(rpcUrl, opts);
-
-            if (!response.ok) {
-                throw new Error(
-                    `Solana RPC ${response.status} ${response.statusText}`,
-                );
-            }
-
-            const payload: unknown = await response.json();
-            const { error, result } = payload as {
-                error?: {
-                    code?: number;
-                    message?: string;
-                };
-                result?: {
-                    value?: Record<string, unknown> | null;
-                };
-            };
-            if (error !== undefined) {
-                throw new Error(
-                    `Solana RPC error ${error.code ?? "unknown"}: ${error.message ?? "unknown error"}`,
-                );
-            }
-            if (result?.value === undefined) {
-                throw new Error("Unexpected Solana account info response");
-            }
-
-            return result.value === null;
-        } catch (error) {
-            const isAbortError =
-                (error instanceof DOMException &&
-                    error.name === "AbortError") ||
-                opts.signal?.aborted === true;
-            lastError = isAbortError
-                ? new Error(
-                      `Solana RPC request timed out after ${solanaRpcProbeTimeout}ms`,
-                  )
-                : error;
-            log.warn("Failed to query Solana associated token account", {
-                destinationAsset,
-                recipient,
-                associatedTokenAddress: associatedTokenAddress.toBase58(),
-                rpcUrl,
-                error: formatError(lastError),
-            });
-        } finally {
-            clearTimeout(requestTimeout);
-        }
-    }
-
-    throw new Error(
-        `Failed to query Solana associated token account for ${destinationAsset}: ${formatError(lastError)}`,
+    return (
+        (await getSolanaAccountInfo(
+            destinationAsset,
+            associatedTokenAddress,
+        )) === null
     );
 };
 
@@ -325,19 +307,29 @@ export const shouldCreateSolanaTokenAccount = (
         return Promise.resolve(false);
     }
 
-    const cacheKey = `${destinationAsset}:${recipient}`;
-    if (solanaTokenAccountExistsCache.has(cacheKey)) {
-        return Promise.resolve(false);
+    const mintAddress = destinationConfig.token?.address;
+    if (mintAddress === undefined || mintAddress === "") {
+        return Promise.reject(
+            new Error(
+                `Missing Solana token mint address for asset: ${destinationAsset}`,
+            ),
+        );
     }
 
-    return queryShouldCreateSolanaTokenAccount(
-        destinationAsset,
-        recipient,
-    ).then((shouldCreate) => {
-        if (!shouldCreate) {
-            solanaTokenAccountExistsCache.add(cacheKey);
-        }
-
-        return shouldCreate;
-    });
+    return cache
+        .getOrCreate(
+            tokenAccountExistsPrefix,
+            `${mintAddress}:${recipient}`,
+            async () => {
+                return !(await queryShouldCreateSolanaTokenAccount(
+                    destinationAsset,
+                    recipient,
+                    mintAddress,
+                ));
+            },
+            {
+                shouldCache: (exists) => exists,
+            },
+        )
+        .then((exists) => !exists);
 };

@@ -19,7 +19,7 @@ import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import {
-    clearSolanaTokenAccountCreationCache,
+    clearSolanaCache,
     encodeSolanaAtaCreationOption,
     encodeSolanaRecipient,
     getSolanaRentExemptMinimumBalance,
@@ -140,7 +140,7 @@ export const decodeExecutorNativeAmountExceedsCapError = (
 export const clearOftDeployments = () => {
     clearOftRegistry();
     providerCache.clear();
-    clearSolanaTokenAccountCreationCache();
+    clearSolanaCache();
 };
 
 export const getOftTransport = (asset: string): NetworkTransport => {
@@ -247,7 +247,7 @@ export const createOftContract = async (
         case NetworkTransport.Solana: {
             const oftStore = await getOftStoreContract(route, oftName);
             return createSolanaOftContract({
-                sourceAsset: route.sourceAsset,
+                asset: route.sourceAsset,
                 programAddress: oftContract.address,
                 storeAddress: oftStore.address,
                 walletProvider: getSolanaOftWalletProvider(route, runner),
@@ -439,12 +439,12 @@ export const getBufferedOftNativeFee = (nativeFee: bigint): bigint =>
     (nativeFee * 110n) / 100n;
 
 export const getRequiredSolanaOftNativeBalance = async (
-    sourceAsset: string,
+    asset: string,
     nativeFee: bigint,
 ): Promise<bigint> => {
     const bufferedFee = getBufferedOftNativeFee(nativeFee);
     const rentExemptMinimum = await getSolanaRentExemptMinimumBalance(
-        sourceAsset,
+        asset,
         solanaTokenAccountSize,
     );
 
@@ -640,7 +640,7 @@ export const getSolanaOftTokenBalance = async (
 
     return await getSolanaLegacyMeshTokenBalance(
         {
-            sourceAsset: route.sourceAsset,
+            asset: route.sourceAsset,
             programAddress: oftContract.address,
             storeAddress: oftStore.address,
         },
