@@ -13,17 +13,17 @@ from source following the instructions below.
 
 ### Dependencies
 
-Make sure to have the latest
-[Node.js LTS and NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-installed. We recommend using
-[nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm
-installs: `nvm install --lts`
+This project uses [Bun](https://bun.com). Install it with:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
 
 ### Run
 
-Clone the repository, change to the project folder and run `npm install` to
-install all dependencies. Then `npm run mainnet && npm run build` and
-`npx serve dist` to bring it up.
+Clone the repository, change to the project folder and run `bun install` to
+install all dependencies. Then `bun run mainnet && bun run build` and
+`bunx serve dist` to bring it up.
 
 Open [http://localhost:3000](http://localhost:3000) in your browser and start
 swapping!

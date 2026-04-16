@@ -159,7 +159,10 @@ export const usdt0Variants = [
         chainId: 295,
         tokenAddress: "0x00000000000000000000000000000000009Ce723",
         blockExplorerUrl: "https://hashscan.io/mainnet",
-        rpcUrls: ["https://mainnet.hashio.io/api"],
+        rpcUrls: [
+            "https://mainnet.hashio.io/api",
+            "https://295.rpc.thirdweb.com",
+        ],
     },
     {
         asset: "USDT0-INK",

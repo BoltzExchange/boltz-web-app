@@ -5,8 +5,10 @@ import fs from "fs";
 import process from "process";
 
 const fixSuggestion = `
-Please run "npm run optimize:assets", commit the changes and try again
+Please run "bun run optimize:assets", commit the changes and try again
 `;
+
+const svgoCommand = "bunx svgo -r src/assets";
 
 const pngFiles = fs
     .readdirSync("src/assets")
@@ -20,7 +22,7 @@ if (pngFiles.length > 0) {
 }
 
 try {
-    execSync("npx svgo -r src/assets", { stdio: "pipe" });
+    execSync(svgoCommand, { stdio: "pipe" });
     const status = execSync("git status --porcelain src/assets", {
         encoding: "utf8",
     });

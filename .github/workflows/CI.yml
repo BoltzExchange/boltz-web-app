@@ -8,25 +8,22 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Use Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "24"
-                  cache: "npm"
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
-            - run: npm ci
+            - run: bun ci
 
-            - run: npm run check:assets
+            - run: bun run check:assets
 
-            - run: npm run check:html-template
+            - run: bun run check:html-template
 
-            - run: npm run lint
+            - run: bun run lint
 
-            - run: npm run prettier:check
+            - run: bun run prettier:check
 
-            - run: npm run test
+            - run: bun run test
 
-            - run: npm run tsc
+            - run: bun run tsc
 
     e2e:
         timeout-minutes: 60
@@ -39,10 +36,8 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - uses: actions/setup-node@v5
-              with:
-                  node-version: "24"
-                  cache: "npm"
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
             - name: Start regtest
               env:
@@ -56,17 +51,17 @@ jobs:
                   ./start.sh
 
             - name: Install dependencies
-              run: npm ci
+              run: bun ci
 
             - name: Install Playwright Browsers
-              run: npm run playwright:install
+              run: bun run playwright:install
 
             - name: Run Playwright tests
               env:
                   CI: true
                   VITE_RSK_LOG_SCAN_ENDPOINT: "http://localhost:8545"
               run:
-                  npm run test:e2e -- --shard=${{ matrix.shardIndex }}/${{
+                  bun run test:e2e -- --shard=${{ matrix.shardIndex }}/${{
                   matrix.shardTotal }}
 
             - name: Upload blob report to GitHub Actions Artifacts
@@ -85,12 +80,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v6
-            - uses: actions/setup-node@v5
-              with:
-                  node-version: "24"
-                  cache: "npm"
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
 
-            - run: npm ci
+            - run: bun ci
 
             - name: Download blob reports from GitHub Actions Artifacts
               uses: actions/download-artifact@v8
@@ -101,7 +94,7 @@ jobs:
 
             - name: Merge into HTML Report
               run:
-                  npx playwright merge-reports --reporter html
+                  bunx playwright merge-reports --reporter html
                   ./all-blob-reports
 
             - name: Upload HTML report
