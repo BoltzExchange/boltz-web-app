@@ -153,7 +153,7 @@ export const usdt0Variants = [
     },
     {
         asset: "USDT0-HBAR",
-        canSend: false,
+        canSend: true,
         chainName: "Hedera",
         symbol: "HBAR",
         chainId: 295,
@@ -219,7 +219,7 @@ export const usdt0Variants = [
     },
     {
         asset: "USDT0-OP",
-        canSend: true,
+        canSend: false,
         chainName: "Optimism",
         symbol: "OP",
         gasToken: "ETH",
@@ -261,7 +261,7 @@ export const usdt0Variants = [
     },
     {
         asset: "USDT0-SEI",
-        canSend: true,
+        canSend: false,
         chainName: "Sei",
         symbol: "SEI",
         chainId: 1329,
