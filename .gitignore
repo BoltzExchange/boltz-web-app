@@ -8,9 +8,6 @@ dist/
 ts-out/
 coverage/
 node_modules/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
 src/generated/*
 !src/generated/idl.json
 !src/generated/README.md

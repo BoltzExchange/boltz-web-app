@@ -39,7 +39,7 @@ git checkout -b $tag
 
 # Bump version in package.json
 bun pm version "$version" --no-git-tag-version
-bun install
+bun ci
 
 # Generate changelog after we updated the version
 bunx git-cliff -o CHANGELOG.md -t $tag
