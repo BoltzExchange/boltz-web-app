@@ -4,11 +4,10 @@ import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 import { config as runtimeConfig } from "../../../src/config";
 import { config as mainnetConfig } from "../../../src/configs/mainnet";
 import lazySolana from "../../../src/lazy/solana";
+import { clearCache } from "../../../src/utils/cache";
 import {
-    clearSolanaConnectionCache,
-    clearSolanaRentExemptBalanceCache,
-    clearSolanaTokenAccountCreationCache,
     decodeSolanaAddress,
+    getSolanaAccountInfo,
     getSolanaRentExemptMinimumBalance,
     isValidSolanaAddress,
     shouldCreateSolanaTokenAccount,
@@ -31,9 +30,7 @@ beforeAll(() => {
 afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-    clearSolanaConnectionCache();
-    clearSolanaRentExemptBalanceCache();
-    clearSolanaTokenAccountCreationCache();
+    clearCache();
 });
 
 afterAll(() => {
@@ -62,8 +59,17 @@ test("should validate Solana base58 recipients", () => {
 const stubSolanaAtaLookup = (
     accountInfoValue: Record<string, unknown> | null,
 ) => {
+    const mockGetAccountInfo = vi.fn().mockResolvedValue(accountInfoValue);
+    const mockGetVersion = vi.fn().mockResolvedValue({
+        "solana-core": "2.1.0",
+    });
+
     vi.spyOn(lazySolana, "get").mockResolvedValue({
         web3: {
+            Connection: class {
+                getVersion = mockGetVersion;
+                getAccountInfo = mockGetAccountInfo;
+            },
             PublicKey: class {
                 constructor(private readonly value: string) {}
 
@@ -77,21 +83,15 @@ const stubSolanaAtaLookup = (
         },
     } as never);
 
-    const fetchSpy = vi.fn().mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue({
-            result: {
-                value: accountInfoValue,
-            },
-        }),
-    });
-    vi.stubGlobal("fetch", fetchSpy);
-    return fetchSpy;
+    return {
+        mockGetAccountInfo,
+        mockGetVersion,
+    };
 };
 
 test("should cache false ATA creation results", async () => {
-    clearSolanaTokenAccountCreationCache();
-    const fetchSpy = stubSolanaAtaLookup({
+    clearCache();
+    const { mockGetAccountInfo } = stubSolanaAtaLookup({
         data: ["", "base64"],
     });
 
@@ -102,12 +102,12 @@ test("should cache false ATA creation results", async () => {
         shouldCreateSolanaTokenAccount("USDT0-SOL", knownRecipientWithUsdtAta),
     ).resolves.toBe(false);
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(mockGetAccountInfo).toHaveBeenCalledTimes(1);
 });
 
 test("should not cache true ATA creation results", async () => {
-    clearSolanaTokenAccountCreationCache();
-    const fetchSpy = stubSolanaAtaLookup(null);
+    clearCache();
+    const { mockGetAccountInfo } = stubSolanaAtaLookup(null);
 
     await expect(
         shouldCreateSolanaTokenAccount(
@@ -122,7 +122,27 @@ test("should not cache true ATA creation results", async () => {
         ),
     ).resolves.toBe(true);
 
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(mockGetAccountInfo).toHaveBeenCalledTimes(2);
+});
+
+test("should cache Solana account info for existing accounts", async () => {
+    const { mockGetAccountInfo, mockGetVersion } = stubSolanaAtaLookup({
+        data: ["", "base64"],
+    });
+
+    await expect(
+        getSolanaAccountInfo("USDT0-SOL", mockAssociatedTokenAddress),
+    ).resolves.toEqual({
+        data: ["", "base64"],
+    });
+    await expect(
+        getSolanaAccountInfo("USDT0-SOL", mockAssociatedTokenAddress),
+    ).resolves.toEqual({
+        data: ["", "base64"],
+    });
+
+    expect(mockGetVersion).toHaveBeenCalledTimes(1);
+    expect(mockGetAccountInfo).toHaveBeenCalledTimes(1);
 });
 
 test("should query and cache Solana rent-exempt minimum balances", async () => {

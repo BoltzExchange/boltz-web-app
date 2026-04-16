@@ -18,8 +18,8 @@ import type { Signer } from "src/context/Web3";
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
+import { clearCache, getCachedValue } from "../cache";
 import {
-    clearSolanaTokenAccountCreationCache,
     encodeSolanaAtaCreationOption,
     encodeSolanaRecipient,
     getSolanaRentExemptMinimumBalance,
@@ -42,7 +42,6 @@ import {
 } from "./evm";
 import {
     type OftContract,
-    clearOftRegistry,
     defaultOftName,
     formatRoute,
     getOftChain,
@@ -79,7 +78,7 @@ export type {
     SendParam,
 } from "./types";
 
-const providerCache = new Map<string, Provider>();
+const providerCachePrefix = "oft:provider:";
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
 const type3Option = 3;
 const executorWorkerId = 1;
@@ -138,9 +137,7 @@ export const decodeExecutorNativeAmountExceedsCapError = (
 };
 
 export const clearOftDeployments = () => {
-    clearOftRegistry();
-    providerCache.clear();
-    clearSolanaTokenAccountCreationCache();
+    clearCache();
 };
 
 export const getOftTransport = (asset: string): NetworkTransport => {
@@ -160,19 +157,18 @@ export const getOftProvider = (sourceAsset: string): Provider => {
     }
 
     const rpcUrls = requireRpcUrls(sourceAsset);
-    const cacheKey = `${sourceAsset}:${rpcUrls.join(",")}`;
-    const cached = providerCache.get(cacheKey);
-    if (cached) {
-        return cached;
-    }
-
-    const provider = createAssetProvider(sourceAsset);
-    providerCache.set(cacheKey, provider);
-    log.debug("Created OFT provider", {
-        sourceAsset,
-        rpcUrlCount: rpcUrls.length,
-    });
-    return provider;
+    return getCachedValue(
+        providerCachePrefix,
+        `${sourceAsset}:${rpcUrls.join(",")}`,
+        () => {
+            const provider = createAssetProvider(sourceAsset);
+            log.debug("Created OFT provider", {
+                sourceAsset,
+                rpcUrlCount: rpcUrls.length,
+            });
+            return provider;
+        },
+    );
 };
 
 const getOftStoreContract = async (
@@ -247,7 +243,7 @@ export const createOftContract = async (
         case NetworkTransport.Solana: {
             const oftStore = await getOftStoreContract(route, oftName);
             return createSolanaOftContract({
-                sourceAsset: route.sourceAsset,
+                asset: route.sourceAsset,
                 programAddress: oftContract.address,
                 storeAddress: oftStore.address,
                 walletProvider: getSolanaOftWalletProvider(route, runner),
@@ -439,12 +435,12 @@ export const getBufferedOftNativeFee = (nativeFee: bigint): bigint =>
     (nativeFee * 110n) / 100n;
 
 export const getRequiredSolanaOftNativeBalance = async (
-    sourceAsset: string,
+    asset: string,
     nativeFee: bigint,
 ): Promise<bigint> => {
     const bufferedFee = getBufferedOftNativeFee(nativeFee);
     const rentExemptMinimum = await getSolanaRentExemptMinimumBalance(
-        sourceAsset,
+        asset,
         solanaTokenAccountSize,
     );
 
@@ -640,7 +636,7 @@ export const getSolanaOftTokenBalance = async (
 
     return await getSolanaLegacyMeshTokenBalance(
         {
-            sourceAsset: route.sourceAsset,
+            asset: route.sourceAsset,
             programAddress: oftContract.address,
             storeAddress: oftStore.address,
         },

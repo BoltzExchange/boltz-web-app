@@ -16,6 +16,7 @@ vi.mock("../../src/utils/chains/solana", async () => {
         getSolanaRentExemptMinimumBalance: vi.fn(
             actual.getSolanaRentExemptMinimumBalance,
         ),
+        shouldCreateSolanaTokenAccount: vi.fn().mockResolvedValue(false),
     };
 });
 
@@ -87,6 +88,8 @@ describe("oft", () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+        vi.mocked(shouldCreateSolanaTokenAccount).mockReset();
+        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(false);
         clearOftDeployments();
     });
 
@@ -405,6 +408,7 @@ describe("oft", () => {
             },
         } as never;
 
+        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(true);
         const rpcFetchSpy = vi
             .fn()
             .mockResolvedValue(
@@ -441,10 +445,11 @@ describe("oft", () => {
             200n,
         );
 
-        expect(rpcFetchSpy).toHaveBeenCalledTimes(2);
+        expect(shouldCreateSolanaTokenAccount).toHaveBeenCalledTimes(2);
     });
 
     test("should include Solana ATA creation options in OFT send params", async () => {
+        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(true);
         const rpcFetchSpy = vi
             .fn()
             .mockResolvedValue(

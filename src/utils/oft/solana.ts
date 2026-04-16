@@ -14,8 +14,10 @@ import log from "loglevel";
 import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolanaOft from "../../lazy/solanaOft";
+import { getCachedValue } from "../cache";
 import {
     getConnectedSolanaWalletAddress,
+    getSolanaAccountInfo,
     getSolanaAssociatedTokenAddress,
     getSolanaConnection,
 } from "../chains/solana";
@@ -26,6 +28,7 @@ type SolanaOftModules = Awaited<ReturnType<(typeof lazySolanaOft)["get"]>>;
 
 type Context = {
     modules: SolanaOftModules;
+    asset: string;
     connection: Connection;
     umi: Umi;
     walletProvider?: SolanaWalletProvider;
@@ -49,7 +52,7 @@ type SolanaReturnSerializer<T> =
       };
 
 export type SolanaLegacyMeshConfig = {
-    sourceAsset: string;
+    asset: string;
     programAddress: string;
     storeAddress: string;
     walletProvider?: SolanaWalletProvider;
@@ -60,6 +63,9 @@ const programReturnPrefix = "Program return: ";
 const creditsSeed = "Credits";
 const eventAuthoritySeed = "__event_authority";
 const peerSeed = "Peer";
+const cachePrefix = "oft:";
+const peerReceiverCachePrefix = `${cachePrefix}peer-receiver:`;
+const remainingAccountsCachePrefix = `${cachePrefix}remaining-accounts:`;
 
 const encodeU32 = (value: number, littleEndian = true): Uint8Array => {
     const bytes = new Uint8Array(4);
@@ -75,6 +81,14 @@ const hexToBytes = (value: string): Uint8Array =>
     value === "0x"
         ? new Uint8Array()
         : hex.decode(value.startsWith("0x") ? value.slice(2) : value);
+
+const getCacheScope = (context: Context): string =>
+    [
+        context.asset,
+        context.programAddress,
+        context.storeAddress,
+        context.endpointProgram,
+    ].join(":");
 
 const getSendParamArgs = (
     sendParam: SendParam,
@@ -175,7 +189,7 @@ const createSolanaWalletAdapter = async (
 };
 
 const getQuotePayer = async (
-    sourceAsset: string,
+    asset: string,
     walletProvider?: SolanaWalletProvider,
 ): Promise<string> => {
     const walletAddress =
@@ -187,14 +201,13 @@ const getQuotePayer = async (
         return walletAddress;
     }
 
-    const configuredQuotePayer =
-        config.assets?.[sourceAsset]?.network?.oftQuotePayer;
+    const configuredQuotePayer = config.assets?.[asset]?.network?.oftQuotePayer;
     if (configuredQuotePayer !== undefined) {
         return configuredQuotePayer;
     }
 
     throw new Error(
-        `Could not determine a valid Solana quote payer for ${sourceAsset}`,
+        `Could not determine a valid Solana quote payer for ${asset}`,
     );
 };
 
@@ -228,17 +241,18 @@ const createUmiContext = async (
 };
 
 export const getSolanaLegacyMeshContext = async ({
-    sourceAsset,
+    asset,
     programAddress,
     storeAddress,
     walletProvider,
 }: SolanaLegacyMeshConfig): Promise<Context> => {
     const modules = await lazySolanaOft.get();
     try {
-        const connection = await getSolanaConnection(sourceAsset);
-        const accountInfo = await connection.getAccountInfo(
-            new modules.web3.PublicKey(storeAddress),
-            "confirmed",
+        const connection = await getSolanaConnection(asset);
+        const accountInfo = await getSolanaAccountInfo(
+            asset,
+            storeAddress,
+            connection,
         );
         if (accountInfo === null) {
             throw new Error(`missing Solana OFT store account ${storeAddress}`);
@@ -263,6 +277,7 @@ export const getSolanaLegacyMeshContext = async ({
 
         return {
             modules,
+            asset,
             connection,
             umi,
             walletProvider,
@@ -277,17 +292,17 @@ export const getSolanaLegacyMeshContext = async ({
             tokenMint,
             tokenEscrow,
             endpointProgram,
-            quotePayer: await getQuotePayer(sourceAsset, walletProvider),
+            quotePayer: await getQuotePayer(asset, walletProvider),
             addressLookupTableAddress,
         };
     } catch (error) {
         log.warn(
             "Failed to initialize Solana OFT context",
-            sourceAsset,
+            asset,
             formatError(error),
         );
         throw new Error(
-            `Failed to initialize Solana OFT context for ${sourceAsset}: ${formatError(error)}`,
+            `Failed to initialize Solana OFT context for ${asset}: ${formatError(error)}`,
         );
     }
 };
@@ -358,28 +373,34 @@ const createLegacySendInstruction = (
 const getLegacyPeerReceiver = async (
     context: Context,
     dstEid: number,
-): Promise<Uint8Array> => {
-    const { modules } = context;
-    const peerAddress = derivePeerAddress(
-        modules,
-        context.programAddress,
-        dstEid,
-    );
-    const peerInfo = await context.connection.getAccountInfo(
-        new modules.web3.PublicKey(peerAddress),
-        "confirmed",
-    );
-    if (peerInfo === null) {
-        throw new Error(
-            `Missing Solana legacy peer account ${peerAddress} for ${dstEid}`,
-        );
-    }
+): Promise<Uint8Array> =>
+    await getCachedValue(
+        peerReceiverCachePrefix,
+        `${getCacheScope(context)}:${dstEid}`,
+        async () => {
+            const { modules } = context;
+            const peerAddress = derivePeerAddress(
+                modules,
+                context.programAddress,
+                dstEid,
+            );
+            const peerInfo = await getSolanaAccountInfo(
+                context.asset,
+                peerAddress,
+                context.connection,
+            );
+            if (peerInfo === null) {
+                throw new Error(
+                    `Missing Solana legacy peer account ${peerAddress} for ${dstEid}`,
+                );
+            }
 
-    return Uint8Array.from(
-        modules.generated.getPeerConfigDecoder().decode(peerInfo.data)
-            .peerAddress,
+            return Uint8Array.from(
+                modules.generated.getPeerConfigDecoder().decode(peerInfo.data)
+                    .peerAddress,
+            );
+        },
     );
-};
 
 const getRemainingAccounts = async (
     kind: "quote" | "send",
@@ -389,67 +410,79 @@ const getRemainingAccounts = async (
     receiver: Uint8Array,
 ) => {
     const { modules } = context;
-    const endpoint = new modules.lzSolanaUmi.EndpointProgram.Endpoint(
-        modules.umi.publicKey(context.endpointProgram) as never,
-    );
-    const sendLibrary = await endpoint.getSendLibrary(
-        context.umi.rpc as never,
-        modules.umi.publicKey(context.storeAddress) as never,
-        dstEid,
-    );
-    if (!sendLibrary.programId) {
-        throw new Error("Send library not initialized for Solana legacy mesh");
-    }
-
-    const sendLibraryProgramId = String(sendLibrary.programId);
-    let msgLibProgram;
-    switch (sendLibraryProgramId) {
-        case modules.lzSolanaUmi.SimpleMessageLibProgram
-            .SIMPLE_MESSAGELIB_PROGRAM_ID:
-            msgLibProgram =
-                new modules.lzSolanaUmi.SimpleMessageLibProgram.SimpleMessageLib(
-                    modules.umi.publicKey(sendLibraryProgramId) as never,
+    return await getCachedValue(
+        remainingAccountsCachePrefix,
+        `${getCacheScope(context)}:${kind}:${payer}:${dstEid}:${hex.encode(receiver)}`,
+        async (): Promise<AccountMeta[]> => {
+            const endpoint = new modules.lzSolanaUmi.EndpointProgram.Endpoint(
+                modules.umi.publicKey(context.endpointProgram) as never,
+            );
+            const sendLibrary = await endpoint.getSendLibrary(
+                context.umi.rpc as never,
+                modules.umi.publicKey(context.storeAddress) as never,
+                dstEid,
+            );
+            if (!sendLibrary.programId) {
+                throw new Error(
+                    "Send library not initialized for Solana legacy mesh",
                 );
-            break;
+            }
 
-        case modules.lzSolanaUmi.UlnProgram.ULN_PROGRAM_ID:
-            msgLibProgram = new modules.lzSolanaUmi.UlnProgram.Uln(
-                modules.umi.publicKey(sendLibraryProgramId) as never,
-            );
-            break;
+            const sendLibraryProgramId = String(sendLibrary.programId);
+            let msgLibProgram;
+            switch (sendLibraryProgramId) {
+                case modules.lzSolanaUmi.SimpleMessageLibProgram
+                    .SIMPLE_MESSAGELIB_PROGRAM_ID:
+                    msgLibProgram =
+                        new modules.lzSolanaUmi.SimpleMessageLibProgram.SimpleMessageLib(
+                            modules.umi.publicKey(
+                                sendLibraryProgramId,
+                            ) as never,
+                        );
+                    break;
 
-        default:
-            throw new Error(
-                `Unsupported Solana legacy mesh send library ${sendLibraryProgramId}`,
-            );
-    }
+                case modules.lzSolanaUmi.UlnProgram.ULN_PROGRAM_ID:
+                    msgLibProgram = new modules.lzSolanaUmi.UlnProgram.Uln(
+                        modules.umi.publicKey(sendLibraryProgramId) as never,
+                    );
+                    break;
 
-    const cpiPath = {
-        path: {
-            sender: modules.umi.publicKey(context.storeAddress) as never,
-            dstEid,
-            receiver,
+                default:
+                    throw new Error(
+                        `Unsupported Solana legacy mesh send library ${sendLibraryProgramId}`,
+                    );
+            }
+
+            const cpiPath = {
+                path: {
+                    sender: modules.umi.publicKey(
+                        context.storeAddress,
+                    ) as never,
+                    dstEid,
+                    receiver,
+                },
+                msgLibProgram,
+            };
+            const accountMetas =
+                kind === "quote"
+                    ? await endpoint.getQuoteIXAccountMetaForCPI(
+                          context.umi.rpc as never,
+                          modules.umi.publicKey(payer) as never,
+                          cpiPath,
+                      )
+                    : await endpoint.getSendIXAccountMetaForCPI(
+                          context.umi.rpc as never,
+                          modules.umi.publicKey(payer) as never,
+                          cpiPath,
+                      );
+
+            return accountMetas.map((meta) => ({
+                pubkey: new modules.web3.PublicKey(meta.pubkey),
+                isSigner: meta.isSigner,
+                isWritable: meta.isWritable,
+            }));
         },
-        msgLibProgram,
-    };
-    const metas =
-        kind === "quote"
-            ? await endpoint.getQuoteIXAccountMetaForCPI(
-                  context.umi.rpc as never,
-                  modules.umi.publicKey(payer) as never,
-                  cpiPath,
-              )
-            : await endpoint.getSendIXAccountMetaForCPI(
-                  context.umi.rpc as never,
-                  modules.umi.publicKey(payer) as never,
-                  cpiPath,
-              );
-
-    return metas.map((meta) => ({
-        pubkey: new modules.web3.PublicKey(meta.pubkey),
-        isSigner: meta.isSigner,
-        isWritable: meta.isWritable,
-    }));
+    );
 };
 
 const formatSolanaLogsMessage = (logs: string[] | undefined | null): string =>
@@ -468,9 +501,10 @@ const createTransaction = async (
 
     let lookupTables = [];
     if (context.addressLookupTableAddress !== undefined) {
-        const lookupTableAccount = await context.connection.getAccountInfo(
-            new modules.web3.PublicKey(context.addressLookupTableAddress),
-            "confirmed",
+        const lookupTableAccount = await getSolanaAccountInfo(
+            context.asset,
+            context.addressLookupTableAddress,
+            context.connection,
         );
         if (lookupTableAccount === null) {
             throw new Error(
@@ -674,7 +708,7 @@ const quoteSend = async (
 };
 
 const sendLegacyMesh = async (
-    sourceAsset: string,
+    asset: string,
     context: Context,
     sendParam: SendParam,
     msgFee: MsgFee,
@@ -684,7 +718,7 @@ const sendLegacyMesh = async (
     const walletProvider = context.walletProvider;
     if (signerAddress === undefined || walletProvider === undefined) {
         throw new Error(
-            `Missing connected Solana wallet for OFT send from ${sourceAsset}`,
+            `Missing connected Solana wallet for OFT send from ${asset}`,
         );
     }
 
@@ -822,7 +856,7 @@ export const createSolanaOftContract = (
             await quoteSend(await contextPromise, sendParam, payInLzToken),
         send: async (sendParam, msgFee) =>
             await sendLegacyMesh(
-                contextConfig.sourceAsset,
+                contextConfig.asset,
                 await contextPromise,
                 sendParam,
                 msgFee,
