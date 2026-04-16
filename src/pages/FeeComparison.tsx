@@ -18,7 +18,7 @@ const FeeComparison = () => {
         <div class="frame opportunities">
             <SettingsCog />
             <SettingsMenu />
-            <h2>{t("swap_opportunities")}</h2>
+            <h2 class="frame-title">{t("swap_opportunities")}</h2>
             <p>{t("swap_opportunities_subline")}</p>
             <Accordion title={t("swap_opportunities_accordion")} isOpen={true}>
                 <FeeComparisonTable

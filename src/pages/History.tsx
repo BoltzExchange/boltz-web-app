@@ -46,7 +46,7 @@ const History = () => {
         <div id="history">
             <div class="frame">
                 <SettingsCog />
-                <h2>{t("refund_past_swaps")}</h2>
+                <h2 class="frame-title">{t("refund_past_swaps")}</h2>
                 <p>{t("refund_past_swaps_subline")}</p>
                 <Show
                     when={swaps().length > 0}

@@ -690,7 +690,9 @@ const Create = () => {
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div class="frame">
                 <SettingsCog />
-                <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
+                <h2 class="frame-title" data-testid="create-swap-title">
+                    {t("create_swap")}
+                </h2>
                 {t("create_swap_subline")} <br />
                 <SwapLimits
                     asset={pair().fromAsset}

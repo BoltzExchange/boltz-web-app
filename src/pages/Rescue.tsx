@@ -65,7 +65,7 @@ const Rescue = () => {
                 <div class="frame refund" data-testid="refundFrame">
                     <header>
                         <SettingsCog />
-                        <h2>{t("rescue_swap")}</h2>
+                        <h2 class="frame-title">{t("rescue_swap")}</h2>
                     </header>
                     <Show
                         when={allSwaps()?.length > 0}

@@ -282,7 +282,9 @@ const RescueEvm = () => {
                     <Match when={rescueData.state === "ready"}>
                         <SettingsCog />
                         <SettingsMenu />
-                        <h2 style={{ "margin-bottom": "6px" }}>
+                        <h2
+                            class="frame-title"
+                            style={{ "margin-bottom": "6px" }}>
                             {pageTitle()} {cropString(params.txHash, 15, 5)}
                         </h2>
                         <hr />
