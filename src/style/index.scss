@@ -855,6 +855,22 @@ textarea.invalid {
     border-right: 0;
     background: var(--color-secondary-700);
 }
+.frame > h2 {
+    padding-inline-end: 1.9rem;
+    overflow-wrap: break-word;
+}
+
+@media (min-width: 400px) {
+    .frame > h2 {
+        padding-inline-start: 2.75rem;
+    }
+}
+
+@media (max-width: 399px) {
+    .frame-header > h2 {
+        padding-inline-end: 0;
+    }
+}
 .swap-status {
     display: inline-flex;
     gap: 0.5rem;
