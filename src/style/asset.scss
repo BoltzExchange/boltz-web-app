@@ -148,8 +148,21 @@
 }
 
 [data-network="hedera"] {
-    @include network-badge(vars.$hedera_icon, var(--color-secondary-700));
+    @include network-badge(vars.$hedera_icon, var(--color-white));
     @include network-primary-icon(vars.$hedera_icon);
+
+    &.network-icon .icon {
+        background-image:
+            vars.$hedera_icon,
+            radial-gradient(
+                circle closest-side,
+                var(--color-white) 95%,
+                transparent 100%
+            );
+        background-size: 85%, 85%;
+        background-position: center, center;
+        background-repeat: no-repeat;
+    }
 }
 
 [data-network="hyperevm"] {
