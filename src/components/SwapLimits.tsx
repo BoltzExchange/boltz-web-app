@@ -31,28 +31,30 @@ type SwapLimitsProps = {
 
 const SwapLimit = (props: SwapLimitProps) => {
     return (
-        <span>
-            {props.label}
-            {props.loading ? (
-                <span
-                    class="swap-limit-value swap-limit-value-loading"
-                    aria-busy="true"
-                    aria-disabled="true">
-                    <span class="skeleton" aria-hidden="true" />
-                </span>
-            ) : (
-                <span
-                    onClick={() => props.onClick()}
-                    class="btn-small btn-light swap-limit-value">
-                    {formatAmount(
-                        BigNumber(props.amount),
-                        props.denomination,
-                        props.separator,
-                        props.asset,
-                    )}
-                </span>
-            )}
-            <AmountDenominator value={props.icon} />
+        <span class="swap-limit">
+            <span class="swap-limit-label">{props.label}</span>
+            <span class="swap-limit-amount">
+                {props.loading ? (
+                    <span
+                        class="swap-limit-value swap-limit-value-loading"
+                        aria-busy="true"
+                        aria-disabled="true">
+                        <span class="skeleton" aria-hidden="true" />
+                    </span>
+                ) : (
+                    <span
+                        onClick={() => props.onClick()}
+                        class="btn-small btn-light swap-limit-value">
+                        {formatAmount(
+                            BigNumber(props.amount),
+                            props.denomination,
+                            props.separator,
+                            props.asset,
+                        )}
+                    </span>
+                )}
+                <AmountDenominator value={props.icon} />
+            </span>
         </span>
     );
 };
