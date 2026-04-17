@@ -9,6 +9,10 @@ export const enum NetworkTransport {
     Tron = "tron",
 }
 
+export const enum BridgeKind {
+    Oft = "oft",
+}
+
 export const enum Usdt0Kind {
     Native = "native",
     Legacy = "legacy",
@@ -33,6 +37,15 @@ export type Usdt0Variant = {
     mesh?: Usdt0Kind;
 };
 
+export type AssetBridge = {
+    kind: BridgeKind;
+    canonicalAsset: string;
+    mesh?: Usdt0Kind;
+    // Address used to simulate bridge quote transactions when no wallet
+    // is connected. Only needed on Solana
+    quotePayer?: string;
+};
+
 export type Asset = {
     type: AssetKind;
     canSend?: boolean;
@@ -54,7 +67,6 @@ export type Asset = {
         gasToken: string;
         transport: NetworkTransport;
         chainId?: number;
-        oftQuotePayer?: string;
         rpcUrls: string[];
         nativeCurrency?: {
             name: string;
@@ -63,8 +75,8 @@ export type Asset = {
             // Minimum native token balance, in base units, to target for gas top-ups.
             minGas?: bigint;
         };
-        mesh?: Usdt0Kind;
     };
+    bridge?: AssetBridge;
     token?: {
         address: string;
         decimals: number;

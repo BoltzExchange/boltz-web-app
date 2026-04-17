@@ -15,9 +15,9 @@ import {
 } from "../helper";
 import { pairs } from "../pairs";
 import {
-    getSendableUsdt0VariantAssets,
-    getUnsendableUsdt0VariantAssets,
-    getUsdt0Variants,
+    getBridgeVariantAssets,
+    getSendableBridgeVariantAssets,
+    getUnsendableBridgeVariantAssets,
     setPairAssets,
 } from "./selectTestUtils";
 
@@ -132,9 +132,11 @@ afterEach(() => {
     localStorage.clear();
 });
 
-const usdt0VariantAssets = getUsdt0Variants(config.assets);
-const sendableUsdt0VariantAssets = getSendableUsdt0VariantAssets(config.assets);
-const unsendableUsdt0VariantAssets = getUnsendableUsdt0VariantAssets(
+const bridgeVariantAssets = getBridgeVariantAssets(config.assets);
+const sendableBridgeVariantAssets = getSendableBridgeVariantAssets(
+    config.assets,
+);
+const unsendableBridgeVariantAssets = getUnsendableBridgeVariantAssets(
     config.assets,
 );
 const evmAddress = "0x5000000000000000000000000000000000000000";
@@ -563,7 +565,7 @@ describe("AssetSelect", () => {
 
             await screen.findByTestId(`select-${USDT0}`);
 
-            for (const variant of usdt0VariantAssets) {
+            for (const variant of bridgeVariantAssets) {
                 expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
         });
@@ -593,13 +595,13 @@ describe("AssetSelect", () => {
 
             expect(screen.queryByTestId(`select-${USDT0}`)).not.toBeNull();
 
-            for (const variant of sendableUsdt0VariantAssets) {
+            for (const variant of sendableBridgeVariantAssets) {
                 expect(
                     screen.queryByTestId(`select-${variant}`),
                 ).not.toBeNull();
             }
 
-            for (const variant of unsendableUsdt0VariantAssets) {
+            for (const variant of unsendableBridgeVariantAssets) {
                 expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
         });
@@ -610,7 +612,7 @@ describe("AssetSelect", () => {
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
             await screen.findByText(i18n.en.select_network);
 
-            for (const variant of usdt0VariantAssets) {
+            for (const variant of bridgeVariantAssets) {
                 expect(
                     screen.queryByTestId(`select-${variant}`),
                 ).not.toBeNull();
@@ -654,13 +656,13 @@ describe("AssetSelect", () => {
             fireEvent.click(screen.getByTestId("search-clear"));
 
             expect((searchInput as HTMLInputElement).value).toBe("");
-            for (const variant of sendableUsdt0VariantAssets) {
+            for (const variant of sendableBridgeVariantAssets) {
                 expect(
                     screen.queryByTestId(`select-${variant}`),
                 ).not.toBeNull();
             }
 
-            for (const variant of unsendableUsdt0VariantAssets) {
+            for (const variant of unsendableBridgeVariantAssets) {
                 expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
         });

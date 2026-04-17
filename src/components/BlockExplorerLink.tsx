@@ -3,14 +3,19 @@ import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { bridgeRegistry } from "../utils/bridge";
 import type {
     ChainSwap,
     ReverseSwap,
     SomeSwap,
     SubmarineSwap,
 } from "../utils/swapCreator";
-import { getRelevantAssetForSwap, isEvmSwap } from "../utils/swapCreator";
-import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
+import {
+    getPostBridgeDetail,
+    getRelevantAssetForSwap,
+    isEvmSwap,
+} from "../utils/swapCreator";
+import BlockExplorer from "./BlockExplorer";
 
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
@@ -32,11 +37,9 @@ const ChainSwapLink = (props: {
                 <BlockExplorer
                     asset={asset()}
                     txId={props.swap().claimTx}
-                    explorer={
-                        props.swap().oft !== undefined && isEvmAsset(asset())
-                            ? ExplorerKind.LayerZero
-                            : undefined
-                    }
+                    explorer={bridgeRegistry.getExplorerKind(
+                        getPostBridgeDetail(props.swap().bridge),
+                    )}
                     address={
                         // When it has been claimed, the "txId" is populated
                         hasBeenClaimed()
@@ -63,19 +66,21 @@ const BlockExplorerLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
-    const oftSendPending = () => {
+    const bridgeSendPending = () => {
         const s = props.swap();
-        return s.oft?.txHash !== undefined && s.lockupTx === undefined;
+        return s.bridge?.txHash !== undefined && s.lockupTx === undefined;
     };
 
     return (
         <Show
-            when={!oftSendPending()}
+            when={!bridgeSendPending()}
             fallback={
                 <BlockExplorer
                     asset={props.swap().assetSend}
-                    txId={props.swap().oft?.txHash}
-                    explorer={ExplorerKind.LayerZero}
+                    txId={props.swap().bridge?.txHash}
+                    explorer={bridgeRegistry.getExplorerKind(
+                        props.swap().bridge,
+                    )}
                     typeLabel={"lockup_tx"}
                 />
             }>
@@ -100,11 +105,9 @@ const BlockExplorerLink = (props: {
                             <BlockExplorer
                                 asset={getRelevantAssetForSwap(props.swap())}
                                 txId={props.swap().claimTx}
-                                explorer={
-                                    props.swap().oft !== undefined
-                                        ? ExplorerKind.LayerZero
-                                        : undefined
-                                }
+                                explorer={bridgeRegistry.getExplorerKind(
+                                    props.swap().bridge,
+                                )}
                                 address={
                                     props.swap().type === SwapType.Submarine
                                         ? (props.swap() as SubmarineSwap)
@@ -134,11 +137,9 @@ const BlockExplorerLink = (props: {
                             <BlockExplorer
                                 asset={getRelevantAssetForSwap(props.swap())}
                                 txId={props.swap().claimTx}
-                                explorer={
-                                    props.swap().oft !== undefined
-                                        ? ExplorerKind.LayerZero
-                                        : undefined
-                                }
+                                explorer={bridgeRegistry.getExplorerKind(
+                                    props.swap().bridge,
+                                )}
                                 typeLabel={"claim_tx"}
                             />
                         </Show>

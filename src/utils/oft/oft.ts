@@ -11,7 +11,7 @@ import {
 } from "ethers";
 import type { Wallet } from "ethers";
 import log from "loglevel";
-import { getUsdt0Mesh } from "src/consts/Assets";
+import { getBridgeMesh } from "src/consts/Assets";
 import { createTokenContract } from "src/context/Web3";
 import type { Signer } from "src/context/Web3";
 
@@ -589,7 +589,7 @@ export const quoteOftAmountInForAmountOut = async (
     }
 
     if (
-        getUsdt0Mesh(route.sourceAsset, route.destinationAsset) ===
+        getBridgeMesh(route.sourceAsset, route.destinationAsset) ===
         Usdt0Kind.Legacy
     ) {
         return getLegacyMeshSourceAmount(amountOut);

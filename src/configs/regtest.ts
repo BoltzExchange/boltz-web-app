@@ -1,7 +1,9 @@
 import type { Config } from "src/configs/base";
 import {
+    BridgeKind,
     Explorer,
     NetworkTransport,
+    Usdt0Kind,
     arbitrumExplorer,
     arbitrumNetwork,
     baseConfig,
@@ -88,6 +90,11 @@ const config = {
             type: AssetKind.ERC20,
             blockExplorerUrl: arbitrumExplorer,
             network: arbitrumNetwork,
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "USDT0",
+                mesh: Usdt0Kind.Native,
+            },
             token: {
                 address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
                 decimals: 6,

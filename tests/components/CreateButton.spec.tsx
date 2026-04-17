@@ -71,6 +71,36 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000001030",
                     },
                 },
+                "USDT0-SOL": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    blockExplorerUrl: {
+                        id: "solscan",
+                        normal: "https://solscan.io",
+                    },
+                    network: {
+                        chainName: "Solana",
+                        symbol: "SOL",
+                        gasToken: "SOL",
+                        transport: "solana",
+                        rpcUrls: ["https://api.mainnet.solana.com"],
+                        nativeCurrency: {
+                            name: "SOL",
+                            symbol: "SOL",
+                            decimals: 9,
+                        },
+                    },
+                    bridge: {
+                        ...actual.config.assets.USDT0.bridge,
+                        mesh: "legacy",
+                        quotePayer:
+                            "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+                    },
+                },
             },
         },
     };

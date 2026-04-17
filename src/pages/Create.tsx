@@ -165,7 +165,7 @@ const Create = () => {
             hasRpcUrls,
             gasTopUpEnabled,
             asset: pair().toAsset,
-            hasPostOft: pair().hasPostOft,
+            hasPostBridge: pair().hasPostBridge,
         };
     });
     createResource(
@@ -181,7 +181,7 @@ const Create = () => {
             hasRpcUrls,
             gasTopUpEnabled,
             asset,
-            hasPostOft,
+            hasPostBridge,
         }) => {
             if (!enabled || rpcUrls === undefined) {
                 log.info("Gas top-up auto-detect skipped", {
@@ -193,7 +193,7 @@ const Create = () => {
                     validAddress,
                     hasAddress,
                     hasRpcUrls,
-                    hasPostOft,
+                    hasPostBridge,
                 });
                 setGetGasToken(false);
                 return;
@@ -203,7 +203,7 @@ const Create = () => {
                 log.info("Gas top-up auto-detect started", {
                     asset,
                     address,
-                    hasPostOft,
+                    hasPostBridge,
                     rpcUrlCount: rpcUrls.length,
                 });
                 const balance = await getAssetNativeBalance(asset, address);
@@ -217,11 +217,11 @@ const Create = () => {
                 });
                 if (balance < gasTokenCostWei && connectedDestination()) {
                     if (
-                        hasPostOft &&
-                        !(await pair().canPostOftNativeDrop(address))
+                        hasPostBridge &&
+                        !(await pair().canPostBridgeNativeDrop(address))
                     ) {
                         log.info(
-                            "Gas top-up disabled because post-OFT native drop is unavailable",
+                            "Gas top-up disabled because post-bridge native drop is unavailable",
                             {
                                 asset,
                                 address,

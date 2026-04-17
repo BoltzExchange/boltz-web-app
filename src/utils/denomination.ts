@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 
 import { config } from "../config";
 import { AssetKind } from "../consts/AssetKind";
-import { getAssetDisplaySymbol, isUsdt0Asset } from "../consts/Assets";
+import { getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
@@ -22,7 +22,7 @@ export const getDecimals = (asset: string) => {
 
     const isRoutedErc20 =
         assetConfig?.type === AssetKind.ERC20 &&
-        (assetConfig?.token?.routeVia !== undefined || isUsdt0Asset(asset));
+        (assetConfig?.token?.routeVia !== undefined || isBridgeAsset(asset));
 
     return {
         isErc20: isRoutedErc20,

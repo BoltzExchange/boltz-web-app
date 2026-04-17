@@ -2,14 +2,14 @@ import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
-import { config } from "../config";
 import {
-    USDT0,
+    getAssetBridge,
     getAssetDisplaySymbol,
     getAssetNetwork,
+    getBridgeVariants,
     getNetworkBadge,
-    isUsdt0Asset,
-    isUsdt0Variant,
+    isBridgeCanonicalAsset,
+    isBridgeVariant,
     assets as orderedAssets,
 } from "../consts/Assets";
 import { AssetSelection, Side } from "../consts/Enums";
@@ -24,7 +24,9 @@ import {
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
-const hasUsdt0 = USDT0 in config.assets;
+// True if this canonical hub has >= 1 chain-specific variant registered.
+const hasBridgeVariants = (asset: string) =>
+    isBridgeCanonicalAsset(asset) && getBridgeVariants(asset).length > 0;
 
 const SelectAsset = () => {
     const { t, fetchPairs, pairs, regularPairs, bitcoinOnly } =
@@ -38,6 +40,7 @@ const SelectAsset = () => {
         assetSelected,
         setInvoice,
         setOnchainAddress,
+        setNetworkSelectCanonical,
     } = useCreateContext();
 
     const [focusedIndex, setFocusedIndex] = createSignal(0);
@@ -46,7 +49,7 @@ const SelectAsset = () => {
     const assets = createMemo(() =>
         orderedAssets.filter(
             (asset) =>
-                !isUsdt0Variant(asset) &&
+                !isBridgeVariant(asset) &&
                 canSelectAsset(assetSelected(), asset),
         ),
     );
@@ -125,7 +128,8 @@ const SelectAsset = () => {
         if (isAssetDisabled(asset)) {
             return;
         }
-        if (asset === USDT0 && hasUsdt0) {
+        if (hasBridgeVariants(asset)) {
+            setNetworkSelectCanonical(asset);
             setAssetSelection(AssetSelection.AssetNetwork);
             return;
         }
@@ -135,7 +139,9 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         const current =
             assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
-        if (asset === USDT0 && hasUsdt0) return isUsdt0Asset(current);
+        if (hasBridgeVariants(asset)) {
+            return getAssetBridge(current)?.canonicalAsset === asset;
+        }
         return asset === current;
     };
 
@@ -173,9 +179,9 @@ const SelectAsset = () => {
                                     type="button"
                                     class={`asset-select-item asset-${getAssetDisplaySymbol(asset)}`}
                                     data-network={
-                                        asset !== USDT0 || !hasUsdt0
-                                            ? getNetworkBadge(asset)
-                                            : null
+                                        hasBridgeVariants(asset)
+                                            ? null
+                                            : getNetworkBadge(asset)
                                     }
                                     data-selected={isSelected(asset)}
                                     data-focused={focusedIndex() === i()}
@@ -190,7 +196,7 @@ const SelectAsset = () => {
                                             {getAssetDisplaySymbol(asset)}
                                         </span>
                                         <span class="asset-select-network">
-                                            {asset === USDT0 && hasUsdt0
+                                            {hasBridgeVariants(asset)
                                                 ? t("select_network")
                                                 : getAssetNetwork(asset)}
                                         </span>

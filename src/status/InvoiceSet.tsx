@@ -9,7 +9,7 @@ import { decodeInvoice } from "../utils/invoice";
 import {
     type SubmarineSwap,
     getLockupGasAbstraction,
-    getPreOftDetail,
+    getPreBridgeDetail,
 } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
@@ -46,7 +46,7 @@ const InvoiceSet = () => {
                         ? submarine.dex.hops
                         : undefined
                 }
-                oft={getPreOftDetail(submarine.oft)}
+                bridge={getPreBridgeDetail(submarine.bridge)}
             />
         </Show>
     );

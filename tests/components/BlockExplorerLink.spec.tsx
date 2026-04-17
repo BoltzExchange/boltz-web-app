@@ -4,7 +4,7 @@ import { createSignal } from "solid-js";
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
 import { BTC, LBTC, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
+import { SwapPosition, SwapType } from "../../src/consts/Enums";
 import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
@@ -74,9 +74,11 @@ describe("BlockExplorerLink", () => {
                 type: SwapType.Reverse,
                 assetReceive: USDT0,
                 claimTx,
-                oft: {
+                bridge: {
+                    kind: "oft",
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
+                    position: SwapPosition.Post,
                 },
             } as unknown as SomeSwap);
 
@@ -227,9 +229,11 @@ describe("BlockExplorerLink", () => {
                 assetSend: RBTC,
                 assetReceive: USDT0,
                 lockupTx,
-                oft: {
+                bridge: {
+                    kind: "oft",
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
+                    position: SwapPosition.Post,
                 },
                 lockupDetails: {
                     lockupAddress: "0xabc",
@@ -284,14 +288,16 @@ describe("BlockExplorerLink", () => {
                 assetSend: LBTC,
                 assetReceive: USDT0,
                 claimTx,
-                oft: {
+                bridge: {
+                    kind: "oft",
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
+                    position: SwapPosition.Post,
                 },
                 lockupDetails: {
                     lockupAddress: "bc1",
                 },
-            } as ChainSwap);
+            } as unknown as ChainSwap);
 
             render(
                 () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,

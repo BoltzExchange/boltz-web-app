@@ -12,7 +12,7 @@ import {
     type ChainSwap,
     type ReverseSwap,
     getLockupGasAbstraction,
-    getPreOftDetail,
+    getPreBridgeDetail,
 } from "../utils/swapCreator";
 
 const SwapCreated = () => {
@@ -57,7 +57,7 @@ const SwapCreated = () => {
                             ? chain.dex.hops
                             : undefined
                     }
-                    oft={getPreOftDetail(chain.oft)}
+                    bridge={getPreBridgeDetail(chain.bridge)}
                 />
             </Show>
         </Show>

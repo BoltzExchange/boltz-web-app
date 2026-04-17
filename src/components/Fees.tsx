@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC, isUsdt0Asset } from "../consts/Assets";
+import { BTC, LBTC, isBridgeAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -247,8 +247,8 @@ const Fees = () => {
             <div class="fees-dyn-right">
                 <Show
                     when={
-                        !isUsdt0Asset(assetSend()) &&
-                        !isUsdt0Asset(assetReceive())
+                        !isBridgeAsset(assetSend()) &&
+                        !isBridgeAsset(assetReceive())
                     }
                     fallback={<FeesCollapse />}>
                     <label>

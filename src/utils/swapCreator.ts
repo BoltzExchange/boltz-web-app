@@ -3,6 +3,7 @@ import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
 
+import type { BridgeKind } from "../configs/base";
 import { type AssetType } from "../consts/Assets";
 import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
@@ -18,7 +19,7 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
-import type { OftRoute } from "./oft/types";
+import type { BridgeRoute } from "./bridge/types";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
 export type DexDetail = {
@@ -33,7 +34,8 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
-export type OftDetail = OftRoute & {
+export type BridgeDetail = BridgeRoute & {
+    kind: BridgeKind;
     position: SwapPosition;
     txHash?: string;
 };
@@ -89,8 +91,8 @@ export type SwapBase = {
     // DEX route for routed swaps (e.g. USDT0 via TBTC).
     dex?: DexDetail;
 
-    // OFT routes for bridging before lockup or after claim.
-    oft?: OftDetail;
+    // Bridge routes for bridging before lockup or after claim.
+    bridge?: BridgeDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -148,8 +150,8 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.oft?.position === SwapPosition.Pre) {
-        return swap.oft.sourceAsset;
+    if (swap.bridge?.position === SwapPosition.Pre) {
+        return swap.bridge.sourceAsset;
     }
 
     if (
@@ -167,8 +169,8 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.oft?.position === SwapPosition.Post) {
-        return swap.oft.destinationAsset;
+    if (swap.bridge?.position === SwapPosition.Post) {
+        return swap.bridge.destinationAsset;
     }
 
     if (
@@ -187,11 +189,15 @@ export const getFinalAssetReceive = (
 export const isEvmSwap = (swap: SomeSwap) =>
     isEvmAsset(getRelevantAssetForSwap(swap));
 
-export const getPreOftDetail = (oft?: OftDetail): OftDetail | undefined =>
-    oft?.position === SwapPosition.Pre ? oft : undefined;
+export const getPreBridgeDetail = (
+    bridge?: BridgeDetail,
+): BridgeDetail | undefined =>
+    bridge?.position === SwapPosition.Pre ? bridge : undefined;
 
-export const getPostOftDetail = (oft?: OftDetail): OftDetail | undefined =>
-    oft?.position === SwapPosition.Post ? oft : undefined;
+export const getPostBridgeDetail = (
+    bridge?: BridgeDetail,
+): BridgeDetail | undefined =>
+    bridge?.position === SwapPosition.Post ? bridge : undefined;
 
 const generatePreimage = ({
     asset,

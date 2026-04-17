@@ -10,7 +10,7 @@ import {
 } from "../alchemy/Alchemy";
 import { config } from "../config";
 import { NetworkTransport } from "../configs/base";
-import { getNetworkTransport, getTokenAddress } from "../consts/Assets";
+import { getTokenAddress } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -24,22 +24,12 @@ import {
     encodeDexQuote,
     getCommitmentLockupDetails,
 } from "../utils/boltzClient";
+import { bridgeRegistry } from "../utils/bridge";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { getSolanaConnection } from "../utils/chains/solana";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
-import {
-    assertTransactionSignerProvider,
-    sendPopulatedTransaction,
-} from "../utils/evmTransaction";
+import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
-import {
-    createOftContract,
-    getOftProvider,
-    getOftReceivedEventByGuid,
-    getOftSentEvent,
-} from "../utils/oft/oft";
-import { getOftContract } from "../utils/oft/registry";
-import { getSolanaOftGuidFromLogs } from "../utils/oft/solana";
 import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -80,11 +70,11 @@ const isPendingCommitmentStatus = (status?: string) =>
     status === swapStatusPending.SwapCreated;
 
 const getCommitmentChainAsset = (swap: SomeSwap) =>
-    swap.oft?.position === SwapPosition.Pre
-        ? swap.oft.destinationAsset
+    swap.bridge?.position === SwapPosition.Pre
+        ? swap.bridge.destinationAsset
         : swap.assetSend;
 
-const getPreOftCommitmentClaimAddress = (swap: SomeSwap) =>
+const getPreBridgeCommitmentClaimAddress = (swap: SomeSwap) =>
     swap.type === SwapType.Chain
         ? (swap as ChainSwap).lockupDetails.claimAddress
         : swap.claimAddress;
@@ -104,11 +94,11 @@ const getSwapPreimageHash = (swap: SomeSwap): string => {
     }
 };
 
-const needsPreOftLockup = (swap: SomeSwap | null | undefined) =>
+const needsPreBridgeLockup = (swap: SomeSwap | null | undefined) =>
     swap !== undefined &&
     swap !== null &&
-    swap.oft?.position === SwapPosition.Pre &&
-    swap.oft.txHash !== undefined &&
+    swap.bridge?.position === SwapPosition.Pre &&
+    swap.bridge.txHash !== undefined &&
     swap.commitmentLockupTxHash === undefined &&
     isPendingCommitmentStatus(swap.status) &&
     swap.dex !== undefined &&
@@ -122,7 +112,7 @@ const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
     !swap.commitmentSignatureSubmitted &&
     isPendingCommitmentStatus(swap.status);
 
-type TaskStage = "pre-oft" | "commitment";
+type TaskStage = "pre-bridge" | "commitment";
 
 const enum CommitmentLockupTransactionSource {
     Recovered = "recovered",
@@ -130,22 +120,22 @@ const enum CommitmentLockupTransactionSource {
     Broadcast = "broadcast",
 }
 
-const enum PreOftCommitmentLockupRecoveryStatus {
+const enum PreBridgeCommitmentLockupRecoveryStatus {
     Recovered = "recovered",
     Ambiguous = "ambiguous",
     NotFound = "not-found",
 }
 
-type PreOftCommitmentLockupRecoveryResult =
+type PreBridgeCommitmentLockupRecoveryResult =
     | {
-          status: PreOftCommitmentLockupRecoveryStatus.Recovered;
+          status: PreBridgeCommitmentLockupRecoveryStatus.Recovered;
           transactionHash: string;
       }
     | {
-          status: PreOftCommitmentLockupRecoveryStatus.Ambiguous;
+          status: PreBridgeCommitmentLockupRecoveryStatus.Ambiguous;
       }
     | {
-          status: PreOftCommitmentLockupRecoveryStatus.NotFound;
+          status: PreBridgeCommitmentLockupRecoveryStatus.NotFound;
       };
 
 const isTaskRelevant = (
@@ -153,8 +143,8 @@ const isTaskRelevant = (
     swap: SomeSwap | null | undefined,
 ) => {
     switch (stage) {
-        case "pre-oft":
-            return needsPreOftLockup(swap);
+        case "pre-bridge":
+            return needsPreBridgeLockup(swap);
 
         case "commitment":
             return needsCommitmentPost(swap);
@@ -208,7 +198,7 @@ export const SwapExecutionWorker = () => {
         return true;
     };
 
-    const recoverPreOftCommitmentLockup = async (
+    const recoverPreBridgeCommitmentLockup = async (
         currentSwap: SomeSwap,
         receivedEvent: {
             blockNumber: number;
@@ -216,7 +206,7 @@ export const SwapExecutionWorker = () => {
         gasAbstractionSigner: {
             address: string;
         },
-    ): Promise<PreOftCommitmentLockupRecoveryResult> => {
+    ): Promise<PreBridgeCommitmentLockupRecoveryResult> => {
         const commitmentAsset = currentSwap.assetSend;
         const erc20Swap = getErc20Swap(commitmentAsset).connect(
             createAssetProvider(commitmentAsset),
@@ -226,17 +216,17 @@ export const SwapExecutionWorker = () => {
             receivedEvent.blockNumber,
             "latest",
         );
-        const claimAddress = getPreOftCommitmentClaimAddress(currentSwap);
+        const claimAddress = getPreBridgeCommitmentClaimAddress(currentSwap);
         if (typeof claimAddress !== "string") {
             log.warn(
-                "Swap execution cannot recover pre-OFT commitment lockup without claim address",
+                "Swap execution cannot recover pre-bridge commitment lockup without claim address",
                 getSwapExecutionLogContext(currentSwap.id, {
                     commitmentAsset,
                     fromBlock: receivedEvent.blockNumber,
                 }),
             );
             return {
-                status: PreOftCommitmentLockupRecoveryStatus.NotFound,
+                status: PreBridgeCommitmentLockupRecoveryStatus.NotFound,
             };
         }
         const tokenAddress = getTokenAddress(commitmentAsset);
@@ -281,7 +271,7 @@ export const SwapExecutionWorker = () => {
         if (matchingLockups.length === 1) {
             const recovered = matchingLockups[0];
             log.info(
-                "Swap execution recovered pre-OFT commitment lockup",
+                "Swap execution recovered pre-bridge commitment lockup",
                 getSwapExecutionLogContext(currentSwap.id, {
                     commitmentAsset,
                     commitmentLockupTxHash: recovered.transactionHash,
@@ -290,14 +280,14 @@ export const SwapExecutionWorker = () => {
                 }),
             );
             return {
-                status: PreOftCommitmentLockupRecoveryStatus.Recovered,
+                status: PreBridgeCommitmentLockupRecoveryStatus.Recovered,
                 transactionHash: recovered.transactionHash,
             };
         }
 
         if (matchingLockups.length > 1) {
             log.warn(
-                "Swap execution found multiple matching pre-OFT commitment lockups",
+                "Swap execution found multiple matching pre-bridge commitment lockups",
                 getSwapExecutionLogContext(currentSwap.id, {
                     commitmentAsset,
                     fromBlock: receivedEvent.blockNumber,
@@ -308,16 +298,16 @@ export const SwapExecutionWorker = () => {
                 }),
             );
             return {
-                status: PreOftCommitmentLockupRecoveryStatus.Ambiguous,
+                status: PreBridgeCommitmentLockupRecoveryStatus.Ambiguous,
             };
         }
 
         return {
-            status: PreOftCommitmentLockupRecoveryStatus.NotFound,
+            status: PreBridgeCommitmentLockupRecoveryStatus.NotFound,
         };
     };
 
-    const abandonFailedOftSend = async (
+    const abandonFailedBridgeSend = async (
         swapId: string,
         sourceAsset: string,
         txHash: string,
@@ -327,18 +317,18 @@ export const SwapExecutionWorker = () => {
         if (
             latestSwap === undefined ||
             latestSwap === null ||
-            latestSwap.oft === undefined
+            latestSwap.bridge === undefined
         ) {
             return;
         }
 
-        latestSwap.oft = {
-            ...latestSwap.oft,
+        latestSwap.bridge = {
+            ...latestSwap.bridge,
             txHash: undefined,
         };
         await persistSwap(latestSwap);
         log.warn(
-            "Swap execution abandoning failed OFT send transaction",
+            "Swap execution abandoning failed bridge send transaction",
             getSwapExecutionLogContext(swapId, {
                 sourceAsset,
                 txHash,
@@ -347,15 +337,16 @@ export const SwapExecutionWorker = () => {
         );
     };
 
-    const waitForOftSendReceipt = async (
+    const waitForBridgeSendReceipt = async (
         swapId: string,
         sourceAsset: string,
         txHash: string,
     ) => {
-        const sourceProvider = getOftProvider(sourceAsset);
+        const bridgeDriver = bridgeRegistry.requireDriverForAsset(sourceAsset);
+        const sourceProvider = bridgeDriver.getProvider(sourceAsset);
 
         log.debug(
-            "Swap execution waiting for OFT send receipt",
+            "Swap execution waiting for bridge send receipt",
             getSwapExecutionLogContext(swapId, {
                 sourceAsset,
                 txHash,
@@ -364,9 +355,9 @@ export const SwapExecutionWorker = () => {
 
         while (true) {
             const currentSwap = await getSwap<SomeSwap>(swapId);
-            if (!needsPreOftLockup(currentSwap)) {
+            if (!needsPreBridgeLockup(currentSwap)) {
                 log.debug(
-                    "Swap execution stopped waiting for OFT send receipt",
+                    "Swap execution stopped waiting for bridge send receipt",
                     getSwapExecutionLogContext(swapId, {
                         sourceAsset,
                         txHash,
@@ -378,7 +369,7 @@ export const SwapExecutionWorker = () => {
             const receipt = await sourceProvider.getTransactionReceipt(txHash);
             if (receipt !== null) {
                 log.info(
-                    "Swap execution found OFT send receipt",
+                    "Swap execution found bridge send receipt",
                     getSwapExecutionLogContext(swapId, {
                         sourceAsset,
                         txHash,
@@ -392,7 +383,7 @@ export const SwapExecutionWorker = () => {
         }
     };
 
-    const waitForSolanaOftSendConfirmation = async (
+    const waitForSolanaBridgeSendConfirmation = async (
         swapId: string,
         sourceAsset: string,
         txHash: string,
@@ -400,7 +391,7 @@ export const SwapExecutionWorker = () => {
         const connection = await getSolanaConnection(sourceAsset);
 
         log.debug(
-            "Swap execution waiting for Solana OFT send confirmation",
+            "Swap execution waiting for Solana bridge send confirmation",
             getSwapExecutionLogContext(swapId, {
                 sourceAsset,
                 txHash,
@@ -409,9 +400,9 @@ export const SwapExecutionWorker = () => {
 
         while (true) {
             const currentSwap = await getSwap<SomeSwap>(swapId);
-            if (!needsPreOftLockup(currentSwap)) {
+            if (!needsPreBridgeLockup(currentSwap)) {
                 log.debug(
-                    "Swap execution stopped waiting for Solana OFT send confirmation",
+                    "Swap execution stopped waiting for Solana bridge send confirmation",
                     getSwapExecutionLogContext(swapId, {
                         sourceAsset,
                         txHash,
@@ -426,7 +417,7 @@ export const SwapExecutionWorker = () => {
             });
             if (transaction !== null) {
                 log.info(
-                    "Swap execution found Solana OFT send confirmation",
+                    "Swap execution found Solana bridge send confirmation",
                     getSwapExecutionLogContext(swapId, {
                         sourceAsset,
                         txHash,
@@ -440,7 +431,7 @@ export const SwapExecutionWorker = () => {
         }
     };
 
-    const waitForOftReceiptByGuid = async (
+    const waitForBridgeReceiptByGuid = async (
         swapId: string,
         destinationAsset: string,
         guid: string,
@@ -448,33 +439,33 @@ export const SwapExecutionWorker = () => {
     ) => {
         const destinationChainId =
             config.assets?.[destinationAsset]?.network?.chainId;
-        const oftRoute = {
+        const bridgeRoute = {
             sourceAsset: destinationAsset,
             destinationAsset: sourceAsset,
         };
-        const oftContract = await getOftContract(oftRoute);
-
-        const provider = assertTransactionSignerProvider(
-            getGasAbstractionSigner(destinationAsset),
-            "OFT destination signer",
+        const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridgeRoute);
+        const provider = bridgeDriver.getProvider(destinationAsset);
+        const contract = await bridgeDriver.createContract(
+            bridgeRoute,
+            provider,
         );
-        const contract = await createOftContract(oftRoute, provider);
+        const bridgeContract = await bridgeDriver.getContract(bridgeRoute);
 
         log.debug(
-            "Swap execution waiting for OFT receive event",
+            "Swap execution waiting for bridge receive event",
             getSwapExecutionLogContext(swapId, {
                 destinationAsset,
                 destinationChainId,
                 guid,
-                contractAddress: oftContract.address,
+                contractAddress: bridgeContract.address,
             }),
         );
 
         while (true) {
             const currentSwap = await getSwap<SomeSwap>(swapId);
-            if (!needsPreOftLockup(currentSwap)) {
+            if (!needsPreBridgeLockup(currentSwap)) {
                 log.debug(
-                    "Swap execution stopped waiting for OFT receive event",
+                    "Swap execution stopped waiting for bridge receive event",
                     getSwapExecutionLogContext(swapId, {
                         destinationAsset,
                         guid,
@@ -483,15 +474,15 @@ export const SwapExecutionWorker = () => {
                 return undefined;
             }
 
-            const receivedEvent = await getOftReceivedEventByGuid(
+            const receivedEvent = await bridgeDriver.getReceivedEventByGuid(
                 contract,
                 provider,
-                oftContract.address,
+                bridgeContract.address,
                 guid,
             );
             if (receivedEvent !== undefined) {
                 log.info(
-                    "Swap execution found OFT receive event",
+                    "Swap execution found bridge receive event",
                     getSwapExecutionLogContext(swapId, {
                         destinationAsset,
                         guid,
@@ -507,8 +498,8 @@ export const SwapExecutionWorker = () => {
         }
     };
 
-    const executePreOftLockup = async (currentSwap: SomeSwap) => {
-        if (!needsPreOftLockup(currentSwap)) {
+    const executePreBridgeLockup = async (currentSwap: SomeSwap) => {
+        if (!needsPreBridgeLockup(currentSwap)) {
             return;
         }
 
@@ -533,110 +524,120 @@ export const SwapExecutionWorker = () => {
         }
 
         log.info(
-            "Swap execution resuming pre-OFT lockup",
+            "Swap execution resuming pre-bridge lockup",
             getSwapExecutionLogContext(currentSwap.id, {
-                sourceAsset: currentSwap.oft.sourceAsset,
-                destinationAsset: currentSwap.oft.destinationAsset,
-                oftTxHash: currentSwap.oft.txHash,
+                sourceAsset: currentSwap.bridge.sourceAsset,
+                destinationAsset: currentSwap.bridge.destinationAsset,
+                bridgeTxHash: currentSwap.bridge.txHash,
             }),
         );
 
-        const sourceOft = await getOftContract(currentSwap.oft);
-
-        const sourceTransport = getNetworkTransport(
-            currentSwap.oft.sourceAsset,
+        const bridgeDriver = bridgeRegistry.requireDriverForRoute(
+            currentSwap.bridge,
+        );
+        const sourceBridge = await bridgeDriver.getContract(currentSwap.bridge);
+        const sourceTransport = bridgeDriver.getTransport(
+            currentSwap.bridge.sourceAsset,
         );
         let guid: string | undefined;
 
         switch (sourceTransport) {
             case NetworkTransport.Evm: {
-                const sendReceipt = await waitForOftSendReceipt(
+                const sendReceipt = await waitForBridgeSendReceipt(
                     currentSwap.id,
-                    currentSwap.oft.sourceAsset,
-                    currentSwap.oft.txHash,
+                    currentSwap.bridge.sourceAsset,
+                    currentSwap.bridge.txHash,
                 );
                 if (sendReceipt === undefined) {
                     return;
                 }
 
                 if (sendReceipt.status === 0) {
-                    await abandonFailedOftSend(
+                    await abandonFailedBridgeSend(
                         currentSwap.id,
-                        currentSwap.oft.sourceAsset,
-                        currentSwap.oft.txHash,
+                        currentSwap.bridge.sourceAsset,
+                        currentSwap.bridge.txHash,
                         sendReceipt.blockNumber,
                     );
                     return;
                 }
 
-                const sourceProvider = getOftProvider(
-                    currentSwap.oft.sourceAsset,
+                const sourceProvider = bridgeDriver.getProvider(
+                    currentSwap.bridge.sourceAsset,
                 );
-                const sourceContract = await createOftContract(
-                    currentSwap.oft,
+                const sourceContract = await bridgeDriver.createContract(
+                    currentSwap.bridge,
                     sourceProvider,
                 );
-                guid = getOftSentEvent(
+                guid = bridgeDriver.getSentEvent(
                     sourceContract,
                     sendReceipt,
-                    sourceOft.address,
+                    sourceBridge.address,
                 ).guid;
                 break;
             }
 
             case NetworkTransport.Solana: {
-                const sendTransaction = await waitForSolanaOftSendConfirmation(
-                    currentSwap.id,
-                    currentSwap.oft.sourceAsset,
-                    currentSwap.oft.txHash,
-                );
+                const sendTransaction =
+                    await waitForSolanaBridgeSendConfirmation(
+                        currentSwap.id,
+                        currentSwap.bridge.sourceAsset,
+                        currentSwap.bridge.txHash,
+                    );
                 if (sendTransaction === undefined) {
                     return;
                 }
 
                 const logMessages = sendTransaction.meta?.logMessages;
                 if (sendTransaction.meta?.err != null || logMessages == null) {
-                    await abandonFailedOftSend(
+                    await abandonFailedBridgeSend(
                         currentSwap.id,
-                        currentSwap.oft.sourceAsset,
-                        currentSwap.oft.txHash,
+                        currentSwap.bridge.sourceAsset,
+                        currentSwap.bridge.txHash,
                     );
                     return;
                 }
 
-                guid = getSolanaOftGuidFromLogs(logMessages);
+                guid = bridgeDriver.getGuidFromSolanaLogs(logMessages);
                 break;
             }
 
             case NetworkTransport.Tron:
                 throw new Error(
-                    `Unsupported OFT source transport for pre-lockup execution: ${sourceTransport}`,
+                    `Unsupported bridge source transport for pre-lockup execution: ${sourceTransport}`,
                 );
+
+            default: {
+                const exhaustive: never = sourceTransport;
+                throw new Error(
+                    `Unsupported bridge source transport for pre-lockup execution: ${String(exhaustive)}`,
+                );
+            }
         }
 
         if (guid === undefined) {
-            throw new Error("Swap execution failed to find OFT send guid");
+            throw new Error("Swap execution failed to find bridge send guid");
         }
 
         log.info(
-            "Swap execution decoded OFT send guid",
+            "Swap execution decoded bridge send guid",
             getSwapExecutionLogContext(currentSwap.id, {
                 guid,
-                contractAddress: sourceOft.address,
+                contractAddress: sourceBridge.address,
             }),
         );
-        const receivedEvent = await waitForOftReceiptByGuid(
+        const receivedEvent = await waitForBridgeReceiptByGuid(
             currentSwap.id,
-            currentSwap.oft.destinationAsset,
+            currentSwap.bridge.destinationAsset,
             guid,
-            currentSwap.oft.sourceAsset,
+            currentSwap.bridge.sourceAsset,
         );
         if (receivedEvent === undefined) {
             return;
         }
 
         const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
-        if (!needsPreOftLockup(latestSwap)) {
+        if (!needsPreBridgeLockup(latestSwap)) {
             return;
         }
 
@@ -645,18 +646,18 @@ export const SwapExecutionWorker = () => {
         );
         const hop = latestSwap.dex.hops[0];
         const gasAbstractionSigner = getGasAbstractionSigner(
-            latestSwap.oft.destinationAsset,
+            latestSwap.bridge.destinationAsset,
         );
-        const recoveryResult = await recoverPreOftCommitmentLockup(
+        const recoveryResult = await recoverPreBridgeCommitmentLockup(
             latestSwap,
             receivedEvent,
             gasAbstractionSigner,
         );
         switch (recoveryResult.status) {
-            case PreOftCommitmentLockupRecoveryStatus.Ambiguous:
+            case PreBridgeCommitmentLockupRecoveryStatus.Ambiguous:
                 return;
 
-            case PreOftCommitmentLockupRecoveryStatus.Recovered:
+            case PreBridgeCommitmentLockupRecoveryStatus.Recovered:
                 await persistCommitmentLockupTransaction(
                     latestSwap.id,
                     recoveryResult.transactionHash,
@@ -664,7 +665,7 @@ export const SwapExecutionWorker = () => {
                 );
                 return;
 
-            case PreOftCommitmentLockupRecoveryStatus.NotFound:
+            case PreBridgeCommitmentLockupRecoveryStatus.NotFound:
                 break;
         }
         const receivedAmount = receivedEvent.amountReceivedLD;
@@ -675,7 +676,7 @@ export const SwapExecutionWorker = () => {
         const quote = await fetchDexQuote(hop.dexDetails, receivedAmount);
 
         log.debug(
-            "Swap execution fetched pre-OFT DEX quote",
+            "Swap execution fetched pre-bridge DEX quote",
             getSwapExecutionLogContext(latestSwap.id, {
                 guid,
                 amountReceived: receivedAmount.toString(),
@@ -685,7 +686,7 @@ export const SwapExecutionWorker = () => {
         );
 
         if (quote.trade.amountOut < expectedAmount) {
-            log.warn("OFT received amount is less than expected", {
+            log.warn("Bridge received amount is less than expected", {
                 swapId: latestSwap.id,
                 guid,
                 amountReceived: receivedAmount.toString(),
@@ -708,7 +709,7 @@ export const SwapExecutionWorker = () => {
         );
 
         const token = createTokenContract(
-            latestSwap.oft.destinationAsset,
+            latestSwap.bridge.destinationAsset,
             gasAbstractionSigner,
         );
         const transferData = token.interface.encodeFunctionData("transfer", [
@@ -717,17 +718,17 @@ export const SwapExecutionWorker = () => {
         ]);
         const calls: AlchemyCall[] = [
             {
-                to: getTokenAddress(latestSwap.oft.destinationAsset),
+                to: getTokenAddress(latestSwap.bridge.destinationAsset),
                 value: "0",
                 data: transferData,
             },
         ];
 
         log.info(
-            "Swap execution broadcasting pre-OFT commitment lockup",
+            "Swap execution broadcasting pre-bridge commitment lockup",
             getSwapExecutionLogContext(latestSwap.id, {
                 guid,
-                destinationAsset: latestSwap.oft.destinationAsset,
+                destinationAsset: latestSwap.bridge.destinationAsset,
                 commitmentAsset: latestSwap.assetSend,
                 amountReceived: receivedAmount.toString(),
             }),
@@ -735,7 +736,7 @@ export const SwapExecutionWorker = () => {
         const tx = await router.executeAndLockERC20.populateTransaction(
             prefix0x("00".repeat(32)),
             getTokenAddress(latestSwap.assetSend),
-            getPreOftCommitmentClaimAddress(latestSwap),
+            getPreBridgeCommitmentClaimAddress(latestSwap),
             gasAbstractionSigner.address,
             commitmentLockupDetails.timelock,
             encoded.calls.map((call) => ({
@@ -767,16 +768,16 @@ export const SwapExecutionWorker = () => {
                 },
             );
         } catch (error) {
-            const recoveryResult = await recoverPreOftCommitmentLockup(
+            const recoveryResult = await recoverPreBridgeCommitmentLockup(
                 latestSwap,
                 receivedEvent,
                 gasAbstractionSigner,
             );
             switch (recoveryResult.status) {
-                case PreOftCommitmentLockupRecoveryStatus.Ambiguous:
+                case PreBridgeCommitmentLockupRecoveryStatus.Ambiguous:
                     return;
 
-                case PreOftCommitmentLockupRecoveryStatus.Recovered:
+                case PreBridgeCommitmentLockupRecoveryStatus.Recovered:
                     await persistCommitmentLockupTransaction(
                         latestSwap.id,
                         recoveryResult.transactionHash,
@@ -784,7 +785,7 @@ export const SwapExecutionWorker = () => {
                     );
                     return;
 
-                case PreOftCommitmentLockupRecoveryStatus.NotFound:
+                case PreBridgeCommitmentLockupRecoveryStatus.NotFound:
                     break;
             }
 
@@ -899,9 +900,9 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
-        if (needsPreOftLockup(currentSwap)) {
-            void runTask(currentSwap.id, "pre-oft", async (storedSwap) => {
-                await executePreOftLockup(storedSwap);
+        if (needsPreBridgeLockup(currentSwap)) {
+            void runTask(currentSwap.id, "pre-bridge", async (storedSwap) => {
+                await executePreBridgeLockup(storedSwap);
             });
         }
 
@@ -909,9 +910,9 @@ export const SwapExecutionWorker = () => {
             void runTask(currentSwap.id, "commitment", async (storedSwap) => {
                 const commitmentAsset = getCommitmentChainAsset(storedSwap);
                 const transactionSigner =
-                    storedSwap.oft?.position === SwapPosition.Pre
+                    storedSwap.bridge?.position === SwapPosition.Pre
                         ? getGasAbstractionSigner(
-                              storedSwap.oft.destinationAsset,
+                              storedSwap.bridge.destinationAsset,
                           )
                         : getLockupGasAbstraction(storedSwap) ===
                             GasAbstractionType.Signer
