@@ -6,16 +6,20 @@ import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
-import type * as SolanaModule from "../../src/utils/chains/solana";
-import type * as OftModule from "../../src/utils/oft/oft";
-import type * as QouterModule from "../../src/utils/quoter";
+import type * as QuoterModule from "../../src/utils/quoter";
 
 const {
     quoteDexAmountInMock,
     quoteDexAmountOutMock,
-    quoteOftAmountInForAmountOutMock,
-    quoteOftReceiveAmountMock,
-    shouldCreateSolanaTokenAccountMock,
+    bridgeBuildQuoteOptionsMock,
+    bridgeGetDriverForAssetMock,
+    bridgeGetMessagingFeeTokenMock,
+    bridgeGetNativeDropFailureMock,
+    bridgeGetPostRouteMock,
+    bridgeGetPreRouteMock,
+    bridgeGetTransferFeeAssetMock,
+    bridgeQuoteAmountInForAmountOutMock,
+    bridgeQuoteReceiveAmountMock,
     fetchDexQuoteMock,
     fetchGasTokenQuoteMock,
     gasTopUpSupportedMock,
@@ -23,16 +27,20 @@ const {
 } = vi.hoisted(() => ({
     quoteDexAmountInMock: vi.fn<() => Promise<QuoteData[]>>(),
     quoteDexAmountOutMock: vi.fn<() => Promise<QuoteData[]>>(),
-    quoteOftAmountInForAmountOutMock:
-        vi.fn<typeof OftModule.quoteOftAmountInForAmountOut>(),
-    quoteOftReceiveAmountMock: vi.fn<typeof OftModule.quoteOftReceiveAmount>(),
-    shouldCreateSolanaTokenAccountMock:
-        vi.fn<typeof SolanaModule.shouldCreateSolanaTokenAccount>(),
-    fetchDexQuoteMock: vi.fn<typeof QouterModule.fetchDexQuote>(),
-    fetchGasTokenQuoteMock: vi.fn<typeof QouterModule.fetchGasTokenQuote>(),
-    gasTopUpSupportedMock: vi.fn<typeof QouterModule.gasTopUpSupported>(),
+    bridgeBuildQuoteOptionsMock: vi.fn(),
+    bridgeGetDriverForAssetMock: vi.fn(),
+    bridgeGetMessagingFeeTokenMock: vi.fn(),
+    bridgeGetNativeDropFailureMock: vi.fn(),
+    bridgeGetPostRouteMock: vi.fn(),
+    bridgeGetPreRouteMock: vi.fn(),
+    bridgeGetTransferFeeAssetMock: vi.fn(),
+    bridgeQuoteAmountInForAmountOutMock: vi.fn(),
+    bridgeQuoteReceiveAmountMock: vi.fn(),
+    fetchDexQuoteMock: vi.fn<typeof QuoterModule.fetchDexQuote>(),
+    fetchGasTokenQuoteMock: vi.fn<typeof QuoterModule.fetchGasTokenQuote>(),
+    gasTopUpSupportedMock: vi.fn<typeof QuoterModule.gasTopUpSupported>(),
     getGasTopUpNativeAmountMock:
-        vi.fn<typeof QouterModule.getGasTopUpNativeAmount>(),
+        vi.fn<typeof QuoterModule.getGasTopUpNativeAmount>(),
 }));
 
 vi.mock("../../src/utils/boltzClient", async () => {
@@ -152,34 +160,11 @@ vi.mock("../../src/config", async () => {
     };
 });
 
-vi.mock("../../src/utils/oft/oft", () => ({
-    decodeExecutorNativeAmountExceedsCapError: (error: unknown) => {
-        const data = (error as { data?: string })?.data;
-        if (data === undefined || !data.startsWith("0x0084ce02")) {
-            return undefined;
-        }
-
-        return {
-            amount: BigInt(`0x${data.slice(10, 74)}`),
-            cap: BigInt(`0x${data.slice(74, 138)}`),
-        };
+vi.mock("../../src/utils/bridge/registry", () => ({
+    bridgeRegistry: {
+        getDriverForAsset: bridgeGetDriverForAssetMock,
     },
-    isExecutorNativeAmountExceedsCapError: (error: unknown) =>
-        (error as { data?: string })?.data?.startsWith("0x0084ce02") ?? false,
-    quoteOftAmountInForAmountOut: quoteOftAmountInForAmountOutMock,
-    quoteOftReceiveAmount: quoteOftReceiveAmountMock,
 }));
-
-vi.mock("../../src/utils/chains/solana", async () => {
-    const actual = await vi.importActual<typeof SolanaModule>(
-        "../../src/utils/chains/solana",
-    );
-
-    return {
-        ...actual,
-        shouldCreateSolanaTokenAccount: shouldCreateSolanaTokenAccountMock,
-    };
-});
 
 vi.mock("../../src/utils/quoter", () => ({
     fetchDexQuote: fetchDexQuoteMock,
@@ -191,7 +176,7 @@ vi.mock("../../src/utils/quoter", () => ({
 const tbtcAssetAmount = (sats: number) =>
     (BigInt(sats) * 10_000_000_000n).toString();
 
-const makeOftQuote = ({
+const makeBridgeQuote = ({
     amountIn,
     amountOut,
     msgFee,
@@ -203,9 +188,9 @@ const makeOftQuote = ({
     amountIn,
     amountOut,
     msgFee: [msgFee, 0n] as [bigint, bigint],
-    oftLimit: [0n, 0n] as [bigint, bigint],
-    oftFeeDetails: [],
-    oftReceipt: [amountIn, amountOut] as [bigint, bigint],
+    bridgeLimit: [0n, 0n] as [bigint, bigint],
+    bridgeFeeDetails: [],
+    bridgeReceipt: [amountIn, amountOut] as [bigint, bigint],
 });
 
 const pairs: Pairs = {
@@ -293,15 +278,90 @@ describe("Pair", () => {
     beforeEach(() => {
         quoteDexAmountInMock.mockReset();
         quoteDexAmountOutMock.mockReset();
-        quoteOftAmountInForAmountOutMock.mockReset();
-        quoteOftReceiveAmountMock.mockReset();
-        shouldCreateSolanaTokenAccountMock.mockReset();
+        bridgeBuildQuoteOptionsMock.mockReset();
+        bridgeGetDriverForAssetMock.mockReset();
+        bridgeGetMessagingFeeTokenMock.mockReset();
+        bridgeGetNativeDropFailureMock.mockReset();
+        bridgeGetPostRouteMock.mockReset();
+        bridgeGetPreRouteMock.mockReset();
+        bridgeGetTransferFeeAssetMock.mockReset();
+        bridgeQuoteAmountInForAmountOutMock.mockReset();
+        bridgeQuoteReceiveAmountMock.mockReset();
         fetchDexQuoteMock.mockReset();
         fetchGasTokenQuoteMock.mockReset();
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
         gasTopUpSupportedMock.mockReturnValue(true);
-        shouldCreateSolanaTokenAccountMock.mockResolvedValue(false);
+        bridgeGetPreRouteMock.mockImplementation((asset: string) =>
+            asset === "USDT0-POL"
+                ? {
+                      sourceAsset: "USDT0-POL",
+                      destinationAsset: USDT0,
+                  }
+                : undefined,
+        );
+        bridgeGetPostRouteMock.mockImplementation((asset: string) =>
+            asset === "USDT0-POL"
+                ? {
+                      sourceAsset: USDT0,
+                      destinationAsset: "USDT0-POL",
+                  }
+                : undefined,
+        );
+        bridgeBuildQuoteOptionsMock.mockImplementation(
+            async (
+                destinationAsset: string,
+                destination: string,
+                getGasToken: boolean,
+            ) => ({
+                recipient: destination,
+                nativeDrop:
+                    getGasToken && gasTopUpSupportedMock(destinationAsset)
+                        ? {
+                              amount: await getGasTopUpNativeAmountMock(
+                                  destinationAsset,
+                              ),
+                              receiver: destination,
+                          }
+                        : undefined,
+            }),
+        );
+        bridgeGetMessagingFeeTokenMock.mockImplementation(
+            (route: { sourceAsset: string }) =>
+                route.sourceAsset === "USDT0-POL" ? "POL" : "ETH",
+        );
+        bridgeGetTransferFeeAssetMock.mockImplementation(
+            (route: { sourceAsset: string }) => route.sourceAsset,
+        );
+        bridgeGetNativeDropFailureMock.mockImplementation(
+            (error: { data?: string }) => {
+                const data = error.data;
+                if (data === undefined || !data.startsWith("0x0084ce02")) {
+                    return undefined;
+                }
+
+                return {
+                    reason: "exceeds_cap",
+                    amount: BigInt(`0x${data.slice(10, 74)}`),
+                    cap: BigInt(`0x${data.slice(74, 138)}`),
+                };
+            },
+        );
+
+        const bridgeDriver = {
+            getPreRoute: bridgeGetPreRouteMock,
+            getPostRoute: bridgeGetPostRouteMock,
+            buildQuoteOptions: bridgeBuildQuoteOptionsMock,
+            quoteReceiveAmount: bridgeQuoteReceiveAmountMock,
+            quoteAmountInForAmountOut: bridgeQuoteAmountInForAmountOutMock,
+            getMessagingFeeToken: bridgeGetMessagingFeeTokenMock,
+            getTransferFeeAsset: bridgeGetTransferFeeAssetMock,
+            getNativeDropFailure: bridgeGetNativeDropFailureMock,
+        };
+
+        bridgeGetDriverForAssetMock.mockImplementation((asset: string) =>
+            asset === "USDT0-POL" ? bridgeDriver : undefined,
+        );
     });
 
     afterEach(() => {
@@ -375,7 +435,7 @@ describe("Pair", () => {
         expect(debugSpy).not.toHaveBeenCalled();
     });
 
-    test("should allow 0-amount chain swaps with post-OFT routing", () => {
+    test("should allow 0-amount chain swaps with post-bridge routing", () => {
         const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
         const pair = new Pair(pairs, BTC, "USDT0-POL");
 
@@ -405,8 +465,8 @@ describe("Pair", () => {
                         type: "reverse",
                     },
                 ],
-                hasPreOft: false,
-                hasPostOft: true,
+                hasPreBridge: false,
+                hasPostBridge: true,
             }),
         );
     });
@@ -423,8 +483,8 @@ describe("Pair", () => {
                 to: LN,
                 blockers: ["route has no first hop"],
                 route: [],
-                hasPreOft: false,
-                hasPostOft: false,
+                hasPreBridge: false,
+                hasPostBridge: false,
             }),
         );
     });
@@ -457,9 +517,9 @@ describe("Pair", () => {
         expect(creationData?.receiveAmount.toNumber()).toBe(1480);
     });
 
-    test("should quote OFT send variants before routed Boltz swaps", async () => {
-        quoteOftReceiveAmountMock.mockResolvedValueOnce(
-            makeOftQuote({
+    test("should quote bridge send variants before routed Boltz swaps", async () => {
+        bridgeQuoteReceiveAmountMock.mockResolvedValueOnce(
+            makeBridgeQuote({
                 amountIn: 2_000n,
                 amountOut: 2_000n,
                 msgFee: 10n,
@@ -487,11 +547,11 @@ describe("Pair", () => {
             false,
             undefined,
         );
-        expect(pair.oftMessagingFeeFromLatestQuote(sendAmount)).toBe(10n);
-        expect(pair.oftMessagingFeeToken).toBe("POL");
+        expect(pair.bridgeMessagingFeeFromLatestQuote(sendAmount)).toBe(10n);
+        expect(pair.bridgeMessagingFeeToken).toBe("POL");
     });
 
-    test("should include OFT source messaging fees in reverse quotes", async () => {
+    test("should include bridge source messaging fees in reverse quotes", async () => {
         quoteDexAmountOutMock.mockResolvedValueOnce([
             {
                 quote: "1000000",
@@ -504,9 +564,9 @@ describe("Pair", () => {
                 data: { route: "exact-in" },
             },
         ]);
-        quoteOftAmountInForAmountOutMock.mockResolvedValue(1_000_000n);
-        quoteOftReceiveAmountMock.mockResolvedValue(
-            makeOftQuote({
+        bridgeQuoteAmountInForAmountOutMock.mockResolvedValue(1_000_000n);
+        bridgeQuoteReceiveAmountMock.mockResolvedValue(
+            makeBridgeQuote({
                 amountIn: 1_000_000n,
                 amountOut: 999_970n,
                 msgFee: 25n,
@@ -518,14 +578,14 @@ describe("Pair", () => {
         const creationData = await pair.creationData(sendAmount, 0);
 
         expect(sendAmount.toNumber()).toBe(1_000_000);
-        expect(pair.hasPreOft).toBe(true);
-        expect(pair.hasPostOft).toBe(false);
-        expect(pair.oftMessagingFeeFromLatestQuote(sendAmount)).toBe(25n);
-        expect(pair.oftMessagingFeeToken).toBe("POL");
-        expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
-            30,
-        );
-        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
+        expect(pair.hasPreBridge).toBe(true);
+        expect(pair.hasPostBridge).toBe(false);
+        expect(pair.bridgeMessagingFeeFromLatestQuote(sendAmount)).toBe(25n);
+        expect(pair.bridgeMessagingFeeToken).toBe("POL");
+        expect(
+            pair.bridgeTransferFeeFromLatestQuote(sendAmount)?.toNumber(),
+        ).toBe(30);
+        expect(pair.bridgeTransferFeeAsset).toBe("USDT0-POL");
         expect(
             pair.boltzSwapSendAmountFromLatestQuote(sendAmount)?.toNumber(),
         ).toBe(1480);
@@ -534,10 +594,10 @@ describe("Pair", () => {
         expect(creationData?.to).toBe(BTC);
     });
 
-    test("should cache OFT transfer fees in reverse quotes for post-OFT pairs", async () => {
-        quoteOftAmountInForAmountOutMock.mockResolvedValue(1_030n);
-        quoteOftReceiveAmountMock.mockResolvedValue(
-            makeOftQuote({
+    test("should cache bridge transfer fees in reverse quotes for post-bridge pairs", async () => {
+        bridgeQuoteAmountInForAmountOutMock.mockResolvedValue(1_030n);
+        bridgeQuoteReceiveAmountMock.mockResolvedValue(
+            makeBridgeQuote({
                 amountIn: 1_030n,
                 amountOut: 1_000n,
                 msgFee: 0n,
@@ -548,15 +608,15 @@ describe("Pair", () => {
         const sendAmount = await pair.calculateSendAmount(BigNumber(1_000), 0);
 
         expect(sendAmount.toNumber()).toBe(1_030);
-        expect(pair.hasPreOft).toBe(false);
-        expect(pair.hasPostOft).toBe(true);
-        expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
-            30,
-        );
-        expect(pair.oftTransferFeeAsset).toBe(USDT0);
+        expect(pair.hasPreBridge).toBe(false);
+        expect(pair.hasPostBridge).toBe(true);
+        expect(
+            pair.bridgeTransferFeeFromLatestQuote(sendAmount)?.toNumber(),
+        ).toBe(30);
+        expect(pair.bridgeTransferFeeAsset).toBe(USDT0);
     });
 
-    test("should include OFT native drop costs in post-OFT receive quotes", async () => {
+    test("should include bridge native drop costs in post-bridge receive quotes", async () => {
         getGasTopUpNativeAmountMock.mockResolvedValue(77n);
         quoteDexAmountOutMock.mockResolvedValue([
             {
@@ -564,9 +624,9 @@ describe("Pair", () => {
                 data: { route: "native-fee" },
             },
         ]);
-        quoteOftReceiveAmountMock.mockImplementation((_route, amount) =>
+        bridgeQuoteReceiveAmountMock.mockImplementation((_route, amount) =>
             Promise.resolve(
-                makeOftQuote({
+                makeBridgeQuote({
                     amountIn: amount,
                     amountOut: amount,
                     msgFee: 25n,
@@ -591,8 +651,8 @@ describe("Pair", () => {
         };
 
         expect(receiveAmount.toNumber()).toBe(900);
-        expect(quoteOftReceiveAmountMock).toHaveBeenCalledTimes(2);
-        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+        expect(bridgeQuoteReceiveAmountMock).toHaveBeenCalledTimes(2);
+        expect(bridgeQuoteReceiveAmountMock).toHaveBeenNthCalledWith(
             1,
             route,
             1000n,
@@ -604,7 +664,7 @@ describe("Pair", () => {
                 },
             },
         );
-        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+        expect(bridgeQuoteReceiveAmountMock).toHaveBeenNthCalledWith(
             2,
             route,
             900n,
@@ -618,10 +678,12 @@ describe("Pair", () => {
         );
         expect(fetchGasTokenQuoteMock).not.toHaveBeenCalled();
         expect(getGasTopUpNativeAmountMock).toHaveBeenCalledWith("USDT0-POL");
-        expect(pair.oftMessagingFeeFromLatestQuote(BigNumber(1_000))).toBe(25n);
+        expect(pair.bridgeMessagingFeeFromLatestQuote(BigNumber(1_000))).toBe(
+            25n,
+        );
     });
 
-    test("should fall back when post-OFT native drop exceeds the executor cap", async () => {
+    test("should fall back when post-bridge native drop exceeds the executor cap", async () => {
         getGasTopUpNativeAmountMock.mockResolvedValue(77n);
         quoteDexAmountOutMock.mockResolvedValue([
             {
@@ -629,7 +691,7 @@ describe("Pair", () => {
                 data: { route: "native-fee" },
             },
         ]);
-        quoteOftReceiveAmountMock.mockImplementation(
+        bridgeQuoteReceiveAmountMock.mockImplementation(
             (_route, amount, options) => {
                 if (options?.nativeDrop !== undefined) {
                     throw {
@@ -638,7 +700,7 @@ describe("Pair", () => {
                 }
 
                 return Promise.resolve(
-                    makeOftQuote({
+                    makeBridgeQuote({
                         amountIn: amount,
                         amountOut: amount === 1_000n ? 900n : amount,
                         msgFee: 5n,
@@ -660,6 +722,42 @@ describe("Pair", () => {
             ),
         ).resolves.toEqual(BigNumber(900));
 
-        await expect(pair.canPostOftNativeDrop(recipient)).resolves.toBe(false);
+        await expect(pair.canPostBridgeNativeDrop(recipient)).resolves.toBe(
+            false,
+        );
+    });
+
+    test("should treat missing driver native-drop options as unsupported", async () => {
+        bridgeBuildQuoteOptionsMock.mockResolvedValue({
+            recipient: "0x5000000000000000000000000000000000000000",
+        });
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const recipient = "0x5000000000000000000000000000000000000000";
+
+        await expect(pair.canPostBridgeNativeDrop(recipient)).resolves.toBe(
+            false,
+        );
+        expect(bridgeQuoteReceiveAmountMock).not.toHaveBeenCalled();
+    });
+
+    test("should rethrow unclassified post-bridge native-drop quote failures", async () => {
+        getGasTopUpNativeAmountMock.mockResolvedValue(77n);
+        const error = new Error("quote failed");
+        bridgeGetNativeDropFailureMock.mockReturnValue(undefined);
+        bridgeQuoteReceiveAmountMock.mockRejectedValue(error);
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const recipient = "0x5000000000000000000000000000000000000000";
+
+        await expect(
+            pair.calculateReceiveAmount(
+                BigNumber(1_000),
+                0,
+                undefined,
+                true,
+                recipient,
+            ),
+        ).rejects.toBe(error);
     });
 });

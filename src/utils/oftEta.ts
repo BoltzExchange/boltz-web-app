@@ -1,6 +1,6 @@
-import type { Usdt0VariantAsset } from "../configs/mainnet";
+import type { Usdt0VariantAsset } from "../configs/usdt0";
 
-const preOftEtaSecondsToUsdt0: Record<Usdt0VariantAsset, number | undefined> = {
+const preOftEtaSecondsToUsdt0: Record<Usdt0VariantAsset, number> = {
     "USDT0-BERA": 2 * 60 + 11,
     "USDT0-CFX": 58 * 60 + 18,
     "USDT0-CORN": 25 * 60 * 60,

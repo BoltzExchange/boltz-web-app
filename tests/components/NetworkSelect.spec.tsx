@@ -9,9 +9,9 @@ import i18n from "../../src/i18n/i18n";
 import { TestComponent, contextWrapper, signals } from "../helper";
 import { pairs } from "../pairs";
 import {
-    getSendableUsdt0VariantAssets,
-    getUnsendableUsdt0VariantAssets,
-    getUsdt0Variants,
+    getBridgeVariantAssets,
+    getSendableBridgeVariantAssets,
+    getUnsendableBridgeVariantAssets,
     setPairAssets,
 } from "./selectTestUtils";
 
@@ -139,9 +139,11 @@ vi.mock("../../src/config", async () => {
     };
 });
 
-const usdt0VariantAssets = getUsdt0Variants(config.assets);
-const sendableUsdt0VariantAssets = getSendableUsdt0VariantAssets(config.assets);
-const unsendableUsdt0VariantAssets = getUnsendableUsdt0VariantAssets(
+const bridgeVariantAssets = getBridgeVariantAssets(config.assets);
+const sendableBridgeVariantAssets = getSendableBridgeVariantAssets(
+    config.assets,
+);
+const unsendableBridgeVariantAssets = getUnsendableBridgeVariantAssets(
     config.assets,
 );
 const evmAddress = "0x5000000000000000000000000000000000000000";
@@ -157,6 +159,7 @@ const openNetworkSelect = (side = Side.Send) => {
         { wrapper: contextWrapper },
     );
 
+    signals.setNetworkSelectCanonical(USDT0);
     signals.setAssetSelection(AssetSelection.AssetNetwork);
     signals.setAssetSelected(side);
 };
@@ -167,11 +170,11 @@ describe("NetworkSelect", () => {
 
         await screen.findByText(i18n.en.select_network);
 
-        for (const variant of sendableUsdt0VariantAssets) {
+        for (const variant of sendableBridgeVariantAssets) {
             expect(screen.queryByTestId(`select-${variant}`)).not.toBeNull();
         }
 
-        for (const variant of unsendableUsdt0VariantAssets) {
+        for (const variant of unsendableBridgeVariantAssets) {
             expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
         }
     });
@@ -181,7 +184,7 @@ describe("NetworkSelect", () => {
 
         await screen.findByText(i18n.en.select_network);
 
-        for (const variant of usdt0VariantAssets) {
+        for (const variant of bridgeVariantAssets) {
             expect(screen.queryByTestId(`select-${variant}`)).not.toBeNull();
         }
     });

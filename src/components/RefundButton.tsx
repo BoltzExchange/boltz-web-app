@@ -27,7 +27,6 @@ import {
     type AssetType,
     getKindForAsset,
     isEvmAsset,
-    requireTokenConfig,
 } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -44,6 +43,7 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
+import { bridgeRegistry } from "../utils/bridge";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
@@ -63,20 +63,13 @@ import {
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
-import {
-    buildOftApprovalCall,
-    getOftTransactionSender,
-    getQuotedOftContract,
-    quoteOftSend,
-} from "../utils/oft/oft";
-import { getOftContract } from "../utils/oft/registry";
 import { createAssetProvider } from "../utils/provider";
 import { RefundType, refund } from "../utils/rescue";
 import {
+    type BridgeDetail,
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
-    type OftDetail,
     type SubmarineSwap,
     getLockupGasAbstraction,
 } from "../utils/swapCreator";
@@ -131,29 +124,35 @@ const buildRefundFollowUpCalls = async (
     slippage: number,
     dexDetails?: DexDetail,
     destination?: string,
-    oft?: OftDetail,
+    bridge?: BridgeDetail,
 ) => {
     let resolvedDestination = destination;
+    const isPreBridge = bridge?.position === SwapPosition.Pre;
 
-    if (oft?.position === SwapPosition.Pre) {
-        if (oft.txHash === undefined) {
-            throw new Error("missing OFT transaction hash for pre-OFT refund");
+    if (isPreBridge) {
+        if (bridge.txHash === undefined) {
+            throw new Error(
+                "missing bridge transaction hash for pre-bridge refund",
+            );
         }
 
         if (
             dexDetails === undefined ||
             dexDetails.position !== SwapPosition.Pre
         ) {
-            throw new Error("missing reverse DEX details for pre-OFT refund");
+            throw new Error(
+                "missing reverse DEX details for pre-bridge refund",
+            );
         }
 
-        const sender = await getOftTransactionSender(
-            oft.sourceAsset,
-            oft.txHash,
+        const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridge);
+        const sender = await bridgeDriver.getTransactionSender(
+            bridge.sourceAsset,
+            bridge.txHash,
         );
         if (sender === undefined) {
             throw new Error(
-                `could not resolve original sender from OFT transaction: ${oft.txHash}`,
+                `could not resolve original sender from bridge transaction: ${bridge.txHash}`,
             );
         }
 
@@ -182,18 +181,17 @@ const buildRefundFollowUpCalls = async (
 
     const quoteAmount = BigInt(quote.quote);
     const amountOutMin = calculateAmountOutMin(quoteAmount, slippage);
-    const dexRecipient =
-        oft?.position === SwapPosition.Pre
-            ? refundData.refundAddress
-            : resolvedDestination;
+    const dexRecipient = isPreBridge
+        ? refundData.refundAddress
+        : resolvedDestination;
 
     log.debug(
-        oft?.position === SwapPosition.Pre
-            ? `Refunding via DEX and OFT to ${resolvedDestination}`
+        isPreBridge
+            ? `Refunding via DEX and bridge to ${resolvedDestination}`
             : `Refunding via DEX to ${desiredToken}`,
     );
 
-    if (oft?.position !== SwapPosition.Pre) {
+    if (!isPreBridge) {
         const calldata = await encodeDexQuote(
             quoteChain,
             dexRecipient,
@@ -209,19 +207,24 @@ const buildRefundFollowUpCalls = async (
         }));
     }
 
-    const route = {
-        sourceAsset: oft.destinationAsset,
-        destinationAsset: oft.sourceAsset,
+    const reverseBridgeRoute = {
+        sourceAsset: bridge.destinationAsset,
+        destinationAsset: bridge.sourceAsset,
     };
-    const router = createRouterContract(route.sourceAsset, transactionSigner);
-    const [routerAddress, oftContract, quotedOft] = await Promise.all([
+    const bridgeDriver =
+        bridgeRegistry.requireDriverForRoute(reverseBridgeRoute);
+    const router = createRouterContract(
+        reverseBridgeRoute.sourceAsset,
+        transactionSigner,
+    );
+    const [routerAddress, bridgeContract, quotedBridge] = await Promise.all([
         router.getAddress(),
-        getOftContract(route),
-        getQuotedOftContract(route),
+        bridgeDriver.getContract(reverseBridgeRoute),
+        bridgeDriver.getQuotedContract(reverseBridgeRoute),
     ]);
-    const { msgFee } = await quoteOftSend(
-        quotedOft,
-        route,
+    const { msgFee } = await bridgeDriver.quoteSend(
+        quotedBridge,
+        reverseBridgeRoute,
         resolvedDestination,
         quoteAmount,
     );
@@ -240,13 +243,13 @@ const buildRefundFollowUpCalls = async (
             msgFeeAmountOut,
         );
         if (msgFeeQuote === undefined) {
-            throw new Error("could not get DEX quote for OFT messaging fee");
+            throw new Error("could not get DEX quote for bridge messaging fee");
         }
 
         const msgFeeAmountIn = BigInt(msgFeeQuote.quote);
         tradeAmountIn -= msgFeeAmountIn;
         if (tradeAmountIn <= 0n) {
-            throw new Error("amount too small to cover OFT messaging fee");
+            throw new Error("amount too small to cover bridge messaging fee");
         }
 
         const msgFeeCalldata = await encodeDexQuote(
@@ -295,8 +298,8 @@ const buildRefundFollowUpCalls = async (
         callData: prefixHex(call.data ?? "0x"),
     }));
 
-    const approvalCall = await buildOftApprovalCall(
-        route,
+    const approvalCall = await bridgeDriver.buildApprovalCall(
+        reverseBridgeRoute,
         routerAddress,
         BigInt(tradeQuote.quote),
         transactionSigner,
@@ -309,29 +312,23 @@ const buildRefundFollowUpCalls = async (
         });
     }
 
-    const { sendParam } = await quoteOftSend(
-        quotedOft,
-        route,
+    const { sendParam } = await bridgeDriver.quoteSend(
+        quotedBridge,
+        reverseBridgeRoute,
         resolvedDestination,
         tradeAmountOutMin,
     );
     const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
-    const tokenAddress = requireTokenConfig(route.sourceAsset).address;
-    const executeOftData = router.interface.encodeFunctionData("executeOft", [
+    const executeBridgeData = bridgeDriver.encodeRouterExecuteData({
+        router,
+        route: reverseBridgeRoute,
+        bridgeContract,
         routerCalls,
-        tokenAddress,
-        oftContract.address,
-        {
-            dstEid: sendParam[0],
-            to: sendParam[1],
-            extraOptions: sendParam[4],
-            composeMsg: sendParam[5],
-            oftCmd: sendParam[6],
-        },
+        sendParam,
         minAmountLd,
-        msgFee[1],
-        refundData.refundAddress,
-    ]);
+        lzTokenFee: msgFee[1],
+        refundAddress: refundData.refundAddress,
+    });
 
     return [
         {
@@ -343,7 +340,7 @@ const buildRefundFollowUpCalls = async (
         },
         {
             to: routerAddress,
-            data: executeOftData,
+            data: executeBridgeData,
         },
     ];
 };
@@ -357,7 +354,7 @@ const buildErc20RefundTransaction = async ({
     slippage,
     dexDetails,
     destination,
-    oft,
+    bridge,
     cooperative,
     commitmentRefund = false,
 }: {
@@ -369,7 +366,7 @@ const buildErc20RefundTransaction = async ({
     slippage: number;
     dexDetails?: DexDetail;
     destination?: string;
-    oft?: OftDetail;
+    bridge?: BridgeDetail;
     cooperative: boolean;
     commitmentRefund?: boolean;
 }): Promise<TransactionRequest | AlchemyCall[]> => {
@@ -431,7 +428,7 @@ const buildErc20RefundTransaction = async ({
         slippage,
         dexDetails,
         destination,
-        oft,
+        bridge,
     );
 
     if (followUpCalls !== undefined) {
@@ -472,7 +469,7 @@ export const RefundEvm = (props: {
     setRefundTxId: Setter<string>;
     dexDetails?: DexDetail;
     destination?: string;
-    oft?: OftDetail;
+    bridge?: BridgeDetail;
 }) => {
     const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
         useWeb3Signer();
@@ -704,7 +701,7 @@ export const RefundEvm = (props: {
                                     slippage: slippage(),
                                     dexDetails: props.dexDetails,
                                     destination: props.destination,
-                                    oft: props.oft,
+                                    bridge: props.bridge,
                                     cooperative: true,
                                     commitmentRefund: isCommitmentLockup,
                                 });
@@ -753,7 +750,7 @@ export const RefundEvm = (props: {
                                     slippage: slippage(),
                                     dexDetails: props.dexDetails,
                                     destination: props.destination,
-                                    oft: props.oft,
+                                    bridge: props.bridge,
                                     cooperative: false,
                                 });
                             }
@@ -995,7 +992,7 @@ const RefundButton = (props: {
                     lockupTxHash={props.swap().lockupTx}
                     dexDetails={props.swap().dex}
                     destination={props.swap().signer}
-                    oft={props.swap().oft}
+                    bridge={props.swap().bridge}
                 />
             }>
             <RefundBtc {...props} setRefundTxId={setRefundTxId} />

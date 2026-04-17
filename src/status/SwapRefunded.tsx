@@ -1,24 +1,28 @@
 import { useNavigate } from "@solidjs/router";
 
-import BlockExplorer, { ExplorerKind } from "../components/BlockExplorer";
+import BlockExplorer from "../components/BlockExplorer";
 import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { bridgeRegistry } from "../utils/bridge";
 
 const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
     const { t } = useGlobalContext();
-    const isPreOft = () => swap().oft?.position === SwapPosition.Pre;
+    const preBridge = () =>
+        swap().bridge?.position === SwapPosition.Pre
+            ? swap().bridge
+            : undefined;
 
     return (
         <div>
             <p>{t("refunded")}</p>
             <hr />
             <BlockExplorer
-                asset={isPreOft() ? swap().oft.sourceAsset : swap().assetSend}
+                asset={preBridge()?.sourceAsset ?? swap().assetSend}
                 txId={props.refundTxId}
-                explorer={isPreOft() ? ExplorerKind.LayerZero : undefined}
+                explorer={bridgeRegistry.getExplorerKind(preBridge())}
                 typeLabel="refund_tx"
             />
             <hr />

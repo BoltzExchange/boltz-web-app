@@ -19,6 +19,7 @@ import {
 import { Currency } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { BridgeMessagingFeeDisplayMode } from "../utils/Pair";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import {
     convertToFiat,
@@ -50,7 +51,9 @@ const TokenFee = (props: { token?: string }) => {
     );
 };
 
-const getOftMessagingFeeTokenDecimals = (token: string | undefined): number => {
+const getBridgeMessagingFeeTokenDecimals = (
+    token: string | undefined,
+): number => {
     if (token === undefined) {
         return 18;
     }
@@ -89,22 +92,25 @@ const FeesCollapse = () => {
 
     const [feesExpanded, setFeesExpanded] = createSignal(false);
 
-    const oftMessagingFeeIncluded = createMemo(() => {
-        return pair().hasPostOft;
+    const bridgeMessagingFeeIncluded = createMemo(() => {
+        return (
+            pair().bridgeMessagingFeeDisplayMode ===
+            BridgeMessagingFeeDisplayMode.Details
+        );
     });
 
-    const hasOftMessagingFeeTokenUsdLookup = createMemo(() => {
-        const token = pair().oftMessagingFeeToken;
+    const hasBridgeMessagingFeeTokenUsdLookup = createMemo(() => {
+        const token = pair().bridgeMessagingFeeToken;
         return token !== undefined && hasGasTokenPriceLookup(token);
     });
 
-    const [oftMessagingFeeTokenUsdPrice] = createResource<
+    const [bridgeMessagingFeeTokenUsdPrice] = createResource<
         BigNumber | Error | undefined,
         string
     >(
         () => {
-            const token = pair().oftMessagingFeeToken;
-            return token !== undefined && hasOftMessagingFeeTokenUsdLookup()
+            const token = pair().bridgeMessagingFeeToken;
+            return token !== undefined && hasBridgeMessagingFeeTokenUsdLookup()
                 ? token
                 : undefined;
         },
@@ -120,8 +126,8 @@ const FeesCollapse = () => {
         },
     );
 
-    const oftMessagingFeeTokenDecimals = createMemo(() =>
-        getOftMessagingFeeTokenDecimals(pair().oftMessagingFeeToken),
+    const bridgeMessagingFeeTokenDecimals = createMemo(() =>
+        getBridgeMessagingFeeTokenDecimals(pair().bridgeMessagingFeeToken),
     );
 
     const boltzFeeAmount = createMemo(() => {
@@ -140,28 +146,28 @@ const FeesCollapse = () => {
         return pair().feeOnSend(boltzSwapSendAmount);
     });
 
-    const oftTransferFee = createMemo(() => {
+    const bridgeTransferFee = createMemo(() => {
         if (!pair().isRoutable) {
             return undefined;
         }
 
         receiveAmount();
 
-        return pair().oftTransferFeeFromLatestQuote(sendAmount());
+        return pair().bridgeTransferFeeFromLatestQuote(sendAmount());
     });
 
-    const oftMessagingFee = createMemo(() => {
+    const bridgeMessagingFee = createMemo(() => {
         if (!pair().isRoutable) {
             return undefined;
         }
 
         receiveAmount();
 
-        return pair().oftMessagingFeeFromLatestQuote(sendAmount());
+        return pair().bridgeMessagingFeeFromLatestQuote(sendAmount());
     });
 
-    const hasOftMessagingFee = createMemo(() => {
-        const fee = oftMessagingFee();
+    const hasBridgeMessagingFee = createMemo(() => {
+        const fee = bridgeMessagingFee();
         return fee !== undefined && fee > 0n;
     });
 
@@ -188,8 +194,8 @@ const FeesCollapse = () => {
 
         let amount = btcFeesUsd;
 
-        const transferFee = oftTransferFee();
-        const transferFeeAsset = pair().oftTransferFeeAsset;
+        const transferFee = bridgeTransferFee();
+        const transferFeeAsset = pair().bridgeTransferFeeAsset;
         if (
             transferFee !== undefined &&
             !transferFee.isNaN() &&
@@ -199,12 +205,12 @@ const FeesCollapse = () => {
             amount = amount.plus(transferFee.div(BigNumber(10).pow(decimals)));
         }
 
-        const messagingFee = oftMessagingFee();
-        const messagingFeeTokenUsdRate = oftMessagingFeeTokenUsdPrice();
+        const messagingFee = bridgeMessagingFee();
+        const messagingFeeTokenUsdRate = bridgeMessagingFeeTokenUsdPrice();
 
-        if (oftMessagingFeeIncluded() && hasOftMessagingFee()) {
+        if (bridgeMessagingFeeIncluded() && hasBridgeMessagingFee()) {
             if (messagingFeeTokenUsdRate === undefined) {
-                if (!hasOftMessagingFeeTokenUsdLookup()) {
+                if (!hasBridgeMessagingFeeTokenUsdLookup()) {
                     return { status: FeeUsdViewStatus.Error };
                 }
 
@@ -217,7 +223,10 @@ const FeesCollapse = () => {
 
             amount = amount.plus(
                 BigNumber(
-                    formatUnits(messagingFee, oftMessagingFeeTokenDecimals()),
+                    formatUnits(
+                        messagingFee,
+                        bridgeMessagingFeeTokenDecimals(),
+                    ),
                 ).multipliedBy(messagingFeeTokenUsdRate),
             );
         }
@@ -264,13 +273,13 @@ const FeesCollapse = () => {
         }
     };
 
-    const formattedOftMessagingFee = createMemo(() => {
-        const fee = oftMessagingFee();
+    const formattedBridgeMessagingFee = createMemo(() => {
+        const fee = bridgeMessagingFee();
         if (fee === undefined || fee <= 0n) {
             return undefined;
         }
 
-        return BigNumber(formatUnits(fee, oftMessagingFeeTokenDecimals()))
+        return BigNumber(formatUnits(fee, bridgeMessagingFeeTokenDecimals()))
             .toFixed(6)
             .replace(/\.?0+$/, "");
     });
@@ -348,45 +357,48 @@ const FeesCollapse = () => {
                         </span>
                         <Show
                             when={
-                                oftTransferFee() !== undefined &&
-                                oftTransferFee()!.isGreaterThan(0) &&
-                                pair().oftTransferFeeAsset !== undefined
+                                bridgeTransferFee() !== undefined &&
+                                bridgeTransferFee()!.isGreaterThan(0) &&
+                                pair().bridgeTransferFeeAsset !== undefined
                             }>
                             <br />
-                            {t("legacy_mesh_fee_label")}:{" "}
+                            {t("bridge_transfer_fee")}:{" "}
                             <span class="fee-amount">
-                                <span data-testid="legacy-mesh-fee">
+                                <span data-testid="bridge-transfer-fee">
                                     {formatAmount(
-                                        oftTransferFee()!,
+                                        bridgeTransferFee()!,
                                         denomination(),
                                         separator(),
-                                        pair().oftTransferFeeAsset!,
+                                        pair().bridgeTransferFeeAsset!,
                                         true,
                                     )}
                                 </span>
                                 <AmountDenominator
                                     value={formatDenomination(
                                         denomination(),
-                                        pair().oftTransferFeeAsset!,
+                                        pair().bridgeTransferFeeAsset!,
                                     )}
                                 />
                             </span>
                         </Show>
                         <Show
                             when={
-                                oftMessagingFeeIncluded() &&
-                                hasOftMessagingFee() &&
-                                formattedOftMessagingFee() !== undefined
+                                pair().bridgeMessagingFeeDisplayMode ===
+                                    BridgeMessagingFeeDisplayMode.Details &&
+                                hasBridgeMessagingFee() &&
+                                formattedBridgeMessagingFee() !== undefined
                             }>
                             <br />
-                            {t("layer_zero_fee")}:{" "}
+                            {t("bridge_messaging_fee")}:{" "}
                             <span class="fee-amount">
                                 <span
-                                    class="oft-messaging-fee"
-                                    data-testid="oft-messaging-fee">
-                                    {formattedOftMessagingFee()}
+                                    class="bridge-messaging-fee"
+                                    data-testid="bridge-messaging-fee">
+                                    {formattedBridgeMessagingFee()}
                                 </span>
-                                <TokenFee token={pair().oftMessagingFeeToken} />
+                                <TokenFee
+                                    token={pair().bridgeMessagingFeeToken}
+                                />
                             </span>
                         </Show>
                         <Show
@@ -408,19 +420,20 @@ const FeesCollapse = () => {
             <RoutingFee />
             <Show
                 when={
-                    !oftMessagingFeeIncluded() &&
-                    hasOftMessagingFee() &&
-                    formattedOftMessagingFee() !== undefined
+                    pair().bridgeMessagingFeeDisplayMode ===
+                        BridgeMessagingFeeDisplayMode.Inline &&
+                    hasBridgeMessagingFee() &&
+                    formattedBridgeMessagingFee() !== undefined
                 }>
                 <span class="fees-extra-line">
-                    {t("layer_zero_fee")}:{" "}
+                    {t("bridge_messaging_fee")}:{" "}
                     <span class="fee-amount">
                         <span
-                            class="oft-messaging-fee"
-                            data-testid="oft-messaging-fee">
-                            {formattedOftMessagingFee()}
+                            class="bridge-messaging-fee"
+                            data-testid="bridge-messaging-fee">
+                            {formattedBridgeMessagingFee()}
                         </span>
-                        <TokenFee token={pair().oftMessagingFeeToken} />
+                        <TokenFee token={pair().bridgeMessagingFeeToken} />
                     </span>
                 </span>
             </Show>

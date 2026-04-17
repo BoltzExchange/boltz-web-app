@@ -1,16 +1,19 @@
 import log from "loglevel";
-import { createEffect, createSignal, onCleanup } from "solid-js";
+import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
 
+import { BridgeKind } from "../configs/base";
 import { useGlobalContext } from "../context/Global";
+import { type BridgeDetail, bridgeRegistry } from "../utils/bridge";
 import { formatError } from "../utils/errors";
 import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
+import BlockExplorer from "./BlockExplorer";
 import LoadingSpinner from "./LoadingSpinner";
 
 const WaitForOft = (props: {
     sourceAsset: string;
     destinationAsset: string;
-    txHash?: string;
+    txHash: string;
 }) => {
     const { t } = useGlobalContext();
     const formatEta = (seconds: number): string => {
@@ -60,11 +63,6 @@ const WaitForOft = (props: {
 
         const txHash = props.txHash;
         const sourceAsset = props.sourceAsset;
-
-        if (txHash === undefined) {
-            setRemaining(Math.ceil(eta));
-            return;
-        }
 
         getOftTransactionConfirmationTimestamp(sourceAsset, txHash)
             .then((confirmationTimeSecs) => {
@@ -118,4 +116,47 @@ const WaitForOft = (props: {
     );
 };
 
-export default WaitForOft;
+const WaitForGenericBridge = (props: {
+    bridge: BridgeDetail;
+    transactionHash: string;
+}) => {
+    const { t } = useGlobalContext();
+
+    return (
+        <>
+            <h2>{t("waiting_for_bridge")}</h2>
+            <LoadingSpinner />
+            <BlockExplorer
+                asset={props.bridge.sourceAsset}
+                txId={props.transactionHash}
+                explorer={bridgeRegistry.getExplorerKind(props.bridge)}
+                typeLabel={"lockup_tx"}
+            />
+        </>
+    );
+};
+
+const WaitForBridge = (props: {
+    bridge: BridgeDetail;
+    transactionHash: string;
+}) => {
+    return (
+        <Switch
+            fallback={
+                <WaitForGenericBridge
+                    bridge={props.bridge}
+                    transactionHash={props.transactionHash}
+                />
+            }>
+            <Match when={props.bridge.kind === BridgeKind.Oft}>
+                <WaitForOft
+                    sourceAsset={props.bridge.sourceAsset}
+                    destinationAsset={props.bridge.destinationAsset}
+                    txHash={props.transactionHash}
+                />
+            </Match>
+        </Switch>
+    );
+};
+
+export default WaitForBridge;

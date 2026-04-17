@@ -18,32 +18,17 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { getSolanaNativeBalance as getSolanaBalance } from "../utils/chains/solana";
-import {
-    getOftDirectRequiredNativeBalance,
-    getOftDirectRequiredTokenAmount,
-    getOftDirectSendTarget,
-    requiresOftDirectUserApproval,
-    sendOftDirect,
-} from "../utils/oft/directSend";
-import {
-    createOftContract,
-    getOftTransport,
-    getQuotedOftContract,
-    getRequiredSolanaOftNativeBalance,
-    getSolanaOftTokenBalance,
-    quoteOftSend,
-} from "../utils/oft/oft";
-import type { OftDetail } from "../utils/swapCreator";
+import { bridgeRegistry } from "../utils/bridge";
+import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
-import WaitForOft from "./WaitForOft";
+import WaitForBridge from "./WaitForBridge";
 
-const SendToOft = (props: {
-    oft: OftDetail;
+const SendToBridge = (props: {
+    bridge: BridgeDetail;
     swapId: string;
     amount: bigint;
 }) => {
@@ -52,13 +37,17 @@ const SendToOft = (props: {
     const { signer, connectedWallet, getGasAbstractionSigner } =
         useWeb3Signer();
 
-    const sourceTransport = () => getOftTransport(props.oft.sourceAsset);
+    const bridgeDriver = () =>
+        bridgeRegistry.requireDriverForRoute(props.bridge);
+
+    const sourceTransport = () =>
+        bridgeDriver().getTransport(props.bridge.sourceAsset);
 
     const expectedChainId = () =>
-        config.assets?.[props.oft.sourceAsset]?.network?.chainId;
+        config.assets?.[props.bridge.sourceAsset]?.network?.chainId;
 
     const sourceGasToken = () =>
-        config.assets?.[props.oft.sourceAsset]?.network?.gasToken;
+        config.assets?.[props.bridge.sourceAsset]?.network?.gasToken;
 
     const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
     const [requiredTokenBalance, setRequiredTokenBalance] =
@@ -68,7 +57,7 @@ const SendToOft = (props: {
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
     const txSent = createMemo(() => {
-        return swap()?.oft?.txHash;
+        return swap()?.bridge?.txHash;
     });
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
@@ -93,34 +82,35 @@ const SendToOft = (props: {
                 );
             default: {
                 throw new Error(
-                    `Unsupported OFT source transport: ${transport}`,
+                    `Unsupported bridge source transport: ${transport}`,
                 );
             }
         }
     };
 
-    const getOftRecipient = () =>
-        getGasAbstractionSigner(props.oft.destinationAsset).address;
+    const getBridgeRecipient = () =>
+        getGasAbstractionSigner(props.bridge.destinationAsset).address;
 
-    const quoteOftSendState = async (recipient: string) => {
-        const oftRoute = props.oft;
-        const quotedOftInstance = await getQuotedOftContract(oftRoute);
-        const { sendParam, msgFee } = await quoteOftSend(
-            quotedOftInstance,
-            oftRoute,
+    const quoteBridgeSendState = async (recipient: string) => {
+        const bridgeRoute = props.bridge;
+        const quotedBridgeInstance =
+            await bridgeDriver().getQuotedContract(bridgeRoute);
+        const { sendParam, msgFee } = await bridgeDriver().quoteSend(
+            quotedBridgeInstance,
+            bridgeRoute,
             recipient,
             props.amount,
         );
 
         return {
-            oftRoute,
+            bridgeRoute,
             recipient,
             sendParam,
             msgFee,
         };
     };
 
-    const syncOftSendBalanceState = (
+    const syncBridgeSendBalanceState = (
         logLabel: string,
         balance: bigint,
         requiredTokenAmount: bigint,
@@ -140,14 +130,14 @@ const SendToOft = (props: {
         const hasEnoughMsgFee = nativeBalance >= requiredNativeBalance;
 
         log.info(`${logLabel} signer token balance check`, {
-            asset: props.oft.sourceAsset,
+            asset: props.bridge.sourceAsset,
             balance: balance.toString(),
             requiredAmount: requiredTokenAmount.toString(),
             sufficient: hasEnoughTokenBalance,
         });
         log.info(`${logLabel} signer native balance check`, {
-            asset: props.oft.sourceAsset,
-            destinationAsset: props.oft.destinationAsset,
+            asset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
             nativeBalance: nativeBalance.toString(),
             requiredMsgFee: requiredNativeBalance.toString(),
             sufficient: hasEnoughMsgFee,
@@ -162,31 +152,36 @@ const SendToOft = (props: {
         setApprovalTarget(approvalTarget);
     };
 
-    const refreshOftSendState = async (connectedSigner: Signer) => {
+    const refreshBridgeSendState = async (connectedSigner: Signer) => {
         const signerAddress = await connectedSigner.getAddress();
-        const recipient = getOftRecipient();
+        const recipient = getBridgeRecipient();
         const tokenContract = createTokenContract(
-            props.oft.sourceAsset,
+            props.bridge.sourceAsset,
             connectedSigner,
         );
-        const { oftRoute, sendParam, msgFee } =
-            await quoteOftSendState(recipient);
-        const directSendTarget = await getOftDirectSendTarget(oftRoute);
+        const { bridgeRoute, sendParam, msgFee } =
+            await quoteBridgeSendState(recipient);
+        const directSendTarget =
+            await bridgeDriver().getDirectSendTarget(bridgeRoute);
         const [balance, needsUserApproval, nativeBalance] = await Promise.all([
-            tokenContract.balanceOf(signerAddress),
-            requiresOftDirectUserApproval(directSendTarget, connectedSigner),
-            connectedSigner.provider.getBalance(signerAddress),
+            bridgeDriver().getSourceTokenBalance(bridgeRoute, signerAddress),
+            bridgeDriver().requiresDirectUserApproval(
+                directSendTarget,
+                connectedSigner,
+            ),
+            bridgeDriver().getSourceNativeBalance(bridgeRoute, signerAddress),
         ]);
 
-        const requiredTokenAmount = getOftDirectRequiredTokenAmount(
+        const requiredTokenAmount = bridgeDriver().getDirectRequiredTokenAmount(
             directSendTarget,
             props.amount,
             msgFee,
         );
-        const requiredNativeBalance = getOftDirectRequiredNativeBalance(
-            directSendTarget,
-            msgFee,
-        );
+        const requiredNativeBalance =
+            bridgeDriver().getDirectRequiredNativeBalance(
+                directSendTarget,
+                msgFee,
+            );
 
         let needsUpdatedApproval = false;
         if (needsUserApproval) {
@@ -202,8 +197,8 @@ const SendToOft = (props: {
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
 
-        syncOftSendBalanceState(
-            "OFT",
+        syncBridgeSendBalanceState(
+            "Bridge",
             balance,
             requiredTokenAmount,
             nativeBalance,
@@ -228,23 +223,22 @@ const SendToOft = (props: {
         };
     };
 
-    const refreshSolanaOftSendState = async (walletAddress: string) => {
-        const { oftRoute, msgFee } = await quoteOftSendState(getOftRecipient());
-        const [balance, nativeBalance, requiredNativeBalance] =
-            await Promise.all([
-                getSolanaOftTokenBalance(oftRoute, walletAddress),
-                getSolanaBalance(props.oft.sourceAsset, walletAddress),
-                getRequiredSolanaOftNativeBalance(
-                    props.oft.sourceAsset,
-                    msgFee[0],
-                ),
-            ]);
+    const refreshSolanaBridgeSendState = async (walletAddress: string) => {
+        const { bridgeRoute, msgFee } =
+            await quoteBridgeSendState(getBridgeRecipient());
+        const [balance, nativeBalance] = await Promise.all([
+            bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
+            bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
+        ]);
+        const requiredNativeBalance = bridgeDriver().getBufferedNativeFee(
+            msgFee[0],
+        );
         const hasEnoughTokenBalance = balance >= props.amount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
 
-        syncOftSendBalanceState(
-            "Solana OFT",
+        syncBridgeSendBalanceState(
+            "Solana bridge",
             balance,
             props.amount,
             nativeBalance,
@@ -259,7 +253,7 @@ const SendToOft = (props: {
         };
     };
 
-    const syncOftSendState = async () => {
+    const syncBridgeSendState = async () => {
         const transport = sourceTransport();
 
         switch (transport) {
@@ -272,7 +266,7 @@ const SendToOft = (props: {
                     return;
                 }
 
-                await refreshSolanaOftSendState(wallet.address);
+                await refreshSolanaBridgeSendState(wallet.address);
                 return;
             }
             case NetworkTransport.Evm: {
@@ -288,72 +282,79 @@ const SendToOft = (props: {
                     return;
                 }
 
-                await refreshOftSendState(connectedSigner);
+                await refreshBridgeSendState(connectedSigner);
                 return;
             }
             default: {
                 throw new Error(
-                    `Unsupported OFT source transport: ${transport}`,
+                    `Unsupported bridge source transport: ${transport}`,
                 );
             }
         }
     };
 
-    const sendOftFromSolana = async () => {
+    const sendBridgeFromSolana = async () => {
         const wallet = connectedWallet();
         if (
             wallet?.transport !== NetworkTransport.Solana ||
             wallet.address === undefined
         ) {
-            throw new Error("connected Solana wallet is required for OFT send");
+            throw new Error(
+                "connected Solana wallet is required for bridge send",
+            );
         }
 
-        const recipient = getOftRecipient();
+        const recipient = getBridgeRecipient();
         const { hasEnoughTokenBalance, hasEnoughNativeBalanceForMsgFee } =
-            await refreshSolanaOftSendState(wallet.address);
+            await refreshSolanaBridgeSendState(wallet.address);
 
         if (!hasEnoughTokenBalance) {
             throw new Error(
-                "Token balance is no longer sufficient for the updated OFT quote.",
+                "Token balance is no longer sufficient for the updated bridge quote.",
             );
         }
         if (!hasEnoughNativeBalanceForMsgFee) {
             throw new Error(
-                "Native balance is no longer sufficient for the updated OFT message fee.",
+                "Native balance is no longer sufficient for the updated bridge message fee.",
             );
         }
 
-        log.debug(`Sending OFT ${props.oft.destinationAsset} to ${recipient}`);
+        log.debug(
+            `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
+        );
 
-        const quotedOftInstance = await getQuotedOftContract(props.oft);
-        const oftInstance = await createOftContract(
-            props.oft,
+        const quotedBridgeInstance = await bridgeDriver().getQuotedContract(
+            props.bridge,
+        );
+        const bridgeInstance = await bridgeDriver().createContract(
+            props.bridge,
             WalletConnectProvider.getSolanaProvider(),
         );
-        const { sendParam, msgFee } = await quoteOftSend(
-            quotedOftInstance,
-            props.oft,
+        const { sendParam, msgFee } = await bridgeDriver().quoteSend(
+            quotedBridgeInstance,
+            props.bridge,
             recipient,
             props.amount,
         );
 
-        log.debug("Quoted OFT send", {
+        log.debug("Quoted bridge send", {
             swapId: props.swapId,
-            sourceAsset: props.oft.sourceAsset,
-            destinationAsset: props.oft.destinationAsset,
+            sourceAsset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
             recipient,
             amount: props.amount.toString(),
             nativeFee: msgFee[0].toString(),
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (await oftInstance.send(sendParam, msgFee, wallet.address)).hash;
+        return (await bridgeInstance.send(sendParam, msgFee, wallet.address))
+            .hash;
     };
 
-    const sendOftFromEvm = async () => {
+    const sendBridgeFromEvm = async () => {
         const connectedSigner = signer();
         if (connectedSigner === undefined) {
-            throw new Error("connected signer is required for OFT send");
+            throw new Error("connected signer is required for bridge send");
         }
 
         const {
@@ -365,30 +366,32 @@ const SendToOft = (props: {
             hasEnoughTokenBalance,
             hasEnoughNativeBalanceForMsgFee,
             needsUpdatedApproval,
-        } = await refreshOftSendState(connectedSigner);
+        } = await refreshBridgeSendState(connectedSigner);
 
-        log.debug(`Sending OFT ${props.oft.destinationAsset} to ${recipient}`);
+        log.debug(
+            `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
+        );
 
         if (needsUpdatedApproval) {
             throw new Error(
-                "Approval is no longer sufficient for the updated OFT quote. Please approve the new amount and try again.",
+                "Approval is no longer sufficient for the updated bridge quote. Please approve the new amount and try again.",
             );
         }
         if (!hasEnoughTokenBalance) {
             throw new Error(
-                "Token balance is no longer sufficient for the updated OFT quote.",
+                "Token balance is no longer sufficient for the updated bridge quote.",
             );
         }
         if (!hasEnoughNativeBalanceForMsgFee) {
             throw new Error(
-                "Native balance is no longer sufficient for the updated OFT message fee.",
+                "Native balance is no longer sufficient for the updated bridge message fee.",
             );
         }
 
-        log.debug("Quoted OFT send", {
+        log.debug("Quoted bridge send", {
             swapId: props.swapId,
-            sourceAsset: props.oft.sourceAsset,
-            destinationAsset: props.oft.destinationAsset,
+            sourceAsset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
             recipient,
             amount: props.amount.toString(),
             nativeFee: msgFee[0].toString(),
@@ -396,7 +399,7 @@ const SendToOft = (props: {
         });
 
         return (
-            await sendOftDirect({
+            await bridgeDriver().sendDirect({
                 target: directSendTarget,
                 runner: connectedSigner,
                 sendParam,
@@ -406,56 +409,57 @@ const SendToOft = (props: {
         ).hash;
     };
 
-    const sendOft = async () => {
+    const sendBridge = async () => {
         const transport = sourceTransport();
 
         switch (transport) {
             case NetworkTransport.Solana:
-                return await sendOftFromSolana();
+                return await sendBridgeFromSolana();
             case NetworkTransport.Evm:
-                return await sendOftFromEvm();
+                return await sendBridgeFromEvm();
             case NetworkTransport.Tron:
-                throw new Error("OFT sending is not implemented for tron yet");
+                throw new Error(
+                    "Bridge sending is not implemented for tron yet",
+                );
             default: {
                 const exhaustiveTransport: never = transport;
                 throw new Error(
-                    `Unsupported OFT source transport: ${String(exhaustiveTransport)}`,
+                    `Unsupported bridge source transport: ${String(exhaustiveTransport)}`,
                 );
             }
         }
     };
 
-    const persistOftSend = async (txHash: string) => {
+    const persistBridgeSend = async (txHash: string) => {
         const currentSwap = await getSwap(props.swapId);
-        if (currentSwap.oft !== undefined) {
-            currentSwap.oft = {
-                ...currentSwap.oft,
+        if (currentSwap?.bridge !== undefined) {
+            currentSwap.bridge = {
+                ...currentSwap.bridge,
                 txHash,
             };
         }
 
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
-        log.info("Persisted OFT send tx hash for background worker", {
+        log.info("Persisted bridge send tx hash for background worker", {
             swapId: props.swapId,
-            sourceAsset: props.oft.sourceAsset,
-            destinationAsset: props.oft.destinationAsset,
+            sourceAsset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
             txHash,
         });
     };
 
     createEffect(() => {
-        void syncOftSendState();
+        void syncBridgeSendState();
     });
 
     return (
         <Show
             when={txSent() === undefined}
             fallback={
-                <WaitForOft
-                    sourceAsset={props.oft.sourceAsset}
-                    destinationAsset={props.oft.destinationAsset}
-                    txHash={txSent()}
+                <WaitForBridge
+                    bridge={props.bridge}
+                    transactionHash={txSent()}
                 />
             }>
             <Show
@@ -467,7 +471,7 @@ const SendToOft = (props: {
                     <Show
                         when={sourceWalletReady()}
                         fallback={
-                            <ConnectWallet asset={props.oft.sourceAsset} />
+                            <ConnectWallet asset={props.bridge.sourceAsset} />
                         }>
                         <LoadingSpinner />
                     </Show>
@@ -478,13 +482,13 @@ const SendToOft = (props: {
                         (requiredTokenBalance() ?? props.amount)
                     }
                     fallback={
-                        <InsufficientBalance asset={props.oft.sourceAsset} />
+                        <InsufficientBalance asset={props.bridge.sourceAsset} />
                     }>
                     <Show
                         when={hasEnoughMsgFee()}
                         fallback={
                             <InsufficientBalance
-                                asset={props.oft.sourceAsset}
+                                asset={props.bridge.sourceAsset}
                                 line={t(
                                     "insufficient_gas_balance_line" as DictKey,
                                     {
@@ -497,7 +501,7 @@ const SendToOft = (props: {
                             when={!needsApproval()}
                             fallback={
                                 <ApproveErc20
-                                    asset={props.oft.sourceAsset}
+                                    asset={props.bridge.sourceAsset}
                                     value={() =>
                                         requiredTokenBalance() ?? props.amount
                                     }
@@ -507,15 +511,15 @@ const SendToOft = (props: {
                                 />
                             }>
                             <ContractTransaction
-                                asset={props.oft.sourceAsset}
+                                asset={props.bridge.sourceAsset}
                                 /* eslint-disable-next-line solid/reactivity */
                                 onClick={async () => {
-                                    const txHash = await sendOft();
-                                    await persistOftSend(txHash);
+                                    const txHash = await sendBridge();
+                                    await persistBridgeSend(txHash);
                                 }}
                                 children={
                                     <ConnectWallet
-                                        asset={props.oft.sourceAsset}
+                                        asset={props.bridge.sourceAsset}
                                     />
                                 }
                                 buttonText={t("send")}
@@ -533,4 +537,4 @@ const SendToOft = (props: {
     );
 };
 
-export default SendToOft;
+export default SendToBridge;

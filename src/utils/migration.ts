@@ -2,15 +2,16 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
+import { BridgeKind } from "../configs/base";
 import { LN, RBTC, isEvmAsset } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import {
+    type BridgeDetail,
     GasAbstractionType,
-    type OftDetail,
     type SomeSwap,
 } from "./swapCreator";
 
-export const latestStorageVersion = 6;
+export const latestStorageVersion = 7;
 
 const storageVersionKey = "version";
 
@@ -85,7 +86,9 @@ const migrateStorageToChainSwaps = async (swapsForage: LocalForage) => {
     return swaps.length;
 };
 
-const migrateSwapGasAbstraction = (swap: Record<string, unknown>): SomeSwap => {
+export const migrateSwapGasAbstraction = (
+    swap: Record<string, unknown>,
+): SomeSwap => {
     if (swap.gasAbstraction !== undefined) {
         return swap as SomeSwap;
     }
@@ -167,7 +170,7 @@ const deriveLockupGasAbstraction = (
         : GasAbstractionType.None;
 };
 
-const migrateSwapGasAbstractionShape = (
+export const migrateSwapGasAbstractionShape = (
     swap: Record<string, unknown>,
 ): SomeSwap => {
     const claim = parseGasAbstraction(swap.gasAbstraction)?.claim;
@@ -200,7 +203,7 @@ const normalizeSwapPosition = (position: unknown): SwapPosition | undefined => {
     }
 };
 
-const migrateSwapDexPositionShape = (swap: SomeSwap): SomeSwap => {
+export const migrateSwapDexPositionShape = (swap: SomeSwap): SomeSwap => {
     const position = normalizeSwapPosition(swap.dex?.position);
     if (position === undefined) {
         return swap as SomeSwap;
@@ -245,26 +248,44 @@ const migrateStorageDexPositionShape = async (swapsForage: LocalForage) => {
     return swaps.length;
 };
 
-const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
-    const oft = swap.oft as
-        | (Record<string, unknown> & {
-              sourceAsset?: string;
-              destinationAsset?: string;
-              destinationChainId?: number;
-              position?: string;
-              pre?: Record<string, unknown>;
-              post?: Record<string, unknown>;
-          })
-        | undefined;
+export const migrateSwapBridgeShape = (
+    swap: Record<string, unknown>,
+): SomeSwap => {
+    const swapWithoutLegacyOft = { ...swap };
+    delete swapWithoutLegacyOft.oft;
+    const bridge =
+        (swap.bridge as
+            | (Record<string, unknown> & {
+                  kind?: string;
+                  sourceAsset?: string;
+                  destinationAsset?: string;
+                  destinationChainId?: number;
+                  position?: string;
+                  pre?: Record<string, unknown>;
+                  post?: Record<string, unknown>;
+                  txHash?: string;
+              })
+            | undefined) ??
+        (swap.oft as
+            | (Record<string, unknown> & {
+                  sourceAsset?: string;
+                  destinationAsset?: string;
+                  destinationChainId?: number;
+                  position?: string;
+                  pre?: Record<string, unknown>;
+                  post?: Record<string, unknown>;
+                  txHash?: string;
+              })
+            | undefined);
 
-    if (oft === undefined) {
-        return swap as SomeSwap;
+    if (bridge === undefined) {
+        return swapWithoutLegacyOft as SomeSwap;
     }
 
-    const toOftDetail = (
+    const toBridgeDetail = (
         detail: Record<string, unknown> | undefined,
         position: SwapPosition,
-    ): OftDetail | undefined => {
+    ): BridgeDetail | undefined => {
         if (
             detail === undefined ||
             typeof detail.sourceAsset !== "string" ||
@@ -274,38 +295,47 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
         }
 
         return {
+            kind: BridgeKind.Oft,
             sourceAsset: detail.sourceAsset,
             destinationAsset: detail.destinationAsset,
             position,
+            ...(typeof detail.txHash === "string"
+                ? { txHash: detail.txHash }
+                : {}),
         };
     };
 
-    const migratedOft =
-        typeof oft.sourceAsset === "string" &&
-        typeof oft.destinationAsset === "string"
+    const migratedBridge =
+        typeof bridge.sourceAsset === "string" &&
+        typeof bridge.destinationAsset === "string"
             ? {
-                  sourceAsset: oft.sourceAsset,
-                  destinationAsset: oft.destinationAsset,
+                  kind:
+                      (bridge.kind as BridgeKind | undefined) ?? BridgeKind.Oft,
+                  sourceAsset: bridge.sourceAsset,
+                  destinationAsset: bridge.destinationAsset,
                   position:
-                      oft.position === SwapPosition.Pre
+                      bridge.position === SwapPosition.Pre
                           ? SwapPosition.Pre
                           : SwapPosition.Post,
+                  ...(typeof bridge.txHash === "string"
+                      ? { txHash: bridge.txHash }
+                      : {}),
               }
-            : (toOftDetail(oft.pre, SwapPosition.Pre) ??
-              toOftDetail(oft.post, SwapPosition.Post));
+            : (toBridgeDetail(bridge.pre, SwapPosition.Pre) ??
+              toBridgeDetail(bridge.post, SwapPosition.Post));
 
     return {
-        ...swap,
-        oft: migratedOft,
+        ...swapWithoutLegacyOft,
+        bridge: migratedBridge,
     } as SomeSwap;
 };
 
-const migrateStorageOftShape = async (swapsForage: LocalForage) => {
+const migrateStorageBridgeShape = async (swapsForage: LocalForage) => {
     const swaps = await swapsForage.keys();
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
-        await swapsForage.setItem(swapId, migrateSwapOftShape(swap));
+        await swapsForage.setItem(swapId, migrateSwapBridgeShape(swap));
     }
 
     return swaps.length;
@@ -357,7 +387,7 @@ const migrateLocalForage = async (
 
         case 3: {
             log.info(`Migrating OFT storage format`);
-            const migratedSwaps = await migrateStorageOftShape(swapsForage);
+            const migratedSwaps = await migrateStorageBridgeShape(swapsForage);
             log.info(`Migrated OFT shape for ${migratedSwaps} swaps`);
 
             await paramsForage.setItem(storageVersionKey, 4);
@@ -387,6 +417,18 @@ const migrateLocalForage = async (
             );
 
             await paramsForage.setItem(storageVersionKey, 6);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
+
+        case 6: {
+            log.info(`Migrating bridge storage format`);
+            const migratedSwaps = await migrateStorageBridgeShape(swapsForage);
+            log.info(
+                `Migrated bridge storage shape for ${migratedSwaps} swaps`,
+            );
+
+            await paramsForage.setItem(storageVersionKey, 7);
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }

@@ -21,7 +21,7 @@ import {
     TBTC,
     assets,
     isBitcoinOnlyPair,
-    isUsdt0Asset,
+    isBridgeAsset,
 } from "../consts/Assets";
 import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
@@ -140,7 +140,7 @@ const setDestination = (
 const isValidAsset = (asset: string) =>
     urlParamIsSet(asset) &&
     assets.includes(asset) &&
-    !(isTor() && (asset === TBTC || isUsdt0Asset(asset)));
+    !(isTor() && (asset === TBTC || isBridgeAsset(asset)));
 
 const parseAmount = (amount: string): BigNumber | undefined => {
     if (!urlParamIsSet(amount)) {
@@ -260,6 +260,8 @@ export type CreateContextType = {
     setAssetSelection: Setter<AssetSelection | null>;
     assetSelected: Accessor<string>;
     setAssetSelected: Setter<string>;
+    networkSelectCanonical: Accessor<string | undefined>;
+    setNetworkSelectCanonical: Setter<string | undefined>;
     valid: Accessor<boolean>;
     setValid: Setter<boolean>;
     invoiceValid: Accessor<boolean>;
@@ -330,6 +332,9 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [assetSelection, setAssetSelection] =
         createSignal<AssetSelection | null>(null);
     const [assetSelected, setAssetSelected] = createSignal(null);
+    const [networkSelectCanonical, setNetworkSelectCanonical] = createSignal<
+        string | undefined
+    >(undefined);
 
     // validation
     const [valid, setValid] = createSignal(false);
@@ -463,6 +468,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setAssetSelection,
                 assetSelected,
                 setAssetSelected,
+                networkSelectCanonical,
+                setNetworkSelectCanonical,
                 valid,
                 setValid,
                 invoiceValid,

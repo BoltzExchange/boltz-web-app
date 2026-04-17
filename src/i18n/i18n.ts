@@ -204,8 +204,8 @@ const dict = {
         gas_topup_tooltip:
             "Automatically convert a small portion of your swap into native gas if your connected wallet has no gas.",
         gas_topup_label: "Destination gas ({{ gasToken }}) included",
-        layer_zero_fee: "LayerZero Fee",
-        legacy_mesh_fee_label: "Legacy Mesh fee",
+        bridge_messaging_fee: "Bridge messaging fee",
+        bridge_transfer_fee: "Bridge transfer fee",
         retry: "Retry",
         error_no_quote:
             "A quote could not be obtained. Please check your connection and try again.",
@@ -218,6 +218,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Arriving soon...",
         oft_transfer_in_progress: "Transfer in progress",
+        waiting_for_bridge: "Waiting for bridge",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -704,8 +705,8 @@ const dict = {
         gas_topup_tooltip:
             "Wandelt automatisch einen kleinen Teil deines Swaps in natives Gas um, wenn dein verbundenes Wallet kein Gas hat.",
         gas_topup_label: "Ziel-Gas ({{ gasToken }}) enthalten",
-        layer_zero_fee: "LayerZero-Gebuehr",
-        legacy_mesh_fee_label: "Legacy-Mesh-Gebuehr",
+        bridge_messaging_fee: "Bridge-Messaging-Gebühr",
+        bridge_transfer_fee: "Bridge-Transfer-Gebühr",
         retry: "Erneut versuchen",
         error_no_quote:
             "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
@@ -718,6 +719,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Gleich da...",
         oft_transfer_in_progress: "Übertragung läuft",
+        waiting_for_bridge: "Warte auf Bridge",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1213,8 +1215,8 @@ const dict = {
         gas_topup_tooltip:
             "Convierte automáticamente una pequeña parte de tu swap en gas nativo si tu monedero conectado no tiene gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        layer_zero_fee: "Tarifa LayerZero",
-        legacy_mesh_fee_label: "Tarifa Legacy Mesh",
+        bridge_messaging_fee: "Tarifa de mensajería del puente",
+        bridge_transfer_fee: "Tarifa de transferencia del puente",
         retry: "Reintentar",
         error_no_quote:
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
@@ -1227,6 +1229,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Llegando pronto...",
         oft_transfer_in_progress: "Transferencia en curso",
+        waiting_for_bridge: "Esperando el puente",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1717,8 +1720,8 @@ const dict = {
         gas_topup_tooltip:
             "Converte automaticamente uma pequena parte da sua troca em gas nativo se a sua carteira conectada não tiver gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        layer_zero_fee: "Taxa LayerZero",
-        legacy_mesh_fee_label: "Taxa Legacy Mesh",
+        bridge_messaging_fee: "Taxa de mensagem da ponte",
+        bridge_transfer_fee: "Taxa de transferência da ponte",
         retry: "Tentar novamente",
         error_no_quote:
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
@@ -1731,6 +1734,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Chegando em breve...",
         oft_transfer_in_progress: "Transferência em andamento",
+        waiting_for_bridge: "Aguardando a ponte",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -2198,8 +2202,8 @@ const dict = {
         gas_topup_tooltip:
             "如果您连接的钱包没有 Gas，将自动把交换的一小部分转换为原生 Gas。",
         gas_topup_label: "已包含目标链 Gas ({{ gasToken }})",
-        layer_zero_fee: "LayerZero 费用",
-        legacy_mesh_fee_label: "Legacy Mesh 费用",
+        bridge_messaging_fee: "桥接消息费用",
+        bridge_transfer_fee: "桥接转账费用",
         retry: "重试",
         error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
         error_zero_quote: "提高发送金额",
@@ -2211,6 +2215,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}秒",
         oft_arriving_soon: "即将到达...",
         oft_transfer_in_progress: "转账进行中",
+        waiting_for_bridge: "等待桥接",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
@@ -2673,8 +2678,8 @@ const dict = {
         gas_topup_tooltip:
             "接続されたウォレットにガスがない場合、スワップの一部を自動的にネイティブガスに変換します。",
         gas_topup_label: "宛先ガス ({{ gasToken }}) を含む",
-        layer_zero_fee: "LayerZero手数料",
-        legacy_mesh_fee_label: "Legacy Mesh手数料",
+        bridge_messaging_fee: "ブリッジメッセージ手数料",
+        bridge_transfer_fee: "ブリッジ転送手数料",
         retry: "再試行",
         error_no_quote:
             "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
@@ -2687,6 +2692,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}秒",
         oft_arriving_soon: "まもなく到着...",
         oft_transfer_in_progress: "転送中",
+        waiting_for_bridge: "ブリッジを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",

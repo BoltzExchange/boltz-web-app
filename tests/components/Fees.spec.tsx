@@ -9,7 +9,7 @@ import { Denomination, SwapType } from "../../src/consts/Enums";
 import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
-import Pair from "../../src/utils/Pair";
+import Pair, { BridgeMessagingFeeDisplayMode } from "../../src/utils/Pair";
 import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateBoltzFeeOnSend,
@@ -39,9 +39,26 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
 
 describe("Fees component", () => {
     beforeAll(() => {
+        const bridgeVariants = [
+            "USDT0-SOL",
+            "USDT0-POL",
+            "USDT0-ETH",
+            "USDT0-SEI",
+        ];
         runtimeConfig.assets = {
             ...runtimeConfig.assets,
-            "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
+            ...Object.fromEntries(
+                bridgeVariants
+                    .filter(
+                        (asset) => mainnetConfig.assets[asset] !== undefined,
+                    )
+                    .map((asset) => [
+                        asset,
+                        structuredClone(mainnetConfig.assets[asset]),
+                    ]),
+            ),
+            // Synthetic variant used only in tests (not in mainnet config).
+            "USDT0-ARB": structuredClone(mainnetConfig.assets["USDT0-ETH"]),
         };
     });
 
@@ -122,12 +139,12 @@ describe("Fees component", () => {
             feePercentage: 1,
             minerFees: 300,
             maxRoutingFee: 0.0123,
-            oftMessagingFeeToken: undefined,
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeToken: undefined,
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(200)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -358,7 +375,7 @@ describe("Fees component", () => {
         expect(globalSignals.notification()).toEqual("");
     });
 
-    test("should use the quoted Boltz input for OFT-routed service fees", async () => {
+    test("should use the quoted Boltz input for bridge-routed service fees", async () => {
         render(
             () => (
                 <>
@@ -382,17 +399,17 @@ describe("Fees component", () => {
             swapToCreate: {
                 type: SwapType.Submarine,
             },
-            preOft: null,
+            preBridge: null,
             dexHopBeforeBoltz: null,
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: undefined,
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeToken: undefined,
+            bridgeTransferFeeAsset: undefined,
             feeOnSend,
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1480)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -411,7 +428,7 @@ describe("Fees component", () => {
         expect(feeOnSend.mock.calls.at(-1)?.[0].toNumber()).toBe(1480);
     });
 
-    test("should display legacy mesh transfer fees when present", async () => {
+    test("should display bridge transfer fees when present", async () => {
         render(
             () => (
                 <>
@@ -435,12 +452,14 @@ describe("Fees component", () => {
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "ETH",
-            oftTransferFeeAsset: USDT0,
+            bridgeMessagingFeeIncludedInTotal: false,
+            bridgeMessagingFeeDisplayMode: BridgeMessagingFeeDisplayMode.Inline,
+            bridgeMessagingFeeToken: "ETH",
+            bridgeTransferFeeAsset: USDT0,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 0n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => 0n),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -451,11 +470,16 @@ describe("Fees component", () => {
         fireEvent.click(screen.getByTestId("fees-toggle"));
 
         await waitFor(() => {
-            expect(screen.getByTestId("legacy-mesh-fee").textContent).toEqual(
-                "0.030000",
-            );
+            expect(
+                screen.getByTestId("bridge-transfer-fee").textContent,
+            ).toEqual("0.030000");
         });
-        expect(screen.queryByTestId("oft-messaging-fee")).toBeNull();
+        expect(
+            screen.getByText((content) =>
+                content.includes("Bridge transfer fee"),
+            ),
+        ).toBeInTheDocument();
+        expect(screen.queryByTestId("bridge-messaging-fee")).toBeNull();
     });
 
     test("should ignore legacy mesh transfer fees without an asset config", async () => {
@@ -475,19 +499,20 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: "USDT0-SOL",
-            hasPostOft: false,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: undefined,
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: false,
+            bridgeMessagingFeeDisplayMode: BridgeMessagingFeeDisplayMode.Inline,
+            bridgeMessagingFeeToken: undefined,
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
-            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -502,7 +527,7 @@ describe("Fees component", () => {
         });
     });
 
-    test("should show post-OFT messaging fees only inside the expanded details", async () => {
+    test("should show post-bridge messaging fees only inside the expanded details", async () => {
         render(
             () => (
                 <>
@@ -519,19 +544,23 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: "USDT0-ETH",
-            hasPostOft: true,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "ETH",
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: "ETH",
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(
+                () => 1_000_000_000_000_000n,
+            ),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -549,12 +578,17 @@ describe("Fees component", () => {
 
         fireEvent.click(screen.getByTestId("fees-toggle"));
 
-        expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
+        expect(
+            screen.getByText((content) =>
+                content.includes("Bridge messaging fee"),
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("bridge-messaging-fee").textContent).toEqual(
             "0.001",
         );
     });
 
-    test("should show the fiat rate fallback when the post-OFT fee token is unsupported", async () => {
+    test("should show the fiat rate fallback when the post-bridge fee token is unsupported", async () => {
         render(
             () => (
                 <>
@@ -571,19 +605,23 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: "USDT0-ARB",
-            hasPostOft: true,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "ARB",
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: "ARB",
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(
+                () => 1_000_000_000_000_000n,
+            ),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -600,7 +638,7 @@ describe("Fees component", () => {
         expect(document.querySelector(".fees-toggle .skeleton")).toBeNull();
     });
 
-    test("should not render zero OFT messaging fees for SEI routes", async () => {
+    test("should not render zero bridge messaging fees for SEI routes", async () => {
         render(
             () => (
                 <>
@@ -617,19 +655,21 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: "USDT0-SEI",
-            hasPostOft: true,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "SEI",
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: "SEI",
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 0n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => 0n),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -645,10 +685,10 @@ describe("Fees component", () => {
 
         fireEvent.click(screen.getByTestId("fees-toggle"));
 
-        expect(screen.queryByTestId("oft-messaging-fee")).toBeNull();
+        expect(screen.queryByTestId("bridge-messaging-fee")).toBeNull();
     });
 
-    test("should use the OFT messaging fee token decimals for USD totals and display formatting", async () => {
+    test("should use the bridge messaging fee token decimals for USD totals and display formatting", async () => {
         render(
             () => (
                 <>
@@ -665,19 +705,21 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: USDT0,
-            hasPostOft: true,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: USDT0,
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: USDT0,
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000n),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -693,19 +735,19 @@ describe("Fees component", () => {
 
         fireEvent.click(screen.getByTestId("fees-toggle"));
 
-        expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
+        expect(screen.getByTestId("bridge-messaging-fee").textContent).toEqual(
             "1",
         );
         expect(
             screen
-                .getByTestId("oft-messaging-fee")
+                .getByTestId("bridge-messaging-fee")
                 .parentElement?.querySelector(
                     '.denominator[data-denominator="USDT"]',
                 ),
         ).not.toBeNull();
     });
 
-    test("should keep pre-OFT messaging fees in the inline summary row", async () => {
+    test("should keep pre-bridge messaging fees in the inline summary row", async () => {
         render(
             () => (
                 <>
@@ -722,20 +764,22 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: "USDT0-POL",
             toAsset: BTC,
-            hasPreOft: true,
-            hasPostOft: false,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "POL",
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: false,
+            bridgeMessagingFeeDisplayMode: BridgeMessagingFeeDisplayMode.Inline,
+            bridgeMessagingFeeToken: "POL",
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(
+                () => 1_000_000_000_000_000n,
+            ),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -744,18 +788,23 @@ describe("Fees component", () => {
         signals.setSendAmount(BigNumber(2_000_000));
 
         await waitFor(() => {
-            expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
-                "0.001",
-            );
+            expect(
+                screen.getByTestId("bridge-messaging-fee").textContent,
+            ).toEqual("0.001");
         });
         expect(document.querySelector(".fees-extra-line")).not.toBeNull();
         expect(
-            document.querySelectorAll('[data-testid="oft-messaging-fee"]')
+            screen.getByText((content) =>
+                content.includes("Bridge messaging fee"),
+            ),
+        ).toBeInTheDocument();
+        expect(
+            document.querySelectorAll('[data-testid="bridge-messaging-fee"]')
                 .length,
         ).toEqual(1);
         expect(
             screen
-                .getByTestId("oft-messaging-fee")
+                .getByTestId("bridge-messaging-fee")
                 .parentElement?.querySelector(".denominator-text")?.textContent,
         ).toEqual("POL");
     });
@@ -778,19 +827,23 @@ describe("Fees component", () => {
             isRoutable: true,
             fromAsset: BTC,
             toAsset: "USDT0-SOL",
-            hasPostOft: true,
             swapToCreate: {
                 type: SwapType.Submarine,
             },
             feePercentage: 1,
             minerFees: 300,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "ETH",
-            oftTransferFeeAsset: USDT0,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: "ETH",
+            bridgeTransferFeeAsset: USDT0,
             feeOnSend: vi.fn(() => BigNumber(200)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(
+                () => 1_000_000_000_000_000n,
+            ),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -816,10 +869,10 @@ describe("Fees component", () => {
         expect(screen.getByTestId("boltz-fee").textContent).toEqual(
             "0.00000200",
         );
-        expect(screen.getByTestId("legacy-mesh-fee").textContent).toEqual(
+        expect(screen.getByTestId("bridge-transfer-fee").textContent).toEqual(
             "0.030000",
         );
-        expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
+        expect(screen.getByTestId("bridge-messaging-fee").textContent).toEqual(
             "0.001",
         );
         expect(
@@ -838,20 +891,20 @@ describe("Fees component", () => {
         ).not.toBeNull();
         expect(
             screen
-                .getByTestId("legacy-mesh-fee")
+                .getByTestId("bridge-transfer-fee")
                 .parentElement?.querySelector(
                     '.denominator[data-denominator="USDT"]',
                 ),
         ).not.toBeNull();
         expect(
             screen
-                .getByTestId("oft-messaging-fee")
+                .getByTestId("bridge-messaging-fee")
                 .parentElement?.querySelector(".denominator-text-symbol")
                 ?.textContent,
         ).toEqual("Ξ");
     });
 
-    test("should format Solana OFT messaging fees in lamports", async () => {
+    test("should format Solana bridge messaging fees in lamports", async () => {
         render(
             () => (
                 <>
@@ -874,12 +927,14 @@ describe("Fees component", () => {
             feePercentage: 1,
             minerFees: 0,
             maxRoutingFee: undefined,
-            oftMessagingFeeToken: "SOL",
-            oftTransferFeeAsset: undefined,
+            bridgeMessagingFeeIncludedInTotal: false,
+            bridgeMessagingFeeDisplayMode: BridgeMessagingFeeDisplayMode.Inline,
+            bridgeMessagingFeeToken: "SOL",
+            bridgeTransferFeeAsset: undefined,
             feeOnSend: vi.fn(() => BigNumber(0)),
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 500_000_000n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => 500_000_000n),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -888,9 +943,9 @@ describe("Fees component", () => {
         signals.setSendAmount(BigNumber(2_000));
 
         await waitFor(() => {
-            expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
-                "0.5",
-            );
+            expect(
+                screen.getByTestId("bridge-messaging-fee").textContent,
+            ).toEqual("0.5");
         });
     });
 

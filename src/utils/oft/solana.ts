@@ -201,7 +201,7 @@ const getQuotePayer = async (
         return walletAddress;
     }
 
-    const configuredQuotePayer = config.assets?.[asset]?.network?.oftQuotePayer;
+    const configuredQuotePayer = config.assets?.[asset]?.bridge?.quotePayer;
     if (configuredQuotePayer !== undefined) {
         return configuredQuotePayer;
     }
