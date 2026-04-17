@@ -1,6 +1,8 @@
+import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
+    Interface,
     MaxUint256,
     type Wallet,
     keccak256 as ethersKeccak256,
@@ -24,6 +26,7 @@ import {
     createRouterContract,
     createTokenContract,
     customDerivationPathRdns,
+    isTrustWalletIOSSigner,
     useWeb3Signer,
 } from "../context/Web3";
 import type { EncodedHop } from "../utils/Pair";
@@ -54,6 +57,23 @@ import OptimizedRoute from "./OptimizedRoute";
 import SendToOft from "./SendToOft";
 
 const lockupGasUsage = 46_000n;
+
+const erc20Interface = new Interface(ERC20Abi);
+
+const buildTransferFromCall = (
+    asset: string,
+    ownerAddress: string,
+    routerAddress: string,
+    amount: bigint,
+) => ({
+    target: getTokenAddress(asset),
+    value: 0n,
+    callData: erc20Interface.encodeFunctionData("transferFrom", [
+        ownerAddress,
+        routerAddress,
+        amount,
+    ]),
+});
 
 const getHopExecutionQuote = async (
     hop: EncodedHop,
@@ -104,19 +124,96 @@ const hashRouterCalls = (
     return ethersKeccak256(encodedCalls);
 };
 
-const lockupErc20WithPermit2 = async (
-    gasAbstraction: GasAbstractionType,
+const getRouterApprovalTarget = async (
     asset: string,
-    amount: bigint,
-    preimageHash: string,
-    claimAddress: string,
-    timeoutBlockHeight: number,
     signer: Signer,
-    transactionSigner: Signer | Wallet,
 ): Promise<string> => {
+    const router = createRouterContract(asset, signer);
+    return isTrustWalletIOSSigner(signer)
+        ? await router.getAddress()
+        : ((await router.PERMIT2()) as string);
+};
+
+const permit2Types = {
+    PermitWitnessTransferFrom: [
+        { name: "permitted", type: "TokenPermissions" },
+        { name: "spender", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+        { name: "witness", type: "ExecuteAndLockERC20" },
+    ],
+    TokenPermissions: [
+        { name: "token", type: "address" },
+        { name: "amount", type: "uint256" },
+    ],
+    ExecuteAndLockERC20: [
+        { name: "preimageHash", type: "bytes32" },
+        { name: "token", type: "address" },
+        { name: "claimAddress", type: "address" },
+        { name: "refundAddress", type: "address" },
+        { name: "timelock", type: "uint256" },
+        { name: "callsHash", type: "bytes32" },
+    ],
+};
+
+const permit2DeadlineSeconds = 1_800;
+
+const newPermit2Nonce = () => BigInt("0x" + randomBytes(32).toString("hex"));
+
+const newPermit2Deadline = () =>
+    BigInt(Math.floor(Date.now() / 1000) + permit2DeadlineSeconds);
+
+const lockupErc20 = async ({
+    gasAbstraction,
+    asset,
+    amount,
+    preimageHash,
+    claimAddress,
+    timeoutBlockHeight,
+    signer,
+    transactionSigner,
+    usePermit2,
+}: {
+    gasAbstraction: GasAbstractionType;
+    asset: string;
+    amount: bigint;
+    preimageHash: string;
+    claimAddress: string;
+    timeoutBlockHeight: number;
+    signer: Signer;
+    transactionSigner: Signer | Wallet;
+    usePermit2: boolean;
+}): Promise<string> => {
     const router = createRouterContract(asset, transactionSigner);
-    const routerAddress = await router.getAddress();
+    const [routerAddress, refundAddress] = await Promise.all([
+        router.getAddress(),
+        signer.getAddress(),
+    ]);
     const tokenAddress = getTokenAddress(asset);
+
+    if (!usePermit2) {
+        const tx = await router.executeAndLockERC20.populateTransaction(
+            prefix0x(preimageHash),
+            tokenAddress,
+            claimAddress,
+            refundAddress,
+            timeoutBlockHeight,
+            [
+                buildTransferFromCall(
+                    asset,
+                    refundAddress,
+                    routerAddress,
+                    amount,
+                ),
+            ],
+        );
+        return await sendPopulatedTransaction(
+            gasAbstraction,
+            transactionSigner,
+            tx,
+        );
+    }
+
     const calls: {
         target: string;
         value: string | bigint;
@@ -124,19 +221,15 @@ const lockupErc20WithPermit2 = async (
     }[] = [];
     const callsHash = hashRouterCalls(calls);
 
-    const [permit2Address, chainId, refundAddress] = await Promise.all([
+    const [permit2Address, chainId] = await Promise.all([
         router.PERMIT2(),
         transactionSigner.provider
             .getNetwork()
             .then((network) => network.chainId),
-        signer.getAddress(),
     ]);
 
-    const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
-    const permit2DeadlineSeconds = 1_800;
-    const deadline = BigInt(
-        Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
-    );
+    const nonce = newPermit2Nonce();
+    const deadline = newPermit2Deadline();
 
     const permit2Signature = await signer.signTypedData(
         {
@@ -144,32 +237,9 @@ const lockupErc20WithPermit2 = async (
             verifyingContract: permit2Address,
             chainId,
         },
+        permit2Types,
         {
-            PermitWitnessTransferFrom: [
-                { name: "permitted", type: "TokenPermissions" },
-                { name: "spender", type: "address" },
-                { name: "nonce", type: "uint256" },
-                { name: "deadline", type: "uint256" },
-                { name: "witness", type: "ExecuteAndLockERC20" },
-            ],
-            TokenPermissions: [
-                { name: "token", type: "address" },
-                { name: "amount", type: "uint256" },
-            ],
-            ExecuteAndLockERC20: [
-                { name: "preimageHash", type: "bytes32" },
-                { name: "token", type: "address" },
-                { name: "claimAddress", type: "address" },
-                { name: "refundAddress", type: "address" },
-                { name: "timelock", type: "uint256" },
-                { name: "callsHash", type: "bytes32" },
-            ],
-        },
-        {
-            permitted: {
-                token: tokenAddress,
-                amount,
-            },
+            permitted: { token: tokenAddress, amount },
             spender: routerAddress,
             nonce,
             deadline,
@@ -192,10 +262,7 @@ const lockupErc20WithPermit2 = async (
         timeoutBlockHeight,
         calls,
         {
-            permitted: {
-                token: tokenAddress,
-                amount,
-            },
+            permitted: { token: tokenAddress, amount },
             nonce,
             deadline,
         },
@@ -210,19 +277,33 @@ const lockupErc20WithPermit2 = async (
     );
 };
 
-const lockupWithHops = async (
-    hops: EncodedHop[],
-    gasAbstraction: GasAbstractionType,
-    asset: string,
-    swapId: string,
-    lockupAmount: bigint,
-    connectedSigner: Signer,
-    getGasAbstractionSigner: (asset: string) => Wallet,
-    slippage: number,
-    getSwap: (id: string) => Promise<SomeSwap>,
-    setSwap: Setter<SomeSwap | null>,
-    setSwapStorage: (swap: SomeSwap) => Promise<void>,
-): Promise<string> => {
+const lockupWithHops = async ({
+    hops,
+    gasAbstraction,
+    asset,
+    swapId,
+    lockupAmount,
+    connectedSigner,
+    getGasAbstractionSigner,
+    slippage,
+    getSwap,
+    setSwap,
+    setSwapStorage,
+    usePermit2,
+}: {
+    hops: EncodedHop[];
+    gasAbstraction: GasAbstractionType;
+    asset: string;
+    swapId: string;
+    lockupAmount: bigint;
+    connectedSigner: Signer;
+    getGasAbstractionSigner: (asset: string) => Wallet;
+    slippage: number;
+    getSwap: (id: string) => Promise<SomeSwap>;
+    setSwap: Setter<SomeSwap | null>;
+    setSwapStorage: (swap: SomeSwap) => Promise<void>;
+    usePermit2: boolean;
+}): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
         connectedSigner,
@@ -251,99 +332,94 @@ const lockupWithHops = async (
             quote.data,
         );
 
-        const [permit2Address, chainId, ownerAddress] = await Promise.all([
-            router.PERMIT2(),
-            transactionSigner.provider.getNetwork().then((n) => n.chainId),
-            connectedSigner.getAddress(),
-        ]);
+        const ownerAddress = await connectedSigner.getAddress();
         const refundAddress = transactionSigner.address;
-
-        const calls = calldata.calls.map((call) => ({
-            target: call.to,
-            value: call.value,
-            callData: prefix0x(call.data),
-        }));
-
-        // Must match the Solidity contract's abi.encode of Call[] struct.
-        const callsHash = hashRouterCalls(calls);
-
-        const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
-
-        const permit2DeadlineSeconds = 1_800;
-        const deadline = BigInt(
-            Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
-        );
-
         const tokenAddress = getTokenAddress(asset);
         const commitmentLockupDetails = await getCommitmentLockupDetails(asset);
         const commitmentPreimageHash = "00".repeat(32);
 
-        const permit2Signature = await connectedSigner.signTypedData(
-            {
-                name: "Permit2",
-                verifyingContract: permit2Address,
-                chainId,
-            },
-            {
-                PermitWitnessTransferFrom: [
-                    { name: "permitted", type: "TokenPermissions" },
-                    { name: "spender", type: "address" },
-                    { name: "nonce", type: "uint256" },
-                    { name: "deadline", type: "uint256" },
-                    { name: "witness", type: "ExecuteAndLockERC20" },
-                ],
-                TokenPermissions: [
-                    { name: "token", type: "address" },
-                    { name: "amount", type: "uint256" },
-                ],
-                ExecuteAndLockERC20: [
-                    { name: "preimageHash", type: "bytes32" },
-                    { name: "token", type: "address" },
-                    { name: "claimAddress", type: "address" },
-                    { name: "refundAddress", type: "address" },
-                    { name: "timelock", type: "uint256" },
-                    { name: "callsHash", type: "bytes32" },
-                ],
-            },
-            {
-                permitted: {
-                    token: hop.dexDetails.tokenIn,
-                    amount: amountIn,
-                },
-                spender: routerAddress,
-                nonce,
-                deadline,
-                witness: {
-                    preimageHash: prefix0x(commitmentPreimageHash),
-                    token: tokenAddress,
-                    claimAddress: commitmentLockupDetails.claimAddress,
-                    refundAddress: refundAddress,
-                    timelock: commitmentLockupDetails.timelock,
-                    callsHash,
-                },
-            },
-        );
+        const hopCalls = calldata.calls.map((call) => ({
+            target: call.to,
+            value: call.value,
+            callData: prefix0x(call.data),
+        }));
+        const calls = usePermit2
+            ? hopCalls
+            : [
+                  buildTransferFromCall(
+                      hop.from,
+                      ownerAddress,
+                      routerAddress,
+                      amountIn,
+                  ),
+                  ...hopCalls,
+              ];
 
-        // Encode the transaction calldata without executing
-        const tx =
-            await router.executeAndLockERC20WithPermit2.populateTransaction(
+        let tx;
+        if (usePermit2) {
+            const [permit2Address, chainId] = await Promise.all([
+                router.PERMIT2(),
+                transactionSigner.provider.getNetwork().then((n) => n.chainId),
+            ]);
+            const callsHash = hashRouterCalls(calls);
+            const nonce = newPermit2Nonce();
+            const deadline = newPermit2Deadline();
+
+            const permit2Signature = await connectedSigner.signTypedData(
+                {
+                    name: "Permit2",
+                    verifyingContract: permit2Address,
+                    chainId,
+                },
+                permit2Types,
+                {
+                    permitted: {
+                        token: hop.dexDetails.tokenIn,
+                        amount: amountIn,
+                    },
+                    spender: routerAddress,
+                    nonce,
+                    deadline,
+                    witness: {
+                        preimageHash: prefix0x(commitmentPreimageHash),
+                        token: tokenAddress,
+                        claimAddress: commitmentLockupDetails.claimAddress,
+                        refundAddress,
+                        timelock: commitmentLockupDetails.timelock,
+                        callsHash,
+                    },
+                },
+            );
+
+            tx =
+                await router.executeAndLockERC20WithPermit2.populateTransaction(
+                    prefix0x(commitmentPreimageHash),
+                    tokenAddress,
+                    commitmentLockupDetails.claimAddress,
+                    refundAddress,
+                    commitmentLockupDetails.timelock,
+                    calls,
+                    {
+                        permitted: {
+                            token: hop.dexDetails.tokenIn,
+                            amount: amountIn,
+                        },
+                        nonce,
+                        deadline,
+                    },
+                    ownerAddress,
+                    permit2Signature,
+                );
+        } else {
+            tx = await router.executeAndLockERC20.populateTransaction(
                 prefix0x(commitmentPreimageHash),
                 tokenAddress,
                 commitmentLockupDetails.claimAddress,
                 refundAddress,
                 commitmentLockupDetails.timelock,
                 calls,
-                {
-                    permitted: {
-                        token: hop.dexDetails.tokenIn,
-                        amount: amountIn,
-                    },
-                    nonce,
-                    deadline,
-                },
-                ownerAddress,
-                permit2Signature,
             );
+        }
 
         log.info("Broadcasting commitment lockup with hops", {
             swapId,
@@ -352,6 +428,7 @@ const lockupWithHops = async (
             amountIn: amountIn.toString(),
             targetLockupAmount: targetLockupAmount.toString(),
             routerAddress,
+            usePermit2,
         });
         const transactionHash = await sendPopulatedTransaction(
             gasAbstraction,
@@ -447,19 +524,23 @@ const LockupTransaction = (props: {
                     );
 
                     if (props.hops !== undefined && props.hops.length > 0) {
-                        transactionHash = await lockupWithHops(
-                            props.hops,
-                            props.gasAbstraction,
-                            props.asset,
-                            props.swapId,
-                            props.value(),
+                        transactionHash = await lockupWithHops({
+                            hops: props.hops,
+                            gasAbstraction: props.gasAbstraction,
+                            asset: props.asset,
+                            swapId: props.swapId,
+                            lockupAmount: props.value(),
                             connectedSigner,
                             getGasAbstractionSigner,
-                            slippage(),
+                            slippage: slippage(),
                             getSwap,
                             setSwap,
                             setSwapStorage,
-                        );
+                            usePermit2:
+                                props.gasAbstraction !==
+                                    GasAbstractionType.None &&
+                                !isTrustWalletIOSSigner(connectedSigner),
+                        });
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
                     ) {
@@ -501,16 +582,18 @@ const LockupTransaction = (props: {
                                 tx,
                             );
                         } else {
-                            transactionHash = await lockupErc20WithPermit2(
-                                props.gasAbstraction,
-                                props.asset,
-                                props.value(),
-                                props.preimageHash,
-                                props.claimAddress,
-                                props.timeoutBlockHeight,
-                                connectedSigner,
+                            transactionHash = await lockupErc20({
+                                gasAbstraction: props.gasAbstraction,
+                                asset: props.asset,
+                                amount: props.value(),
+                                preimageHash: props.preimageHash,
+                                claimAddress: props.claimAddress,
+                                timeoutBlockHeight: props.timeoutBlockHeight,
+                                signer: connectedSigner,
                                 transactionSigner,
-                            );
+                                usePermit2:
+                                    !isTrustWalletIOSSigner(connectedSigner),
+                            });
                         }
                     }
 
@@ -609,15 +692,14 @@ const LockupEvm = (props: {
                     hop.from,
                     signer(),
                 );
-                const router = createRouterContract(hop.from, signer());
-                const [permit2Address, signerAddress] = await Promise.all([
-                    router.PERMIT2(),
+                const [approvalTarget, signerAddress] = await Promise.all([
+                    getRouterApprovalTarget(hop.from, signer()),
                     signer().getAddress(),
                 ]);
 
                 const [balance, allowance, requiredValue] = await Promise.all([
                     hopInputContract.balanceOf(signerAddress),
-                    hopInputContract.allowance(signerAddress, permit2Address),
+                    hopInputContract.allowance(signerAddress, approvalTarget),
                     getHopExecutionQuote(hop, value(), slippage()).then(
                         ({ amountIn }) => amountIn,
                     ),
@@ -631,10 +713,8 @@ const LockupEvm = (props: {
 
                 setSignerBalance(balance);
                 setRequiredValue(requiredValue);
-                // Permit2 requires a one-time unlimited approval of the
-                // input token to the Permit2 contract
                 setNeedsApproval(allowance < requiredValue);
-                setApprovalTarget(permit2Address);
+                setApprovalTarget(approvalTarget);
 
                 return;
             }
@@ -661,11 +741,13 @@ const LockupEvm = (props: {
                 }
                 case AssetKind.ERC20: {
                     const contract = createTokenContract(props.asset, signer());
-                    const router = createRouterContract(props.asset, signer());
 
                     const approvalTarget =
                         props.gasAbstraction !== GasAbstractionType.None
-                            ? await router.PERMIT2()
+                            ? await getRouterApprovalTarget(
+                                  props.asset,
+                                  signer(),
+                              )
                             : await getErc20Swap(props.asset).getAddress();
 
                     const [balance, allowance] = await Promise.all([

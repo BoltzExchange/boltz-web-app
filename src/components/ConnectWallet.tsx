@@ -23,14 +23,16 @@ import type {
 } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { type ConnectedWallet, useWeb3Signer } from "../context/Web3";
+import {
+    type ConnectedWallet,
+    useWeb3Signer,
+    walletConnectRdns,
+} from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
-
-const walletConnectRdns = "wallet-connect";
 
 const getSupportedProviders = (
     asset: string,
@@ -336,15 +338,28 @@ const ConnectWallet = (props: {
     ) => {
         const transport = getNetworkTransport(asset);
         const chainId = config.assets?.[asset]?.network?.chainId;
-        const signerChainId =
+        let signerChainId: number | undefined;
+
+        if (
             currentAddress !== undefined &&
             transport === NetworkTransport.Evm &&
             chainId !== undefined
-                ? Number(
-                      (await activeWallet?.signer?.provider.getNetwork())
-                          ?.chainId || -1,
-                  )
-                : undefined;
+        ) {
+            try {
+                const network =
+                    await activeWallet?.signer?.provider.getNetwork();
+                signerChainId = Number(network?.chainId || -1);
+                log.debug(
+                    `syncWalletState: getNetwork() returned chainId ${String(signerChainId)} for ${currentAddress}`,
+                );
+            } catch (error) {
+                log.warn(
+                    `syncWalletState: getNetwork() failed for ${currentAddress}, rdns=${activeWallet?.rdns}`,
+                    error,
+                );
+                signerChainId = -1;
+            }
+        }
 
         if (syncId !== latestSyncId) {
             return;

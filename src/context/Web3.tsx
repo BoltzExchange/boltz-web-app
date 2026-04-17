@@ -47,6 +47,7 @@ import { getContracts } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
+import { isIos } from "../utils/helper";
 import {
     createAssetProvider,
     getRpcUrls,
@@ -115,6 +116,14 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Trezor,
 ];
 
+const isTrustWalletIOSByRdns = (rdns: string) =>
+    rdns === walletConnectRdns &&
+    WalletConnectProvider.isTrustWallet() &&
+    isIos();
+
+const isTrustWalletIOSSigner = (signer: Signer) =>
+    isTrustWalletIOSByRdns(signer.rdns);
+
 export const createTokenContract = (asset: string, signer: Signer | Wallet) => {
     const tokenConfig = requireTokenConfig(asset);
     return new Contract(
@@ -149,6 +158,10 @@ const Web3SignerContext = createContext<{
     signer: Accessor<Signer | undefined>;
     connectedWallet: Accessor<ConnectedWallet | undefined>;
     clearSigner: () => void;
+    restoreWalletConnectEvmSession: (
+        address: string,
+        chainId?: number,
+    ) => Promise<boolean>;
 
     switchNetwork: (asset: string) => Promise<void>;
 
@@ -383,11 +396,27 @@ const Web3SignerProvider = (props: {
         address: string,
         rdns: string,
     ) => {
+        const needsTrustWalletIOSWorkarounds = isTrustWalletIOSByRdns(rdns);
+        log.info("Creating connected signer", {
+            address,
+            rdns,
+            needsTrustWalletIOSWorkarounds,
+            providerType:
+                (provider as { constructor?: { name?: string } }).constructor
+                    ?.name ?? typeof provider,
+        });
+        const browserProvider = new BrowserProvider(provider);
         const nextSigner = new JsonRpcSigner(
-            new BrowserProvider(provider),
+            browserProvider,
             address,
         ) as unknown as Signer;
         nextSigner.rdns = rdns;
+
+        log.info("Created connected signer", {
+            requestedAddress: address,
+            signerAddress: nextSigner.address,
+            rdns,
+        });
 
         return nextSigner;
     };
@@ -420,6 +449,15 @@ const Web3SignerProvider = (props: {
         rdns: string,
         chainId?: string,
     ) => {
+        log.info("Setting EVM wallet", {
+            address,
+            rdns,
+            chainId,
+            walletConnectDebugState:
+                rdns === walletConnectRdns
+                    ? WalletConnectProvider.getEvmDebugState()
+                    : undefined,
+        });
         await setRdns(address, rdns);
         const signer = createConnectedSigner(provider, address, rdns);
         setConnectedWallet({
@@ -431,6 +469,58 @@ const Web3SignerProvider = (props: {
         });
         setWalletConnected(true);
         void logSignerNetwork(signer);
+    };
+
+    const restoreWalletConnectEvmSession = async (
+        address: string,
+        chainId?: number,
+    ): Promise<boolean> => {
+        if (WalletConnectProvider.isDisconnecting()) {
+            log.info(
+                "WalletConnect session restore skipped because a disconnect is in progress",
+                { address, chainId },
+            );
+            return true;
+        }
+
+        const walletConnectProvider = providers()[walletConnectRdns]?.provider;
+        if (walletConnectProvider === undefined) {
+            log.warn(
+                "WalletConnect session restore skipped because the WalletConnect provider is unavailable",
+                {
+                    address,
+                    chainId,
+                },
+            );
+            return false;
+        }
+
+        const activeWallet = connectedWallet();
+        if (
+            activeWallet?.rdns === walletConnectRdns &&
+            activeWallet.address.toLowerCase() === address.toLowerCase() &&
+            (chainId === undefined || activeWallet.chainId === chainId)
+        ) {
+            log.info("WalletConnect session already restored", {
+                address,
+                chainId,
+            });
+            setWalletConnected(true);
+            return true;
+        }
+
+        log.info("Restoring WalletConnect EVM session", {
+            address,
+            chainId,
+            activeWallet,
+        });
+        await setEvmWallet(
+            walletConnectProvider,
+            address,
+            walletConnectRdns,
+            chainId !== undefined ? `0x${chainId.toString(16)}` : undefined,
+        );
+        return true;
     };
 
     const refreshConnectedSigner = async (
@@ -486,27 +576,54 @@ const Web3SignerProvider = (props: {
             ? (getNetworkTransport(options.asset) ?? NetworkTransport.Evm)
             : NetworkTransport.Evm;
 
-        if (
-            wallet.info.rdns === walletConnectRdns &&
-            transport !== NetworkTransport.Evm
-        ) {
-            const account = await WalletConnectProvider.connect(transport);
+        if (wallet.info.rdns === walletConnectRdns) {
+            const evmChainId =
+                transport === NetworkTransport.Evm && options?.asset
+                    ? config.assets?.[options.asset]?.network?.chainId
+                    : undefined;
+
+            log.info("Connecting WalletConnect provider", {
+                transport,
+                asset: options?.asset,
+                evmChainId,
+                requestedAddressForReconnect: connectedWallet()?.address,
+                walletConnectDebugState:
+                    WalletConnectProvider.getEvmDebugState(),
+            });
+
+            const account = await WalletConnectProvider.connect(
+                transport,
+                evmChainId,
+            );
 
             log.info(
                 `Connected address from ${wallet.info.rdns} on ${transport}: ${account.address}`,
             );
 
-            await setRdns(account.address, wallet.info.rdns);
-            setWalletConnected(true);
-            setConnectedWallet({
-                address: account.address,
-                rdns: wallet.info.rdns,
-                transport: account.transport,
-            });
             if (rawProvider()) {
                 rawProvider().removeAllListeners("chainChanged");
             }
             setRawProvider(undefined);
+
+            if (transport === NetworkTransport.Evm) {
+                const chainIdHex = evmChainId
+                    ? `0x${evmChainId.toString(16)}`
+                    : undefined;
+                await setEvmWallet(
+                    wallet.provider,
+                    account.address,
+                    wallet.info.rdns,
+                    chainIdHex,
+                );
+            } else {
+                await setRdns(account.address, wallet.info.rdns);
+                setWalletConnected(true);
+                setConnectedWallet({
+                    address: account.address,
+                    rdns: wallet.info.rdns,
+                    transport: account.transport,
+                });
+            }
             return;
         }
 
@@ -541,10 +658,6 @@ const Web3SignerProvider = (props: {
     };
 
     const switchNetwork = async (asset: string) => {
-        if (rawProvider() === undefined) {
-            return;
-        }
-
         const assetConfig = config.assets?.[asset];
         if (!assetConfig?.network) {
             log.warn(`No network config found for asset: ${asset}`);
@@ -553,6 +666,59 @@ const Web3SignerProvider = (props: {
 
         const sanitizedChainId = `0x${assetConfig.network.chainId.toString(16)}`;
         const activeSigner = signer();
+        const activeProvider =
+            activeSigner?.rdns === walletConnectRdns
+                ? (providers()[walletConnectRdns]?.provider as unknown as
+                      | EIP1193Provider
+                      | undefined)
+                : rawProvider();
+
+        if (
+            activeSigner !== undefined &&
+            isTrustWalletIOSSigner(activeSigner)
+        ) {
+            log.info(
+                `WalletConnect: reconnecting on target chain ${assetConfig.network.chainId} for asset ${asset}`,
+            );
+            log.info("WalletConnect: starting reconnect-based network switch", {
+                asset,
+                requestedChainId: assetConfig.network.chainId,
+                currentWallet: connectedWallet(),
+                walletConnectDebugState:
+                    WalletConnectProvider.getEvmDebugState(),
+            });
+            setWalletConnected(false);
+            setConnectedWallet(undefined);
+            if (rawProvider()) {
+                rawProvider().removeAllListeners("chainChanged");
+            }
+            setRawProvider(undefined);
+
+            const account = await WalletConnectProvider.connect(
+                NetworkTransport.Evm,
+                assetConfig.network.chainId,
+            );
+            const wcProvider = providers()[walletConnectRdns];
+            log.info("WalletConnect: reconnect finished", {
+                account,
+                hasWalletConnectProvider: wcProvider !== undefined,
+                walletConnectDebugState:
+                    WalletConnectProvider.getEvmDebugState(),
+            });
+            if (wcProvider) {
+                await setEvmWallet(
+                    wcProvider.provider,
+                    account.address,
+                    walletConnectRdns,
+                    sanitizedChainId,
+                );
+            }
+            return;
+        }
+
+        if (activeProvider === undefined) {
+            return;
+        }
 
         if (
             activeSigner !== undefined &&
@@ -570,7 +736,7 @@ const Web3SignerProvider = (props: {
         }
 
         try {
-            await rawProvider().request({
+            await activeProvider.request({
                 method: "wallet_switchEthereumChain",
                 params: [
                     {
@@ -597,15 +763,25 @@ const Web3SignerProvider = (props: {
                     ];
                 }
 
-                await rawProvider().request({
+                await activeProvider.request({
                     method: "wallet_addEthereumChain",
                     params: [addChainParams],
                 });
-
-                return;
+            } else {
+                throw switchError;
             }
+        }
 
-            throw switchError;
+        const currentWallet = connectedWallet();
+        if (
+            currentWallet !== undefined &&
+            currentWallet.rdns === walletConnectRdns
+        ) {
+            await refreshConnectedSigner(
+                activeProvider,
+                currentWallet.rdns,
+                sanitizedChainId,
+            );
         }
     };
 
@@ -627,8 +803,13 @@ const Web3SignerProvider = (props: {
                 connectProviderForAddress,
                 getContractsForAsset,
                 getGasAbstractionSigner,
+                restoreWalletConnectEvmSession,
                 clearSigner: () => {
-                    log.info(`Clearing connected signer`);
+                    const activeWallet = untrack(() => connectedWallet());
+                    log.info(`Clearing connected signer`, {
+                        rdns: activeWallet?.rdns,
+                        transport: activeWallet?.transport,
+                    });
                     if (rawProvider()) {
                         rawProvider().removeAllListeners("chainChanged");
                     }
@@ -636,6 +817,12 @@ const Web3SignerProvider = (props: {
                     setWalletConnected(false);
                     setConnectedWallet(undefined);
                     setRawProvider(undefined);
+
+                    if (activeWallet?.rdns === walletConnectRdns) {
+                        void WalletConnectProvider.disconnect(
+                            activeWallet.transport,
+                        );
+                    }
                 },
             }}>
             {props.children}
@@ -684,4 +871,6 @@ export {
     Web3SignerProvider,
     etherSwapCodeHashes,
     customDerivationPathRdns,
+    walletConnectRdns,
+    isTrustWalletIOSSigner,
 };

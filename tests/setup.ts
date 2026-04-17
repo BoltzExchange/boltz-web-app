@@ -97,11 +97,25 @@ vi.mock("ethers", () => {
             })
             .join("")}`;
 
+    class MockJsonRpcSigner {
+        public readonly provider: unknown;
+        public readonly address: string;
+
+        constructor(provider?: unknown, address?: string) {
+            this.provider = provider;
+            this.address =
+                address ?? "0x0000000000000000000000000000000000000000";
+        }
+
+        public getAddress = () => this.address;
+    }
+
     return {
         Contract: vi.fn(),
         Interface: class {
             encodeFunctionData = vi.fn(() => "0xencoded");
         },
+        JsonRpcSigner: MockJsonRpcSigner,
         JsonRpcProvider: vi.fn(),
         FallbackProvider: vi.fn(),
         Signature: {
