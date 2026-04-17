@@ -324,6 +324,7 @@ export const usdt0Variants = [
         symbol: "TRX",
         gasToken: "TRX",
         transport: NetworkTransport.Tron,
+        nativeDecimals: 6,
         tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
         blockExplorerUrl: "https://tronscan.org/#",
         rpcUrls: ["https://api.trongrid.io"],
