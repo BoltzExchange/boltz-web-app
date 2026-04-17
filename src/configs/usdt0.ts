@@ -297,7 +297,10 @@ export const usdt0Variants = [
         chainId: 130,
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
         blockExplorerUrl: "https://uniscan.xyz/",
-        rpcUrls: ["https://unichain-rpc.publicnode.com"],
+        rpcUrls: [
+            "https://mainnet.unichain.org",
+            "https://unichain-rpc.publicnode.com",
+        ],
     },
     {
         asset: "USDT0-SOL",
