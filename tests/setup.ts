@@ -96,6 +96,19 @@ vi.mock("ethers", () => {
                 throw new Error(`unsupported solidityPacked type: ${type}`);
             })
             .join("")}`;
+    const getAddress = (value: string) => value;
+    const toQuantity = (value: bigint | number | string) => {
+        if (typeof value === "string") {
+            if (!value.startsWith("0x")) {
+                return `0x${BigInt(value).toString(16)}`;
+            }
+
+            const normalized = value.slice(2).replace(/^0+/, "");
+            return `0x${normalized === "" ? "0" : normalized}`;
+        }
+
+        return `0x${BigInt(value).toString(16)}`;
+    };
 
     class MockJsonRpcSigner {
         public readonly provider: unknown;
@@ -130,9 +143,11 @@ vi.mock("ethers", () => {
         concat,
         formatEther,
         formatUnits,
+        getAddress,
         getBytes,
         keccak256: vi.fn((value: string) => value),
         solidityPacked,
+        toQuantity,
         zeroPadValue,
     };
 });
