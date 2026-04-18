@@ -146,6 +146,14 @@ export default class Pair {
         }
 
         if (
+            config.assets[from]?.disabled === true ||
+            config.assets[to]?.disabled === true
+        ) {
+            log.info(`Pair ${from} -> ${to} contains disabled asset`);
+            return;
+        }
+
+        if (
             isTor() &&
             (from === TBTC ||
                 to === TBTC ||

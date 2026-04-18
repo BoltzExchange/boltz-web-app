@@ -26,7 +26,7 @@ import {
     scrollToFocused,
 } from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
-import { canSelectAsset } from "../utils/selectableAsset";
+import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
 const isTouchDevice = () =>
     typeof window.matchMedia === "function" &&
@@ -99,6 +99,9 @@ const NetworkSelect = () => {
         (assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset);
 
     const selectNetwork = (newAsset: string) => {
+        if (isAssetDisabled(newAsset)) {
+            return;
+        }
         if (isSelected(newAsset)) {
             close();
             return;
@@ -210,6 +213,8 @@ const NetworkSelect = () => {
                                         data-network={getNetworkBadge(asset)}
                                         data-selected={isSelected(asset)}
                                         data-focused={focusedIndex() === i()}
+                                        data-disabled={isAssetDisabled(asset)}
+                                        disabled={isAssetDisabled(asset)}
                                         data-testid={`select-${asset}`}
                                         onMouseEnter={() =>
                                             setFocusedIndex(i())

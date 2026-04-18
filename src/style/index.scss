@@ -1114,6 +1114,13 @@ textarea.invalid {
     &:hover {
         background: var(--color-secondary-700);
     }
+
+    &[data-disabled="true"],
+    &[data-disabled="true"]:hover {
+        cursor: not-allowed;
+        opacity: 0.4;
+        background: none;
+    }
 }
 
 .asset-select-info {
