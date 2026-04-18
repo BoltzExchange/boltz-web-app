@@ -8,7 +8,7 @@ import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { config } from "src/config";
-import { arbitrumNetwork } from "src/configs/base";
+import { arbitrumChainId } from "src/configs/base";
 
 import {
     type AssetType,
@@ -625,7 +625,7 @@ export const getTimeoutEta = (
 ) => {
     // for assets on Arbitrum, we need to get timeout ETA from ETH L1
     const blockchainAsset =
-        config.assets?.[asset]?.network?.chainId === arbitrumNetwork.chainId
+        config.assets?.[asset]?.network?.chainId === arbitrumChainId
             ? ETH
             : asset;
 
