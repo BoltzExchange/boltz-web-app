@@ -18,6 +18,7 @@ export const enum Usdt0Kind {
 export type Usdt0Variant = {
     asset: string;
     canSend: boolean;
+    disabled?: boolean;
     chainName: string;
     symbol: string;
     nativeDecimals?: number;
@@ -35,6 +36,7 @@ export type Usdt0Variant = {
 export type Asset = {
     type: AssetKind;
     canSend?: boolean;
+    disabled?: boolean;
 
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];

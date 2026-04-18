@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
@@ -38,6 +38,10 @@ vi.mock("../../src/config", async () => {
                 RBTC: {
                     ...actual.config.assets.RBTC,
                     canSend: false,
+                },
+                TBTC: {
+                    ...actual.config.assets.TBTC,
+                    disabled: true,
                 },
                 "USDT0-ETH": {
                     ...actual.config.assets.USDT0,
@@ -401,6 +405,123 @@ describe("AssetSelect", () => {
         signals.setAssetSelected(Side.Receive);
 
         expect(await screen.findByTestId(`select-${RBTC}`)).toBeDefined();
+    });
+
+    test("should mark disabled assets as disabled in the list", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        const entry = (await screen.findByTestId(
+            `select-${TBTC}`,
+        )) as HTMLButtonElement;
+
+        expect(entry.disabled).toBe(true);
+        expect(entry.getAttribute("data-disabled")).toEqual("true");
+    });
+
+    test("should ignore clicks on disabled assets", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(LN, BTC);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        const setPair = vi.spyOn(signals, "setPair");
+
+        fireEvent.click(await screen.findByTestId(`select-${TBTC}`));
+
+        expect(setPair).not.toHaveBeenCalled();
+        expect(signals.pair().toAsset).toEqual(BTC);
+        expect(signals.assetSelection()).toEqual(AssetSelection.Asset);
+    });
+
+    test("should focus the next enabled asset when the selected asset is disabled", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(LN, TBTC);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        await screen.findByTestId(`select-${USDT0}`);
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId(`select-${USDT0}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+        expect(
+            screen.getByTestId(`select-${TBTC}`).getAttribute("data-focused"),
+        ).not.toEqual("true");
+    });
+
+    test("should skip disabled assets during keyboard navigation", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(LN, RBTC);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        await screen.findByTestId(`select-${USDT0}`);
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId(`select-${RBTC}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+
+        const modal = document.querySelector(".asset-select-modal");
+        expect(modal).not.toBeNull();
+
+        fireEvent.keyDown(modal as HTMLDivElement, { key: "ArrowDown" });
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId(`select-${USDT0}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+        expect(
+            screen.getByTestId(`select-${TBTC}`).getAttribute("data-focused"),
+        ).not.toEqual("true");
     });
 
     test("should not render when bitcoinOnly is true", () => {

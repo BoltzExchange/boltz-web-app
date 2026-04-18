@@ -97,6 +97,56 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000001030",
                     },
                 },
+                "USDT0-DIS": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    disabled: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Disabled Chain",
+                        symbol: "DIS",
+                        gasToken: "DIS",
+                        chainId: 9999,
+                        nativeCurrency: {
+                            name: "DIS",
+                            symbol: "DIS",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000009999",
+                    },
+                },
+                "TBTC-DIS": {
+                    ...actual.config.assets.TBTC,
+                    disabled: true,
+                    token: {
+                        ...actual.config.assets.TBTC.token,
+                        address: "0x0000000000000000000000000000000000008888",
+                    },
+                },
+                "ROUTED-DIS": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Routed Disabled",
+                        symbol: "RDIS",
+                        gasToken: "RDIS",
+                        chainId: 8888,
+                        nativeCurrency: {
+                            name: "RDIS",
+                            symbol: "RDIS",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000008889",
+                        routeVia: "TBTC-DIS",
+                    },
+                },
             },
         },
     };
@@ -270,6 +320,49 @@ describe("Pair", () => {
         expect(pair.isRoutable).toBe(false);
         expect(pair.swapToCreate).toBeUndefined();
         expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+    });
+
+    test("should treat disabled `from` asset as non-routable", () => {
+        const infoSpy = vi.spyOn(log, "info").mockImplementation(() => {});
+        const pair = new Pair(pairs, "USDT0-DIS", LN);
+
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.swapToCreate).toBeUndefined();
+        expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+        expect(infoSpy).toHaveBeenCalledWith(
+            expect.stringContaining("disabled asset"),
+        );
+    });
+
+    test("should treat disabled `to` asset as non-routable", () => {
+        const infoSpy = vi.spyOn(log, "info").mockImplementation(() => {});
+        const pair = new Pair(pairs, BTC, "USDT0-DIS");
+
+        expect(pair.isRoutable).toBe(false);
+        expect(infoSpy).toHaveBeenCalledWith(
+            expect.stringContaining("disabled asset"),
+        );
+    });
+
+    test("should treat routes with a disabled intermediary asset as non-routable", () => {
+        const infoSpy = vi.spyOn(log, "info").mockImplementation(() => {});
+        const pairsWithDisabledRoute: Pairs = {
+            ...pairs,
+            submarine: {
+                ...pairs.submarine,
+                "TBTC-DIS": {
+                    BTC: pairs.submarine.TBTC.BTC,
+                },
+            },
+        };
+        const pair = new Pair(pairsWithDisabledRoute, "ROUTED-DIS", LN);
+
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.swapToCreate).toBeUndefined();
+        expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+        expect(infoSpy).toHaveBeenCalledWith(
+            expect.stringContaining("TBTC-DIS"),
+        );
     });
 
     test("should allow 0-amount direct non-EVM chain swaps without logging blockers", () => {

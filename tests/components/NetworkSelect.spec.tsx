@@ -1,9 +1,9 @@
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 
 import NetworkSelect from "../../src/components/NetworkSelect";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
-import { BTC, LN, RBTC } from "../../src/consts/Assets";
+import { BTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import { TestComponent, contextWrapper, signals } from "../helper";
@@ -113,6 +113,27 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000000003",
                     },
                 },
+                "USDT0-DIS": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    disabled: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Disabled Chain",
+                        symbol: "DIS",
+                        gasToken: "DIS",
+                        chainId: 9999,
+                        nativeCurrency: {
+                            name: "DIS",
+                            symbol: "DIS",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000009999",
+                    },
+                },
             },
         },
     };
@@ -163,6 +184,85 @@ describe("NetworkSelect", () => {
         for (const variant of usdt0VariantAssets) {
             expect(screen.queryByTestId(`select-${variant}`)).not.toBeNull();
         }
+    });
+
+    test("should mark disabled networks as disabled and ignore clicks", async () => {
+        openNetworkSelect();
+        setPairAssets("USDT0-ETH", BTC);
+
+        const entry = (await screen.findByTestId(
+            "select-USDT0-DIS",
+        )) as HTMLButtonElement;
+
+        expect(entry.disabled).toBe(true);
+        expect(entry.getAttribute("data-disabled")).toEqual("true");
+
+        const setPair = vi.spyOn(signals, "setPair");
+
+        fireEvent.click(entry);
+
+        expect(setPair).not.toHaveBeenCalled();
+        expect(signals.pair().fromAsset).toEqual("USDT0-ETH");
+        expect(signals.assetSelection()).toEqual(AssetSelection.AssetNetwork);
+    });
+
+    test("should focus the next enabled network when the selected network is disabled", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <NetworkSelect />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets("USDT0-DIS", BTC);
+        signals.setAssetSelected(Side.Send);
+        signals.setAssetSelection(AssetSelection.AssetNetwork);
+
+        await screen.findByTestId("select-USDT0-ETH");
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId("select-USDT0-ETH")
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+        expect(
+            screen.getByTestId("select-USDT0-DIS").getAttribute("data-focused"),
+        ).not.toEqual("true");
+    });
+
+    test("should skip disabled networks during keyboard navigation", async () => {
+        openNetworkSelect();
+
+        await screen.findByTestId(`select-${USDT0}`);
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId(`select-${USDT0}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+
+        const modal = document.querySelector(".asset-select-modal");
+        expect(modal).not.toBeNull();
+
+        fireEvent.keyDown(modal as HTMLDivElement, { key: "ArrowDown" });
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId("select-USDT0-ETH")
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+        expect(
+            screen.getByTestId("select-USDT0-DIS").getAttribute("data-focused"),
+        ).not.toEqual("true");
     });
 
     test("should change the send asset when selecting a network", async () => {

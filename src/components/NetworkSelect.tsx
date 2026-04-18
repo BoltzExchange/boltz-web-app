@@ -21,12 +21,13 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
 import {
+    findEnabledIndex,
     fuzzySort,
     handleListKeyDown,
     scrollToFocused,
 } from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
-import { canSelectAsset } from "../utils/selectableAsset";
+import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
 const isTouchDevice = () =>
     typeof window.matchMedia === "function" &&
@@ -66,6 +67,8 @@ const NetworkSelect = () => {
             (asset) => getAssetNetwork(asset) ?? "",
         );
 
+    const isIndexDisabled = (i: number) => isAssetDisabled(filtered()[i]);
+
     createEffect(
         on(
             () => assetSelection(),
@@ -74,13 +77,27 @@ const NetworkSelect = () => {
                     return;
                 }
 
-                const idx = filtered().findIndex(isSelected);
-                setFocusedIndex(idx >= 0 ? idx : 0);
+                const list = filtered();
+                const idx = list.findIndex(isSelected);
+                setFocusedIndex(
+                    findEnabledIndex(
+                        idx >= 0 ? idx : 0,
+                        1,
+                        list.length,
+                        isIndexDisabled,
+                    ),
+                );
             },
         ),
     );
 
-    createEffect(on(search, () => setFocusedIndex(0)));
+    createEffect(
+        on(search, () =>
+            setFocusedIndex(
+                findEnabledIndex(0, 1, filtered().length, isIndexDisabled),
+            ),
+        ),
+    );
 
     createEffect(() => scrollToFocused(listRef, focusedIndex()));
 
@@ -99,6 +116,9 @@ const NetworkSelect = () => {
         (assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset);
 
     const selectNetwork = (newAsset: string) => {
+        if (isAssetDisabled(newAsset)) {
+            return;
+        }
         if (isSelected(newAsset)) {
             close();
             return;
@@ -151,6 +171,7 @@ const NetworkSelect = () => {
             setFocusedIndex,
             selectFocused,
             close,
+            isIndexDisabled,
         );
     };
 
@@ -210,6 +231,8 @@ const NetworkSelect = () => {
                                         data-network={getNetworkBadge(asset)}
                                         data-selected={isSelected(asset)}
                                         data-focused={focusedIndex() === i()}
+                                        data-disabled={isAssetDisabled(asset)}
+                                        disabled={isAssetDisabled(asset)}
                                         data-testid={`select-${asset}`}
                                         onMouseEnter={() =>
                                             setFocusedIndex(i())
