@@ -146,6 +146,14 @@ export default class Pair {
         }
 
         if (
+            config.assets[from]?.disabled === true ||
+            config.assets[to]?.disabled === true
+        ) {
+            log.info(`Pair ${from} -> ${to} contains disabled asset`);
+            return;
+        }
+
+        if (
             isTor() &&
             (from === TBTC ||
                 to === TBTC ||
@@ -178,10 +186,21 @@ export default class Pair {
                 : undefined;
         this.postOft = postOft;
 
+        const logDisabledAssetInRoute = (route: Hop[]): boolean => {
+            const disabledAsset = Pair.findDisabledAssetInRoute(route);
+            if (disabledAsset !== undefined) {
+                log.info(
+                    `Pair ${from} -> ${to} contains disabled asset ${disabledAsset}`,
+                );
+                return true;
+            }
+            return false;
+        };
+
         const pair = Pair.findPair(pairs, routeSource, routeTarget);
         if (pair !== undefined) {
             log.debug(`Found direct pair for ${from} -> ${routeTarget}`);
-            this.route = [
+            const proposedRoute: Hop[] = [
                 {
                     type: pair.type,
                     pair: pair.pair,
@@ -189,6 +208,10 @@ export default class Pair {
                     to: routeTarget,
                 },
             ];
+            if (logDisabledAssetInRoute(proposedRoute)) {
+                return;
+            }
+            this.route = proposedRoute;
             return;
         }
 
@@ -205,7 +228,7 @@ export default class Pair {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
-                this.route = [
+                const proposedRoute: Hop[] = [
                     {
                         type: hopPair.type,
                         pair: hopPair.pair,
@@ -223,6 +246,10 @@ export default class Pair {
                         },
                     },
                 ];
+                if (logDisabledAssetInRoute(proposedRoute)) {
+                    return;
+                }
+                this.route = proposedRoute;
                 return;
             }
         }
@@ -240,7 +267,7 @@ export default class Pair {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
-                this.route = [
+                const proposedRoute: Hop[] = [
                     {
                         type: SwapType.Dex,
                         from: routeSource,
@@ -258,12 +285,29 @@ export default class Pair {
                         to: routeTarget,
                     },
                 ];
+                if (logDisabledAssetInRoute(proposedRoute)) {
+                    return;
+                }
+                this.route = proposedRoute;
                 return;
             }
         }
 
         log.info(`No pair found for ${from} -> ${to}`);
     }
+
+    private static findDisabledAssetInRoute = (
+        route: Hop[],
+    ): string | undefined => {
+        for (const hop of route) {
+            for (const asset of [hop.from, hop.to]) {
+                if (config.assets[asset]?.disabled === true) {
+                    return asset;
+                }
+            }
+        }
+        return undefined;
+    };
 
     private static findPair = (
         pairs: Pairs | undefined,

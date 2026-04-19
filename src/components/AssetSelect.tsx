@@ -16,9 +16,13 @@ import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
-import { handleListKeyDown, scrollToFocused } from "../utils/assetSearch";
+import {
+    findEnabledIndex,
+    handleListKeyDown,
+    scrollToFocused,
+} from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
-import { canSelectAsset } from "../utils/selectableAsset";
+import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
 const hasUsdt0 = USDT0 in config.assets;
 
@@ -47,10 +51,20 @@ const SelectAsset = () => {
         ),
     );
 
+    const isIndexDisabled = (i: number) => isAssetDisabled(assets()[i]);
+
     createEffect(() => {
         if (assetSelection() === AssetSelection.Asset) {
-            const idx = assets().findIndex(isSelected);
-            setFocusedIndex(idx >= 0 ? idx : 0);
+            const list = assets();
+            const idx = list.findIndex(isSelected);
+            setFocusedIndex(
+                findEnabledIndex(
+                    idx >= 0 ? idx : 0,
+                    1,
+                    list.length,
+                    isIndexDisabled,
+                ),
+            );
         }
     });
 
@@ -66,6 +80,7 @@ const SelectAsset = () => {
             setFocusedIndex,
             selectFocused,
             close,
+            isIndexDisabled,
         );
 
     const changeAsset = (newAsset: string) => {
@@ -107,6 +122,9 @@ const SelectAsset = () => {
     };
 
     const handleAssetClick = (asset: string) => {
+        if (isAssetDisabled(asset)) {
+            return;
+        }
         if (asset === USDT0 && hasUsdt0) {
             setAssetSelection(AssetSelection.AssetNetwork);
             return;
@@ -161,6 +179,8 @@ const SelectAsset = () => {
                                     }
                                     data-selected={isSelected(asset)}
                                     data-focused={focusedIndex() === i()}
+                                    data-disabled={isAssetDisabled(asset)}
+                                    disabled={isAssetDisabled(asset)}
                                     data-testid={`select-${asset}`}
                                     onMouseEnter={() => setFocusedIndex(i())}
                                     onClick={() => handleAssetClick(asset)}>

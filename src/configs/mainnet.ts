@@ -55,6 +55,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     const asset: Asset = {
         type: AssetKind.ERC20,
         canSend: variant.canSend,
+        disabled: true,
         blockExplorerUrl: {
             id: getExplorerId(transport),
             normal: variant.blockExplorerUrl,
