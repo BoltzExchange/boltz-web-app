@@ -26,7 +26,11 @@ import {
 } from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { getSolanaConnection } from "../utils/chains/solana";
-import { postCommitmentSignatureForTransaction } from "../utils/commitment";
+import {
+    emptyPreimageHash,
+    isEmptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+} from "../utils/commitment";
 import {
     assertTransactionSignerProvider,
     sendPopulatedTransaction,
@@ -53,7 +57,6 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
-const emptyPreimageHash = prefix0x("00".repeat(32));
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -257,8 +260,7 @@ export const SwapExecutionWorker = () => {
             } = parsedLog.args;
             const matches =
                 typeof event.transactionHash === "string" &&
-                preimageHash.toLowerCase() ===
-                    emptyPreimageHash.toLowerCase() &&
+                isEmptyPreimageHash(preimageHash) &&
                 lockupTokenAddress.toLowerCase() ===
                     tokenAddress.toLowerCase() &&
                 lockupClaimAddress.toLowerCase() ===
@@ -733,7 +735,7 @@ export const SwapExecutionWorker = () => {
             }),
         );
         const tx = await router.executeAndLockERC20.populateTransaction(
-            prefix0x("00".repeat(32)),
+            emptyPreimageHash,
             getTokenAddress(latestSwap.assetSend),
             getPreOftCommitmentClaimAddress(latestSwap),
             gasAbstractionSigner.address,
@@ -941,7 +943,6 @@ export const SwapExecutionWorker = () => {
                     swapId: storedSwap.id,
                     preimageHash: getSwapPreimageHash(storedSwap),
                     commitmentTxHash: storedSwap.commitmentLockupTxHash,
-                    slippage: slippage(),
                     erc20Swap: getErc20Swap(commitmentAsset),
                     signer: transactionSigner,
                 });

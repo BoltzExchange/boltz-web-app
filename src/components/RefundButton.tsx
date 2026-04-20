@@ -48,6 +48,10 @@ import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
 } from "../utils/calculate";
+import {
+    getCommitmentRefundSignature,
+    isEmptyPreimageHash,
+} from "../utils/commitment";
 import { validateAddress } from "../utils/compat";
 import { getTimelockBlockNumber } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
@@ -355,6 +359,7 @@ const buildErc20RefundTransaction = async ({
     destination,
     oft,
     cooperative,
+    commitmentRefund = false,
 }: {
     gasAbstraction: GasAbstractionType;
     transactionSigner: Signer | Wallet;
@@ -366,6 +371,7 @@ const buildErc20RefundTransaction = async ({
     destination?: string;
     oft?: OftDetail;
     cooperative: boolean;
+    commitmentRefund?: boolean;
 }): Promise<TransactionRequest | AlchemyCall[]> => {
     if (cooperative && signature === undefined) {
         throw new Error("missing cooperative refund signature");
@@ -374,20 +380,34 @@ const buildErc20RefundTransaction = async ({
     const refundTransaction: TransactionRequest = {
         to: await contract.getAddress(),
         data: cooperative
-            ? contract.interface.encodeFunctionData(
-                  "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
-                  [
-                      refundData.preimageHash,
-                      refundData.amount,
-                      refundData.tokenAddress,
-                      refundData.claimAddress,
-                      refundData.refundAddress,
-                      refundData.timelock,
-                      signature?.v,
-                      signature?.r,
-                      signature?.s,
-                  ],
-              )
+            ? commitmentRefund
+                ? contract.interface.encodeFunctionData(
+                      "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)",
+                      [
+                          refundData.preimageHash,
+                          refundData.amount,
+                          refundData.tokenAddress,
+                          refundData.claimAddress,
+                          refundData.timelock,
+                          signature?.v,
+                          signature?.r,
+                          signature?.s,
+                      ],
+                  )
+                : contract.interface.encodeFunctionData(
+                      "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
+                      [
+                          refundData.preimageHash,
+                          refundData.amount,
+                          refundData.tokenAddress,
+                          refundData.claimAddress,
+                          refundData.refundAddress,
+                          refundData.timelock,
+                          signature?.v,
+                          signature?.r,
+                          signature?.s,
+                      ],
+                  )
             : contract.interface.encodeFunctionData(
                   "refund(bytes32,uint256,address,address,address,uint256)",
                   [
@@ -634,17 +654,42 @@ export const RefundEvm = (props: {
                         const currentContractKind = contractKind();
 
                         const refundCooperative = async () => {
-                            if (props.swapId === undefined) {
-                                throw new Error(
-                                    "swap id is required for cooperative refunds",
-                                );
-                            }
-
-                            const { signature } = await getEipRefundSignature(
-                                props.swapId,
-                                props.swapType ?? SwapType.Submarine,
+                            const isCommitmentLockup = isEmptyPreimageHash(
+                                currentRefundData.preimageHash,
                             );
-                            const decSignature = Signature.from(signature);
+
+                            let signatureHex: string;
+                            if (isCommitmentLockup) {
+                                const commitmentTxHash =
+                                    props.lockupTxHash ??
+                                    props.commitmentLockupTxHash;
+                                if (commitmentTxHash === undefined) {
+                                    throw new Error(
+                                        "commitment lockup transaction hash is required",
+                                    );
+                                }
+                                signatureHex =
+                                    await getCommitmentRefundSignature({
+                                        chainSymbol: props.asset,
+                                        transactionHash: commitmentTxHash,
+                                        logIndex: currentRefundData.logIndex,
+                                        signer: currentTransactionSigner,
+                                    });
+                            } else {
+                                if (props.swapId === undefined) {
+                                    throw new Error(
+                                        "swap id is required for cooperative refunds",
+                                    );
+                                }
+
+                                const { signature } =
+                                    await getEipRefundSignature(
+                                        props.swapId,
+                                        props.swapType ?? SwapType.Submarine,
+                                    );
+                                signatureHex = signature;
+                            }
+                            const decSignature = Signature.from(signatureHex);
 
                             if (currentContractKind === AssetKind.ERC20) {
                                 const contract = getErc20Swap(
@@ -661,12 +706,26 @@ export const RefundEvm = (props: {
                                     destination: props.destination,
                                     oft: props.oft,
                                     cooperative: true,
+                                    commitmentRefund: isCommitmentLockup,
                                 });
                             }
 
                             const contract = getEtherSwap(props.asset).connect(
                                 currentTransactionSigner,
                             );
+                            if (isCommitmentLockup) {
+                                return await contract[
+                                    "refundCooperative(bytes32,uint256,address,uint256,uint8,bytes32,bytes32)"
+                                ].populateTransaction(
+                                    currentRefundData.preimageHash,
+                                    currentRefundData.amount,
+                                    currentRefundData.claimAddress,
+                                    currentRefundData.timelock,
+                                    decSignature.v,
+                                    decSignature.r,
+                                    decSignature.s,
+                                );
+                            }
                             return await contract[
                                 "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
                             ].populateTransaction(

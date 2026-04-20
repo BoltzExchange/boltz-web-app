@@ -9,6 +9,7 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { isEmptyPreimageHash } from "../utils/commitment";
 import type { LogRefundData } from "../utils/contractLogs";
 import {
     getLogsFromReceipt,
@@ -33,6 +34,11 @@ const RefundState = (props: {
     const timelockExpired = () =>
         props.refundData.timelock <= props.refundData.currentHeight;
 
+    const isCommitmentLockup = () =>
+        isEmptyPreimageHash(props.refundData.preimageHash);
+
+    const refundGated = () => !isCommitmentLockup() && !timelockExpired();
+
     return (
         <>
             <p>
@@ -51,7 +57,7 @@ const RefundState = (props: {
                 {formatDenomination(denomination(), props.asset)}
             </p>
 
-            <Show when={!timelockExpired()}>
+            <Show when={refundGated()}>
                 <h3>
                     {t("refund_available_in", {
                         blocks: (
@@ -64,7 +70,7 @@ const RefundState = (props: {
 
             <RefundButton
                 asset={props.asset}
-                disabled={!timelockExpired()}
+                disabled={refundGated()}
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}

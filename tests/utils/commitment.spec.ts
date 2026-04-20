@@ -1,11 +1,18 @@
 const mockPostCommitmentSignature = vi.fn();
+const mockPostCommitmentRefundSignature = vi.fn();
 
 vi.mock("../../src/utils/boltzClient", () => ({
     postCommitmentSignature: mockPostCommitmentSignature,
+    postCommitmentRefundSignature: mockPostCommitmentRefundSignature,
 }));
 
-const { postCommitmentSignatureForTransaction } =
-    await import("../../src/utils/commitment");
+const {
+    emptyPreimageHash,
+    isEmptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+    buildCommitmentRefundAuthMessage,
+    getCommitmentRefundSignature,
+} = await import("../../src/utils/commitment");
 
 describe("commitment", () => {
     beforeEach(() => {
@@ -64,7 +71,6 @@ describe("commitment", () => {
             swapId: "swap-1",
             preimageHash: "11".repeat(32),
             commitmentTxHash: "0xcommitment",
-            slippage: 0.5,
             erc20Swap: erc20Swap as never,
             signer: signer as never,
         });
@@ -92,8 +98,115 @@ describe("commitment", () => {
             "0xsigned",
             "0xcommitment",
             7,
-            50,
+            10,
         );
+    });
+
+    describe("buildCommitmentRefundAuthMessage", () => {
+        test("formats logIndex as 'none' when undefined", () => {
+            expect(
+                buildCommitmentRefundAuthMessage("RBTC", "0xabc", undefined),
+            ).toEqual(
+                [
+                    "Boltz commitment refund authorization",
+                    "chain: RBTC",
+                    "transactionHash: 0xabc",
+                    "logIndex: none",
+                ].join("\n"),
+            );
+        });
+
+        test("formats numeric logIndex as decimal", () => {
+            expect(
+                buildCommitmentRefundAuthMessage("USDT", "0xdef", 3),
+            ).toEqual(
+                [
+                    "Boltz commitment refund authorization",
+                    "chain: USDT",
+                    "transactionHash: 0xdef",
+                    "logIndex: 3",
+                ].join("\n"),
+            );
+        });
+    });
+
+    describe("isEmptyPreimageHash", () => {
+        test("matches the shared empty hash with a 0x prefix", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash)).toBe(true);
+        });
+
+        test("matches the shared empty hash without a 0x prefix", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash.slice(2))).toBe(true);
+        });
+
+        test("matches case-insensitively", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash.toUpperCase())).toBe(
+                true,
+            );
+        });
+
+        test("returns false for a non-empty preimage hash", () => {
+            expect(isEmptyPreimageHash(`0x${"11".repeat(32)}`)).toBe(false);
+        });
+    });
+
+    describe("getCommitmentRefundSignature", () => {
+        test("signs the auth message and posts it to the refund endpoint", async () => {
+            mockPostCommitmentRefundSignature.mockResolvedValue({
+                signature: "0xrefundSig",
+            });
+            const signer = {
+                signMessage: vi.fn().mockResolvedValue("0xauthSig"),
+            };
+
+            const signature = await getCommitmentRefundSignature({
+                chainSymbol: "RBTC",
+                transactionHash: "0xcommitment",
+                logIndex: 4,
+                signer: signer as never,
+            });
+
+            expect(signer.signMessage).toHaveBeenCalledWith(
+                [
+                    "Boltz commitment refund authorization",
+                    "chain: RBTC",
+                    "transactionHash: 0xcommitment",
+                    "logIndex: 4",
+                ].join("\n"),
+            );
+            expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
+                "RBTC",
+                "0xcommitment",
+                "0xauthSig",
+                4,
+            );
+            expect(signature).toEqual("0xrefundSig");
+        });
+
+        test("uses 'none' when logIndex is undefined", async () => {
+            mockPostCommitmentRefundSignature.mockResolvedValue({
+                signature: "0xrefundSig",
+            });
+            const signer = {
+                signMessage: vi.fn().mockResolvedValue("0xauthSig"),
+            };
+
+            await getCommitmentRefundSignature({
+                chainSymbol: "USDT",
+                transactionHash: "0xcommitment",
+                signer: signer as never,
+            });
+
+            expect(signer.signMessage).toHaveBeenCalledWith(
+                expect.stringContaining("logIndex: none"),
+            );
+            expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
+                "USDT",
+                "0xcommitment",
+                "0xauthSig",
+                undefined,
+            );
+        });
     });
 });
 

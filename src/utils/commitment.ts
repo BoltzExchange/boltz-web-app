@@ -3,30 +3,44 @@ import type { Wallet } from "ethers";
 import log from "loglevel";
 
 import type { Signer } from "../context/Web3";
-import { postCommitmentSignature } from "./boltzClient";
+import {
+    postCommitmentRefundSignature,
+    postCommitmentSignature,
+} from "./boltzClient";
 import {
     assertTransactionSignerProvider,
     getLockupEvent,
 } from "./evmTransaction";
 import { prefix0x } from "./rootstock";
 
+export const emptyPreimageHash = prefix0x("00".repeat(32));
+
+export const normalizePreimageHash = (preimageHash: string | undefined) =>
+    preimageHash?.replace(/^0x/i, "").toLowerCase();
+
+export const isEmptyPreimageHash = (preimageHash: string | undefined) =>
+    normalizePreimageHash(preimageHash) ===
+    normalizePreimageHash(emptyPreimageHash);
+
 type PostCommitmentSignatureParams = {
     asset: string;
     swapId: string;
     preimageHash: string;
     commitmentTxHash: string;
-    slippage: number;
     erc20Swap: ERC20Swap;
     signer: Signer | Wallet;
     waitTimeoutMs?: number;
 };
+
+// Backend caps maxOverpaymentPercentage at 10 (lib/api/v2/routers/CommitmentRouter.ts).
+// Send the max so the commitment post is not rejected for small over-lockups.
+const maxAllowedOverpaymentPercentage = 10;
 
 export const postCommitmentSignatureForTransaction = async ({
     asset,
     swapId,
     preimageHash,
     commitmentTxHash,
-    slippage,
     erc20Swap,
     signer,
     waitTimeoutMs = 120_000,
@@ -131,7 +145,7 @@ export const postCommitmentSignatureForTransaction = async ({
         commitmentSignature,
         commitmentTxHash,
         logIndex,
-        slippage * 100,
+        maxAllowedOverpaymentPercentage,
     );
 
     log.info("Posted commitment signature", {
@@ -140,4 +154,59 @@ export const postCommitmentSignatureForTransaction = async ({
         commitmentTxHash,
         logIndex,
     });
+};
+
+export const buildCommitmentRefundAuthMessage = (
+    chainSymbol: string,
+    transactionHash: string,
+    logIndex: number | undefined,
+) =>
+    [
+        "Boltz commitment refund authorization",
+        `chain: ${chainSymbol}`,
+        `transactionHash: ${transactionHash}`,
+        `logIndex: ${logIndex ?? "none"}`,
+    ].join("\n");
+
+type GetCommitmentRefundSignatureParams = {
+    chainSymbol: string;
+    transactionHash: string;
+    logIndex?: number;
+    signer: Signer | Wallet;
+};
+
+export const getCommitmentRefundSignature = async ({
+    chainSymbol,
+    transactionHash,
+    logIndex,
+    signer,
+}: GetCommitmentRefundSignatureParams): Promise<string> => {
+    const message = buildCommitmentRefundAuthMessage(
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    );
+
+    log.debug("Requesting commitment refund authorization signature", {
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    });
+
+    const refundAddressSignature = await signer.signMessage(message);
+
+    const { signature } = await postCommitmentRefundSignature(
+        chainSymbol,
+        transactionHash,
+        refundAddressSignature,
+        logIndex,
+    );
+
+    log.info("Received commitment refund signature", {
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    });
+
+    return signature;
 };
