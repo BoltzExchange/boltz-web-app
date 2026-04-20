@@ -26,21 +26,36 @@ const ChainSwapLink = (props: {
         hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
 
     return (
-        <BlockExplorer
-            asset={asset()}
-            txId={props.swap().claimTx}
-            explorer={
-                props.swap().oft !== undefined && isEvmAsset(asset())
-                    ? ExplorerKind.LayerZero
-                    : undefined
-            }
-            address={
-                // When it has been claimed, the "txId" is populated
-                hasBeenClaimed()
-                    ? undefined
-                    : (props.swap() as ChainSwap).lockupDetails.lockupAddress
-            }
-        />
+        <Show
+            when={!hasBeenClaimed() && isEvmAsset(asset())}
+            fallback={
+                <BlockExplorer
+                    asset={asset()}
+                    txId={props.swap().claimTx}
+                    explorer={
+                        props.swap().oft !== undefined && isEvmAsset(asset())
+                            ? ExplorerKind.LayerZero
+                            : undefined
+                    }
+                    address={
+                        // When it has been claimed, the "txId" is populated
+                        hasBeenClaimed()
+                            ? undefined
+                            : (props.swap() as ChainSwap).lockupDetails
+                                  .lockupAddress
+                    }
+                />
+            }>
+            {/* Showing addresses makes no sense for EVM based chains.
+                The lockup tx is a regular EVM tx, not a LayerZero message. */}
+            <Show when={props.swap().lockupTx}>
+                <BlockExplorer
+                    asset={asset()}
+                    txId={props.swap().lockupTx}
+                    typeLabel={"lockup_tx"}
+                />
+            </Show>
+        </Show>
     );
 };
 
