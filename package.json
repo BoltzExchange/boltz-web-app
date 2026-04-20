@@ -1,6 +1,6 @@
 {
     "name": "boltz-frontend",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Boltz Exchange, Atomic Swaps, Web App",
     "scripts": {
         "start": "bun run regtest && vite",
