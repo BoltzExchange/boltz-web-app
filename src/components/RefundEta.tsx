@@ -2,7 +2,7 @@ import type { Accessor } from "solid-js";
 import { Show } from "solid-js";
 
 import { config } from "../config";
-import { arbitrumNetwork } from "../configs/base";
+import { arbitrumChainId } from "../configs/base";
 import { ETH } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { getNetworkName } from "../utils/blockchain";
@@ -22,7 +22,7 @@ const RefundEta = (props: {
                 {t("pay_timeout_blockheight", {
                     network: getNetworkName(
                         config.assets?.[props.asset]?.network?.chainId ===
-                            arbitrumNetwork.chainId
+                            arbitrumChainId
                             ? ETH
                             : props.asset,
                     ),

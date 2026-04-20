@@ -4,13 +4,33 @@ import {
     Explorer,
     NetworkTransport,
     Usdt0Kind,
-    arbitrumExplorer,
-    arbitrumNetwork,
+    arbitrumChainId,
     baseConfig,
     chooseUrl,
 } from "src/configs/base";
-import { rskRpcUrls, usdt0VariantAssets } from "src/configs/usdt0";
+import { arbitrumRpcUrls, rskRpcUrls } from "src/configs/rpcs";
+import { usdt0VariantAssets } from "src/configs/usdt0";
 import { AssetKind } from "src/consts/AssetKind";
+import { Network } from "src/consts/Network";
+
+const arbitrumExplorer = {
+    id: Explorer.Blockscout,
+    normal: "https://arbiscan.io",
+};
+
+const arbitrumNetwork = {
+    symbol: "ARB",
+    gasToken: "ETH",
+    chainName: Network.Arbitrum,
+    transport: NetworkTransport.Evm,
+    chainId: arbitrumChainId,
+    rpcUrls: arbitrumRpcUrls,
+    nativeCurrency: {
+        name: "Ethereum",
+        symbol: "ETH",
+        decimals: 18,
+    },
+};
 
 const config = {
     ...baseConfig,
