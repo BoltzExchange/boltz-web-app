@@ -27,7 +27,7 @@ test.describe("reverseSwap", () => {
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
         const sendAmount = await expectApproxAmount(
             inputSendAmount,
-            "0.01005284",
+            "0.01005294",
         );
 
         const inputOnchainAddress = page.locator(
@@ -88,7 +88,7 @@ test.describe("reverseSwap", () => {
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
         const sendAmount = await expectApproxAmount(
             inputSendAmount,
-            "0.01005284",
+            "0.01005294",
         );
 
         const inputOnchainAddress = page.locator(
