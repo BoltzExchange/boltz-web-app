@@ -69,7 +69,6 @@ describe("commitment", () => {
             swapId: "swap-1",
             preimageHash: "11".repeat(32),
             commitmentTxHash: "0xcommitment",
-            slippage: 0.5,
             erc20Swap: erc20Swap as never,
             signer: signer as never,
         });
@@ -97,7 +96,7 @@ describe("commitment", () => {
             "0xsigned",
             "0xcommitment",
             7,
-            50,
+            10,
         );
     });
 

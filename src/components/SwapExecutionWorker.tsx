@@ -943,7 +943,6 @@ export const SwapExecutionWorker = () => {
                     swapId: storedSwap.id,
                     preimageHash: getSwapPreimageHash(storedSwap),
                     commitmentTxHash: storedSwap.commitmentLockupTxHash,
-                    slippage: slippage(),
                     erc20Swap: getErc20Swap(commitmentAsset),
                     signer: transactionSigner,
                 });

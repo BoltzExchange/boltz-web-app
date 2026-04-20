@@ -20,18 +20,20 @@ type PostCommitmentSignatureParams = {
     swapId: string;
     preimageHash: string;
     commitmentTxHash: string;
-    slippage: number;
     erc20Swap: ERC20Swap;
     signer: Signer | Wallet;
     waitTimeoutMs?: number;
 };
+
+// Backend caps maxOverpaymentPercentage at 10 (lib/api/v2/routers/CommitmentRouter.ts).
+// Send the max so the commitment post is not rejected for small over-lockups.
+const maxAllowedOverpaymentPercentage = 10;
 
 export const postCommitmentSignatureForTransaction = async ({
     asset,
     swapId,
     preimageHash,
     commitmentTxHash,
-    slippage,
     erc20Swap,
     signer,
     waitTimeoutMs = 120_000,
@@ -136,7 +138,7 @@ export const postCommitmentSignatureForTransaction = async ({
         commitmentSignature,
         commitmentTxHash,
         logIndex,
-        slippage * 100,
+        maxAllowedOverpaymentPercentage,
     );
 
     log.info("Posted commitment signature", {
