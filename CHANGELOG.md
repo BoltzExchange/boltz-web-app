@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.0.3](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.2..v2.0.3) - 2026-04-20
+
+### Bug Fixes
+
+- Aqua link (#1349) - ([39bafde](https://github.com/BoltzExchange/boltz-web-app/commit/39bafdebede2ee97048f03b926328500bf3a2491))
+- fees CSS and HTML structure (#1351) - ([47fc60b](https://github.com/BoltzExchange/boltz-web-app/commit/47fc60b9298c411d17df0ecd2416b5cce770e68f))
+- update E2E values for Bitcoin Core v31.0 - ([863b143](https://github.com/BoltzExchange/boltz-web-app/commit/863b14332950e9936f685b8fde206edb160e025e))
+
+### Features
+
+- ability to disable pairs - ([e83660d](https://github.com/BoltzExchange/boltz-web-app/commit/e83660d98acb2dd397fb67d607a9fcb3f34ab146))
+- refund commitments without link to swap - ([a997049](https://github.com/BoltzExchange/boltz-web-app/commit/a9970499a803118870000c9610d1eed0b2f45687))
+
+### Miscellaneous Chores
+
+- migrate from npm to bun (#1350) - ([98e378e](https://github.com/BoltzExchange/boltz-web-app/commit/98e378e65ab815779159542600c82760e504b96f))
+- disable USDT0 OFT - ([6ba9b4e](https://github.com/BoltzExchange/boltz-web-app/commit/6ba9b4efa2325acc48e042b30e14bb6a173431bb))
+- use max allowed commitment slippage - ([319172b](https://github.com/BoltzExchange/boltz-web-app/commit/319172b5e29db129b1cd9dfa70b2891f74321397))
+
+### Refactoring
+
+- remove lockup address link for EVM chains - ([8067f53](https://github.com/BoltzExchange/boltz-web-app/commit/8067f531554d6b8ef331212d166572527dd4f609))
+- harden empty preimage hash detection - ([9eb5ad1](https://github.com/BoltzExchange/boltz-web-app/commit/9eb5ad1198ea0163234541023f135f7b84bac269))
+
+### Tests
+
+- E2E for performing asset rescue twice (#1356) - ([1802247](https://github.com/BoltzExchange/boltz-web-app/commit/1802247acb49d308b4fdb2d73e77fce0e5814cfa))
+
+---
 ## [2.0.2](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.1..v2.0.2) - 2026-04-16
 
 ### Bug Fixes
@@ -27,6 +56,7 @@ All notable changes to this project will be documented in this file. See [conven
 - env variable for Solana RPC (#1344) - ([6d2123c](https://github.com/BoltzExchange/boltz-web-app/commit/6d2123ca0fc7f9a6792cb6c6d6d3349b244bdcb2))
 - optimize Solana RPC calls (#1346) - ([62a52fc](https://github.com/BoltzExchange/boltz-web-app/commit/62a52fcc48fcc43eb2f805d84a096405acbd1263))
 - update canSend OFT list (#1347) - ([a85b1f6](https://github.com/BoltzExchange/boltz-web-app/commit/a85b1f636e68bf0f198c182f242bf9de9dc7946d))
+- bump version to v2.0.2 (#1348) - ([cbed076](https://github.com/BoltzExchange/boltz-web-app/commit/cbed076631574ccbd5bca6334bdb213f77f4af71))
 
 ### Refactoring
 
