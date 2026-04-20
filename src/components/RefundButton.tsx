@@ -49,8 +49,8 @@ import {
     calculateAmountWithSlippage,
 } from "../utils/calculate";
 import {
-    emptyPreimageHash,
     getCommitmentRefundSignature,
+    isEmptyPreimageHash,
 } from "../utils/commitment";
 import { validateAddress } from "../utils/compat";
 import { getTimelockBlockNumber } from "../utils/contractLogs";
@@ -654,9 +654,9 @@ export const RefundEvm = (props: {
                         const currentContractKind = contractKind();
 
                         const refundCooperative = async () => {
-                            const isCommitmentLockup =
-                                currentRefundData.preimageHash.toLowerCase() ===
-                                emptyPreimageHash;
+                            const isCommitmentLockup = isEmptyPreimageHash(
+                                currentRefundData.preimageHash,
+                            );
 
                             let signatureHex: string;
                             if (isCommitmentLockup) {

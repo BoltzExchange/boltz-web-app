@@ -15,6 +15,13 @@ import { prefix0x } from "./rootstock";
 
 export const emptyPreimageHash = prefix0x("00".repeat(32));
 
+export const normalizePreimageHash = (preimageHash: string | undefined) =>
+    preimageHash?.replace(/^0x/i, "").toLowerCase();
+
+export const isEmptyPreimageHash = (preimageHash: string | undefined) =>
+    normalizePreimageHash(preimageHash) ===
+    normalizePreimageHash(emptyPreimageHash);
+
 type PostCommitmentSignatureParams = {
     asset: string;
     swapId: string;

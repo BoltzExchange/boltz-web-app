@@ -145,6 +145,8 @@ vi.mock("../../src/utils/chains/solana", () => ({
 
 vi.mock("../../src/utils/commitment", () => ({
     emptyPreimageHash: `0x${"00".repeat(32)}`,
+    isEmptyPreimageHash: (preimageHash?: string) =>
+        preimageHash?.replace(/^0x/i, "").toLowerCase() === "00".repeat(32),
     postCommitmentSignatureForTransaction: (...args: unknown[]) =>
         mockPostCommitmentSignatureForTransaction(...args),
 }));

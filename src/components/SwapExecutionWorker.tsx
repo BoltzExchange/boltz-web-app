@@ -28,6 +28,7 @@ import { calculateAmountOutMin } from "../utils/calculate";
 import { getSolanaConnection } from "../utils/chains/solana";
 import {
     emptyPreimageHash,
+    isEmptyPreimageHash,
     postCommitmentSignatureForTransaction,
 } from "../utils/commitment";
 import {
@@ -259,8 +260,7 @@ export const SwapExecutionWorker = () => {
             } = parsedLog.args;
             const matches =
                 typeof event.transactionHash === "string" &&
-                preimageHash.toLowerCase() ===
-                    emptyPreimageHash.toLowerCase() &&
+                isEmptyPreimageHash(preimageHash) &&
                 lockupTokenAddress.toLowerCase() ===
                     tokenAddress.toLowerCase() &&
                 lockupClaimAddress.toLowerCase() ===
@@ -735,7 +735,7 @@ export const SwapExecutionWorker = () => {
             }),
         );
         const tx = await router.executeAndLockERC20.populateTransaction(
-            prefix0x("00".repeat(32)),
+            emptyPreimageHash,
             getTokenAddress(latestSwap.assetSend),
             getPreOftCommitmentClaimAddress(latestSwap),
             gasAbstractionSigner.address,

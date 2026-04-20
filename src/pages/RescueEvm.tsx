@@ -23,6 +23,7 @@ import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim } from "../rif/Signer";
+import { isEmptyPreimageHash } from "../utils/commitment";
 import type { LogRefundData } from "../utils/contractLogs";
 import {
     getLogsFromReceipt,
@@ -265,7 +266,7 @@ const RescueEvm = () => {
         rescueData() && rescueData().timelock <= rescueData().currentHeight;
 
     const isCommitmentLockup = () =>
-        rescueData()?.preimageHash === "00".repeat(32);
+        isEmptyPreimageHash(rescueData()?.preimageHash);
 
     const canRefund = () =>
         isRefundAction() && (timelockExpired() || isCommitmentLockup());

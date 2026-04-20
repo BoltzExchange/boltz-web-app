@@ -7,6 +7,8 @@ vi.mock("../../src/utils/boltzClient", () => ({
 }));
 
 const {
+    emptyPreimageHash,
+    isEmptyPreimageHash,
     postCommitmentSignatureForTransaction,
     buildCommitmentRefundAuthMessage,
     getCommitmentRefundSignature,
@@ -125,6 +127,26 @@ describe("commitment", () => {
                     "logIndex: 3",
                 ].join("\n"),
             );
+        });
+    });
+
+    describe("isEmptyPreimageHash", () => {
+        test("matches the shared empty hash with a 0x prefix", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash)).toBe(true);
+        });
+
+        test("matches the shared empty hash without a 0x prefix", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash.slice(2))).toBe(true);
+        });
+
+        test("matches case-insensitively", () => {
+            expect(isEmptyPreimageHash(emptyPreimageHash.toUpperCase())).toBe(
+                true,
+            );
+        });
+
+        test("returns false for a non-empty preimage hash", () => {
+            expect(isEmptyPreimageHash(`0x${"11".repeat(32)}`)).toBe(false);
         });
     });
 
