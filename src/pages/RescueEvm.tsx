@@ -264,7 +264,11 @@ const RescueEvm = () => {
     const timelockExpired = () =>
         rescueData() && rescueData().timelock <= rescueData().currentHeight;
 
-    const canRefund = () => isRefundAction() && timelockExpired();
+    const isCommitmentLockup = () =>
+        rescueData()?.preimageHash === "00".repeat(32);
+
+    const canRefund = () =>
+        isRefundAction() && (timelockExpired() || isCommitmentLockup());
 
     const pageTitle = () => {
         if (isRefundAction()) {

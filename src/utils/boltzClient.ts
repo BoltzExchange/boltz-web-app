@@ -464,6 +464,18 @@ export const postCommitmentSignature = (
         maxOverpaymentPercentage,
     });
 
+export const postCommitmentRefundSignature = (
+    currency: string,
+    transactionHash: string,
+    refundAddressSignature: string,
+    logIndex?: number,
+) =>
+    fetcher<{ signature: string }>(`/v2/commitment/${currency}/refund`, {
+        transactionHash,
+        refundAddressSignature,
+        logIndex,
+    });
+
 export const broadcastTransaction = async (
     asset: string,
     txHex: string,

@@ -33,6 +33,11 @@ const RefundState = (props: {
     const timelockExpired = () =>
         props.refundData.timelock <= props.refundData.currentHeight;
 
+    const isCommitmentLockup = () =>
+        props.refundData.preimageHash === "00".repeat(32);
+
+    const refundGated = () => !isCommitmentLockup() && !timelockExpired();
+
     return (
         <>
             <p>
@@ -51,7 +56,7 @@ const RefundState = (props: {
                 {formatDenomination(denomination(), props.asset)}
             </p>
 
-            <Show when={!timelockExpired()}>
+            <Show when={refundGated()}>
                 <h3>
                     {t("refund_available_in", {
                         blocks: (
@@ -64,7 +69,7 @@ const RefundState = (props: {
 
             <RefundButton
                 asset={props.asset}
-                disabled={!timelockExpired()}
+                disabled={refundGated()}
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}

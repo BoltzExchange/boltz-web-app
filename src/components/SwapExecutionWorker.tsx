@@ -26,7 +26,10 @@ import {
 } from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { getSolanaConnection } from "../utils/chains/solana";
-import { postCommitmentSignatureForTransaction } from "../utils/commitment";
+import {
+    emptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+} from "../utils/commitment";
 import {
     assertTransactionSignerProvider,
     sendPopulatedTransaction,
@@ -53,7 +56,6 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
-const emptyPreimageHash = prefix0x("00".repeat(32));
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));

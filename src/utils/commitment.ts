@@ -3,12 +3,17 @@ import type { Wallet } from "ethers";
 import log from "loglevel";
 
 import type { Signer } from "../context/Web3";
-import { postCommitmentSignature } from "./boltzClient";
+import {
+    postCommitmentRefundSignature,
+    postCommitmentSignature,
+} from "./boltzClient";
 import {
     assertTransactionSignerProvider,
     getLockupEvent,
 } from "./evmTransaction";
 import { prefix0x } from "./rootstock";
+
+export const emptyPreimageHash = prefix0x("00".repeat(32));
 
 type PostCommitmentSignatureParams = {
     asset: string;
@@ -140,4 +145,59 @@ export const postCommitmentSignatureForTransaction = async ({
         commitmentTxHash,
         logIndex,
     });
+};
+
+export const buildCommitmentRefundAuthMessage = (
+    chainSymbol: string,
+    transactionHash: string,
+    logIndex: number | undefined,
+) =>
+    [
+        "Boltz commitment refund authorization",
+        `chain: ${chainSymbol}`,
+        `transactionHash: ${transactionHash}`,
+        `logIndex: ${logIndex ?? "none"}`,
+    ].join("\n");
+
+type GetCommitmentRefundSignatureParams = {
+    chainSymbol: string;
+    transactionHash: string;
+    logIndex?: number;
+    signer: Signer | Wallet;
+};
+
+export const getCommitmentRefundSignature = async ({
+    chainSymbol,
+    transactionHash,
+    logIndex,
+    signer,
+}: GetCommitmentRefundSignatureParams): Promise<string> => {
+    const message = buildCommitmentRefundAuthMessage(
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    );
+
+    log.debug("Requesting commitment refund authorization signature", {
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    });
+
+    const refundAddressSignature = await signer.signMessage(message);
+
+    const { signature } = await postCommitmentRefundSignature(
+        chainSymbol,
+        transactionHash,
+        refundAddressSignature,
+        logIndex,
+    );
+
+    log.info("Received commitment refund signature", {
+        chainSymbol,
+        transactionHash,
+        logIndex,
+    });
+
+    return signature;
 };
