@@ -5,6 +5,7 @@ import {
     LBTC,
     LN,
     RBTC,
+    TBTC,
     USDT0,
     getAssetDisplaySymbol,
     getBridgeVariants,
@@ -15,6 +16,7 @@ import {
     isBridgeCanonicalAsset,
     isBridgeVariant,
     isStablecoinAsset,
+    requireRouterAddress,
 } from "../../src/consts/Assets";
 
 vi.mock("../../src/config", async () => {
@@ -118,21 +120,57 @@ describe("Assets", () => {
 
     describe("getRouteViaAsset", () => {
         test.each`
-            input           | expected
-            ${USDT0}        | ${"TBTC"}
-            ${"USDT0-ETH"}  | ${"TBTC"}
-            ${"USDT0-TRON"} | ${"TBTC"}
-            ${BTC}          | ${undefined}
+            input             | expected
+            ${USDT0}          | ${"TBTC"}
+            ${"USDT0-ETH"}    | ${"TBTC"}
+            ${"USDT0-TRON"}   | ${"TBTC"}
+            ${"USDT0-POL"}    | ${"TBTC"}
+            ${BTC}            | ${undefined}
+            ${TBTC}           | ${undefined}
+            ${"not-an-asset"} | ${undefined}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getRouteViaAsset(input)).toBe(expected);
         });
     });
 
     describe("getRouterAddress", () => {
+        const tbtcRouter = "0x6EA68e965fcd19b6fbC6553BABbF87a5018F9B28";
+
+        test("resolves the canonical asset's routeVia hop router", () => {
+            expect(getRouterAddress(USDT0)).toBe(tbtcRouter);
+        });
+
         test("inherits the canonical router path for bridge variants", () => {
-            expect(getRouterAddress("USDT0-ETH")).toBe(getRouterAddress(USDT0));
-            expect(getRouterAddress("USDT0-TRON")).toBe(
-                getRouterAddress(USDT0),
+            expect(getRouterAddress("USDT0-ETH")).toBe(tbtcRouter);
+            expect(getRouterAddress("USDT0-TRON")).toBe(tbtcRouter);
+            expect(getRouterAddress("USDT0-POL")).toBe(tbtcRouter);
+        });
+
+        test("returns the asset's own router when it has no routeVia", () => {
+            expect(getRouterAddress(TBTC)).toBe(tbtcRouter);
+        });
+
+        test.each([BTC, RBTC, "not-an-asset"])(
+            "returns undefined for %s",
+            (asset) => {
+                expect(getRouterAddress(asset)).toBeUndefined();
+            },
+        );
+    });
+
+    describe("requireRouterAddress", () => {
+        test("returns the resolved router for bridge variants", () => {
+            expect(requireRouterAddress("USDT0-ETH")).toBe(
+                requireRouterAddress(USDT0),
+            );
+        });
+
+        test("throws when no router is configured", () => {
+            expect(() => requireRouterAddress(BTC)).toThrow(
+                /no router configured/,
+            );
+            expect(() => requireRouterAddress("not-an-asset")).toThrow(
+                /no router configured/,
             );
         });
     });

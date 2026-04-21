@@ -80,9 +80,11 @@ vi.mock("../../src/config", async () => {
                             decimals: 18,
                         },
                     },
+                    // Intentionally omits `token.routeVia` to mirror real mainnet
+                    // variants, which inherit routing from the canonical asset.
                     token: {
-                        ...actual.config.assets.USDT0.token,
                         address: "0x0000000000000000000000000000000000000137",
+                        decimals: 6,
                     },
                 },
                 "USDT0-CFX": {
@@ -372,6 +374,14 @@ describe("Pair", () => {
         const pair = new Pair(undefined, "NONEXISTENT", LN);
         expect(pair.isRoutable).toBe(false);
         expect(pair.maxRoutingFee).toBeUndefined();
+    });
+
+    test("should route bridge variants that inherit routeVia from the canonical asset", () => {
+        // USDT0-POL has no own `token.routeVia` — it must inherit "TBTC" from
+        // the canonical USDT0 asset for the DEX hop to be discovered in either
+        // direction.
+        expect(new Pair(pairs, "USDT0-POL", LN).isRoutable).toBe(true);
+        expect(new Pair(pairs, LN, "USDT0-POL").isRoutable).toBe(true);
     });
 
     test("should treat unsupported send variants as non-routable", () => {
