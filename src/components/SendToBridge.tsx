@@ -22,7 +22,7 @@ import { bridgeRegistry } from "../utils/bridge";
 import { getTronTokenAllowance } from "../utils/oft/oft";
 import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
-import ApproveTronErc20 from "./ApproveTronErc20";
+import ApproveTrc20 from "./ApproveTrc20";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import InsufficientBalance from "./InsufficientBalance";
@@ -627,7 +627,7 @@ const SendToBridge = (props: {
                             when={!needsApproval()}
                             fallback={
                                 sourceTransport() === NetworkTransport.Tron ? (
-                                    <ApproveTronErc20
+                                    <ApproveTrc20
                                         asset={props.bridge.sourceAsset}
                                         value={() =>
                                             requiredTokenBalance() ??
@@ -635,7 +635,6 @@ const SendToBridge = (props: {
                                         }
                                         setNeedsApproval={setNeedsApproval}
                                         approvalTarget={approvalTarget()!}
-                                        resetAllowanceFirst={true}
                                     />
                                 ) : (
                                     <ApproveErc20

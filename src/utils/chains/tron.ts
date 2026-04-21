@@ -68,7 +68,7 @@ export const decodeTronBase58Address = (address: string): Uint8Array => {
 
 export const encodeTronBase58Address = (address: Uint8Array): string => {
     if (address.length !== 20) {
-        throw new Error(`Invalid Tron payload length: ${address.length}`);
+        throw new Error(`Invalid Tron address length: ${address.length}`);
     }
 
     const payload = new Uint8Array(tronPayloadLength);

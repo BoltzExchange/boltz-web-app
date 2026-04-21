@@ -46,12 +46,15 @@ type BroadcastResult = {
     raw_data_hex?: string;
 };
 
-type WalletConnectTronSignTransactionResponse =
+type TronSignTransactionResponse =
     | BroadcastResult
     | {
           result: BroadcastResult;
       };
 
+// The `TronConnector` type doesn't have the `tron_signTransaction` rpc method,
+// so we have to extend it here.
+// https://docs.reown.com/advanced/multichain/rpc-reference/tron-rpc#tron_signtransaction
 type WalletConnectTronConnector = TronConnector & {
     provider: {
         request: <T>(
@@ -70,28 +73,19 @@ const getTronAddressHexBody = (address: string): string =>
         .replace(/^0x/, "")
         .replace(/^41/, "");
 
-const getWalletConnectTronChainId = (walletProvider: TronConnector): string => {
-    for (const chain of walletProvider.chains as Array<{
-        caipNetworkId?: string;
-    }>) {
-        if (
-            typeof chain.caipNetworkId === "string" &&
-            chain.caipNetworkId.startsWith("tron:")
-        ) {
-            return chain.caipNetworkId;
-        }
-    }
-
-    throw new Error("Missing WalletConnect Tron chain ID");
-};
-
 const signTronTransaction = async (
     walletProvider: WalletConnectTronConnector,
     walletAddress: string,
     transaction: unknown,
 ): Promise<BroadcastResult> => {
+    const chainId = walletProvider.chains.find((chain) =>
+        chain.caipNetworkId.startsWith("tron"),
+    )?.caipNetworkId;
+    if (chainId === undefined) {
+        throw new Error("Tron chain not found");
+    }
     const response =
-        await walletProvider.provider.request<WalletConnectTronSignTransactionResponse>(
+        await walletProvider.provider.request<TronSignTransactionResponse>(
             {
                 method: "tron_signTransaction",
                 params: {
@@ -101,7 +95,7 @@ const signTronTransaction = async (
                     },
                 },
             },
-            getWalletConnectTronChainId(walletProvider),
+            chainId,
         );
 
     if ("txID" in response) {
@@ -324,7 +318,7 @@ export const getTronOftGuidFromTransactionInfo = (
 ): string | undefined =>
     decodeTronOftSentEvent(transactionInfo, contractAddress)?.guid;
 
-export const getTronOftTokenBalance = async (
+export const getTronTokenBalance = async (
     route: { sourceAsset: string },
     ownerAddress: string,
 ): Promise<bigint> => {

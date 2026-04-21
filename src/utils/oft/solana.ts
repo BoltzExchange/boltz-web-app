@@ -821,7 +821,7 @@ export const getSolanaOftGuidFromLogs = (
     return undefined;
 };
 
-export const getSolanaOftTokenBalance = async (
+export const getSolanaTokenBalance = async (
     contextConfig: SolanaLegacyMeshConfig,
     ownerAddress: string,
 ): Promise<bigint> => {

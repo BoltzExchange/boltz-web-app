@@ -1,3 +1,4 @@
+import { prefixHex } from "../alchemy/Alchemy";
 import { chooseUrl, config } from "../config";
 import { NetworkTransport } from "../configs/base";
 import { getNetworkTransport } from "../consts/Assets";
@@ -33,9 +34,6 @@ const getExplorerBaseUrl = (asset: string, explorer: ExplorerKind) => {
     }
 };
 
-const prefixHex = (value: string): string =>
-    value.startsWith("0x") ? value : `0x${value}`;
-
 const normalizeExplorerValue = (
     asset: string,
     isTxId: boolean,
@@ -43,14 +41,14 @@ const normalizeExplorerValue = (
     explorer: ExplorerKind,
 ): string => {
     if (
-        !isTxId ||
-        explorer !== ExplorerKind.LayerZero ||
-        getNetworkTransport(asset) !== NetworkTransport.Tron
+        isTxId &&
+        explorer === ExplorerKind.LayerZero &&
+        getNetworkTransport(asset) === NetworkTransport.Tron
     ) {
-        return val;
+        return prefixHex(val);
     }
 
-    return prefixHex(val);
+    return val;
 };
 
 const blockExplorerLink = (

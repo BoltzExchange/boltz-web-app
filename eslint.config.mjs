@@ -58,6 +58,7 @@ export default [
                                 "@reown/appkit-adapter-ethers",
                                 "@reown/appkit-adapter-solana",
                                 "@reown/appkit-adapter-tron",
+                                "tronweb",
                                 "@ledgerhq/hw-transport-webhid",
                                 "@vulpemventures/secp256k1-zkp",
                                 "@layerzerolabs/lz-solana-sdk-v2/umi",
