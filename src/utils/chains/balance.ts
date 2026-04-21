@@ -2,6 +2,7 @@ import { NetworkTransport } from "../../configs/base";
 import { getNetworkTransport } from "../../consts/Assets";
 import { createAssetProvider } from "../provider";
 import { getSolanaNativeBalance } from "./solana";
+import { getTronNativeBalance } from "./tron";
 
 export const getAssetNativeBalance = async (
     asset: string,
@@ -13,6 +14,9 @@ export const getAssetNativeBalance = async (
 
         case NetworkTransport.Solana:
             return await getSolanaNativeBalance(asset, ownerAddress);
+
+        case NetworkTransport.Tron:
+            return await getTronNativeBalance(asset, ownerAddress);
 
         default:
             throw new Error(

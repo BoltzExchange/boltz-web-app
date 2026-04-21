@@ -55,8 +55,20 @@ const axiosFetch = async (
 globalThis.fetch = axiosFetch as typeof fetch;
 
 vi.mock("ethers", () => {
+    const encodedFunctionData =
+        "0x123456780000000000000000000000000000000000000000000000000000000000000000";
+    const encodedAbiData =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
     const stripPrefix = (value: string) =>
         value.startsWith("0x") ? value.slice(2) : value;
+    const decodeFunctionResult = (name: string, value: string) => {
+        const normalized = stripPrefix(value);
+        if (name === "approvalRequired") {
+            return [normalized !== "" && BigInt(`0x${normalized}`) !== 0n];
+        }
+
+        return [normalized === "" ? 0n : BigInt(`0x${normalized}`)];
+    };
     const toUintHex = (value: bigint | number, bytes: number) =>
         BigInt(value)
             .toString(16)
@@ -111,7 +123,8 @@ vi.mock("ethers", () => {
     return {
         Contract: vi.fn(),
         Interface: class {
-            encodeFunctionData = vi.fn(() => "0xencoded");
+            encodeFunctionData = vi.fn(() => encodedFunctionData);
+            decodeFunctionResult = vi.fn(decodeFunctionResult);
         },
         JsonRpcProvider: vi.fn(),
         FallbackProvider: vi.fn(),
@@ -120,7 +133,7 @@ vi.mock("ethers", () => {
         },
         AbiCoder: {
             defaultAbiCoder: () => ({
-                encode: vi.fn(() => "0xencoded"),
+                encode: vi.fn(() => encodedAbiData),
             }),
         },
         ZeroAddress: "0x0000000000000000000000000000000000000000",

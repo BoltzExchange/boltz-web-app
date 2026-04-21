@@ -1,4 +1,5 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import type { TronConnector } from "@reown/appkit-utils/tron";
 import { hex } from "@scure/base";
 import {
     type ContractRunner,
@@ -28,7 +29,10 @@ import {
     shouldCreateSolanaTokenAccount,
     solanaTokenAccountSize,
 } from "../chains/solana";
-import { decodeTronBase58Address } from "../chains/tron";
+import {
+    decodeTronBase58Address,
+    getTronTransactionSender,
+} from "../chains/tron";
 import {
     type Provider,
     createAssetProvider,
@@ -52,6 +56,10 @@ import {
     createSolanaOftContract,
     getSolanaOftTokenBalance as getSolanaLegacyMeshTokenBalance,
 } from "./solana";
+import {
+    createTronOftContract,
+    getTronOftTokenBalance as getTronLegacyMeshTokenBalance,
+} from "./tron";
 import type {
     MsgFee,
     OftFeeDetail,
@@ -78,6 +86,7 @@ export type {
     OftTransportClient,
     SendParam,
 } from "./types";
+export { getTronTokenAllowance } from "./tron";
 
 const providerCachePrefix = "oft:provider:";
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
@@ -194,6 +203,11 @@ const isSolanaWalletProvider = (
 ): runner is SolanaWalletProvider =>
     runner !== undefined && "signAndSendTransaction" in runner;
 
+const isTronWalletProvider = (
+    runner: OftTransportRunner,
+): runner is TronConnector =>
+    runner !== undefined && "chain" in runner && runner.chain === "tron";
+
 const getEvmOftRunner = (
     route: OftRoute,
     runner: OftTransportRunner,
@@ -201,7 +215,7 @@ const getEvmOftRunner = (
     if (runner === undefined) {
         return getOftProvider(route.sourceAsset);
     }
-    if (isSolanaWalletProvider(runner)) {
+    if (isSolanaWalletProvider(runner) || isTronWalletProvider(runner)) {
         throw new Error(
             `Expected an EVM runner for OFT route ${formatRoute(route)}`,
         );
@@ -223,6 +237,22 @@ const getSolanaOftWalletProvider = (
 
     throw new Error(
         `Expected a Solana wallet provider for OFT route ${formatRoute(route)}`,
+    );
+};
+
+const getTronOftWalletProvider = (
+    route: OftRoute,
+    runner: OftTransportRunner,
+): TronConnector | undefined => {
+    if (runner === undefined) {
+        return undefined;
+    }
+    if (isTronWalletProvider(runner)) {
+        return runner;
+    }
+
+    throw new Error(
+        `Expected a Tron wallet provider for OFT route ${formatRoute(route)}`,
     );
 };
 
@@ -252,9 +282,11 @@ export const createOftContract = async (
         }
 
         case NetworkTransport.Tron:
-            throw new Error(
-                `OFT sending is not implemented for ${NetworkTransport.Tron} yet`,
-            );
+            return createTronOftContract({
+                sourceAsset: route.sourceAsset,
+                contractAddress: oftContract.address,
+                walletProvider: getTronOftWalletProvider(route, runner),
+            });
 
         default: {
             const exhaustiveCheck: never = sourceTransport;
@@ -645,6 +677,11 @@ export const getSolanaOftTokenBalance = async (
     );
 };
 
+export const getTronOftTokenBalance = async (
+    route: OftRoute,
+    ownerAddress: string,
+): Promise<bigint> => await getTronLegacyMeshTokenBalance(route, ownerAddress);
+
 export const getOftTransactionSender = async (
     sourceAsset: string,
     txHash: string,
@@ -660,7 +697,7 @@ export const getOftTransactionSender = async (
             return await getSolanaTransactionSender(sourceAsset, txHash);
 
         case NetworkTransport.Tron:
-            return undefined;
+            return await getTronTransactionSender(sourceAsset, txHash);
 
         default: {
             const exhaustiveCheck: never = transport;
