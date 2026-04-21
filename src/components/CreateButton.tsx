@@ -5,17 +5,14 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on } from "solid-js";
 
-import { config } from "../config";
 import {
     BTC,
     LBTC,
     LN,
     RBTC,
-    USDT0,
+    getBridgeKind,
     getCanonicalAsset,
     isEvmAsset,
-    isUsdt0Asset,
-    isUsdt0Variant,
 } from "../consts/Assets";
 import { InvoiceValidation, SwapPosition, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
@@ -32,6 +29,7 @@ import {
     fetchBolt12Invoice,
     getPairs,
 } from "../utils/boltzClient";
+import { bridgeRegistry } from "../utils/bridge";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -55,9 +53,9 @@ import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
+    type BridgeDetail,
     type GasAbstraction,
     GasAbstractionType,
-    type OftDetail,
     type SomeSwap,
     createChain,
     createReverse,
@@ -70,20 +68,24 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
 
-const buildOftDetail = (
-    sourceAsset: string,
-    destinationAsset: string,
+const buildBridgeDetail = (
+    asset: string,
     position: SwapPosition,
-): OftDetail | undefined => {
-    if (config.assets?.[destinationAsset] === undefined) {
+): BridgeDetail | undefined => {
+    const route =
+        position === SwapPosition.Pre
+            ? bridgeRegistry.getPreRoute(asset)
+            : bridgeRegistry.getPostRoute(asset);
+    if (route === undefined) {
         return undefined;
     }
 
-    return {
-        sourceAsset,
-        destinationAsset,
-        position,
-    };
+    const driver = bridgeRegistry.getDriverForAsset(asset);
+    if (driver === undefined) {
+        return undefined;
+    }
+
+    return driver.getRoutePosition(route, position);
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
@@ -137,12 +139,12 @@ export const getClaimAddress = async (
     }
 
     if (
-        (isEvmAsset(assetReceive()) || isUsdt0Asset(assetReceive())) &&
+        (isEvmAsset(assetReceive()) ||
+            getBridgeKind(assetReceive()) !== undefined) &&
         assetReceive() !== RBTC
     ) {
-        const gasSigner = getGasAbstractionSigner(
-            isUsdt0Asset(assetReceive()) ? USDT0 : assetReceive(),
-        );
+        const canonicalReceiveAsset = getCanonicalAsset(assetReceive());
+        const gasSigner = getGasAbstractionSigner(canonicalReceiveAsset);
         log.debug("Using gas abstraction signer", gasSigner.address);
         return {
             gasPrice: 0n,
@@ -151,7 +153,7 @@ export const getClaimAddress = async (
                 claim: GasAbstractionType.Signer,
             },
             claimAddress:
-                !isUsdt0Asset(assetReceive()) && !getGasToken
+                getBridgeKind(assetReceive()) === undefined && !getGasToken
                     ? onchainAddress()
                     : gasSigner.address,
         };
@@ -711,6 +713,10 @@ const CreateButton = () => {
                 receiveAmount: data.receiveAmount,
             });
 
+            const bridge =
+                buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
+                buildBridgeDetail(assetReceive(), SwapPosition.Post);
+
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
@@ -725,19 +731,7 @@ const CreateButton = () => {
                                       : Number(sendAmount()),
                           }
                         : undefined,
-                oft: isUsdt0Variant(assetSend())
-                    ? buildOftDetail(
-                          assetSend(),
-                          getCanonicalAsset(assetSend()),
-                          SwapPosition.Pre,
-                      )
-                    : isUsdt0Variant(assetReceive())
-                      ? buildOftDetail(
-                            getCanonicalAsset(assetReceive()),
-                            assetReceive(),
-                            SwapPosition.Post,
-                        )
-                      : undefined,
+                bridge,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

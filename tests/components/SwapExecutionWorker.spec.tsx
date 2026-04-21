@@ -61,7 +61,13 @@ vi.mock("../../src/config", () => ({
 }));
 
 vi.mock("../../src/consts/Assets", () => ({
-    getNetworkTransport: () => mockNetworkTransport,
+    getAssetBridge: (asset: string) =>
+        asset === "SRC" || asset === "DST"
+            ? {
+                  kind: "oft",
+                  canonicalAsset: "FINAL",
+              }
+            : undefined,
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -187,6 +193,7 @@ vi.mock("../../src/utils/oft/oft", () => ({
             blockNumber: 1,
         }),
     })),
+    getOftTransport: vi.fn(() => mockNetworkTransport),
     getOftReceivedEventByGuid: vi.fn().mockResolvedValue({
         amountReceivedLD: 150n,
         blockNumber: 5,
@@ -268,7 +275,8 @@ describe("SwapExecutionWorker", () => {
                 ],
                 quoteAmount: "100",
             },
-            oft: {
+            bridge: {
+                kind: "oft",
                 sourceAsset: "SRC",
                 destinationAsset: "DST",
                 position: "pre",
@@ -456,7 +464,7 @@ describe("SwapExecutionWorker", () => {
         await waitFor(() => {
             expect(mockSetSwapStorage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    oft: expect.objectContaining({
+                    bridge: expect.objectContaining({
                         txHash: undefined,
                     }),
                 }),
@@ -465,7 +473,7 @@ describe("SwapExecutionWorker", () => {
 
         expect(mockSetSwapStorage).toHaveBeenCalledWith(
             expect.objectContaining({
-                oft: expect.objectContaining({
+                bridge: expect.objectContaining({
                     txHash: undefined,
                 }),
             }),

@@ -34,13 +34,13 @@ class FallbackProvider extends EthersFallbackProvider {
     };
 }
 
-export const getRpcUrls = (asset: string): string[] | undefined => {
+export const getRpcUrls = (asset: string): readonly string[] | undefined => {
     const rpcUrls = config.assets?.[asset]?.network?.rpcUrls;
 
     return rpcUrls && rpcUrls.length > 0 ? rpcUrls : undefined;
 };
 
-export const requireRpcUrls = (asset: string): string[] => {
+export const requireRpcUrls = (asset: string): readonly string[] => {
     const rpcUrls = getRpcUrls(asset);
     if (rpcUrls === undefined || rpcUrls.length === 0) {
         throw new Error(`missing RPC configuration for asset: ${asset}`);
@@ -49,7 +49,9 @@ export const requireRpcUrls = (asset: string): string[] => {
     return rpcUrls;
 };
 
-export const createProvider = (rpcUrls: string[] | undefined): Provider => {
+export const createProvider = (
+    rpcUrls: readonly string[] | undefined,
+): Provider => {
     if (rpcUrls === undefined || rpcUrls.length === 0) {
         throw new Error("missing RPC configuration");
     }

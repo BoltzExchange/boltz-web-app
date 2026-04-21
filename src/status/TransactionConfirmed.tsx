@@ -1,13 +1,6 @@
 import BigNumber from "bignumber.js";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { Router } from "boltz-core/typechain/Router";
-import {
-    AbiCoder,
-    Signature,
-    type Wallet,
-    ZeroAddress,
-    keccak256,
-} from "ethers";
+import { Signature, type Wallet, ZeroAddress } from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import {
@@ -26,7 +19,6 @@ import { NetworkTransport } from "../configs/base";
 import {
     AssetKind,
     getKindForAsset,
-    getNetworkTransport,
     getTokenAddress,
     isEvmAsset,
 } from "../consts/Assets";
@@ -46,6 +38,7 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
+import { bridgeRegistry } from "../utils/bridge";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
@@ -58,15 +51,6 @@ import {
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
-import {
-    type OftQuoteOptions,
-    buildOftApprovalCall,
-    getQuotedOftContract,
-    quoteOftReceiveAmount,
-    quoteOftSend,
-} from "../utils/oft/oft";
-import { getOftContract } from "../utils/oft/registry";
-import type { OftReceiveQuote } from "../utils/oft/types";
 import { retryWithBackoff } from "../utils/promise";
 import {
     type ClaimQuote,
@@ -82,14 +66,14 @@ import {
     satsToAssetAmount,
 } from "../utils/rootstock";
 import {
+    type BridgeDetail,
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
-    type OftDetail,
     type ReverseSwap,
     getClaimGasAbstraction,
     getFinalAssetReceive,
-    getPostOftDetail,
+    getPostBridgeDetail,
 } from "../utils/swapCreator";
 
 type RouterExecutionQuote = {
@@ -147,20 +131,14 @@ const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
     return BigInt(Math.round(quoteAmount));
 };
 
-const getPostOftQuoteOptions = async (
-    destinationAsset: string,
+const getPostBridgeQuoteOptions = async (
+    bridge: BridgeDetail,
     destination: string,
     getGasToken: boolean,
-): Promise<OftQuoteOptions> => ({
-    recipient: destination,
-    nativeDrop:
-        getGasToken && gasTopUpSupported(destinationAsset)
-            ? {
-                  amount: await getGasTopUpNativeAmount(destinationAsset),
-                  receiver: destination,
-              }
-            : undefined,
-});
+) =>
+    await bridgeRegistry
+        .requireDriverForRoute(bridge)
+        .buildQuoteOptions(bridge.destinationAsset, destination, getGasToken);
 
 const getAcceptedQuoteAmount = async (
     amount: number,
@@ -169,9 +147,9 @@ const getAcceptedQuoteAmount = async (
     quote: ClaimQuote,
     destination: string,
     getGasToken: boolean,
-    oft?: OftDetail,
+    bridge?: BridgeDetail,
 ): Promise<bigint> => {
-    if (oft === undefined) {
+    if (bridge === undefined) {
         return quote.trade.amountOut;
     }
 
@@ -181,38 +159,39 @@ const getAcceptedQuoteAmount = async (
     }
 
     const claimAmount = satsToAssetAmount(amount, assetReceive);
-    const oftQuoteOptions = await getPostOftQuoteOptions(
-        oft.destinationAsset,
+    const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridge);
+    const bridgeQuoteOptions = await getPostBridgeQuoteOptions(
+        bridge,
         destination,
         getGasToken,
     );
-    const initialOftQuote = await quoteOftReceiveAmount(
-        oft,
+    const initialBridgeQuote = await bridgeDriver.quoteReceiveAmount(
+        bridge,
         quote.trade.amountOut,
-        oftQuoteOptions,
+        bridgeQuoteOptions,
     );
     const [messagingFeeQuote] = await quoteDexAmountOut(
         dexDetails.chain,
         dexDetails.tokenIn,
         ZeroAddress,
-        initialOftQuote.msgFee[0],
+        initialBridgeQuote.msgFee[0],
     );
     const adjustedClaimAmount = claimAmount - BigInt(messagingFeeQuote.quote);
     if (adjustedClaimAmount <= 0n) {
-        throw new Error("amount too small to cover OFT messaging fee");
+        throw new Error("amount too small to cover bridge messaging fee");
     }
 
     const adjustedTradeQuote = await fetchDexQuote(
         dexDetails,
         adjustedClaimAmount,
     );
-    const adjustedOftQuote: OftReceiveQuote = await quoteOftReceiveAmount(
-        oft,
+    const adjustedBridgeQuote = await bridgeDriver.quoteReceiveAmount(
+        bridge,
         adjustedTradeQuote.trade.amountOut,
-        oftQuoteOptions,
+        bridgeQuoteOptions,
     );
 
-    return adjustedOftQuote.amountOut;
+    return adjustedBridgeQuote.amountOut;
 };
 
 const getAssetChain = (asset: string): string => {
@@ -343,30 +322,6 @@ const signRouterClaim = async (
         ),
     );
 
-const hashOftSendData = async (
-    router: Router,
-    sendData: {
-        dstEid: number;
-        to: string;
-        extraOptions: string;
-        composeMsg: string;
-        oftCmd: string;
-    },
-): Promise<string> =>
-    keccak256(
-        AbiCoder.defaultAbiCoder().encode(
-            ["bytes32", "uint32", "bytes32", "bytes32", "bytes32", "bytes32"],
-            [
-                await router.TYPEHASH_SEND_DATA(),
-                sendData.dstEid,
-                sendData.to,
-                keccak256(sendData.extraOptions),
-                keccak256(sendData.composeMsg),
-                keccak256(sendData.oftCmd),
-            ],
-        ),
-    );
-
 const claimErc20ViaRouter = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
@@ -444,7 +399,7 @@ const claimErc20ViaRouter = async (
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
 
-const claimErc20ViaRouterOft = async (
+const claimErc20ViaRouterBridge = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
@@ -457,7 +412,7 @@ const claimErc20ViaRouterOft = async (
     slippage: number,
     hop: EncodedHop,
     quote: ClaimQuote,
-    oft: OftDetail,
+    bridge: BridgeDetail,
     getGasToken: boolean,
 ) => {
     if (getKindForAsset(asset) === AssetKind.EVMNative) {
@@ -473,14 +428,14 @@ const claimErc20ViaRouterOft = async (
         throw new Error("claim hop is missing DEX details");
     }
 
-    const oftContract = await getOftContract(oft);
-    const sourceTransport = getNetworkTransport(oft.sourceAsset);
+    const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridge);
+    const sourceTransport = bridgeDriver.getTransport(bridge.sourceAsset);
     if (sourceTransport !== NetworkTransport.Evm) {
         throw new Error(
-            `OFT approvals require an EVM source contract, got ${String(sourceTransport)}`,
+            `bridge router claim requires an EVM source contract, got ${String(sourceTransport)}`,
         );
     }
-
+    const bridgeContract = await bridgeDriver.getContract(bridge);
     const router = createRouterContract(asset, signer);
     const assetAmount = satsToAssetAmount(amount, asset);
     const [routerAddress, { chainId }] = await Promise.all([
@@ -488,18 +443,18 @@ const claimErc20ViaRouterOft = async (
         signer.provider.getNetwork(),
     ]);
 
-    const oftQuoteInstance = await getQuotedOftContract(oft);
-    const oftQuoteOptions = await getPostOftQuoteOptions(
-        oft.destinationAsset,
+    const bridgeQuoteInstance = await bridgeDriver.getQuotedContract(bridge);
+    const bridgeQuoteOptions = await getPostBridgeQuoteOptions(
+        bridge,
         destination,
         getGasToken,
     );
-    const { msgFee } = await quoteOftSend(
-        oftQuoteInstance,
-        oft,
+    const { msgFee } = await bridgeDriver.quoteSend(
+        bridgeQuoteInstance,
+        bridge,
         destination,
         quote.trade.amountOut,
-        oftQuoteOptions,
+        bridgeQuoteOptions,
     );
     const msgFeeEthAmountOut = calculateAmountWithSlippage(msgFee[0], slippage);
     const [msgFeeEthQuote] = await quoteDexAmountOut(
@@ -510,7 +465,7 @@ const claimErc20ViaRouterOft = async (
     );
     const tradeAmountIn = assetAmount - BigInt(msgFeeEthQuote.quote);
     if (tradeAmountIn <= 0n) {
-        throw new Error("amount too small to cover OFT messaging fee");
+        throw new Error("amount too small to cover bridge messaging fee");
     }
 
     const [tradeQuote] = await quoteDexAmountIn(
@@ -522,51 +477,14 @@ const claimErc20ViaRouterOft = async (
 
     const amountOut = BigInt(tradeQuote.quote);
     const amountOutMin = calculateAmountOutMin(amountOut, slippage);
-    const { sendParam } = await quoteOftSend(
-        oftQuoteInstance,
-        oft,
+    const { sendParam } = await bridgeDriver.quoteSend(
+        bridgeQuoteInstance,
+        bridge,
         destination,
         amountOutMin,
-        oftQuoteOptions,
+        bridgeQuoteOptions,
     );
     const amountLdWithSlippage = calculateAmountOutMin(sendParam[3], slippage);
-    const sendData = {
-        dstEid: sendParam[0],
-        to: sendParam[1],
-        extraOptions: sendParam[4],
-        composeMsg: sendParam[5],
-        oftCmd: sendParam[6],
-    };
-    const authSignature = Signature.from(
-        await signer.signTypedData(
-            {
-                name: "Router",
-                version: "2",
-                verifyingContract: routerAddress,
-                chainId,
-            },
-            {
-                ClaimSend: [
-                    { name: "preimage", type: "bytes32" },
-                    { name: "token", type: "address" },
-                    { name: "oft", type: "address" },
-                    { name: "sendData", type: "bytes32" },
-                    { name: "minAmountLD", type: "uint256" },
-                    { name: "lzTokenFee", type: "uint256" },
-                    { name: "refundAddress", type: "address" },
-                ],
-            },
-            {
-                preimage: prefix0x(preimage),
-                token: dexDetails.tokenOut,
-                oft: oftContract.address,
-                sendData: await hashOftSendData(router, sendData),
-                minAmountLD: amountLdWithSlippage,
-                lzTokenFee: msgFee[1],
-                refundAddress,
-            },
-        ),
-    );
 
     const calldata = await Promise.all([
         encodeDexQuote(
@@ -605,8 +523,8 @@ const claimErc20ViaRouterOft = async (
         })),
     );
 
-    const approvalCall = await buildOftApprovalCall(
-        oft,
+    const approvalCall = await bridgeDriver.buildApprovalCall(
+        bridge,
         routerAddress,
         amountOut,
         signer,
@@ -619,30 +537,24 @@ const claimErc20ViaRouterOft = async (
         });
     }
 
-    const tx = await router.claimERC20ExecuteOft.populateTransaction(
-        {
-            preimage: prefix0x(preimage),
-            amount: assetAmount,
-            tokenAddress,
-            refundAddress,
-            timelock: timeoutBlockHeight,
-            v: claimSignature.v,
-            r: claimSignature.r,
-            s: claimSignature.s,
-        },
+    const tx = await bridgeDriver.populateRouterClaimBridgeTransaction({
+        router,
+        signer,
+        chainId,
+        preimage,
+        claimAmount: assetAmount,
+        claimTokenAddress: tokenAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        claimSignature,
+        route: bridge,
+        bridgeContract,
+        outputTokenAddress: dexDetails.tokenOut,
         routerCalls,
-        dexDetails.tokenOut,
-        oftContract.address,
-        sendData,
-        {
-            minAmountLd: amountLdWithSlippage,
-            lzTokenFee: msgFee[1],
-            refundAddress,
-            v: authSignature.v,
-            r: authSignature.r,
-            s: authSignature.s,
-        },
-    );
+        sendParam,
+        minAmountLd: amountLdWithSlippage,
+        lzTokenFee: msgFee[1],
+    });
 
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
@@ -730,10 +642,10 @@ const claimHops = async (
     slippage: number,
     quote: ClaimQuote,
     getGasToken: boolean,
-    oft?: OftDetail,
+    bridge?: BridgeDetail,
 ) => {
-    if (oft !== undefined) {
-        return await claimErc20ViaRouterOft(
+    if (bridge !== undefined) {
+        return await claimErc20ViaRouterBridge(
             gasAbstraction,
             asset,
             preimage,
@@ -746,7 +658,7 @@ const claimHops = async (
             slippage,
             getSingleClaimHop(hops),
             quote,
-            oft,
+            bridge,
             getGasToken,
         );
     }
@@ -824,7 +736,7 @@ const AutoClaimHops = (props: {
     timeoutBlockHeight: number;
     getGasToken: boolean;
     dex: DexDetail;
-    oft?: OftDetail;
+    bridge?: BridgeDetail;
     autoClaimEnabled: boolean;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
@@ -904,7 +816,7 @@ const AutoClaimHops = (props: {
                         slippage(),
                         quote.quote,
                         props.getGasToken,
-                        props.oft,
+                        props.bridge,
                     ),
                 maxRetries,
                 baseDelayMs,
@@ -944,7 +856,7 @@ const AutoClaimHops = (props: {
                         props.assetReceive,
                     );
                     const useDexGasToken =
-                        props.oft === undefined &&
+                        props.bridge === undefined &&
                         props.getGasToken &&
                         gasTopUpSupported(props.assetReceive);
                     const quote = await fetchDexQuote(
@@ -962,7 +874,7 @@ const AutoClaimHops = (props: {
                         quote,
                         props.signerAddress,
                         props.getGasToken,
-                        props.oft,
+                        props.bridge,
                     );
                     const freshQuoteData = {
                         quote,
@@ -1081,7 +993,7 @@ const ClaimEvm = (props: {
     finalReceive: string;
     getGasToken: boolean;
     dex?: DexDetail;
-    oft?: OftDetail;
+    bridge?: BridgeDetail;
     autoClaimEnabled: boolean;
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
@@ -1196,7 +1108,7 @@ const ClaimEvm = (props: {
                     assetReceive={props.assetReceive}
                     getGasToken={props.getGasToken}
                     dex={props.dex}
-                    oft={getPostOftDetail(props.oft)}
+                    bridge={getPostBridgeDetail(props.bridge)}
                     autoClaimEnabled={props.autoClaimEnabled}
                 />
             }>
@@ -1269,7 +1181,7 @@ const TransactionConfirmed = () => {
                         dex={dexToClaim(chain.dex)}
                         finalReceive={getFinalAssetReceive(chain, true)}
                         getGasToken={chain.getGasToken}
-                        oft={chain.oft}
+                        bridge={chain.bridge}
                         autoClaimEnabled={
                             swapStatus() ===
                             swapStatusPending.TransactionServerConfirmed
@@ -1291,7 +1203,7 @@ const TransactionConfirmed = () => {
                     assetSend={reverse.assetSend}
                     assetReceive={reverse.assetReceive}
                     dex={dexToClaim(reverse.dex)}
-                    oft={reverse.oft}
+                    bridge={reverse.bridge}
                     finalReceive={getFinalAssetReceive(reverse, true)}
                     getGasToken={reverse.getGasToken}
                     autoClaimEnabled={true}

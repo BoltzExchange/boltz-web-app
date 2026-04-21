@@ -2,20 +2,30 @@
 import { expect, test } from "vitest";
 
 import { JsonRpcProvider } from "../../node_modules/ethers/lib.commonjs/providers/provider-jsonrpc.js";
+import type { Asset } from "../../src/configs/base";
 import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
-import { isUsdt0Variant } from "../../src/consts/Assets";
 
 const hasLocalhostHost = (rpcUrl: string): boolean => {
     return new URL(rpcUrl).hostname === "localhost";
 };
 
-const usdt0VariantRpcEndpoints = Object.entries(config.assets).flatMap(
+// Operates on the iterated mainnet config rather than the runtime (regtest)
+// config that `consts/Assets::isBridgeVariant` reads from.
+const isBridgeVariantInConfig = (
+    asset: string,
+    assetConfig: Asset,
+): boolean => {
+    const bridge = assetConfig.bridge;
+    return bridge !== undefined && bridge.canonicalAsset !== asset;
+};
+
+const bridgeVariantRpcEndpoints = Object.entries(config.assets).flatMap(
     ([asset, assetConfig]) => {
         const network = assetConfig.network;
 
         if (
-            !isUsdt0Variant(asset) ||
+            !isBridgeVariantInConfig(asset, assetConfig) ||
             network?.transport !== NetworkTransport.Evm ||
             network.chainId === undefined ||
             network.rpcUrls === undefined
@@ -34,17 +44,17 @@ const usdt0VariantRpcEndpoints = Object.entries(config.assets).flatMap(
     },
 );
 
-type Usdt0VariantRpcEndpoint = (typeof usdt0VariantRpcEndpoints)[number];
+type BridgeVariantRpcEndpoint = (typeof bridgeVariantRpcEndpoints)[number];
 
-type Usdt0VariantRpcTestCase = {
+type BridgeVariantRpcTestCase = {
     asset: string;
     chainId: number;
     chainName: string;
     rpcUrls: string[];
 };
 
-const usdt0VariantRpcTestCases = Array.from(
-    usdt0VariantRpcEndpoints
+const bridgeVariantRpcTestCases = Array.from(
+    bridgeVariantRpcEndpoints
         .reduce((chains, endpoint) => {
             const key = `${endpoint.asset}:${endpoint.chainId}`;
             const chainEndpoints = chains.get(key) ?? [];
@@ -52,9 +62,9 @@ const usdt0VariantRpcTestCases = Array.from(
             chains.set(key, chainEndpoints);
 
             return chains;
-        }, new Map<string, Usdt0VariantRpcEndpoint[]>())
+        }, new Map<string, BridgeVariantRpcEndpoint[]>())
         .values(),
-    (endpoints): Usdt0VariantRpcTestCase => {
+    (endpoints): BridgeVariantRpcTestCase => {
         const [chain] = endpoints;
 
         return {
@@ -66,7 +76,7 @@ const usdt0VariantRpcTestCases = Array.from(
     },
 );
 
-test.each(usdt0VariantRpcTestCases)(
+test.each(bridgeVariantRpcTestCases)(
     "$asset ($chainName) should have at least one working mainnet RPC endpoint",
     async ({ asset, chainId, chainName, rpcUrls }) => {
         const providerFailures: string[] = [];
@@ -136,7 +146,7 @@ const nonEvmRpcTestCases: NonEvmRpcTestCase[] = Object.entries(
     const transport = network?.transport;
 
     if (
-        !isUsdt0Variant(asset) ||
+        !isBridgeVariantInConfig(asset, assetConfig) ||
         network?.rpcUrls === undefined ||
         (transport !== NetworkTransport.Solana &&
             transport !== NetworkTransport.Tron)

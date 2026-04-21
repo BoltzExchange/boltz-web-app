@@ -25,8 +25,8 @@ import {
     LBTC,
     getAssetDisplaySymbol,
     getAssetNetwork,
+    isBridgeAsset,
     isEvmAsset,
-    isUsdt0Asset,
 } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
@@ -553,7 +553,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         if (typeof values?.asset === "string") {
             const raw = values.asset;
             let display = getAssetDisplaySymbol(raw);
-            if (isUsdt0Asset(raw)) {
+            if (isBridgeAsset(raw)) {
                 const network = getAssetNetwork(raw);
                 if (network) {
                     display = `${display} (${network})`;

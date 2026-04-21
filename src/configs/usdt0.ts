@@ -1,0 +1,349 @@
+import type { Asset, Usdt0Variant } from "src/configs/base";
+import {
+    BridgeKind,
+    Explorer,
+    NetworkTransport,
+    Usdt0Kind,
+} from "src/configs/base";
+import {
+    berachainRpcUrls,
+    confluxRpcUrls,
+    cornRpcUrls,
+    ethereumRpcUrls,
+    flareRpcUrls,
+    hederaRpcUrls,
+    hyperEvmRpcUrls,
+    inkRpcUrls,
+    mantleRpcUrls,
+    megaEthRpcUrls,
+    monadRpcUrls,
+    morphRpcUrls,
+    optimismRpcUrls,
+    plasmaRpcUrls,
+    polygonRpcUrls,
+    rskRpcUrls,
+    seiRpcUrls,
+    solanaRpcUrls,
+    stableRpcUrls,
+    tempoRpcUrls,
+    tronRpcUrls,
+    unichainRpcUrls,
+    xlayerRpcUrls,
+} from "src/configs/rpcs";
+import { AssetKind } from "src/consts/AssetKind";
+
+const getExplorerId = (transport: NetworkTransport): Explorer => {
+    switch (transport) {
+        case NetworkTransport.Evm:
+            return Explorer.Blockscout;
+
+        case NetworkTransport.Solana:
+            return Explorer.Solscan;
+
+        case NetworkTransport.Tron:
+            return Explorer.Tronscan;
+    }
+};
+
+const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
+    const transport = variant.transport ?? NetworkTransport.Evm;
+    const mesh = variant.mesh ?? Usdt0Kind.Native;
+
+    const asset: Asset = {
+        type: AssetKind.ERC20,
+        canSend: variant.canSend,
+        disabled: variant.disabled,
+        blockExplorerUrl: {
+            id: getExplorerId(transport),
+            normal: variant.blockExplorerUrl,
+        },
+        network: {
+            chainName: variant.chainName,
+            symbol: variant.symbol,
+            gasToken: variant.gasToken ?? variant.symbol,
+            transport,
+            rpcUrls: variant.rpcUrls,
+        },
+        token: {
+            address: variant.tokenAddress,
+            decimals: 6,
+        },
+        bridge: {
+            kind: BridgeKind.Oft,
+            canonicalAsset: "USDT0",
+            mesh,
+            quotePayer: variant.oftQuotePayer,
+        },
+    };
+    if (transport === NetworkTransport.Evm) {
+        asset.network.chainId = variant.chainId;
+    }
+    asset.network.nativeCurrency = {
+        name: variant.gasToken ?? variant.symbol,
+        symbol: variant.gasToken ?? variant.symbol,
+        decimals: variant.nativeDecimals ?? 18,
+        minGas: variant.minGas,
+    };
+    return asset;
+};
+
+export const usdt0Variants = [
+    {
+        asset: "USDT0-ETH",
+        canSend: true,
+        chainName: "Ethereum",
+        symbol: "ETH",
+        chainId: 1,
+        tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        blockExplorerUrl: "https://etherscan.io",
+        rpcUrls: ethereumRpcUrls,
+    },
+    {
+        asset: "USDT0-BERA",
+        canSend: true,
+        chainName: "Berachain",
+        symbol: "BERA",
+        chainId: 80094,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://berascan.com",
+        rpcUrls: berachainRpcUrls,
+    },
+    {
+        asset: "USDT0-CFX",
+        canSend: false,
+        chainName: "Conflux eSpace",
+        symbol: "CFX",
+        chainId: 1030,
+        tokenAddress: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
+        blockExplorerUrl: "https://evm.confluxscan.org",
+        rpcUrls: confluxRpcUrls,
+    },
+    {
+        asset: "USDT0-CORN",
+        canSend: false,
+        chainName: "Corn",
+        symbol: "CORN",
+        gasToken: "BTCN",
+        chainId: 21000000,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://cornscan.io",
+        rpcUrls: cornRpcUrls,
+    },
+    {
+        asset: "USDT0-FLR",
+        canSend: false,
+        chainName: "Flare",
+        symbol: "FLR",
+        gasToken: "SGB",
+        chainId: 14,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://flarescan.com",
+        rpcUrls: flareRpcUrls,
+    },
+    {
+        asset: "USDT0-HYPE",
+        canSend: false,
+        chainName: "HyperEVM",
+        symbol: "HYPE",
+        chainId: 999,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://hyperevmscan.io",
+        rpcUrls: hyperEvmRpcUrls,
+    },
+    {
+        asset: "USDT0-HBAR",
+        canSend: true,
+        chainName: "Hedera",
+        symbol: "HBAR",
+        chainId: 295,
+        tokenAddress: "0x00000000000000000000000000000000009Ce723",
+        blockExplorerUrl: "https://hashscan.io/mainnet",
+        rpcUrls: hederaRpcUrls,
+    },
+    {
+        asset: "USDT0-INK",
+        canSend: true,
+        chainName: "Ink",
+        symbol: "INK",
+        gasToken: "ETH",
+        chainId: 57073,
+        tokenAddress: "0x0200C29006150606B650577BBE7B6248F58470c1",
+        blockExplorerUrl: "https://explorer.inkonchain.com",
+        rpcUrls: inkRpcUrls,
+    },
+    {
+        asset: "USDT0-MNT",
+        canSend: false,
+        chainName: "Mantle",
+        symbol: "MNT",
+        chainId: 5000,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://mantlescan.xyz",
+        rpcUrls: mantleRpcUrls,
+    },
+    {
+        asset: "USDT0-MEGAETH",
+        canSend: false,
+        chainName: "MegaETH",
+        symbol: "MEGAETH",
+        gasToken: "ETH",
+        chainId: 4326,
+        tokenAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
+        blockExplorerUrl: "https://mega.etherscan.io/",
+        rpcUrls: megaEthRpcUrls,
+    },
+    {
+        asset: "USDT0-MON",
+        canSend: false,
+        chainName: "Monad",
+        symbol: "MON",
+        chainId: 143,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://monadexplorer.com",
+        rpcUrls: monadRpcUrls,
+    },
+    {
+        asset: "USDT0-MORPH",
+        canSend: false,
+        chainName: "Morph",
+        symbol: "MORPH",
+        gasToken: "ETH",
+        chainId: 2818,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://explorer.morph.network",
+        rpcUrls: morphRpcUrls,
+    },
+    {
+        asset: "USDT0-OP",
+        canSend: false,
+        chainName: "Optimism",
+        symbol: "OP",
+        gasToken: "ETH",
+        chainId: 10,
+        tokenAddress: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
+        blockExplorerUrl: "https://optimistic.etherscan.io",
+        rpcUrls: optimismRpcUrls,
+    },
+    {
+        asset: "USDT0-PLASMA",
+        canSend: false,
+        chainName: "Plasma",
+        symbol: "PLASMA",
+        gasToken: "XPL",
+        chainId: 9745,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://plasmascan.to",
+        rpcUrls: plasmaRpcUrls,
+    },
+    {
+        asset: "USDT0-POL",
+        canSend: true,
+        chainName: "Polygon PoS",
+        symbol: "POL",
+        chainId: 137,
+        tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+        blockExplorerUrl: "https://polygonscan.com",
+        rpcUrls: polygonRpcUrls,
+    },
+    {
+        asset: "USDT0-RBTC",
+        canSend: false,
+        chainName: "Rootstock",
+        symbol: "RBTC",
+        chainId: 30,
+        tokenAddress: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
+        blockExplorerUrl: "https://rootstock.blockscout.com",
+        rpcUrls: rskRpcUrls,
+    },
+    {
+        asset: "USDT0-SEI",
+        canSend: false,
+        chainName: "Sei",
+        symbol: "SEI",
+        chainId: 1329,
+        tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
+        blockExplorerUrl: "https://seitrace.com",
+        rpcUrls: seiRpcUrls,
+    },
+    {
+        asset: "USDT0-STABLE",
+        canSend: false,
+        chainName: "Stable",
+        symbol: "STABLE",
+        gasToken: "USDT0",
+        chainId: 988,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://stablescan.xyz",
+        rpcUrls: stableRpcUrls,
+    },
+    {
+        asset: "USDT0-UNI",
+        canSend: true,
+        chainName: "Unichain",
+        symbol: "UNI",
+        gasToken: "ETH",
+        chainId: 130,
+        tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
+        blockExplorerUrl: "https://uniscan.xyz/",
+        rpcUrls: unichainRpcUrls,
+    },
+    {
+        asset: "USDT0-SOL",
+        canSend: true,
+        chainName: "Solana",
+        symbol: "SOL",
+        gasToken: "SOL",
+        transport: NetworkTransport.Solana,
+        nativeDecimals: 9,
+        minGas: 1_500_000n,
+        oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
+        tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        blockExplorerUrl: "https://solscan.io",
+        rpcUrls: solanaRpcUrls,
+        mesh: Usdt0Kind.Legacy,
+    },
+    {
+        asset: "USDT0-TRON",
+        canSend: false,
+        chainName: "Tron",
+        symbol: "TRX",
+        gasToken: "TRX",
+        transport: NetworkTransport.Tron,
+        nativeDecimals: 6,
+        tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        blockExplorerUrl: "https://tronscan.org/#",
+        rpcUrls: tronRpcUrls,
+        mesh: Usdt0Kind.Legacy,
+    },
+    {
+        asset: "USDT0-XLAYER",
+        canSend: false,
+        chainName: "XLayer",
+        symbol: "XLAYER",
+        gasToken: "OKB",
+        chainId: 196,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://www.oklink.com/x-layer",
+        rpcUrls: xlayerRpcUrls,
+    },
+    {
+        asset: "USDT0-TEMPO",
+        canSend: false,
+        chainName: "Tempo",
+        symbol: "USD",
+        nativeDecimals: 6,
+        chainId: 4217,
+        tokenAddress: "0x20C00000000000000000000014f22CA97301EB73",
+        blockExplorerUrl: "https://explore.mainnet.tempo.xyz",
+        rpcUrls: tempoRpcUrls,
+    },
+] as const satisfies readonly Usdt0Variant[];
+
+export type Usdt0VariantAsset = (typeof usdt0Variants)[number]["asset"];
+
+export const usdt0VariantAssets = Object.fromEntries(
+    usdt0Variants.map((variant) => [
+        variant.asset,
+        createUsdt0VariantAsset(variant),
+    ]),
+) as Record<string, Asset>;

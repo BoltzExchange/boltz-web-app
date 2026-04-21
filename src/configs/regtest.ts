@@ -2,8 +2,6 @@ import type { Config } from "src/configs/base";
 import {
     Explorer,
     NetworkTransport,
-    arbitrumExplorer,
-    arbitrumNetwork,
     baseConfig,
     chooseUrl,
 } from "src/configs/base";
@@ -69,29 +67,6 @@ const config = {
                 smartWalletFactory:
                     "0x59b670e9fA9D0A427751Af201D676719a970857b",
                 deployVerifier: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-            },
-        },
-        TBTC: {
-            type: AssetKind.ERC20,
-            blockExplorerUrl: arbitrumExplorer,
-            network: arbitrumNetwork,
-            token: {
-                address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
-                decimals: 18,
-            },
-            contracts: {
-                deployHeight: 435848678,
-                router: "0x6EA68e965fcd19b6fbC6553BABbF87a5018F9B28",
-            },
-        },
-        USDT0: {
-            type: AssetKind.ERC20,
-            blockExplorerUrl: arbitrumExplorer,
-            network: arbitrumNetwork,
-            token: {
-                address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-                decimals: 6,
-                routeVia: "TBTC",
             },
         },
     },

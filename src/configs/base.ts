@@ -1,12 +1,15 @@
 import type log from "loglevel";
 
 import { type AssetKind } from "../consts/AssetKind";
-import { Network } from "../consts/Network";
 
 export const enum NetworkTransport {
     Evm = "evm",
     Solana = "solana",
     Tron = "tron",
+}
+
+export const enum BridgeKind {
+    Oft = "oft",
 }
 
 export const enum Usdt0Kind {
@@ -29,8 +32,17 @@ export type Usdt0Variant = {
     oftQuotePayer?: string;
     tokenAddress: string;
     blockExplorerUrl: string;
-    rpcUrls: string[];
+    rpcUrls: readonly string[];
     mesh?: Usdt0Kind;
+};
+
+export type AssetBridge = {
+    kind: BridgeKind;
+    canonicalAsset: string;
+    mesh?: Usdt0Kind;
+    // Address used to simulate bridge quote transactions when no wallet
+    // is connected. Only needed on Solana
+    quotePayer?: string;
 };
 
 export type Asset = {
@@ -54,8 +66,7 @@ export type Asset = {
         gasToken: string;
         transport: NetworkTransport;
         chainId?: number;
-        oftQuotePayer?: string;
-        rpcUrls: string[];
+        rpcUrls: readonly string[];
         nativeCurrency?: {
             name: string;
             symbol: string;
@@ -63,8 +74,8 @@ export type Asset = {
             // Minimum native token balance, in base units, to target for gas top-ups.
             minGas?: bigint;
         };
-        mesh?: Usdt0Kind;
     };
+    bridge?: AssetBridge;
     token?: {
         address: string;
         decimals: number;
@@ -100,24 +111,7 @@ export type Config = {
     torUrl?: string;
 } & typeof defaults;
 
-export const arbitrumExplorer = {
-    id: Explorer.Blockscout,
-    normal: "https://arbiscan.io",
-};
-
-export const arbitrumNetwork = {
-    symbol: "ARB",
-    gasToken: "ETH",
-    chainName: Network.Arbitrum,
-    transport: NetworkTransport.Evm,
-    chainId: 42161,
-    rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-    nativeCurrency: {
-        name: "Ethereum",
-        symbol: "ETH",
-        decimals: 18,
-    },
-};
+export const arbitrumChainId = 42161;
 
 const defaults = {
     // Disables API endpoints that create cooperative signatures for claim

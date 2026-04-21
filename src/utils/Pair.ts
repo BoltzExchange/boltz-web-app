@@ -9,12 +9,9 @@ import {
     BTC,
     LN,
     TBTC,
-    USDT0,
     getCanonicalAsset,
-    getUsdt0Mesh,
+    isBridgeAsset,
     isEvmAsset,
-    isUsdt0Asset,
-    isUsdt0Variant,
 } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import {
@@ -24,21 +21,21 @@ import {
     type SubmarinePairTypeTaproot,
     quoteDexAmountOut,
 } from "./boltzClient";
+import type { BridgeDriver } from "./bridge";
+import { bridgeRegistry } from "./bridge/registry";
+import type {
+    BridgeErrorLike,
+    BridgeNativeDropFailure,
+    BridgeQuoteOptions,
+    BridgeReceiveQuote,
+    BridgeRoute,
+} from "./bridge/types";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
     calculateSendAmount,
 } from "./calculate";
 import { coalesceLn } from "./helper";
-import {
-    type OftQuoteOptions,
-    type OftReceiveQuote,
-    decodeExecutorNativeAmountExceedsCapError,
-    isExecutorNativeAmountExceedsCapError,
-    quoteOftAmountInForAmountOut,
-    quoteOftReceiveAmount,
-} from "./oft/oft";
-import type { OftRoute } from "./oft/types";
 import {
     fetchDexQuote,
     fetchGasTokenQuote,
@@ -53,7 +50,8 @@ import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
  * Non-routed assets (like TBTC) use sats internally and need conversion.
  */
 const isRoutedAsset = (asset: string) =>
-    config.assets[asset]?.token?.routeVia !== undefined || isUsdt0Asset(asset);
+    config.assets[asset]?.token?.routeVia !== undefined ||
+    config.assets[asset]?.bridge !== undefined;
 
 /** Convert an internal amount to EVM base units for the DEX API. */
 const toDexAmount = (amount: number, asset: string): bigint =>
@@ -72,6 +70,11 @@ export const enum RequiredInput {
     Invoice,
     Web3,
     Unknown,
+}
+
+export const enum BridgeMessagingFeeDisplayMode {
+    Details = "details",
+    Inline = "inline",
 }
 
 type Hop = {
@@ -113,15 +116,17 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
 
 export default class Pair {
     private readonly route: Hop[] = [];
-    private readonly preOft: OftRoute | undefined;
-    private readonly postOft: OftRoute | undefined;
+    private readonly preBridgeDriver: BridgeDriver | undefined;
+    private readonly preBridge: BridgeRoute | undefined;
+    private readonly postBridgeDriver: BridgeDriver | undefined;
+    private readonly postBridge: BridgeRoute | undefined;
     private latestBoltzSwapSendAmount:
         | {
               sendAmount: string;
               value: BigNumber;
           }
         | undefined;
-    private latestOftFee:
+    private latestBridgeFee:
         | {
               sendAmount: string;
               messaging?:
@@ -157,34 +162,23 @@ export default class Pair {
             isTor() &&
             (from === TBTC ||
                 to === TBTC ||
-                isUsdt0Asset(from) ||
-                isUsdt0Asset(to))
+                isBridgeAsset(from) ||
+                isBridgeAsset(to))
         ) {
-            log.info("TBTC and USDT0 pairs are disabled on Tor");
+            log.info("TBTC and bridged pairs are disabled on Tor");
             return;
         }
 
         const routeSource = getCanonicalAsset(from);
         const routeTarget = getCanonicalAsset(to);
-        this.preOft =
-            isUsdt0Variant(from) &&
-            routeSource === USDT0 &&
-            config.assets?.[routeSource] !== undefined
-                ? {
-                      sourceAsset: from,
-                      destinationAsset: routeSource,
-                  }
-                : undefined;
-        const postOft =
-            isUsdt0Variant(to) &&
-            routeTarget === USDT0 &&
-            config.assets?.[to] !== undefined
-                ? {
-                      sourceAsset: routeTarget,
-                      destinationAsset: to,
-                  }
-                : undefined;
-        this.postOft = postOft;
+        const canonicalSourceAsset = config.assets[routeSource];
+        const canonicalTargetAsset = config.assets[routeTarget];
+        const sourceRouteConfig = config.assets[from] ?? canonicalSourceAsset;
+        const targetRouteConfig = config.assets[to] ?? canonicalTargetAsset;
+        this.preBridgeDriver = bridgeRegistry.getDriverForAsset(from);
+        this.preBridge = this.preBridgeDriver?.getPreRoute(from);
+        this.postBridgeDriver = bridgeRegistry.getDriverForAsset(to);
+        this.postBridge = this.postBridgeDriver?.getPostRoute(to);
 
         const logDisabledAssetInRoute = (route: Hop[]): boolean => {
             const disabledAsset = Pair.findDisabledAssetInRoute(route);
@@ -215,9 +209,11 @@ export default class Pair {
             return;
         }
 
-        const toAsset = config.assets[routeTarget];
-        if (toAsset !== undefined && toAsset.type === AssetKind.ERC20) {
-            const hopAssetSymbol = toAsset.token?.routeVia;
+        if (
+            canonicalTargetAsset !== undefined &&
+            canonicalTargetAsset.type === AssetKind.ERC20
+        ) {
+            const hopAssetSymbol = targetRouteConfig?.token?.routeVia;
             const hopAsset = config.assets[hopAssetSymbol];
             const hopPair =
                 hopAssetSymbol !== undefined
@@ -242,7 +238,7 @@ export default class Pair {
                         dexDetails: {
                             chain: hopAsset.network?.symbol,
                             tokenIn: hopAsset.token?.address,
-                            tokenOut: toAsset.token?.address,
+                            tokenOut: canonicalTargetAsset.token?.address,
                         },
                     },
                 ];
@@ -254,9 +250,11 @@ export default class Pair {
             }
         }
 
-        const fromAsset = config.assets[routeSource];
-        if (fromAsset !== undefined && fromAsset.type === AssetKind.ERC20) {
-            const hopAssetSymbol = fromAsset.token?.routeVia;
+        if (
+            canonicalSourceAsset !== undefined &&
+            canonicalSourceAsset.type === AssetKind.ERC20
+        ) {
+            const hopAssetSymbol = sourceRouteConfig?.token?.routeVia;
             const hopAsset = config.assets[hopAssetSymbol];
             const hopPair =
                 hopAssetSymbol !== undefined
@@ -273,8 +271,8 @@ export default class Pair {
                         from: routeSource,
                         to: hopAssetSymbol,
                         dexDetails: {
-                            chain: fromAsset.network?.symbol,
-                            tokenIn: fromAsset.token?.address,
+                            chain: canonicalSourceAsset.network?.symbol,
+                            tokenIn: canonicalSourceAsset.token?.address,
                             tokenOut: hopAsset.token?.address,
                         },
                     },
@@ -364,8 +362,8 @@ export default class Pair {
 
     public get needsNetworkForQuote() {
         return (
-            this.preOft !== undefined ||
-            this.postOft !== undefined ||
+            this.preBridge !== undefined ||
+            this.postBridge !== undefined ||
             this.route.some((hop) => hop.type === SwapType.Dex)
         );
     }
@@ -375,8 +373,8 @@ export default class Pair {
             return RequiredInput.Unknown;
         }
 
-        if (this.postOft !== undefined) {
-            return isEvmAsset(this.postOft.destinationAsset)
+        if (this.postBridge !== undefined) {
+            return isEvmAsset(this.postBridge.destinationAsset)
                 ? RequiredInput.Web3
                 : RequiredInput.Address;
         }
@@ -394,12 +392,12 @@ export default class Pair {
         return RequiredInput.Address;
     }
 
-    public get hasPreOft() {
-        return this.preOft !== undefined;
+    public get hasPreBridge() {
+        return this.preBridge !== undefined;
     }
 
-    public get hasPostOft() {
-        return this.postOft !== undefined;
+    public get hasPostBridge() {
+        return this.postBridge !== undefined;
     }
 
     public get needsBackup() {
@@ -422,8 +420,8 @@ export default class Pair {
     private getCanZeroAmountBlockers = (): string[] => {
         const blockers: string[] = [];
 
-        if (this.preOft !== undefined) {
-            blockers.push("pre-OFT routing is enabled");
+        if (this.preBridge !== undefined) {
+            blockers.push("pre-bridge routing is enabled");
         }
 
         const firstHop = this.route[0];
@@ -457,8 +455,8 @@ export default class Pair {
                     to,
                     type,
                 })),
-                hasPreOft: this.preOft !== undefined,
-                hasPostOft: this.postOft !== undefined,
+                hasPreBridge: this.preBridge !== undefined,
+                hasPostBridge: this.postBridge !== undefined,
             });
         }
 
@@ -540,8 +538,8 @@ export default class Pair {
         return undefined;
     }
 
-    private get postOftDexHop(): Hop | undefined {
-        if (this.postOft === undefined || this.route.length === 0) {
+    private get postBridgeDexHop(): Hop | undefined {
+        if (this.postBridge === undefined || this.route.length === 0) {
             return undefined;
         }
 
@@ -549,59 +547,81 @@ export default class Pair {
         return lastHop.type === SwapType.Dex ? lastHop : undefined;
     }
 
-    private get routeWithoutPostOftDex(): Hop[] {
-        return this.postOftDexHop !== undefined
+    private get routeWithoutPostBridgeDex(): Hop[] {
+        return this.postBridgeDexHop !== undefined
             ? this.route.slice(0, -1)
             : this.route;
     }
 
-    private get preOftMessagingFeeToken() {
-        return this.preOft !== undefined
-            ? config.assets?.[this.preOft.sourceAsset]?.network?.gasToken
+    // Constructor invariant: `preBridge` is only assigned when
+    // `preBridgeDriver` resolved, and vice versa for post. These helpers
+    // encapsulate the `!` assertion in one place.
+    private requirePreBridge = ():
+        | { driver: BridgeDriver; route: BridgeRoute }
+        | undefined => {
+        if (this.preBridge === undefined) return undefined;
+        return { driver: this.preBridgeDriver!, route: this.preBridge };
+    };
+
+    private requirePostBridge = ():
+        | { driver: BridgeDriver; route: BridgeRoute }
+        | undefined => {
+        if (this.postBridge === undefined) return undefined;
+        return { driver: this.postBridgeDriver!, route: this.postBridge };
+    };
+
+    private useDexGasToken = (getGasToken: boolean): boolean =>
+        getGasToken &&
+        this.postBridge === undefined &&
+        gasTopUpSupported(this.to);
+
+    private get preBridgeMessagingFeeToken() {
+        return this.preBridge
+            ? this.preBridgeDriver?.getMessagingFeeToken(this.preBridge)
             : undefined;
     }
 
-    private get postOftMessagingFeeToken() {
-        return this.postOft !== undefined
-            ? config.assets?.[this.postOft.sourceAsset]?.network?.gasToken
+    private get postBridgeMessagingFeeToken() {
+        return this.postBridge
+            ? this.postBridgeDriver?.getMessagingFeeToken(this.postBridge)
             : undefined;
     }
 
-    private cacheLatestOftFee = (
+    private cacheLatestBridgeFee = (
         sendAmountKey: string,
-        quote: OftReceiveQuote,
+        quote: BridgeReceiveQuote,
     ) => {
-        this.latestOftFee = {
+        this.latestBridgeFee = {
             sendAmount: sendAmountKey,
             messaging: {
                 value: quote.msgFee[0],
-                token: this.oftMessagingFeeToken,
+                token: this.bridgeMessagingFeeToken,
             },
             transfer: BigNumber((quote.amountIn - quote.amountOut).toString()),
         };
     };
 
-    private get postOftClaimAsset() {
-        return this.postOftDexHop?.from ?? this.postOft?.sourceAsset;
+    private get postBridgeClaimAsset() {
+        return this.postBridgeDexHop?.from ?? this.postBridge?.sourceAsset;
     }
 
-    private get postOftFeeQuoteDetails():
+    private get postBridgeFeeQuoteDetails():
         | {
               chain: string;
               tokenIn: string;
           }
         | undefined {
-        const claimAsset = this.postOftClaimAsset;
+        const claimAsset = this.postBridgeClaimAsset;
         if (claimAsset === undefined) {
             return undefined;
         }
 
         const claimAssetConfig = config.assets?.[claimAsset];
         const chain =
-            this.postOftDexHop?.dexDetails?.chain ??
+            this.postBridgeDexHop?.dexDetails?.chain ??
             claimAssetConfig?.network?.symbol;
         const tokenIn =
-            this.postOftDexHop?.dexDetails?.tokenIn ??
+            this.postBridgeDexHop?.dexDetails?.tokenIn ??
             claimAssetConfig?.token?.address;
 
         if (chain === undefined || tokenIn === undefined) {
@@ -614,94 +634,118 @@ export default class Pair {
         };
     }
 
-    private getPostOftQuoteOptions = async (
-        postOftRecipient?: string,
+    private getPostBridgeQuoteOptions = async (
+        postBridgeRecipient?: string,
         getGasToken: boolean = false,
-    ): Promise<OftQuoteOptions | undefined> => {
+    ): Promise<BridgeQuoteOptions | undefined> => {
+        const post = this.requirePostBridge();
         if (
-            this.postOft === undefined ||
-            postOftRecipient === undefined ||
-            postOftRecipient === ""
+            post === undefined ||
+            postBridgeRecipient === undefined ||
+            postBridgeRecipient === ""
         ) {
             return undefined;
         }
 
-        const nativeDropAmount =
-            getGasToken && gasTopUpSupported(this.to)
-                ? await getGasTopUpNativeAmount(this.to)
-                : undefined;
-        log.info("Built post-OFT quote options", {
+        log.info("Built post-bridge quote options", {
             destinationAsset: this.to,
-            postOftRecipient,
+            postBridgeRecipient,
             getGasToken,
-            nativeDropAmount: nativeDropAmount?.toString(),
         });
-        return {
-            recipient: postOftRecipient,
-            nativeDrop:
-                nativeDropAmount !== undefined
-                    ? {
-                          amount: nativeDropAmount,
-                          receiver: postOftRecipient,
-                      }
-                    : undefined,
-        };
+        return await post.driver.buildQuoteOptions(
+            this.to,
+            postBridgeRecipient,
+            getGasToken,
+        );
     };
 
-    public canPostOftNativeDrop = async (
-        postOftRecipient?: string,
+    private getNativeDropFailure = (
+        driver: BridgeDriver | undefined,
+        error: unknown,
+    ): BridgeNativeDropFailure | undefined => {
+        return driver?.getNativeDropFailure(error as BridgeErrorLike);
+    };
+
+    private getNativeDropLogDetails = (
+        nativeDropFailure: BridgeNativeDropFailure | undefined,
+    ) => {
+        return nativeDropFailure?.reason === "exceeds_cap"
+            ? {
+                  amount: nativeDropFailure.amount?.toString(),
+                  cap: nativeDropFailure.cap?.toString(),
+              }
+            : {};
+    };
+
+    public canPostBridgeNativeDrop = async (
+        postBridgeRecipient?: string,
     ): Promise<boolean> => {
+        const post = this.requirePostBridge();
         if (
-            this.postOft === undefined ||
-            postOftRecipient === undefined ||
-            postOftRecipient === "" ||
+            post === undefined ||
+            postBridgeRecipient === undefined ||
+            postBridgeRecipient === "" ||
             !gasTopUpSupported(this.to)
         ) {
-            log.info("Post-OFT native drop capability check skipped", {
+            log.info("Post-bridge native drop capability check skipped", {
                 destinationAsset: this.to,
-                postOftRecipient,
-                hasPostOft: this.postOft !== undefined,
+                postBridgeRecipient,
+                hasPostBridge: post !== undefined,
                 gasTopUpSupported: gasTopUpSupported(this.to),
             });
             return false;
         }
 
         try {
-            log.info("Checking post-OFT native drop capability", {
-                sourceAsset: this.postOft.sourceAsset,
-                destinationAsset: this.to,
-                destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.sourceAsset,
-                    this.postOft.destinationAsset,
-                ),
-                postOftRecipient,
-            });
-            await quoteOftReceiveAmount(
-                this.postOft,
-                1n,
-                await this.getPostOftQuoteOptions(postOftRecipient, true),
+            const postBridgeQuoteOptions = await this.getPostBridgeQuoteOptions(
+                postBridgeRecipient,
+                true,
             );
-            log.info("Post-OFT native drop capability confirmed", {
+
+            if (postBridgeQuoteOptions?.nativeDrop === undefined) {
+                log.info(
+                    "Post-bridge native drop capability unavailable from bridge driver",
+                    {
+                        destinationAsset: this.to,
+                        postBridgeRecipient,
+                    },
+                );
+                return false;
+            }
+
+            log.info("Checking post-bridge native drop capability", {
+                sourceAsset: post.route.sourceAsset,
                 destinationAsset: this.to,
-                postOftRecipient,
+                postBridgeRecipient,
+            });
+            await post.driver.quoteReceiveAmount(
+                post.route,
+                1n,
+                postBridgeQuoteOptions,
+            );
+            log.info("Post-bridge native drop capability confirmed", {
+                destinationAsset: this.to,
+                postBridgeRecipient,
             });
             return true;
         } catch (error) {
-            if (isExecutorNativeAmountExceedsCapError(error)) {
-                const decoded =
-                    decodeExecutorNativeAmountExceedsCapError(error);
-                log.warn("Post-OFT native drop exceeds executor cap", {
+            const nativeDropFailure = this.getNativeDropFailure(
+                post.driver,
+                error,
+            );
+            if (nativeDropFailure !== undefined) {
+                log.warn("Post-bridge native drop capability unavailable", {
                     destinationAsset: this.to,
-                    postOftRecipient,
-                    amount: decoded?.amount.toString(),
-                    cap: decoded?.cap.toString(),
+                    postBridgeRecipient,
+                    reason: nativeDropFailure.reason,
+                    ...this.getNativeDropLogDetails(nativeDropFailure),
                 });
                 return false;
             }
 
-            log.warn("Post-OFT native drop capability check failed", {
+            log.warn("Post-bridge native drop capability check failed", {
                 destinationAsset: this.to,
-                postOftRecipient,
+                postBridgeRecipient,
                 error,
             });
             throw error;
@@ -740,7 +784,7 @@ export default class Pair {
 
             return fromDexAmount(BigInt(quoteRes.quote), asset);
         } catch (error) {
-            log.warn("Could not quote OFT messaging fee cost", {
+            log.warn("Could not quote bridge messaging fee cost", {
                 asset,
                 quoteDetails,
                 error,
@@ -749,11 +793,12 @@ export default class Pair {
         }
     };
 
-    private applyPreOftQuote = async (
+    private applyPreBridgeQuote = async (
         sendAmount: BigNumber,
         sendAmountKey?: string,
     ): Promise<BigNumber> => {
-        if (this.preOft === undefined) {
+        const pre = this.requirePreBridge();
+        if (pre === undefined) {
             return sendAmount;
         }
 
@@ -765,25 +810,26 @@ export default class Pair {
             return sendAmount;
         }
 
-        const quote = await quoteOftReceiveAmount(
-            this.preOft,
+        const quote = await pre.driver.quoteReceiveAmount(
+            pre.route,
             BigInt(sendAmount.toFixed(0)),
         );
 
         if (sendAmountKey !== undefined) {
-            this.cacheLatestOftFee(sendAmountKey, quote);
+            this.cacheLatestBridgeFee(sendAmountKey, quote);
         }
 
         return BigNumber(quote.amountOut.toString());
     };
 
-    private invertPreOftQuote = async (
+    private invertPreBridgeQuote = async (
         amount: BigNumber,
     ): Promise<{
         amount: BigNumber;
-        quote?: OftReceiveQuote;
+        quote?: BridgeReceiveQuote;
     }> => {
-        if (this.preOft === undefined) {
+        const pre = this.requirePreBridge();
+        if (pre === undefined) {
             return { amount };
         }
 
@@ -795,11 +841,14 @@ export default class Pair {
             return { amount };
         }
 
-        const requiredAmount = await quoteOftAmountInForAmountOut(
-            this.preOft,
+        const requiredAmount = await pre.driver.quoteAmountInForAmountOut(
+            pre.route,
             BigInt(amount.toFixed(0)),
         );
-        const quote = await quoteOftReceiveAmount(this.preOft, requiredAmount);
+        const quote = await pre.driver.quoteReceiveAmount(
+            pre.route,
+            requiredAmount,
+        );
 
         return {
             amount: BigNumber(requiredAmount.toString()),
@@ -807,10 +856,10 @@ export default class Pair {
         };
     };
 
-    private convertClaimAmountToOftAmount = async (
+    private convertClaimAmountToBridgeAmount = async (
         claimAmount: BigNumber,
     ): Promise<BigNumber> => {
-        const dexHop = this.postOftDexHop;
+        const dexHop = this.postBridgeDexHop;
         if (dexHop === undefined || claimAmount.isLessThanOrEqualTo(0)) {
             return claimAmount;
         }
@@ -822,69 +871,63 @@ export default class Pair {
         return fromDexAmount(trade.amountOut, dexHop.to);
     };
 
-    private convertOftAmountToClaimAmount = async (
-        oftAmount: BigNumber,
+    private convertBridgeAmountToClaimAmount = async (
+        bridgeAmount: BigNumber,
     ): Promise<BigNumber> => {
-        const dexHop = this.postOftDexHop;
-        if (dexHop === undefined || oftAmount.isLessThanOrEqualTo(0)) {
-            return oftAmount;
+        const dexHop = this.postBridgeDexHop;
+        if (dexHop === undefined || bridgeAmount.isLessThanOrEqualTo(0)) {
+            return bridgeAmount;
         }
 
         const [quote] = await quoteDexAmountOut(
             dexHop.dexDetails!.chain,
             dexHop.dexDetails!.tokenIn,
             dexHop.dexDetails!.tokenOut,
-            toDexAmount(oftAmount.toNumber(), dexHop.to),
+            toDexAmount(bridgeAmount.toNumber(), dexHop.to),
         );
 
         return fromDexAmount(BigInt(quote?.quote ?? 0), dexHop.from);
     };
 
-    private applyPostOftQuote = async (
+    private applyPostBridgeQuote = async (
         claimAmount: BigNumber,
         sendAmountKey?: string,
         getGasToken: boolean = false,
-        postOftRecipient?: string,
+        postBridgeRecipient?: string,
     ): Promise<BigNumber> => {
         try {
-            if (
-                this.postOft === undefined ||
-                claimAmount.isLessThanOrEqualTo(0)
-            ) {
+            const post = this.requirePostBridge();
+            if (post === undefined || claimAmount.isLessThanOrEqualTo(0)) {
                 return claimAmount;
             }
 
-            log.info("Applying post-OFT quote", {
-                sourceAsset: this.postOft.sourceAsset,
+            log.info("Applying post-bridge quote", {
+                sourceAsset: post.route.sourceAsset,
                 destinationAsset: this.to,
-                destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.sourceAsset,
-                    this.postOft.destinationAsset,
-                ),
                 claimAmount: claimAmount.toFixed(),
                 getGasToken,
-                postOftRecipient,
+                postBridgeRecipient,
             });
-            const postOftQuoteOptions = await this.getPostOftQuoteOptions(
-                postOftRecipient,
+            const postBridgeQuoteOptions = await this.getPostBridgeQuoteOptions(
+                postBridgeRecipient,
                 getGasToken,
             );
-            const quotedOftAmount =
-                await this.convertClaimAmountToOftAmount(claimAmount);
-            const quote = await quoteOftReceiveAmount(
-                this.postOft,
-                BigInt(quotedOftAmount.toFixed(0)),
-                postOftQuoteOptions,
+            const quotedBridgeAmount =
+                await this.convertClaimAmountToBridgeAmount(claimAmount);
+            const quote = await post.driver.quoteReceiveAmount(
+                post.route,
+                BigInt(quotedBridgeAmount.toFixed(0)),
+                postBridgeQuoteOptions,
             );
             const messagingFeeCost = await this.quoteMessagingFeeCost(
-                this.postOftClaimAsset,
-                this.postOftFeeQuoteDetails,
+                this.postBridgeClaimAsset,
+                this.postBridgeFeeQuoteDetails,
                 quote.msgFee[0],
             );
 
-            log.info("Applied post-OFT quote", {
+            log.info("Applied post-bridge quote", {
                 destinationAsset: this.to,
-                quotedOftAmount: quotedOftAmount.toFixed(),
+                quotedBridgeAmount: quotedBridgeAmount.toFixed(),
                 messagingFee: quote.msgFee[0].toString(),
                 messagingFeeCost: messagingFeeCost.toFixed(),
                 quotedAmountOut: quote.amountOut.toString(),
@@ -892,41 +935,48 @@ export default class Pair {
 
             const adjustedClaimAmount = claimAmount.minus(messagingFeeCost);
             if (adjustedClaimAmount.isLessThanOrEqualTo(0)) {
-                log.info("Post-OFT quote reduced amount to zero", {
+                log.info("Post-bridge quote reduced amount to zero", {
                     destinationAsset: this.to,
                     adjustedClaimAmount: adjustedClaimAmount.toFixed(),
                 });
                 return BigNumber(0);
             }
 
-            const adjustedOftAmount =
-                await this.convertClaimAmountToOftAmount(adjustedClaimAmount);
-            const adjustedQuote = await quoteOftReceiveAmount(
-                this.postOft,
-                BigInt(adjustedOftAmount.toFixed(0)),
-                postOftQuoteOptions,
+            const adjustedBridgeAmount =
+                await this.convertClaimAmountToBridgeAmount(
+                    adjustedClaimAmount,
+                );
+            const adjustedQuote = await post.driver.quoteReceiveAmount(
+                post.route,
+                BigInt(adjustedBridgeAmount.toFixed(0)),
+                postBridgeQuoteOptions,
             );
 
             if (sendAmountKey !== undefined) {
-                this.cacheLatestOftFee(sendAmountKey, adjustedQuote);
+                this.cacheLatestBridgeFee(sendAmountKey, adjustedQuote);
             }
 
             return BigNumber(adjustedQuote.amountOut.toString());
         } catch (error) {
-            if (getGasToken && isExecutorNativeAmountExceedsCapError(error)) {
-                const decoded =
-                    decodeExecutorNativeAmountExceedsCapError(error);
-                log.warn("Falling back to post-OFT quote without native drop", {
-                    destinationAsset: this.to,
-                    postOftRecipient,
-                    amount: decoded?.amount.toString(),
-                    cap: decoded?.cap.toString(),
-                });
-                return await this.applyPostOftQuote(
+            const nativeDropFailure = this.getNativeDropFailure(
+                this.postBridgeDriver,
+                error,
+            );
+            if (getGasToken && nativeDropFailure !== undefined) {
+                log.warn(
+                    "Falling back to post-bridge quote without native drop",
+                    {
+                        destinationAsset: this.to,
+                        postBridgeRecipient,
+                        reason: nativeDropFailure.reason,
+                        ...this.getNativeDropLogDetails(nativeDropFailure),
+                    },
+                );
+                return await this.applyPostBridgeQuote(
                     claimAmount,
                     sendAmountKey,
                     false,
-                    postOftRecipient,
+                    postBridgeRecipient,
                 );
             }
 
@@ -934,55 +984,52 @@ export default class Pair {
         }
     };
 
-    private invertPostOftQuote = async (
+    private invertPostBridgeQuote = async (
         amount: BigNumber,
         getGasToken: boolean = false,
-        postOftRecipient?: string,
+        postBridgeRecipient?: string,
     ): Promise<{
         amount: BigNumber;
-        quote?: OftReceiveQuote;
+        quote?: BridgeReceiveQuote;
     }> => {
         try {
-            if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
+            const post = this.requirePostBridge();
+            if (post === undefined || amount.isLessThanOrEqualTo(0)) {
                 return { amount };
             }
 
-            log.info("Inverting post-OFT quote", {
-                sourceAsset: this.postOft.sourceAsset,
+            log.info("Inverting post-bridge quote", {
+                sourceAsset: post.route.sourceAsset,
                 destinationAsset: this.to,
-                destinationMeshKind: getUsdt0Mesh(
-                    this.postOft.sourceAsset,
-                    this.postOft.destinationAsset,
-                ),
                 requestedAmount: amount.toFixed(),
                 getGasToken,
-                postOftRecipient,
+                postBridgeRecipient,
             });
-            const postOftQuoteOptions = await this.getPostOftQuoteOptions(
-                postOftRecipient,
+            const postBridgeQuoteOptions = await this.getPostBridgeQuoteOptions(
+                postBridgeRecipient,
                 getGasToken,
             );
-            const requiredAmount = await quoteOftAmountInForAmountOut(
-                this.postOft,
+            const requiredAmount = await post.driver.quoteAmountInForAmountOut(
+                post.route,
                 BigInt(amount.toFixed(0)),
-                postOftQuoteOptions,
+                postBridgeQuoteOptions,
             );
 
-            const quote = await quoteOftReceiveAmount(
-                this.postOft,
+            const quote = await post.driver.quoteReceiveAmount(
+                post.route,
                 requiredAmount,
-                postOftQuoteOptions,
+                postBridgeQuoteOptions,
             );
             const requiredClaimAmount =
-                await this.convertOftAmountToClaimAmount(
+                await this.convertBridgeAmountToClaimAmount(
                     BigNumber(requiredAmount.toString()),
                 );
             const messagingFeeCost = await this.quoteMessagingFeeCost(
-                this.postOftClaimAsset,
-                this.postOftFeeQuoteDetails,
+                this.postBridgeClaimAsset,
+                this.postBridgeFeeQuoteDetails,
                 quote.msgFee[0],
             );
-            log.info("Inverted post-OFT quote", {
+            log.info("Inverted post-bridge quote", {
                 destinationAsset: this.to,
                 requiredAmount: requiredAmount.toString(),
                 requiredClaimAmount: requiredClaimAmount.toFixed(),
@@ -995,22 +1042,24 @@ export default class Pair {
                 quote,
             };
         } catch (error) {
-            if (getGasToken && isExecutorNativeAmountExceedsCapError(error)) {
-                const decoded =
-                    decodeExecutorNativeAmountExceedsCapError(error);
+            const nativeDropFailure = this.getNativeDropFailure(
+                this.postBridgeDriver,
+                error,
+            );
+            if (getGasToken && nativeDropFailure !== undefined) {
                 log.warn(
-                    "Falling back to reverse post-OFT quote without native drop",
+                    "Falling back to reverse post-bridge quote without native drop",
                     {
                         destinationAsset: this.to,
-                        postOftRecipient,
-                        amount: decoded?.amount.toString(),
-                        cap: decoded?.cap.toString(),
+                        postBridgeRecipient,
+                        reason: nativeDropFailure.reason,
+                        ...this.getNativeDropLogDetails(nativeDropFailure),
                     },
                 );
-                return await this.invertPostOftQuote(
+                return await this.invertPostBridgeQuote(
                     amount,
                     false,
-                    postOftRecipient,
+                    postBridgeRecipient,
                 );
             }
 
@@ -1019,7 +1068,10 @@ export default class Pair {
     };
 
     public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
-        if (this.preOft === undefined && this.dexHopBeforeBoltz === undefined) {
+        if (
+            this.preBridge === undefined &&
+            this.dexHopBeforeBoltz === undefined
+        ) {
             return sendAmount;
         }
 
@@ -1032,36 +1084,53 @@ export default class Pair {
         return this.latestBoltzSwapSendAmount.value;
     };
 
-    public oftMessagingFeeFromLatestQuote = (sendAmount: BigNumber) => {
+    public bridgeMessagingFeeFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
 
-        if (this.latestOftFee?.sendAmount !== key) {
+        if (this.latestBridgeFee?.sendAmount !== key) {
             return undefined;
         }
 
-        return this.latestOftFee.messaging?.value;
+        return this.latestBridgeFee.messaging?.value;
     };
 
-    public oftTransferFeeFromLatestQuote = (sendAmount: BigNumber) => {
+    public bridgeTransferFeeFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
 
-        if (this.latestOftFee?.sendAmount !== key) {
+        if (this.latestBridgeFee?.sendAmount !== key) {
             return undefined;
         }
 
-        return this.latestOftFee.transfer;
+        return this.latestBridgeFee.transfer;
     };
 
-    public get oftMessagingFeeToken() {
+    public get bridgeMessagingFeeToken() {
         return (
-            this.latestOftFee?.messaging?.token ??
-            this.postOftMessagingFeeToken ??
-            this.preOftMessagingFeeToken
+            this.latestBridgeFee?.messaging?.token ??
+            this.postBridgeMessagingFeeToken ??
+            this.preBridgeMessagingFeeToken
         );
     }
 
-    public get oftTransferFeeAsset() {
-        return this.postOft?.sourceAsset ?? this.preOft?.sourceAsset;
+    public get bridgeTransferFeeAsset() {
+        return (
+            (this.postBridge !== undefined
+                ? this.postBridgeDriver?.getTransferFeeAsset(this.postBridge)
+                : undefined) ??
+            (this.preBridge !== undefined
+                ? this.preBridgeDriver?.getTransferFeeAsset(this.preBridge)
+                : undefined)
+        );
+    }
+
+    public get bridgeMessagingFeeIncludedInTotal(): boolean {
+        return this.postBridge !== undefined;
+    }
+
+    public get bridgeMessagingFeeDisplayMode(): BridgeMessagingFeeDisplayMode {
+        return this.bridgeMessagingFeeIncludedInTotal
+            ? BridgeMessagingFeeDisplayMode.Details
+            : BridgeMessagingFeeDisplayMode.Inline;
     }
 
     private quoteReceiveHop = async (
@@ -1136,11 +1205,11 @@ export default class Pair {
     ): Promise<number> => {
         const amountBeforeBoltz =
             await this.convertThroughPrecedingDex(boltzSendAmount);
-        const preOftQuote = await this.invertPreOftQuote(
+        const preBridgeQuote = await this.invertPreBridgeQuote(
             BigNumber(amountBeforeBoltz),
         );
 
-        return preOftQuote.amount.toNumber();
+        return preBridgeQuote.amount.toNumber();
     };
 
     public getMinimum = async (): Promise<number> => {
@@ -1236,7 +1305,7 @@ export default class Pair {
         minerFees: number,
         route: Hop[] = this.route,
         getGasToken: boolean = false,
-        postOftRecipient?: string,
+        postBridgeRecipient?: string,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -1245,15 +1314,12 @@ export default class Pair {
         const boltzHop = this.boltzHop;
         const shouldCacheBoltzSwapSendAmount = route === this.route;
         const sendAmountKey = sendAmount.toFixed();
-        const useDexGasToken =
-            getGasToken &&
-            this.postOft === undefined &&
-            gasTopUpSupported(this.to);
+        const useDexGasToken = this.useDexGasToken(getGasToken);
         const routeToQuote =
-            route === this.route ? this.routeWithoutPostOftDex : route;
+            route === this.route ? this.routeWithoutPostBridgeDex : route;
         let amount =
             route === this.route
-                ? await this.applyPreOftQuote(sendAmount, sendAmountKey)
+                ? await this.applyPreBridgeQuote(sendAmount, sendAmountKey)
                 : sendAmount;
 
         for (const hop of routeToQuote) {
@@ -1278,11 +1344,11 @@ export default class Pair {
         }
 
         if (route === this.route) {
-            return await this.applyPostOftQuote(
+            return await this.applyPostBridgeQuote(
                 amount,
                 sendAmountKey,
                 getGasToken,
-                postOftRecipient,
+                postBridgeRecipient,
             );
         }
 
@@ -1292,7 +1358,7 @@ export default class Pair {
     public calculatePostBoltzReceiveAmount = async (
         boltzReceiveAmount: BigNumber,
         getGasToken: boolean = false,
-        postOftRecipient?: string,
+        postBridgeRecipient?: string,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -1306,26 +1372,23 @@ export default class Pair {
         const boltzIndex = this.route.indexOf(boltzHop);
         const postBoltzRoute = this.route.slice(boltzIndex + 1);
         const routeToQuote =
-            this.postOftDexHop !== undefined &&
-            postBoltzRoute[postBoltzRoute.length - 1] === this.postOftDexHop
+            this.postBridgeDexHop !== undefined &&
+            postBoltzRoute[postBoltzRoute.length - 1] === this.postBridgeDexHop
                 ? postBoltzRoute.slice(0, -1)
                 : postBoltzRoute;
-        const useDexGasToken =
-            getGasToken &&
-            this.postOft === undefined &&
-            gasTopUpSupported(this.to);
+        const useDexGasToken = this.useDexGasToken(getGasToken);
         let amount = boltzReceiveAmount;
 
         for (const hop of routeToQuote) {
             amount = await this.quoteReceiveHop(amount, hop, 0, useDexGasToken);
         }
 
-        if (this.postOft !== undefined) {
-            return await this.applyPostOftQuote(
+        if (this.postBridge !== undefined) {
+            return await this.applyPostBridgeQuote(
                 amount,
                 undefined,
                 getGasToken,
-                postOftRecipient,
+                postBridgeRecipient,
             );
         }
 
@@ -1336,7 +1399,7 @@ export default class Pair {
         receiveAmount: BigNumber,
         minerFees: number,
         getGasToken: boolean = false,
-        postOftRecipient?: string,
+        postBridgeRecipient?: string,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -1344,18 +1407,15 @@ export default class Pair {
 
         const boltzHop = this.boltzHop;
         let boltzSwapSendAmountForCache: BigNumber | undefined;
-        const routeToQuote = this.routeWithoutPostOftDex;
-        const useDexGasToken =
-            getGasToken &&
-            this.postOft === undefined &&
-            gasTopUpSupported(this.to);
+        const routeToQuote = this.routeWithoutPostBridgeDex;
+        const useDexGasToken = this.useDexGasToken(getGasToken);
 
-        const postOftQuote = await this.invertPostOftQuote(
+        const postBridgeQuote = await this.invertPostBridgeQuote(
             receiveAmount,
             getGasToken,
-            postOftRecipient,
+            postBridgeRecipient,
         );
-        let amount = postOftQuote.amount;
+        let amount = postBridgeQuote.amount;
 
         for (const hop of [...routeToQuote].reverse()) {
             switch (hop.type) {
@@ -1397,8 +1457,8 @@ export default class Pair {
             }
         }
 
-        const preOftQuote = await this.invertPreOftQuote(amount);
-        amount = preOftQuote.amount;
+        const preBridgeQuote = await this.invertPreBridgeQuote(amount);
+        amount = preBridgeQuote.amount;
 
         // Cache using the final user send amount as key.
         const sendAmountKey = amount.toFixed();
@@ -1406,9 +1466,9 @@ export default class Pair {
             sendAmount: sendAmountKey,
             value: boltzSwapSendAmountForCache ?? amount,
         };
-        const quote = preOftQuote.quote ?? postOftQuote.quote;
+        const quote = preBridgeQuote.quote ?? postBridgeQuote.quote;
         if (quote !== undefined) {
-            this.cacheLatestOftFee(sendAmountKey, quote);
+            this.cacheLatestBridgeFee(sendAmountKey, quote);
         }
 
         return amount;
@@ -1427,8 +1487,8 @@ export default class Pair {
         const firstHop = this.route[0];
         let boltzSendAmount =
             this.boltzSwapSendAmountFromLatestQuote(sendAmount) ?? sendAmount;
-        if (boltzSendAmount === sendAmount && this.preOft !== undefined) {
-            boltzSendAmount = await this.applyPreOftQuote(sendAmount);
+        if (boltzSendAmount === sendAmount && this.preBridge !== undefined) {
+            boltzSendAmount = await this.applyPreBridgeQuote(sendAmount);
         }
 
         if (

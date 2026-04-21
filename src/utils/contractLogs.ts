@@ -3,12 +3,11 @@ import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, DeferredTopicFilter, Provider } from "ethers";
 import { JsonRpcProvider, toBeHex } from "ethers";
 import log from "loglevel";
-import { arbitrumNetwork } from "src/configs/base";
+import { arbitrumChainId } from "src/configs/base";
 
 import { config } from "../config";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
-import { Network } from "../consts/Network";
 import {
     PreimageHashesWorker,
     type PreimageMap,
@@ -29,7 +28,7 @@ export const getTimelockBlockNumber = async (
 ): Promise<number> => {
     const network = config.assets?.[asset as string]?.network;
 
-    if (network?.chainId === arbitrumNetwork.chainId) {
+    if (network?.chainId === arbitrumChainId) {
         const rpcProvider = createAssetProvider(asset as string);
         const block = (await rpcProvider.send("eth_getBlockByNumber", [
             "latest",
@@ -51,7 +50,7 @@ export const getRollupL1BlockNumber = async (
 ): Promise<number> => {
     const network = config.assets?.[asset as string]?.network;
 
-    if (network?.chainName !== Network.Arbitrum) {
+    if (network?.chainId !== arbitrumChainId) {
         return rollupBlockNumber;
     }
 

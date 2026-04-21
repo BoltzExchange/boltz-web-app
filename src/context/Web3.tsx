@@ -93,7 +93,7 @@ export type ConnectProviderOptions = {
 type AddEthereumChainParams = {
     chainId: string;
     chainName: string;
-    rpcUrls: string[];
+    rpcUrls: readonly string[];
     nativeCurrency: {
         name: string;
         symbol: string;

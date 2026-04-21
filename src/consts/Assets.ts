@@ -1,5 +1,10 @@
 import { config } from "../config";
-import { NetworkTransport, Usdt0Kind } from "../configs/base";
+import {
+    type AssetBridge,
+    type BridgeKind,
+    NetworkTransport,
+    Usdt0Kind,
+} from "../configs/base";
 import { AssetKind } from "./AssetKind";
 
 export { AssetKind };
@@ -11,7 +16,6 @@ export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
 export const ETH = "ETH";
-export const USDT0_VARIANT_PREFIX = `${USDT0}-`;
 
 export type AssetType =
     | typeof LN
@@ -56,11 +60,46 @@ const networkBadgeAliases: Record<string, string> = {
     "Polygon PoS": "polygon",
 };
 
-export const isUsdt0Variant = (asset: string): boolean =>
-    asset.startsWith(USDT0_VARIANT_PREFIX);
+// Canonical assets that are USD stablecoins. Their base-unit → USD conversion
+// is a simple power-of-ten, not a market-rate lookup. When a new stablecoin
+// bridge (e.g. USDC via CCTP) is added, include its canonical here.
+const stablecoinCanonicals = new Set<string>([USDT0]);
 
-export const isUsdt0Asset = (asset: string): boolean =>
-    asset === USDT0 || isUsdt0Variant(asset);
+export const isStablecoinAsset = (asset: string): boolean => {
+    if (stablecoinCanonicals.has(asset)) {
+        return true;
+    }
+    const canonical = getAssetBridge(asset)?.canonicalAsset;
+    return canonical !== undefined && stablecoinCanonicals.has(canonical);
+};
+
+export const getAssetBridge = (asset: string): AssetBridge | undefined =>
+    config.assets?.[asset]?.bridge;
+
+export const getBridgeKind = (asset: string): BridgeKind | undefined =>
+    getAssetBridge(asset)?.kind;
+
+// Any asset that participates in a bridge (canonical hub or chain-specific variant).
+export const isBridgeAsset = (asset: string): boolean =>
+    getAssetBridge(asset) !== undefined;
+
+// The canonical (hub) asset of a bridge family — i.e. `bridge.canonicalAsset === asset`.
+export const isBridgeCanonicalAsset = (asset: string): boolean =>
+    getAssetBridge(asset)?.canonicalAsset === asset;
+
+// A chain-specific variant of a bridge family — i.e. bridged but not the canonical.
+export const isBridgeVariant = (asset: string): boolean => {
+    const bridge = getAssetBridge(asset);
+    return bridge !== undefined && bridge.canonicalAsset !== asset;
+};
+
+// All variants (excluding the canonical itself) whose bridge.canonicalAsset === canonical.
+export const getBridgeVariants = (canonical: string): string[] =>
+    Object.keys(config.assets ?? {}).filter(
+        (asset) =>
+            asset !== canonical &&
+            getAssetBridge(asset)?.canonicalAsset === canonical,
+    );
 
 export const getNetworkTransport = (
     asset: string,
@@ -69,14 +108,14 @@ export const getNetworkTransport = (
 };
 
 export const getCanonicalAsset = (asset: string): string =>
-    isUsdt0Variant(asset) ? USDT0 : asset;
+    getAssetBridge(asset)?.canonicalAsset ?? asset;
 
-export const getUsdt0Mesh = (from: string, to?: string): Usdt0Kind => {
+export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
         .filter((candidate): candidate is string => candidate !== undefined)
         .map(
             (candidate) =>
-                config.assets?.[candidate]?.network?.mesh ?? Usdt0Kind.Native,
+                config.assets?.[candidate]?.bridge?.mesh ?? Usdt0Kind.Native,
         );
 
     return meshKinds.includes(Usdt0Kind.Legacy)

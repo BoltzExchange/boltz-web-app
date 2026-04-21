@@ -41,8 +41,8 @@ import {
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
+    type BridgeDetail,
     GasAbstractionType,
-    type OftDetail,
     type SomeSwap,
 } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
@@ -51,7 +51,7 @@ import ContractTransaction from "./ContractTransaction";
 import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
-import SendToOft from "./SendToOft";
+import SendToBridge from "./SendToBridge";
 
 const lockupGasUsage = 46_000n;
 
@@ -551,7 +551,7 @@ const LockupEvm = (props: {
     claimAddress: string;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
-    oft?: OftDetail;
+    bridge?: BridgeDetail;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
@@ -572,7 +572,7 @@ const LockupEvm = (props: {
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [requiredValue, setRequiredValue] = createSignal<bigint>(0n);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
-    const [oftValue, setOftValue] = createSignal<bigint>(undefined);
+    const [bridgeValue, setBridgeValue] = createSignal<bigint>(undefined);
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
         return await currentSigner.provider
@@ -582,8 +582,13 @@ const LockupEvm = (props: {
 
     createEffect(() => {
         void (async () => {
-            if (props.oft !== undefined) {
-                setOftValue(
+            if (props.bridge !== undefined) {
+                if (!hasHopsBefore()) {
+                    throw new Error(
+                        `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,
+                    );
+                }
+                setBridgeValue(
                     (
                         await getHopExecutionQuote(
                             props.hops[0],
@@ -698,15 +703,15 @@ const LockupEvm = (props: {
         <>
             <OptimizedRoute />
             <Show
-                when={props.oft === undefined}
+                when={props.bridge === undefined}
                 fallback={
                     <Show
-                        when={oftValue() !== undefined}
+                        when={bridgeValue() !== undefined}
                         fallback={<LoadingSpinner />}>
-                        <SendToOft
-                            oft={props.oft}
+                        <SendToBridge
+                            bridge={props.bridge}
                             swapId={props.swapId}
-                            amount={oftValue()}
+                            amount={bridgeValue()}
                         />
                     </Show>
                 }>

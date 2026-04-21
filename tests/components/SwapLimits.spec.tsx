@@ -1,7 +1,22 @@
 import { fireEvent, render } from "@solidjs/testing-library";
 
 import SwapLimits from "../../src/components/SwapLimits";
+import type * as ConfigModule from "../../src/config";
+import type * as MainnetConfigModule from "../../src/configs/mainnet";
 import { Denomination } from "../../src/consts/Enums";
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+    const mainnet = await vi.importActual<typeof MainnetConfigModule>(
+        "../../src/configs/mainnet",
+    );
+
+    return {
+        ...actual,
+        config: mainnet.config,
+    };
+});
 
 describe("SwapLimits", () => {
     test("renders USDT icons for USDT0 assets and selects both limits", () => {

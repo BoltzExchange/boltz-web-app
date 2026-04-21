@@ -110,7 +110,7 @@ const TransactionLockupFailed = (props: {
                     finalAssetReceive: getFinalAssetReceive(chainSwap),
                     dexPosition: chainSwap.dex?.position,
                     hasDex: chainSwap.dex !== undefined,
-                    hasOft: chainSwap.oft !== undefined,
+                    hasBridge: chainSwap.bridge !== undefined,
                 },
             );
             const [quote, transactions] = await Promise.all([
@@ -220,7 +220,7 @@ const TransactionLockupFailed = (props: {
                 backendQuoteAmount: quoteData.quote,
                 finalReceiveAmount: quoteData.receiveAmount,
                 hasDex: currentSwap.dex !== undefined,
-                hasOft: currentSwap.oft !== undefined,
+                hasBridge: currentSwap.bridge !== undefined,
             },
         );
         setLoading(true);

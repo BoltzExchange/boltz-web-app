@@ -1,5 +1,6 @@
 import { type Config, Explorer, NetworkTransport } from "src/configs/base";
 import { baseConfig, chooseUrl } from "src/configs/base";
+import { rskTestnetRpcUrls } from "src/configs/rpcs";
 import { AssetKind } from "src/consts/AssetKind";
 
 const config = {
@@ -62,7 +63,7 @@ const config = {
                 gasToken: "RBTC",
                 chainId: 31,
                 transport: NetworkTransport.Evm,
-                rpcUrls: ["https://public-node.testnet.rsk.co"],
+                rpcUrls: rskTestnetRpcUrls,
                 nativeCurrency: {
                     name: "RBTC",
                     symbol: "RBTC",

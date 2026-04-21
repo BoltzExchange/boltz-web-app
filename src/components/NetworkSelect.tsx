@@ -9,12 +9,11 @@ import {
     on,
 } from "solid-js";
 
-import { config } from "../config";
 import {
-    USDT0,
+    getAssetBridge,
     getAssetNetwork,
+    getBridgeVariants,
     getNetworkBadge,
-    isUsdt0Variant,
 } from "../consts/Assets";
 import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
@@ -44,25 +43,36 @@ const NetworkSelect = () => {
         setAssetSelection,
         setInvoice,
         setOnchainAddress,
+        networkSelectCanonical,
     } = useCreateContext();
 
     const [search, setSearch] = createSignal("");
     const [focusedIndex, setFocusedIndex] = createSignal(0);
     let listRef: HTMLDivElement;
 
-    const usdt0Networks = createMemo(() =>
-        [USDT0, ...Object.keys(config.assets).filter(isUsdt0Variant)]
+    const selectedAsset = () =>
+        assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
+
+    const bridgeNetworks = createMemo(() => {
+        const canonical =
+            networkSelectCanonical() ??
+            getAssetBridge(selectedAsset())?.canonicalAsset;
+        if (canonical === undefined) {
+            return [];
+        }
+
+        return [canonical, ...getBridgeVariants(canonical)]
             .filter((asset) => canSelectAsset(assetSelected(), asset))
             .sort((a, b) =>
                 (getAssetNetwork(a) ?? "").localeCompare(
                     getAssetNetwork(b) ?? "",
                 ),
-            ),
-    );
+            );
+    });
 
     const filtered = () =>
         fuzzySort(
-            usdt0Networks(),
+            bridgeNetworks(),
             search(),
             (asset) => getAssetNetwork(asset) ?? "",
         );
