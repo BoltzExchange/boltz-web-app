@@ -9,6 +9,8 @@ import {
     getAssetDisplaySymbol,
     getBridgeVariants,
     getCanonicalAsset,
+    getRouteViaAsset,
+    getRouterAddress,
     isBridgeAsset,
     isBridgeCanonicalAsset,
     isBridgeVariant,
@@ -111,6 +113,27 @@ describe("Assets", () => {
         test("returns empty list for an asset with no variants", () => {
             expect(getBridgeVariants(BTC)).toEqual([]);
             expect(getBridgeVariants(RBTC)).toEqual([]);
+        });
+    });
+
+    describe("getRouteViaAsset", () => {
+        test.each`
+            input           | expected
+            ${USDT0}        | ${"TBTC"}
+            ${"USDT0-ETH"}  | ${"TBTC"}
+            ${"USDT0-TRON"} | ${"TBTC"}
+            ${BTC}          | ${undefined}
+        `("$input -> $expected", ({ input, expected }) => {
+            expect(getRouteViaAsset(input)).toBe(expected);
+        });
+    });
+
+    describe("getRouterAddress", () => {
+        test("inherits the canonical router path for bridge variants", () => {
+            expect(getRouterAddress("USDT0-ETH")).toBe(getRouterAddress(USDT0));
+            expect(getRouterAddress("USDT0-TRON")).toBe(
+                getRouterAddress(USDT0),
+            );
         });
     });
 

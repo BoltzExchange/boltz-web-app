@@ -10,6 +10,7 @@ import {
     LN,
     TBTC,
     getCanonicalAsset,
+    getRouteViaAsset,
     isBridgeAsset,
     isEvmAsset,
 } from "../consts/Assets";
@@ -50,7 +51,7 @@ import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
  * Non-routed assets (like TBTC) use sats internally and need conversion.
  */
 const isRoutedAsset = (asset: string) =>
-    config.assets[asset]?.token?.routeVia !== undefined ||
+    getRouteViaAsset(asset) !== undefined ||
     config.assets[asset]?.bridge !== undefined;
 
 /** Convert an internal amount to EVM base units for the DEX API. */
@@ -173,8 +174,6 @@ export default class Pair {
         const routeTarget = getCanonicalAsset(to);
         const canonicalSourceAsset = config.assets[routeSource];
         const canonicalTargetAsset = config.assets[routeTarget];
-        const sourceRouteConfig = config.assets[from] ?? canonicalSourceAsset;
-        const targetRouteConfig = config.assets[to] ?? canonicalTargetAsset;
         this.preBridgeDriver = bridgeRegistry.getDriverForAsset(from);
         this.preBridge = this.preBridgeDriver?.getPreRoute(from);
         this.postBridgeDriver = bridgeRegistry.getDriverForAsset(to);
@@ -213,7 +212,7 @@ export default class Pair {
             canonicalTargetAsset !== undefined &&
             canonicalTargetAsset.type === AssetKind.ERC20
         ) {
-            const hopAssetSymbol = targetRouteConfig?.token?.routeVia;
+            const hopAssetSymbol = getRouteViaAsset(to);
             const hopAsset = config.assets[hopAssetSymbol];
             const hopPair =
                 hopAssetSymbol !== undefined
@@ -254,7 +253,7 @@ export default class Pair {
             canonicalSourceAsset !== undefined &&
             canonicalSourceAsset.type === AssetKind.ERC20
         ) {
-            const hopAssetSymbol = sourceRouteConfig?.token?.routeVia;
+            const hopAssetSymbol = getRouteViaAsset(from);
             const hopAsset = config.assets[hopAssetSymbol];
             const hopPair =
                 hopAssetSymbol !== undefined

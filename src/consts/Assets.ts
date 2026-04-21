@@ -107,8 +107,17 @@ export const getNetworkTransport = (
     return config.assets?.[asset]?.network?.transport;
 };
 
+const getAssetConfig = (asset: string) => config.assets?.[asset];
+
 export const getCanonicalAsset = (asset: string): string =>
     getAssetBridge(asset)?.canonicalAsset ?? asset;
+
+const getCanonicalAssetConfig = (asset: string) =>
+    getAssetConfig(getCanonicalAsset(asset));
+
+export const getRouteViaAsset = (asset: string): string | undefined =>
+    getAssetConfig(asset)?.token?.routeVia ??
+    getCanonicalAssetConfig(asset)?.token?.routeVia;
 
 export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
@@ -259,18 +268,22 @@ export const getNetworkBadge = (asset: string): string | null => {
 };
 
 export const getRouterAddress = (asset: string): string | undefined => {
-    const assetConfig = config.assets?.[asset];
+    const assetConfig = getAssetConfig(asset);
     if (!assetConfig) {
         return undefined;
     }
 
-    // If this asset routes via another asset, get that asset's router
-    if (assetConfig.token?.routeVia) {
-        const routeViaConfig = config.assets?.[assetConfig.token.routeVia];
+    // Bridge variants inherit route metadata from their canonical asset.
+    const routeVia = getRouteViaAsset(asset);
+    if (routeVia) {
+        const routeViaConfig = getAssetConfig(routeVia);
         return routeViaConfig?.contracts?.router;
     }
 
-    return assetConfig.contracts?.router;
+    return (
+        assetConfig.contracts?.router ??
+        getCanonicalAssetConfig(asset)?.contracts?.router
+    );
 };
 
 export const requireRouterAddress = (asset: string): string => {
