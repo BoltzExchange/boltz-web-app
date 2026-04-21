@@ -61,6 +61,19 @@ const createSolanaLegacyMeshDeployment = (
     lzEid: "30168",
     contracts,
 });
+const createTronLegacyMeshDeployment = (
+    contracts = [
+        {
+            name: "OFT",
+            address: "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
+            explorer: "",
+        },
+    ],
+) => ({
+    name: "Tron",
+    lzEid: "30420",
+    contracts,
+});
 const createOkFetchResponse = (json: unknown) => ({
     ok: true,
     json: vi.fn().mockResolvedValue(json),
@@ -266,20 +279,7 @@ describe("oft", () => {
                 json: vi.fn().mockResolvedValue({
                     usdt0: {
                         native: [],
-                        legacyMesh: [
-                            {
-                                name: "Tron",
-                                lzEid: "30420",
-                                contracts: [
-                                    {
-                                        name: "OFT",
-                                        address:
-                                            "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
-                                        explorer: "",
-                                    },
-                                ],
-                            },
-                        ],
+                        legacyMesh: [createTronLegacyMeshDeployment()],
                     },
                 }),
             }),
@@ -302,20 +302,7 @@ describe("oft", () => {
                 json: vi.fn().mockResolvedValue({
                     usdt0: {
                         native: [],
-                        legacyMesh: [
-                            {
-                                name: "Tron",
-                                lzEid: "30420",
-                                contracts: [
-                                    {
-                                        name: "OFT",
-                                        address:
-                                            "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
-                                        explorer: "",
-                                    },
-                                ],
-                            },
-                        ],
+                        legacyMesh: [createTronLegacyMeshDeployment()],
                     },
                 }),
             }),

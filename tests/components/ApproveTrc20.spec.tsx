@@ -53,10 +53,6 @@ describe("ApproveTrc20", () => {
 
     beforeEach(() => {
         vi.restoreAllMocks();
-        vi.clearAllMocks();
-
-        mockSetNeedsApproval.mockReset();
-        vi.mocked(sendTronTokenApproval).mockReset();
 
         vi.spyOn(globalContext, "useGlobalContext").mockReturnValue({
             t: (key: string) => key,
@@ -70,10 +66,6 @@ describe("ApproveTrc20", () => {
         vi.spyOn(WalletConnectProvider, "getTronProvider").mockReturnValue(
             walletProvider as never,
         );
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
     });
 
     it("submits a single approval by default", async () => {
