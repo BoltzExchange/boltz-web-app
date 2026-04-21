@@ -304,7 +304,7 @@ export const usdt0Variants = [
     },
     {
         asset: "USDT0-TRON",
-        canSend: false,
+        canSend: true,
         chainName: "Tron",
         symbol: "TRX",
         gasToken: "TRX",

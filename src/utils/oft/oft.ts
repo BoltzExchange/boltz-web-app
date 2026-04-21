@@ -52,14 +52,8 @@ import {
     getOftChain,
     getOftContract,
 } from "./registry";
-import {
-    createSolanaOftContract,
-    getSolanaOftTokenBalance as getSolanaLegacyMeshTokenBalance,
-} from "./solana";
-import {
-    createTronOftContract,
-    getTronOftTokenBalance as getTronLegacyMeshTokenBalance,
-} from "./tron";
+import { createSolanaOftContract, getSolanaTokenBalance } from "./solana";
+import { createTronOftContract, getTronTokenBalance } from "./tron";
 import type {
     MsgFee,
     OftFeeDetail,
@@ -208,6 +202,9 @@ const isTronWalletProvider = (
 ): runner is TronConnector =>
     runner !== undefined && "chain" in runner && runner.chain === "tron";
 
+const isEvmOftRunner = (runner: OftTransportRunner): runner is ContractRunner =>
+    runner !== undefined && "estimateGas" in runner;
+
 const getEvmOftRunner = (
     route: OftRoute,
     runner: OftTransportRunner,
@@ -215,13 +212,13 @@ const getEvmOftRunner = (
     if (runner === undefined) {
         return getOftProvider(route.sourceAsset);
     }
-    if (isSolanaWalletProvider(runner) || isTronWalletProvider(runner)) {
-        throw new Error(
-            `Expected an EVM runner for OFT route ${formatRoute(route)}`,
-        );
+    if (isEvmOftRunner(runner)) {
+        return runner;
     }
 
-    return runner;
+    throw new Error(
+        `Expected an EVM runner for OFT route ${formatRoute(route)}`,
+    );
 };
 
 const getSolanaOftWalletProvider = (
@@ -667,7 +664,7 @@ export const getSolanaOftTokenBalance = async (
     const oftContract = await getOftContract(route, oftName);
     const oftStore = await getOftStoreContract(route, oftName);
 
-    return await getSolanaLegacyMeshTokenBalance(
+    return await getSolanaTokenBalance(
         {
             asset: route.sourceAsset,
             programAddress: oftContract.address,
@@ -680,7 +677,7 @@ export const getSolanaOftTokenBalance = async (
 export const getTronOftTokenBalance = async (
     route: OftRoute,
     ownerAddress: string,
-): Promise<bigint> => await getTronLegacyMeshTokenBalance(route, ownerAddress);
+): Promise<bigint> => await getTronTokenBalance(route, ownerAddress);
 
 export const getOftTransactionSender = async (
     sourceAsset: string,
