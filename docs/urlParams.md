@@ -24,6 +24,7 @@ are:
 - `L-BTC`
 - `RBTC`
 - `TBTC`
+- `USDT0` (Arbitrum)
 - `USDT0-ETH`
 - `USDT0-BERA`
 - `USDT0-CFX`
@@ -43,6 +44,7 @@ are:
 - `USDT0-SEI`
 - `USDT0-SOL`
 - `USDT0-STABLE`
+- `USDT0-TEMPO`
 - `USDT0-TRON`
 - `USDT0-UNI`
 - `USDT0-XLAYER`
