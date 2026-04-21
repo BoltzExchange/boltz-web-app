@@ -21,6 +21,7 @@ vi.mock("../../src/utils/chains/solana", async () => {
 });
 
 const {
+    createOftContract,
     decodeExecutorNativeAmountExceedsCapError,
     getRequiredSolanaOftNativeBalance,
     getOftReceivedEventByGuid,
@@ -291,6 +292,42 @@ describe("oft", () => {
             address: "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
             explorer: "",
         });
+    });
+
+    test("should create a Tron OFT client for live Tron deployments", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            {
+                                name: "Tron",
+                                lzEid: "30420",
+                                contracts: [
+                                    {
+                                        name: "OFT",
+                                        address:
+                                            "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        await expect(
+            createOftContract(getOftRoute("USDT0-TRON")),
+        ).resolves.toEqual(
+            expect.objectContaining({
+                transport: NetworkTransport.Tron,
+            }),
+        );
     });
 
     test("should calculate legacy mesh amount in locally", async () => {

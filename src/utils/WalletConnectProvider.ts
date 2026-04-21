@@ -1,5 +1,5 @@
-import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { BrowserProvider } from "ethers";
 import type { Setter } from "solid-js";
 
@@ -59,6 +59,15 @@ class WalletConnectProvider implements EIP1193Provider {
         }
 
         return provider as SolanaWalletProvider;
+    };
+
+    public static getTronProvider = (): TronConnector => {
+        const provider = WalletConnectProvider.providers[NetworkTransport.Tron];
+        if (provider === undefined) {
+            throw new Error("wallet connect tron provider not initialized");
+        }
+
+        return provider as TronConnector;
     };
 
     public static connect = (

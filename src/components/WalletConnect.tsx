@@ -1,5 +1,5 @@
-import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { AppKitNetwork } from "@reown/appkit/networks";
 import { BrowserProvider } from "ethers";
 import log from "loglevel";

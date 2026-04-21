@@ -53,7 +53,7 @@ export type EvmOftTransportClient = OftTransportClient & {
     approvalRequired: () => Promise<boolean>;
 };
 
-const oftAbi = [
+export const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
     "function quoteSend(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes), bool) view returns (tuple(uint256,uint256))",
     "function approvalRequired() view returns (bool)",
