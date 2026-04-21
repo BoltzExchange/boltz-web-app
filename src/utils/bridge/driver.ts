@@ -9,9 +9,9 @@ import { getAssetBridge } from "../../consts/Assets";
 import type { SwapPosition } from "../../consts/Enums";
 import type { Signer } from "../../context/Web3";
 import type { Provider } from "../provider";
+import type { BridgeDetail } from "../swapCreator";
 import type {
     BridgeContract,
-    BridgeDetail,
     BridgeDirectSendRunner,
     BridgeDirectSendTarget,
     BridgeErrorLike,
@@ -107,7 +107,8 @@ export abstract class BridgeDriver {
         if (
             bridge?.kind !== this.kind ||
             bridge.canonicalAsset === asset ||
-            config.assets?.[asset] === undefined
+            config.assets?.[asset] === undefined ||
+            config.assets?.[bridge.canonicalAsset] === undefined
         ) {
             return undefined;
         }

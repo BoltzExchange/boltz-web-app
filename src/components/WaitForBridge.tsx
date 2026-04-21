@@ -3,10 +3,11 @@ import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { BridgeKind } from "../configs/base";
 import { useGlobalContext } from "../context/Global";
-import { type BridgeDetail, bridgeRegistry } from "../utils/bridge";
+import { bridgeRegistry } from "../utils/bridge";
 import { formatError } from "../utils/errors";
 import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
+import type { BridgeDetail } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 import LoadingSpinner from "./LoadingSpinner";
 

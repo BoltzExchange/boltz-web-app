@@ -3,7 +3,6 @@ export { OftBridgeDriver } from "./OftBridgeDriver";
 export { BridgeRegistry, bridgeRegistry } from "./registry";
 export type {
     BridgeContract,
-    BridgeDetail,
     BridgeDirectSendTarget,
     BridgeErrorLike,
     BridgeMsgFee,

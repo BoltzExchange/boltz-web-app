@@ -1,7 +1,5 @@
 import type { ContractRunner, TransactionReceipt } from "ethers";
 
-import type { BridgeKind } from "../../configs/base";
-import type { SwapPosition } from "../../consts/Enums";
 import type { OftDirectSendTarget } from "../oft/directSend";
 import type { OftContract } from "../oft/registry";
 import type {
@@ -20,12 +18,6 @@ import type {
 import type { Provider } from "../provider";
 
 export type BridgeRoute = OftRoute;
-
-export type BridgeDetail = BridgeRoute & {
-    kind: BridgeKind;
-    position: SwapPosition;
-    txHash?: string;
-};
 
 export type BridgeNativeDrop = {
     amount: bigint;

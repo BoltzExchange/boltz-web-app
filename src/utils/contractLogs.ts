@@ -8,7 +8,6 @@ import { arbitrumChainId } from "src/configs/base";
 import { config } from "../config";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
-import { Network } from "../consts/Network";
 import {
     PreimageHashesWorker,
     type PreimageMap,
@@ -51,7 +50,7 @@ export const getRollupL1BlockNumber = async (
 ): Promise<number> => {
     const network = config.assets?.[asset as string]?.network;
 
-    if (network?.chainName !== Network.Arbitrum) {
+    if (network?.chainId !== arbitrumChainId) {
         return rollupBlockNumber;
     }
 
