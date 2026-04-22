@@ -31,6 +31,7 @@ import {
 } from "../chains/solana";
 import {
     decodeTronBase58Address,
+    getTronTransactionInfo,
     getTronTransactionSender,
 } from "../chains/tron";
 import {
@@ -729,7 +730,12 @@ export const getOftTransactionConfirmationTimestamp = async (
             return tx?.blockTime ?? undefined;
         }
 
-        case NetworkTransport.Tron:
-            return undefined;
+        case NetworkTransport.Tron: {
+            const tx = await getTronTransactionInfo(sourceAsset, txHash);
+            if (tx?.blockTimeStamp === undefined) {
+                return undefined;
+            }
+            return Math.floor(tx.blockTimeStamp / 1_000);
+        }
     }
 };
