@@ -43,7 +43,6 @@ describe("ApproveTrc20", () => {
         render(() => (
             <ApproveTrc20
                 asset="USDT0-TRON"
-                value={() => 42n}
                 setNeedsApproval={mockSetNeedsApproval}
                 approvalTarget={approvalTarget}
                 {...props}
@@ -83,7 +82,6 @@ describe("ApproveTrc20", () => {
                 sourceAsset: "USDT0-TRON",
                 ownerAddress: walletAddress,
                 spenderAddress: approvalTarget,
-                amount: 42n,
                 walletProvider,
             });
         });

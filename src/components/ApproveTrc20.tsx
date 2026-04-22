@@ -11,7 +11,6 @@ import ContractTransaction from "./ContractTransaction";
 
 const ApproveTrc20 = (props: {
     asset: string;
-    value: () => bigint;
     setNeedsApproval: Setter<boolean>;
     approvalTarget: string;
 }) => {
@@ -38,7 +37,6 @@ const ApproveTrc20 = (props: {
                     sourceAsset: props.asset,
                     ownerAddress: wallet.address,
                     spenderAddress: props.approvalTarget,
-                    amount: props.value(),
                     walletProvider,
                 });
                 await tx.wait(1);
