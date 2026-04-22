@@ -1,4 +1,5 @@
 import type { TronConnector } from "@reown/appkit-utils/tron";
+import type { Adapter as AbstractTronWalletAdapter } from "@tronweb3/tronwallet-abstract-adapter";
 import { Interface } from "ethers";
 import type { TronWeb as TronWebClient } from "tronweb";
 
@@ -40,16 +41,10 @@ const sendSelector =
     "send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address)";
 const approveSelector = "approve(address,uint256)";
 
-type BroadcastResult = {
-    txID: string;
-    signature?: string[];
-    raw_data_hex?: string;
-};
-
 type TronSignTransactionResponse =
-    | BroadcastResult
+    | TronSignedTransaction
     | {
-          result: BroadcastResult;
+          result: TronSignedTransaction;
       };
 
 // The `TronConnector` type doesn't have the `tron_signTransaction` rpc method,
@@ -73,11 +68,26 @@ const getTronAddressHexBody = (address: string): string =>
         .replace(/^0x/, "")
         .replace(/^41/, "");
 
+const normalizeTronSignedTransaction = (
+    response: TronSignTransactionResponse,
+): TronSignedTransaction => {
+    if ("txID" in response) {
+        return response;
+    }
+    return response.result;
+};
+
 const signTronTransaction = async (
     walletProvider: WalletConnectTronConnector,
     walletAddress: string,
     transaction: unknown,
-): Promise<BroadcastResult> => {
+): Promise<TronSignedTransaction> => {
+    if (walletProvider.type === "INJECTED" && "adapter" in walletProvider) {
+        const adapter = walletProvider.adapter as AbstractTronWalletAdapter;
+        const response = await adapter.signTransaction(transaction);
+        return normalizeTronSignedTransaction(response);
+    }
+
     const chainId = walletProvider.chains.find((chain) =>
         chain.caipNetworkId.startsWith("tron"),
     )?.caipNetworkId;
@@ -98,11 +108,7 @@ const signTronTransaction = async (
             chainId,
         );
 
-    if ("txID" in response) {
-        return response;
-    }
-
-    return response.result;
+    return normalizeTronSignedTransaction(response);
 };
 
 const encodeContractParams = (data: string): string => {
@@ -282,16 +288,14 @@ const buildTronSmartContractTransaction = async (params: {
 const submitSignedTronTransaction = async (
     sourceAsset: string,
     client: TronWebClient,
-    signedTransaction: BroadcastResult,
+    signedTransaction: TronSignedTransaction,
 ): Promise<OftTransaction> => {
     const transactionHash = signedTransaction.txID;
     if (transactionHash === undefined || transactionHash === "") {
         throw new Error("Tron wallet did not return a transaction ID");
     }
 
-    const broadcast = await client.trx.sendRawTransaction(
-        signedTransaction as TronSignedTransaction,
-    );
+    const broadcast = await client.trx.sendRawTransaction(signedTransaction);
     if (broadcast.result !== true) {
         throw new Error(
             broadcast.message !== undefined
