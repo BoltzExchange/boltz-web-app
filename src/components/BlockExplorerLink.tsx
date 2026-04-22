@@ -76,8 +76,8 @@ const BlockExplorerLink = (props: {
             when={!bridgeSendPending()}
             fallback={
                 <BlockExplorer
-                    asset={props.swap().assetSend}
-                    txId={props.swap().bridge?.txHash}
+                    asset={props.swap().bridge!.sourceAsset}
+                    txId={props.swap().bridge!.txHash}
                     explorer={bridgeRegistry.getExplorerKind(
                         props.swap().bridge,
                     )}
