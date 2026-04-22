@@ -10,7 +10,10 @@ import { NetworkTransport } from "../configs/base";
 import { getEvmAssets } from "../consts/Assets";
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";
-import type { WalletConnectRuntimeProvider } from "../utils/WalletConnectProvider";
+import type {
+    RawEvmProvider,
+    WalletConnectRuntimeProvider,
+} from "../utils/WalletConnectProvider";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { buildWalletConnectNetworks } from "../utils/walletConnectNetworks";
 
@@ -104,35 +107,35 @@ export const WalletConnect = () => {
             const transport = WalletConnectProvider.getRequestedTransport();
             const namespace = getWalletConnectNamespace(transport);
             const address = created.getAddress(namespace);
-            const evmProvider = created.getProvider<{
-                request: (request: {
-                    method: string;
-                    params?: Array<unknown>;
-                }) => Promise<unknown>;
-            }>("eip155");
             let provider: WalletConnectRuntimeProvider | undefined;
             switch (transport) {
-                case NetworkTransport.Evm:
-                    provider =
-                        evmProvider !== undefined
-                            ? new BrowserProvider(
-                                  evmProvider as {
-                                      request: (request: {
-                                          method: string;
-                                          params?: Array<unknown>;
-                                      }) => Promise<unknown>;
-                                  },
-                              )
-                            : undefined;
+                case NetworkTransport.Evm: {
+                    const evmProvider =
+                        created.getProvider<RawEvmProvider>(namespace);
+                    const chainId = created.getCaipNetwork(namespace)?.id;
+
+                    if (
+                        evmProvider === undefined ||
+                        typeof chainId !== "number"
+                    ) {
+                        WalletConnectProvider.setRawEvmProvider(undefined);
+                        WalletConnectProvider.setEvmChainId(undefined);
+                        break;
+                    }
+
+                    provider = new BrowserProvider(evmProvider);
+                    WalletConnectProvider.setRawEvmProvider(evmProvider);
+                    WalletConnectProvider.setEvmChainId(chainId);
                     break;
+                }
 
                 case NetworkTransport.Solana:
                     provider =
-                        created.getProvider<SolanaWalletProvider>("solana");
+                        created.getProvider<SolanaWalletProvider>(namespace);
                     break;
 
                 case NetworkTransport.Tron:
-                    provider = created.getProvider<TronConnector>("tron");
+                    provider = created.getProvider<TronConnector>(namespace);
                     break;
             }
 
