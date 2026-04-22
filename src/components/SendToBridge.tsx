@@ -629,10 +629,6 @@ const SendToBridge = (props: {
                                 sourceTransport() === NetworkTransport.Tron ? (
                                     <ApproveTrc20
                                         asset={props.bridge.sourceAsset}
-                                        value={() =>
-                                            requiredTokenBalance() ??
-                                            props.amount
-                                        }
                                         setNeedsApproval={setNeedsApproval}
                                         approvalTarget={approvalTarget()!}
                                     />

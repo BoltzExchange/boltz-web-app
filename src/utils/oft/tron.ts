@@ -1,6 +1,6 @@
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Adapter as AbstractTronWalletAdapter } from "@tronweb3/tronwallet-abstract-adapter";
-import { Interface } from "ethers";
+import { Interface, MaxUint256 } from "ethers";
 import type { TronWeb as TronWebClient } from "tronweb";
 
 import { NetworkTransport } from "../../configs/base";
@@ -372,7 +372,6 @@ export const sendTronTokenApproval = async (params: {
     sourceAsset: string;
     ownerAddress: string;
     spenderAddress: string;
-    amount: bigint;
     walletProvider: TronConnector;
 }): Promise<OftTransaction> => {
     const tokenAddress = getTokenAddress(params.sourceAsset);
@@ -382,7 +381,7 @@ export const sendTronTokenApproval = async (params: {
         functionSelector: approveSelector,
         encodedCall: erc20Interface.encodeFunctionData("approve", [
             tronBase58ToHexAddress(params.spenderAddress),
-            params.amount,
+            MaxUint256,
         ]),
         ownerAddress: params.ownerAddress,
         errorContext: "Tron token approval transaction",
