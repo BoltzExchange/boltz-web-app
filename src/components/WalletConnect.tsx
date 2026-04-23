@@ -89,8 +89,12 @@ export const WalletConnect = () => {
             },
         });
 
+        let lastWalletConnectEvent: string | undefined;
         created.subscribeEvents((ev) => {
-            log.debug(`WalletConnect event: ${ev.data.event}`);
+            if (ev.data.event !== lastWalletConnectEvent) {
+                log.debug(`WalletConnect event: ${ev.data.event}`);
+                lastWalletConnectEvent = ev.data.event;
+            }
 
             if (ev.data.event !== "MODAL_CLOSE") {
                 setOpenWalletConnectModal(false);
