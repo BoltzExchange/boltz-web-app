@@ -125,6 +125,7 @@ export const tempoRpcUrls = prependEnv(
 
 export const tronRpcUrls = prependEnv(import.meta.env.VITE_TRON_RPC_ENDPOINT, [
     "https://tron-rpc.publicnode.com",
+    "https://api.trongrid.io",
 ]);
 
 export const unichainRpcUrls = prependEnv(
