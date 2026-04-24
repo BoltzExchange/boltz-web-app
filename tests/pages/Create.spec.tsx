@@ -789,6 +789,88 @@ describe("Create", () => {
         });
     });
 
+    test("should drop maxlength on amount inputs when the pair is invalid", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(LN, BTC);
+
+        await waitFor(() => {
+            expect(signals.maximum()).toBeGreaterThan(0);
+        });
+
+        const sendInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+        const receiveInput = (await screen.findByTestId(
+            "receiveAmount",
+        )) as HTMLInputElement;
+
+        expect(sendInput.hasAttribute("maxlength")).toBe(true);
+        expect(receiveInput.hasAttribute("maxlength")).toBe(true);
+
+        // Fees.tsx zeros maximum when the pair is not routable
+        signals.setMaximum(0);
+
+        await waitFor(() => {
+            expect(sendInput.hasAttribute("maxlength")).toBe(false);
+            expect(receiveInput.hasAttribute("maxlength")).toBe(false);
+        });
+
+        signals.setMaximum(21_000_000);
+
+        await waitFor(() => {
+            expect(sendInput.hasAttribute("maxlength")).toBe(true);
+            expect(receiveInput.hasAttribute("maxlength")).toBe(true);
+        });
+    });
+
+    test("should allow typing past one digit when the pair is invalid", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Sat);
+        setPairAssets(LN, BTC);
+
+        await waitFor(() => {
+            expect(signals.maximum()).toBeGreaterThan(0);
+        });
+
+        signals.setMaximum(0);
+
+        const sendInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+
+        await waitFor(() => {
+            expect(sendInput.hasAttribute("maxlength")).toBe(false);
+        });
+
+        fireEvent.input(sendInput, { target: { value: "123456" } });
+
+        expect(sendInput.value).toBe("123456");
+    });
+
     test("should keep send amount at zero when receive amount is zero", async () => {
         render(
             () => (
