@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import { createEffect, createSignal, on } from "solid-js";
+import { createEffect, createMemo, createSignal, on } from "solid-js";
 
 import {
     BTC,
@@ -67,6 +67,15 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
+
+const userErrorLabelKeys = new Set<DictKey>([
+    "invalid_pair",
+    "invalid_send_asset",
+    "maximum_amount",
+    "invalid_0_amount",
+    "min_amount_destination",
+    "max_amount_destination",
+]);
 
 const buildBridgeDetail = (
     asset: string,
@@ -225,9 +234,19 @@ const CreateButton = () => {
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [loading, setLoading] = createSignal(false);
-    const [buttonClass, setButtonClass] = createSignal("btn");
     const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
+    });
+    const pairsLoading = () => online() && pairs() === undefined;
+    const invalidPairState = () => pairs() !== undefined && !pair().isRoutable;
+    const buttonClass = createMemo(() => {
+        if (!online()) {
+            return "btn btn-danger";
+        }
+        if (!pairsLoading() && userErrorLabelKeys.has(buttonLabel().key)) {
+            return "btn btn-error";
+        }
+        return "btn";
     });
     const [originalDestination, setOriginalDestination] = createSignal<
         string | undefined
@@ -255,10 +274,6 @@ const CreateButton = () => {
         hasBolt12Offer: Boolean(bolt12Offer()),
     });
 
-    createEffect(() => {
-        setButtonClass(!online() ? "btn btn-danger" : "btn");
-    });
-
     createEffect(
         on(
             [
@@ -280,6 +295,9 @@ const CreateButton = () => {
                 setButtonDisable(false);
                 if (!online()) {
                     setButtonLabel({ key: "api_offline" });
+                    return;
+                }
+                if (pairs() === undefined) {
                     return;
                 }
                 if (!pair().isRoutable) {
@@ -831,6 +849,7 @@ const CreateButton = () => {
             class={buttonClass()}
             disabled={
                 !online() ||
+                pairsLoading() ||
                 !(valid() || validWayToFetchInvoice()) ||
                 buttonDisable() ||
                 loading() ||
@@ -843,7 +862,11 @@ const CreateButton = () => {
                     lnurl() === "")
             }
             onClick={buttonClick}>
-            {loading() || bolt12Loading() || quoteLoading() ? (
+            {(pairsLoading() ||
+                loading() ||
+                bolt12Loading() ||
+                quoteLoading()) &&
+            !invalidPairState() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
                 getButtonLabel(buttonLabel())

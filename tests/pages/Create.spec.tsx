@@ -185,7 +185,11 @@ describe("Create", () => {
                 },
             );
 
-            const currentPair = signals.pair();
+            globalSignals.setPairs(pairs);
+            globalSignals.setRegularPairs(pairs);
+
+            const currentPair = new Pair(pairs, LN, BTC, pairs);
+            signals.setPair(currentPair);
             let resolveQuote: ((amount: BigNumber) => void) | undefined;
             const quotePromise = new Promise<BigNumber>((resolve) => {
                 resolveQuote = resolve;
