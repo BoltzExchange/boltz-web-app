@@ -31,8 +31,8 @@
         "@solid-primitives/storage": "^4.3.4",
         "@solidjs/router": "^0.16.1",
         "@trezor/connect-web": "^9.7.2",
-        "@tronweb3/tronwallet-adapter-metamask-tron": "1.0.1",
-        "@tronweb3/tronwallet-adapter-tronlink": "1.1.13",
+        "@tronweb3/tronwallet-adapter-metamask-tron": "^1.0.4",
+        "@tronweb3/tronwallet-adapter-tronlink": "^1.1.16",
         "@vulpemventures/secp256k1-zkp": "^3.2.1",
         "bignumber.js": "^11.0.0",
         "bolt11": "^1.4.1",
@@ -944,9 +944,9 @@
 
     "@tronweb3/tronwallet-abstract-adapter": ["@tronweb3/tronwallet-abstract-adapter@1.1.10", "", { "dependencies": { "eventemitter3": "^4.0.0", "tronweb": "6" } }, "sha512-gZExaEZwPfI9oI7qSi56p/5Zl/DEzo1JlcD3lQzz1cuz0rZmEFpIqDS2mhY4r/IwEPwilIU7lg7T8/RQDVk9gA=="],
 
-    "@tronweb3/tronwallet-adapter-metamask-tron": ["@tronweb3/tronwallet-adapter-metamask-tron@1.0.1", "", { "dependencies": { "@metamask/multichain-api-client": "0.11.0", "@tronweb3/tronwallet-abstract-adapter": "^1.1.10" } }, "sha512-1r/a0BOnLavVfM2QOjXCz4fLxu2aSP/AKOhuGPm8M31oROo+PNw8XtrS2xDTB9C/pAgUMMgYJTKpJ0KK0Ed+yg=="],
+    "@tronweb3/tronwallet-adapter-metamask-tron": ["@tronweb3/tronwallet-adapter-metamask-tron@1.0.4", "", { "dependencies": { "@metamask/multichain-api-client": "0.11.0", "@tronweb3/tronwallet-abstract-adapter": "^1.1.13" } }, "sha512-GzmvOBSzyy6wiFT2uqqGh6tV628wLHEfAnd/8MisXW/UPOQWsYhu2SgX9/gxHqrcVLhPVXEbw9NrsAIKGdZ1DA=="],
 
-    "@tronweb3/tronwallet-adapter-tronlink": ["@tronweb3/tronwallet-adapter-tronlink@1.1.13", "", { "dependencies": { "@tronweb3/tronwallet-abstract-adapter": "^1.1.9" } }, "sha512-Oq5L0FyBM+g49DCr0DYdSx8xuhiqIlKoBTPNVmCTSDoWnoZpIh0XE33Axm/4OUMO2NHFpQMvP3pFo7QIllOZ/w=="],
+    "@tronweb3/tronwallet-adapter-tronlink": ["@tronweb3/tronwallet-adapter-tronlink@1.1.16", "", { "dependencies": { "@tronweb3/tronwallet-abstract-adapter": "^1.1.13" } }, "sha512-PqwiRQdcZ3y+YiVX2kPcmLZtHDD9IDw/9oTjAyla/jFkaaEpMDpPRV4S6yulDyHzjVOJD9yOan9EXtr0KU+aKg=="],
 
     "@tybys/wasm-util": ["@tybys/wasm-util@0.10.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg=="],
 
@@ -2718,6 +2718,8 @@
 
     "@reown/appkit-adapter-solana/bs58": ["bs58@6.0.0", "", { "dependencies": { "base-x": "^5.0.0" } }, "sha512-PD0wEnEYg6ijszw/u8s+iI3H17cTymlrwkKhDhPZq+Sokl3AU4htyBFTjAeNAlCCmg0f53g6ih3jATyCKftTfw=="],
 
+    "@reown/appkit-adapter-tron/@tronweb3/tronwallet-adapter-tronlink": ["@tronweb3/tronwallet-adapter-tronlink@1.1.13", "", { "dependencies": { "@tronweb3/tronwallet-abstract-adapter": "^1.1.9" } }, "sha512-Oq5L0FyBM+g49DCr0DYdSx8xuhiqIlKoBTPNVmCTSDoWnoZpIh0XE33Axm/4OUMO2NHFpQMvP3pFo7QIllOZ/w=="],
+
     "@reown/appkit-ui/qrcode": ["qrcode@1.5.3", "", { "dependencies": { "dijkstrajs": "^1.0.1", "encode-utf8": "^1.0.3", "pngjs": "^5.0.0", "yargs": "^15.3.1" }, "bin": "bin/qrcode" }, "sha512-puyri6ApkEHYiVl4CFzo1tDkAZ+ATcnbJrJ6RiBM1Fhctdn/ix9MTE3hRph33omisEbC/2fcfemsseiKgBPKZg=="],
 
     "@scure/bip32/@noble/curves": ["@noble/curves@2.0.1", "", { "dependencies": { "@noble/hashes": "2.0.1" } }, "sha512-vs1Az2OOTBiP4q0pwjW5aF0xp9n4MxVrmkFBxc6EKZc6ddYx5gaZiAsZoq0uRRXWbi3AT/sBqn05eRPtn1JCPw=="],
@@ -2866,7 +2868,9 @@
 
     "@tronweb3/tronwallet-abstract-adapter/eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
 
-    "@tronweb3/tronwallet-adapter-metamask-tron/@tronweb3/tronwallet-abstract-adapter": ["@tronweb3/tronwallet-abstract-adapter@1.1.12", "", { "dependencies": { "eventemitter3": "4.0.7", "tronweb": "6.2.2" } }, "sha512-DUkZN4xUFCMesbyedms7kkgFmybgEBFREUNJqTuSesdMkTDLddyk870TXEOSXcuLMrdkrSgMRUmhY7hpQUtR1A=="],
+    "@tronweb3/tronwallet-adapter-metamask-tron/@tronweb3/tronwallet-abstract-adapter": ["@tronweb3/tronwallet-abstract-adapter@1.1.13", "", { "dependencies": { "eventemitter3": "4.0.7", "tronweb": "6.2.2" } }, "sha512-Sv1FUo5A1fNgc2oZ2LMJ7SmA5TpW5MSWTNjnWJ8t6Z+aRfLbc/s8nkPPLqm0YfR+Sa80sLhMfqJsJzYf73ynMg=="],
+
+    "@tronweb3/tronwallet-adapter-tronlink/@tronweb3/tronwallet-abstract-adapter": ["@tronweb3/tronwallet-abstract-adapter@1.1.13", "", { "dependencies": { "eventemitter3": "4.0.7", "tronweb": "6.2.2" } }, "sha512-Sv1FUo5A1fNgc2oZ2LMJ7SmA5TpW5MSWTNjnWJ8t6Z+aRfLbc/s8nkPPLqm0YfR+Sa80sLhMfqJsJzYf73ynMg=="],
 
     "@typescript-eslint/eslint-plugin/ignore": ["ignore@7.0.5", "", {}, "sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg=="],
 
@@ -3415,6 +3419,8 @@
     "@trezor/utxo-lib/bs58check/@noble/hashes": ["@noble/hashes@1.8.0", "", {}, "sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A=="],
 
     "@tronweb3/tronwallet-adapter-metamask-tron/@tronweb3/tronwallet-abstract-adapter/eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
+
+    "@tronweb3/tronwallet-adapter-tronlink/@tronweb3/tronwallet-abstract-adapter/eventemitter3": ["eventemitter3@4.0.7", "", {}, "sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw=="],
 
     "@typescript-eslint/typescript-estree/minimatch/brace-expansion": ["brace-expansion@5.0.5", "", { "dependencies": { "balanced-match": "^4.0.2" } }, "sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ=="],
 
