@@ -12,7 +12,11 @@ import {
     Contract,
     type InterfaceAbi,
     JsonRpcSigner,
+    type TypedDataDomain,
+    TypedDataEncoder,
+    type TypedDataField,
     Wallet,
+    getAddress,
 } from "ethers";
 import log from "loglevel";
 import type { Accessor, JSXElement, Setter } from "solid-js";
@@ -47,6 +51,7 @@ import { getContracts } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
+import { isIos } from "../utils/helper";
 import {
     createAssetProvider,
     getRpcUrls,
@@ -389,6 +394,43 @@ const Web3SignerProvider = (props: {
         ) as unknown as Signer;
         nextSigner.rdns = rdns;
 
+        if (
+            rdns === walletConnectRdns &&
+            isIos() &&
+            WalletConnectProvider.isTrustWallet()
+        ) {
+            nextSigner.signTypedData = (async (
+                domain: TypedDataDomain,
+                types: Record<string, TypedDataField[]>,
+                value: Record<string, unknown>,
+            ) => {
+                const chainId =
+                    domain.chainId === null || domain.chainId === undefined
+                        ? undefined
+                        : Number(domain.chainId);
+                const normalizedChainId =
+                    chainId !== undefined && Number.isFinite(chainId)
+                        ? chainId
+                        : undefined;
+                const payload = TypedDataEncoder.getPayload(
+                    domain,
+                    types,
+                    value,
+                ) as { domain: { chainId?: number | string } };
+                if (normalizedChainId !== undefined) {
+                    payload.domain.chainId = normalizedChainId;
+                }
+
+                return (await WalletConnectProvider.requestRawEvm(
+                    {
+                        method: "eth_signTypedData_v4",
+                        params: [getAddress(address), JSON.stringify(payload)],
+                    },
+                    normalizedChainId,
+                )) as string;
+            }) as typeof nextSigner.signTypedData;
+        }
+
         return nextSigner;
     };
 
@@ -563,6 +605,19 @@ const Web3SignerProvider = (props: {
             configureHardwareProvider(activeSigner.rdns, { asset });
             await refreshConnectedSigner(
                 hardwareProvider,
+                activeSigner.rdns,
+                sanitizedChainId,
+            );
+            return;
+        }
+
+        if (
+            activeSigner?.rdns === walletConnectRdns &&
+            WalletConnectProvider.isTrustWallet()
+        ) {
+            WalletConnectProvider.setEvmChainId(assetConfig.network.chainId);
+            await refreshConnectedSigner(
+                rawProvider(),
                 activeSigner.rdns,
                 sanitizedChainId,
             );
