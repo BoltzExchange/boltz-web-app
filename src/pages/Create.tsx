@@ -360,6 +360,7 @@ const Create = () => {
             denomination(),
         );
 
+        setReceiveAmount(satAmount);
         loadingGuard(async (isCurrent) => {
             if (satAmount.isZero()) {
                 setAmountChanged(Side.Receive);
@@ -376,7 +377,6 @@ const Create = () => {
             if (!isCurrent()) {
                 return;
             }
-            setReceiveAmount(satAmount);
             setSendAmount(sendAmount);
             validateAmount();
         });
@@ -408,6 +408,7 @@ const Create = () => {
             denomination(),
         );
 
+        setSendAmount(satAmount);
         loadingGuard(async (isCurrent) => {
             const newReceiveAmount = await pair().calculateReceiveAmount(
                 satAmount,
@@ -419,7 +420,6 @@ const Create = () => {
             if (!isCurrent()) {
                 return;
             }
-            setSendAmount(satAmount);
             setReceiveAmount(newReceiveAmount);
             validateAmount();
         });

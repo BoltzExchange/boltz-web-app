@@ -350,6 +350,75 @@ describe("Create", () => {
         }
     });
 
+    test("should preserve the typed send amount when destination changes during a pending quote", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const currentPair = signals.pair();
+            let resolveFirstQuote: ((amount: BigNumber) => void) | undefined;
+            const firstQuote = new Promise<BigNumber>((resolve) => {
+                resolveFirstQuote = resolve;
+            });
+
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn()
+                .mockImplementationOnce(() => firstQuote)
+                .mockImplementation(() => Promise.resolve(BigNumber(90_000)))
+                .mockName("calculateReceiveAmount");
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(1);
+            });
+
+            fireEvent.input(await screen.findByTestId("onchainAddress"), {
+                target: {
+                    value: "bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm",
+                },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(2);
+            });
+
+            const latestCall = vi
+                .mocked(currentPair.calculateReceiveAmount)
+                .mock.calls.at(-1);
+            expect(latestCall?.[0]?.toString()).toBe("100000");
+
+            resolveFirstQuote?.(BigNumber(90_000));
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("should block creation when a routed quote resolves to zero", async () => {
         vi.useFakeTimers();
 
@@ -868,7 +937,7 @@ describe("Create", () => {
 
         fireEvent.input(sendInput, { target: { value: "123456" } });
 
-        expect(sendInput.value).toBe("123456");
+        expect(sendInput.value).toBe("123 456");
     });
 
     test("should keep send amount at zero when receive amount is zero", async () => {
