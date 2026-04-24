@@ -436,6 +436,36 @@ describe("CreateButton", () => {
         expect(btn.disabled).toBeTruthy();
     });
 
+    test("should apply btn-error class for maximum_amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(250_000));
+        signals.setReceiveAmount(BigNumber(200_000));
+        signals.setMinimum(50_000);
+        signals.setMaximum(200_000);
+        signals.setAmountValid(false);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssets(LBTC, LN);
+
+        const btn = (await screen.findByText(
+            i18n.en.maximum_amount
+                .replace("{{ amount }}", "200 000")
+                .replace("{{ denomination }}", "sats"),
+        )) as HTMLButtonElement;
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
     test("should be enabled with create_swap label", async () => {
         render(
             () => (
@@ -447,7 +477,7 @@ describe("CreateButton", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setOnline(true);
-        signals.setValid(true);
+        setPairAssets(LBTC, BTC);
         signals.setAmountValid(true);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
@@ -558,6 +588,7 @@ describe("CreateButton", () => {
         signals.setInvoiceError("invalid_0_amount");
         expect(btn.disabled).toBeTruthy();
         expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
+        expect(btn.classList.contains("btn-error")).toBe(true);
         signals.setAmountValid(false);
         expect(btn.disabled).toBeTruthy();
         expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
@@ -665,6 +696,37 @@ describe("CreateButton", () => {
             expect(btn.disabled).toBe(true);
             expect(btn.textContent).toBe(i18n.en.invalid_send_asset);
         });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should show btn-error for invalid pairs with sendable assets", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", "USDT0-CFX");
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.invalid_pair);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
     });
 
     test("should not show a loading spinner for invalid pairs", async () => {
@@ -742,6 +804,8 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
         expect(errorBtn.disabled).toBeTruthy();
+        expect(errorBtn.classList.contains("btn-error")).toBe(true);
+        expect(errorBtn.classList.contains("btn-danger")).toBe(false);
     });
 
     test("should apply btn-error class only for user-error labels", async () => {
@@ -840,5 +904,7 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
         expect(errorBtn.disabled).toBeTruthy();
+        expect(errorBtn.classList.contains("btn-error")).toBe(true);
+        expect(errorBtn.classList.contains("btn-danger")).toBe(false);
     });
 });
