@@ -1,5 +1,5 @@
 import type { Accessor } from "solid-js";
-import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
+import { Match, Show, Switch } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -21,11 +21,7 @@ const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
-    const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
-
-    createEffect(() => {
-        setHasBeenClaimed(props.swap().claimTx !== undefined);
-    });
+    const hasBeenClaimed = () => props.swap().claimTx !== undefined;
 
     const asset = () =>
         hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
@@ -68,7 +64,11 @@ const BlockExplorerLink = (props: {
 }) => {
     const bridgeSendPending = () => {
         const s = props.swap();
-        return s.bridge?.txHash !== undefined && s.lockupTx === undefined;
+        return (
+            s.bridge?.txHash !== undefined &&
+            s.lockupTx === undefined &&
+            s.commitmentLockupTxHash === undefined
+        );
     };
 
     return (
