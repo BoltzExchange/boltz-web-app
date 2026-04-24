@@ -754,10 +754,14 @@ const Create = () => {
                                     required
                                     type="text"
                                     placeholder="0"
-                                    maxlength={calculateDigits(
-                                        maximum(),
-                                        denomination(),
-                                    )}
+                                    maxlength={
+                                        maximum() > 0
+                                            ? calculateDigits(
+                                                  maximum(),
+                                                  denomination(),
+                                              )
+                                            : undefined
+                                    }
                                     inputmode={
                                         denomination() == "btc"
                                             ? "decimal"
@@ -807,10 +811,14 @@ const Create = () => {
                                     required
                                     type="text"
                                     placeholder="0"
-                                    maxlength={calculateDigits(
-                                        maximum(),
-                                        denomination(),
-                                    )}
+                                    maxlength={
+                                        maximum() > 0
+                                            ? calculateDigits(
+                                                  maximum(),
+                                                  denomination(),
+                                              )
+                                            : undefined
+                                    }
                                     inputmode={
                                         denomination() == "btc"
                                             ? "decimal"
