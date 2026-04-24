@@ -1,11 +1,12 @@
 import type * as ConfigModule from "../../src/config";
-import type * as MainnetConfigModule from "../../src/configs/mainnet";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
 import {
     BTC,
     LBTC,
     LN,
     RBTC,
     TBTC,
+    USDC,
     USDT0,
     getAssetDisplaySymbol,
     getBridgeVariants,
@@ -22,13 +23,10 @@ import {
 vi.mock("../../src/config", async () => {
     const actual =
         await vi.importActual<typeof ConfigModule>("../../src/config");
-    const mainnet = await vi.importActual<typeof MainnetConfigModule>(
-        "../../src/configs/mainnet",
-    );
 
     return {
         ...actual,
-        config: mainnet.config,
+        config: mainnetConfig,
     };
 });
 
@@ -41,9 +39,11 @@ describe("Assets", () => {
             ${LN}           | ${LN}
             ${RBTC}         | ${RBTC}
             ${USDT0}        | ${USDT0}
+            ${USDC}         | ${USDC}
             ${"USDT0-ETH"}  | ${USDT0}
             ${"USDT0-POL"}  | ${USDT0}
             ${"USDT0-BERA"} | ${USDT0}
+            ${"USDC-BASE"}  | ${USDC}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getCanonicalAsset(input)).toBe(expected);
         });
@@ -57,9 +57,11 @@ describe("Assets", () => {
             ${LN}           | ${"LN"}
             ${RBTC}         | ${"RBTC"}
             ${USDT0}        | ${"USDT"}
+            ${USDC}         | ${"USDC"}
             ${"USDT0-ETH"}  | ${"USDT"}
             ${"USDT0-POL"}  | ${"USDT"}
             ${"USDT0-BERA"} | ${"USDT"}
+            ${"USDC-BASE"}  | ${"USDC"}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getAssetDisplaySymbol(input)).toBe(expected);
         });
@@ -134,7 +136,7 @@ describe("Assets", () => {
     });
 
     describe("getRouterAddress", () => {
-        const tbtcRouter = "0x6EA68e965fcd19b6fbC6553BABbF87a5018F9B28";
+        const tbtcRouter = mainnetConfig.assets.TBTC.contracts!.router;
 
         test("resolves the canonical asset's routeVia hop router", () => {
             expect(getRouterAddress(USDT0)).toBe(tbtcRouter);

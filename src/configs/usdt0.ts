@@ -6,6 +6,31 @@ import {
     Usdt0Kind,
 } from "src/configs/base";
 import {
+    berachainExplorerUrl,
+    confluxExplorerUrl,
+    cornExplorerUrl,
+    ethereumExplorerUrl,
+    flareExplorerUrl,
+    hederaExplorerUrl,
+    hyperEvmExplorerUrl,
+    inkExplorerUrl,
+    mantleExplorerUrl,
+    megaEthExplorerUrl,
+    monadExplorerUrl,
+    morphExplorerUrl,
+    optimismExplorerUrl,
+    plasmaExplorerUrl,
+    polygonExplorerUrl,
+    rskExplorerUrl,
+    seiExplorerUrl,
+    solanaExplorerUrl,
+    stableExplorerUrl,
+    tempoExplorerUrl,
+    tronExplorerUrl,
+    unichainExplorerUrl,
+    xlayerExplorerUrl,
+} from "src/configs/explorers";
+import {
     berachainRpcUrls,
     confluxRpcUrls,
     cornRpcUrls,
@@ -71,8 +96,10 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
         bridge: {
             kind: BridgeKind.Oft,
             canonicalAsset: "USDT0",
-            mesh,
-            quotePayer: variant.oftQuotePayer,
+            oft: {
+                mesh,
+                quotePayer: variant.oftQuotePayer,
+            },
         },
     };
     if (transport === NetworkTransport.Evm) {
@@ -95,7 +122,7 @@ export const usdt0Variants = [
         symbol: "ETH",
         chainId: 1,
         tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        blockExplorerUrl: "https://etherscan.io",
+        blockExplorerUrl: ethereumExplorerUrl,
         rpcUrls: ethereumRpcUrls,
     },
     {
@@ -105,7 +132,7 @@ export const usdt0Variants = [
         symbol: "BERA",
         chainId: 80094,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
-        blockExplorerUrl: "https://berascan.com",
+        blockExplorerUrl: berachainExplorerUrl,
         rpcUrls: berachainRpcUrls,
     },
     {
@@ -115,7 +142,7 @@ export const usdt0Variants = [
         symbol: "CFX",
         chainId: 1030,
         tokenAddress: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
-        blockExplorerUrl: "https://evm.confluxscan.org",
+        blockExplorerUrl: confluxExplorerUrl,
         rpcUrls: confluxRpcUrls,
     },
     {
@@ -126,7 +153,7 @@ export const usdt0Variants = [
         gasToken: "BTCN",
         chainId: 21000000,
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-        blockExplorerUrl: "https://cornscan.io",
+        blockExplorerUrl: cornExplorerUrl,
         rpcUrls: cornRpcUrls,
     },
     {
@@ -137,7 +164,7 @@ export const usdt0Variants = [
         gasToken: "SGB",
         chainId: 14,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
-        blockExplorerUrl: "https://flarescan.com",
+        blockExplorerUrl: flareExplorerUrl,
         rpcUrls: flareRpcUrls,
     },
     {
@@ -147,7 +174,7 @@ export const usdt0Variants = [
         symbol: "HYPE",
         chainId: 999,
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-        blockExplorerUrl: "https://hyperevmscan.io",
+        blockExplorerUrl: hyperEvmExplorerUrl,
         rpcUrls: hyperEvmRpcUrls,
     },
     {
@@ -157,7 +184,7 @@ export const usdt0Variants = [
         symbol: "HBAR",
         chainId: 295,
         tokenAddress: "0x00000000000000000000000000000000009Ce723",
-        blockExplorerUrl: "https://hashscan.io/mainnet",
+        blockExplorerUrl: hederaExplorerUrl,
         rpcUrls: hederaRpcUrls,
     },
     {
@@ -168,7 +195,7 @@ export const usdt0Variants = [
         gasToken: "ETH",
         chainId: 57073,
         tokenAddress: "0x0200C29006150606B650577BBE7B6248F58470c1",
-        blockExplorerUrl: "https://explorer.inkonchain.com",
+        blockExplorerUrl: inkExplorerUrl,
         rpcUrls: inkRpcUrls,
     },
     {
@@ -178,7 +205,7 @@ export const usdt0Variants = [
         symbol: "MNT",
         chainId: 5000,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
-        blockExplorerUrl: "https://mantlescan.xyz",
+        blockExplorerUrl: mantleExplorerUrl,
         rpcUrls: mantleRpcUrls,
     },
     {
@@ -189,7 +216,7 @@ export const usdt0Variants = [
         gasToken: "ETH",
         chainId: 4326,
         tokenAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
-        blockExplorerUrl: "https://mega.etherscan.io/",
+        blockExplorerUrl: megaEthExplorerUrl,
         rpcUrls: megaEthRpcUrls,
     },
     {
@@ -199,7 +226,7 @@ export const usdt0Variants = [
         symbol: "MON",
         chainId: 143,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
-        blockExplorerUrl: "https://monadexplorer.com",
+        blockExplorerUrl: monadExplorerUrl,
         rpcUrls: monadRpcUrls,
     },
     {
@@ -210,7 +237,7 @@ export const usdt0Variants = [
         gasToken: "ETH",
         chainId: 2818,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
-        blockExplorerUrl: "https://explorer.morph.network",
+        blockExplorerUrl: morphExplorerUrl,
         rpcUrls: morphRpcUrls,
     },
     {
@@ -221,7 +248,7 @@ export const usdt0Variants = [
         gasToken: "ETH",
         chainId: 10,
         tokenAddress: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
-        blockExplorerUrl: "https://optimistic.etherscan.io",
+        blockExplorerUrl: optimismExplorerUrl,
         rpcUrls: optimismRpcUrls,
     },
     {
@@ -232,7 +259,7 @@ export const usdt0Variants = [
         gasToken: "XPL",
         chainId: 9745,
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-        blockExplorerUrl: "https://plasmascan.to",
+        blockExplorerUrl: plasmaExplorerUrl,
         rpcUrls: plasmaRpcUrls,
     },
     {
@@ -242,7 +269,7 @@ export const usdt0Variants = [
         symbol: "POL",
         chainId: 137,
         tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
-        blockExplorerUrl: "https://polygonscan.com",
+        blockExplorerUrl: polygonExplorerUrl,
         rpcUrls: polygonRpcUrls,
     },
     {
@@ -252,7 +279,7 @@ export const usdt0Variants = [
         symbol: "RBTC",
         chainId: 30,
         tokenAddress: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
-        blockExplorerUrl: "https://rootstock.blockscout.com",
+        blockExplorerUrl: rskExplorerUrl,
         rpcUrls: rskRpcUrls,
     },
     {
@@ -262,7 +289,7 @@ export const usdt0Variants = [
         symbol: "SEI",
         chainId: 1329,
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
-        blockExplorerUrl: "https://seitrace.com",
+        blockExplorerUrl: seiExplorerUrl,
         rpcUrls: seiRpcUrls,
     },
     {
@@ -273,7 +300,7 @@ export const usdt0Variants = [
         gasToken: "USDT0",
         chainId: 988,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
-        blockExplorerUrl: "https://stablescan.xyz",
+        blockExplorerUrl: stableExplorerUrl,
         rpcUrls: stableRpcUrls,
     },
     {
@@ -284,7 +311,7 @@ export const usdt0Variants = [
         gasToken: "ETH",
         chainId: 130,
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
-        blockExplorerUrl: "https://uniscan.xyz/",
+        blockExplorerUrl: unichainExplorerUrl,
         rpcUrls: unichainRpcUrls,
     },
     {
@@ -298,7 +325,7 @@ export const usdt0Variants = [
         minGas: 1_500_000n,
         oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-        blockExplorerUrl: "https://solscan.io",
+        blockExplorerUrl: solanaExplorerUrl,
         rpcUrls: solanaRpcUrls,
         mesh: Usdt0Kind.Legacy,
     },
@@ -311,7 +338,7 @@ export const usdt0Variants = [
         transport: NetworkTransport.Tron,
         nativeDecimals: 6,
         tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
-        blockExplorerUrl: "https://tronscan.org/#",
+        blockExplorerUrl: tronExplorerUrl,
         rpcUrls: tronRpcUrls,
         mesh: Usdt0Kind.Legacy,
     },
@@ -323,7 +350,7 @@ export const usdt0Variants = [
         gasToken: "OKB",
         chainId: 196,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
-        blockExplorerUrl: "https://www.oklink.com/x-layer",
+        blockExplorerUrl: xlayerExplorerUrl,
         rpcUrls: xlayerRpcUrls,
     },
     {
@@ -334,7 +361,7 @@ export const usdt0Variants = [
         nativeDecimals: 6,
         chainId: 4217,
         tokenAddress: "0x20C00000000000000000000014f22CA97301EB73",
-        blockExplorerUrl: "https://explore.mainnet.tempo.xyz",
+        blockExplorerUrl: tempoExplorerUrl,
         rpcUrls: tempoRpcUrls,
     },
 ] as const satisfies readonly Usdt0Variant[];

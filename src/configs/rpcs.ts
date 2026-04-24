@@ -11,6 +11,16 @@ export const arbitrumRpcUrls = prependEnv(
     ["https://arb1.arbitrum.io/rpc"],
 );
 
+export const avalancheRpcUrls = prependEnv(
+    import.meta.env.VITE_AVALANCHE_RPC_ENDPOINT,
+    ["https://api.avax.network/ext/bc/C/rpc"],
+);
+
+export const baseRpcUrls = prependEnv(import.meta.env.VITE_BASE_RPC_ENDPOINT, [
+    "https://mainnet.base.org",
+    "https://base-rpc.publicnode.com",
+]);
+
 export const berachainRpcUrls = prependEnv(
     import.meta.env.VITE_BERACHAIN_RPC_ENDPOINT,
     ["https://rpc.berachain.com"],
@@ -19,6 +29,11 @@ export const berachainRpcUrls = prependEnv(
 export const confluxRpcUrls = prependEnv(
     import.meta.env.VITE_CONFLUX_RPC_ENDPOINT,
     ["https://evm.confluxrpc.com/"],
+);
+
+export const codexRpcUrls = prependEnv(
+    import.meta.env.VITE_CODEX_RPC_ENDPOINT,
+    ["https://rpc.codex.xyz"],
 );
 
 export const cornRpcUrls = prependEnv(import.meta.env.VITE_CORN_RPC_ENDPOINT, [
@@ -49,6 +64,11 @@ export const inkRpcUrls = prependEnv(import.meta.env.VITE_INK_RPC_ENDPOINT, [
     "https://rpc-gel.inkonchain.com",
 ]);
 
+export const lineaRpcUrls = prependEnv(
+    import.meta.env.VITE_LINEA_RPC_ENDPOINT,
+    ["https://rpc.linea.build", "https://linea-rpc.publicnode.com"],
+);
+
 export const mantleRpcUrls = prependEnv(
     import.meta.env.VITE_MANTLE_RPC_ENDPOINT,
     ["https://rpc.mantle.xyz"],
@@ -71,12 +91,17 @@ export const morphRpcUrls = prependEnv(
 
 export const optimismRpcUrls = prependEnv(
     import.meta.env.VITE_OPTIMISM_RPC_ENDPOINT,
-    ["https://mainnet.optimism.io/"],
+    ["https://mainnet.optimism.io", "https://optimism-rpc.publicnode.com"],
 );
 
 export const plasmaRpcUrls = prependEnv(
     import.meta.env.VITE_PLASMA_RPC_ENDPOINT,
     ["https://rpc.plasma.to"],
+);
+
+export const plumeRpcUrls = prependEnv(
+    import.meta.env.VITE_PLUME_RPC_ENDPOINT,
+    ["https://rpc.plume.org"],
 );
 
 export const polygonRpcUrls = prependEnv(
@@ -113,6 +138,11 @@ export const solanaRpcUrls = prependEnv(
     ["https://api.mainnet.solana.com", "https://solana-rpc.publicnode.com"],
 );
 
+export const sonicRpcUrls = prependEnv(
+    import.meta.env.VITE_SONIC_RPC_ENDPOINT,
+    ["https://rpc.soniclabs.com"],
+);
+
 export const stableRpcUrls = prependEnv(
     import.meta.env.VITE_STABLE_RPC_ENDPOINT,
     ["https://rpc.stable.xyz"],
@@ -132,6 +162,15 @@ export const unichainRpcUrls = prependEnv(
     import.meta.env.VITE_UNICHAIN_RPC_ENDPOINT,
     ["https://mainnet.unichain.org", "https://unichain-rpc.publicnode.com"],
 );
+
+export const worldChainRpcUrls = prependEnv(
+    import.meta.env.VITE_WORLD_CHAIN_RPC_ENDPOINT,
+    ["https://worldchain-mainnet.g.alchemy.com/public"],
+);
+
+export const xdcRpcUrls = prependEnv(import.meta.env.VITE_XDC_RPC_ENDPOINT, [
+    "https://rpc.xdc.org",
+]);
 
 export const xlayerRpcUrls = prependEnv(
     import.meta.env.VITE_XLAYER_RPC_ENDPOINT,

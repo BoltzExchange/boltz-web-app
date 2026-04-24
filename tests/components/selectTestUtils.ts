@@ -4,6 +4,9 @@ import { signals } from "../helper";
 
 type TestAsset = {
     canSend?: boolean;
+    bridge?: {
+        canonicalAsset: string;
+    };
 };
 
 export const setPairAssets = (fromAsset: string, toAsset: string) => {

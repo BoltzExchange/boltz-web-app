@@ -133,7 +133,9 @@ vi.mock("ethers", () => {
         Wallet: MockWallet,
         ZeroAddress: "0x0000000000000000000000000000000000000000",
         concat,
+        getAddress: (value: string) => value,
         getBytes,
+        keccak256: vi.fn(() => "0xkeccak"),
         solidityPacked,
         zeroPadValue,
     };

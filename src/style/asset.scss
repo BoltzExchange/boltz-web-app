@@ -112,14 +112,40 @@
     }
 }
 
+.asset-USDC {
+    .icon {
+        background-image: vars.$usdc_icon;
+        background-size: 80%;
+        background-position: center;
+    }
+    .asset-text:before {
+        content: "USDC";
+    }
+}
+
 [data-network="arbitrum"] {
     @include network-badge(vars.$arbitrum_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$arbitrum_icon);
 }
 
+[data-network="avalanche"] {
+    @include network-badge(vars.$avalanche_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$avalanche_icon);
+}
+
+[data-network="base"] {
+    @include network-badge(vars.$base_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$base_icon);
+}
+
 [data-network="berachain"] {
     @include network-badge(vars.$berachain_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$berachain_icon);
+}
+
+[data-network="codex"] {
+    @include network-badge(vars.$codex_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$codex_icon);
 }
 
 [data-network="conflux"] {
@@ -175,6 +201,11 @@
     @include network-primary-icon(vars.$ink_icon);
 }
 
+[data-network="linea"] {
+    @include network-badge(vars.$linea_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$linea_icon);
+}
+
 [data-network="mantle"] {
     @include network-badge(vars.$mantle_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$mantle_icon);
@@ -205,6 +236,11 @@
     @include network-primary-icon(vars.$plasma_icon);
 }
 
+[data-network="plume"] {
+    @include network-badge(vars.$plume_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$plume_icon);
+}
+
 [data-network="polygon"] {
     @include network-badge(vars.$polygon_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$polygon_icon);
@@ -233,6 +269,11 @@
     }
 }
 
+[data-network="sonic"] {
+    @include network-badge(vars.$sonic_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$sonic_icon);
+}
+
 [data-network="stable"] {
     @include network-badge(vars.$stable_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$stable_icon);
@@ -256,6 +297,16 @@
 [data-network="unichain"] {
     @include network-badge(vars.$unichain_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$unichain_icon);
+}
+
+[data-network="worldchain"] {
+    @include network-badge(vars.$worldchain_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$worldchain_icon);
+}
+
+[data-network="xdc"] {
+    @include network-badge(vars.$xdc_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$xdc_icon);
 }
 
 [data-network="xlayer"] {

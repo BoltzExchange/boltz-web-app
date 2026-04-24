@@ -20,6 +20,7 @@ import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { bridgeRegistry } from "../utils/bridge";
 import { getTronTokenAllowance } from "../utils/oft/oft";
+import type { OftTransportClient, SendParam } from "../utils/oft/types";
 import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ApproveTrc20 from "./ApproveTrc20";
@@ -103,16 +104,26 @@ const SendToBridge = (props: {
         const bridgeRoute = props.bridge;
         const quotedBridgeInstance =
             await bridgeDriver().getQuotedContract(bridgeRoute);
+        // `props.amount` is the amount Boltz needs to arrive on the destination
+        // chain (it was computed by the pair/DEX step on the far side). Bridges
+        // that charge fees in the bridged asset (CCTP) must burn more than
+        // that so the arrival matches. OFT typically returns `amount`
+        // unchanged when there's no token-side fee.
+        const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
+            bridgeRoute,
+            props.amount,
+        );
         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
             quotedBridgeInstance,
             bridgeRoute,
             recipient,
-            props.amount,
+            tokenAmount,
         );
 
         return {
             bridgeRoute,
             recipient,
+            tokenAmount,
             sendParam,
             msgFee,
         };
@@ -167,7 +178,7 @@ const SendToBridge = (props: {
             props.bridge.sourceAsset,
             connectedSigner,
         );
-        const { bridgeRoute, sendParam, msgFee } =
+        const { bridgeRoute, tokenAmount, sendParam, msgFee } =
             await quoteBridgeSendState(recipient);
         const directSendTarget =
             await bridgeDriver().getDirectSendTarget(bridgeRoute);
@@ -182,7 +193,7 @@ const SendToBridge = (props: {
 
         const requiredTokenAmount = bridgeDriver().getDirectRequiredTokenAmount(
             directSendTarget,
-            props.amount,
+            tokenAmount,
             msgFee,
         );
         const requiredNativeBalance =
@@ -232,7 +243,7 @@ const SendToBridge = (props: {
     };
 
     const refreshSolanaBridgeSendState = async (walletAddress: string) => {
-        const { bridgeRoute, msgFee } =
+        const { bridgeRoute, tokenAmount, msgFee } =
             await quoteBridgeSendState(getBridgeRecipient());
         const [balance, nativeBalance] = await Promise.all([
             bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
@@ -241,14 +252,14 @@ const SendToBridge = (props: {
         const requiredNativeBalance = bridgeDriver().getBufferedNativeFee(
             msgFee[0],
         );
-        const hasEnoughTokenBalance = balance >= props.amount;
+        const hasEnoughTokenBalance = balance >= tokenAmount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
 
         syncBridgeSendBalanceState(
             "Solana bridge",
             balance,
-            props.amount,
+            tokenAmount,
             nativeBalance,
             requiredNativeBalance,
             { trackRequiredTokenBalance: false },
@@ -273,8 +284,10 @@ const SendToBridge = (props: {
         const hasEnoughTokenBalance = balance >= props.amount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
+        // Tron bridge sends are OFT-only (CCTP has no Tron transport).
+        const oftBridgeInstance = bridgeInstance as OftTransportClient;
         const approvalRequired =
-            (await bridgeInstance.approvalRequired?.()) ?? false;
+            (await oftBridgeInstance.approvalRequired?.()) ?? false;
         let needsUpdatedApproval = false;
         let spenderAddress: string | undefined;
 
@@ -417,8 +430,15 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (await bridgeInstance.send(sendParam, msgFee, wallet.address))
-            .hash;
+        // Solana bridge sends are OFT-only (CCTP has no Solana transport).
+        const oftBridgeInstance = bridgeInstance as OftTransportClient;
+        return (
+            await oftBridgeInstance.send(
+                sendParam as SendParam,
+                msgFee,
+                wallet.address,
+            )
+        ).hash;
     };
 
     const sendBridgeFromTron = async () => {
@@ -475,8 +495,15 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (await bridgeInstance.send(sendParam, msgFee, wallet.address))
-            .hash;
+        // Tron bridge sends are OFT-only (CCTP has no Tron transport).
+        const oftBridgeInstance = bridgeInstance as OftTransportClient;
+        return (
+            await oftBridgeInstance.send(
+                sendParam as SendParam,
+                msgFee,
+                wallet.address,
+            )
+        ).hash;
     };
 
     const sendBridgeFromEvm = async () => {

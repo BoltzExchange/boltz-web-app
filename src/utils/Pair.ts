@@ -592,10 +592,15 @@ export default class Pair {
     ) => {
         this.latestBridgeFee = {
             sendAmount: sendAmountKey,
-            messaging: {
-                value: quote.msgFee[0],
-                token: this.bridgeMessagingFeeToken,
-            },
+            messaging:
+                quote.messagingFee === undefined
+                    ? undefined
+                    : {
+                          value: quote.messagingFee.amount,
+                          token:
+                              quote.messagingFee.token ??
+                              this.bridgeMessagingFeeToken,
+                      },
             transfer: BigNumber((quote.amountIn - quote.amountOut).toString()),
         };
     };
@@ -918,16 +923,17 @@ export default class Pair {
                 BigInt(quotedBridgeAmount.toFixed(0)),
                 postBridgeQuoteOptions,
             );
+            const bridgeMessagingFee = quote.messagingFee?.amount ?? 0n;
             const messagingFeeCost = await this.quoteMessagingFeeCost(
                 this.postBridgeClaimAsset,
                 this.postBridgeFeeQuoteDetails,
-                quote.msgFee[0],
+                bridgeMessagingFee,
             );
 
             log.info("Applied post-bridge quote", {
                 destinationAsset: this.to,
                 quotedBridgeAmount: quotedBridgeAmount.toFixed(),
-                messagingFee: quote.msgFee[0].toString(),
+                messagingFee: bridgeMessagingFee.toString(),
                 messagingFeeCost: messagingFeeCost.toFixed(),
                 quotedAmountOut: quote.amountOut.toString(),
             });
@@ -1019,6 +1025,7 @@ export default class Pair {
                 requiredAmount,
                 postBridgeQuoteOptions,
             );
+            const bridgeMessagingFee = quote.messagingFee?.amount ?? 0n;
             const requiredClaimAmount =
                 await this.convertBridgeAmountToClaimAmount(
                     BigNumber(requiredAmount.toString()),
@@ -1026,13 +1033,13 @@ export default class Pair {
             const messagingFeeCost = await this.quoteMessagingFeeCost(
                 this.postBridgeClaimAsset,
                 this.postBridgeFeeQuoteDetails,
-                quote.msgFee[0],
+                bridgeMessagingFee,
             );
             log.info("Inverted post-bridge quote", {
                 destinationAsset: this.to,
                 requiredAmount: requiredAmount.toString(),
                 requiredClaimAmount: requiredClaimAmount.toFixed(),
-                messagingFee: quote.msgFee[0].toString(),
+                messagingFee: bridgeMessagingFee.toString(),
                 messagingFeeCost: messagingFeeCost.toFixed(),
             });
 

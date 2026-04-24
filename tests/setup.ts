@@ -140,6 +140,7 @@ vi.mock("ethers", () => {
         concat,
         formatEther,
         formatUnits,
+        getAddress: (value: string) => value,
         getBytes,
         keccak256: vi.fn((value: string) => value),
         solidityPacked,

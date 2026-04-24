@@ -90,7 +90,7 @@ const createFetchWithDeployments = (
         return rpcFetchSpy();
     });
 
-const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+const originalAssets = structuredClone(runtimeConfig.assets);
 const originalNetwork = runtimeConfig.network;
 
 describe("oft", () => {

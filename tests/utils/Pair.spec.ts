@@ -2,7 +2,8 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, TBTC, USDT0 } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
@@ -157,6 +158,30 @@ vi.mock("../../src/config", async () => {
                         routeVia: "TBTC-DIS",
                     },
                 },
+                // Built like real USDT0 / CCTP variants (src/configs/usdt0.ts,
+                // src/configs/cctp.ts): token has only `address` + `decimals`,
+                // no inherited `routeVia`. The hop asset must be picked up
+                // from the canonical config.
+                "USDT0-BARE": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Bare Chain",
+                        symbol: "BARE",
+                        gasToken: "BARE",
+                        chainId: 7777,
+                        nativeCurrency: {
+                            name: "BARE",
+                            symbol: "BARE",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        address: "0x0000000000000000000000000000000000007777",
+                        decimals: 6,
+                    },
+                },
             },
         },
     };
@@ -181,15 +206,20 @@ const tbtcAssetAmount = (sats: number) =>
 const makeBridgeQuote = ({
     amountIn,
     amountOut,
-    msgFee,
+    msgFee = 0n,
 }: {
     amountIn: bigint;
     amountOut: bigint;
-    msgFee: bigint;
+    msgFee?: bigint;
 }) => ({
     amountIn,
     amountOut,
-    msgFee: [msgFee, 0n] as [bigint, bigint],
+    messagingFee:
+        msgFee === 0n
+            ? undefined
+            : {
+                  amount: msgFee,
+              },
     bridgeLimit: [0n, 0n] as [bigint, bigint],
     bridgeFeeDetails: [],
     bridgeReceipt: [amountIn, amountOut] as [bigint, bigint],
@@ -390,6 +420,48 @@ describe("Pair", () => {
         expect(pair.isRoutable).toBe(false);
         expect(pair.swapToCreate).toBeUndefined();
         expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+    });
+
+    test("variant without its own routeVia falls back to the canonical hop asset (send)", () => {
+        // No direct pairs.submarine[USDT0][BTC] entry exists, so the route
+        // resolves through the canonical source's `routeVia: TBTC`.
+        const pair = new Pair(pairs, "USDT0-BARE", LN);
+
+        // Without the fallback, the variant's token config has no `routeVia`
+        // and the TBTC hop is never resolved, so the pair is non-routable.
+        expect(pair.isRoutable).toBe(true);
+        expect(pair.swapToCreate).toMatchObject({
+            type: SwapType.Submarine,
+            from: TBTC,
+            to: LN,
+        });
+    });
+
+    test("variant without its own routeVia falls back to the canonical hop asset (receive)", () => {
+        // Remove the direct reverse BTC -> USDT0 pair so the target-side hop
+        // branch is actually exercised (matches prod config for USDC-BASE),
+        // and add a reverse BTC -> TBTC pair to land on from the fallback.
+        const pairsWithoutDirectReverse: Pairs = {
+            ...pairs,
+            reverse: {
+                BTC: {
+                    [TBTC]: pairs.reverse.BTC.USDT0,
+                },
+            },
+        };
+        const pair = new Pair(
+            pairsWithoutDirectReverse,
+            LN,
+            "USDT0-BARE",
+            pairsWithoutDirectReverse,
+        );
+
+        expect(pair.isRoutable).toBe(true);
+        expect(pair.swapToCreate).toMatchObject({
+            type: SwapType.Reverse,
+            from: LN,
+            to: TBTC,
+        });
     });
 
     test("should treat disabled `from` asset as non-routable", () => {
