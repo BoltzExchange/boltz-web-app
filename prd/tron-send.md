@@ -3,7 +3,7 @@
 ## Wallet support
 
 Tron sends require a directly connected Tron wallet. For the initial release,
-only TronLink and MetaMask are supported.
+only TronLink and MetaMask are supported alongside Wallet Connect.
 
 ## Approvals
 
