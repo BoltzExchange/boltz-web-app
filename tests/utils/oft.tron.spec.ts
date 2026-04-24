@@ -1,6 +1,7 @@
 // @vitest-environment node
 import type { TronConnector } from "@reown/appkit-utils/tron";
 
+import type { TronTransactionInfo } from "../../src/utils/chains/tron";
 import type * as TronChainsModule from "../../src/utils/chains/tron";
 
 vi.mock("../../src/utils/chains/tron", async () => {
@@ -10,12 +11,14 @@ vi.mock("../../src/utils/chains/tron", async () => {
 
     return {
         ...actual,
+        getTronTransactionInfo: vi.fn(actual.getTronTransactionInfo),
         getTronWeb: vi.fn(actual.getTronWeb),
     };
 });
 
 const { createTronOftContract } = await import("../../src/utils/oft/tron");
-const { getTronWeb } = await import("../../src/utils/chains/tron");
+const { getTronTransactionInfo, getTronWeb } =
+    await import("../../src/utils/chains/tron");
 
 type MockTronClient = Awaited<ReturnType<typeof getTronWeb>>;
 
@@ -137,5 +140,29 @@ describe("tron oft", () => {
             txID: "wallet-connect-tx",
             signature: ["0x01"],
         });
+    });
+
+    test("should decode hex Tron transaction failure messages", async () => {
+        const walletConnectRequest = vi.fn().mockResolvedValue({
+            result: {
+                txID: "failed-tron-tx",
+                signature: ["0x01"],
+            },
+        });
+        const walletProvider = createWalletProvider(walletConnectRequest);
+        const { client } = createMockClient();
+        vi.mocked(getTronWeb).mockResolvedValue(client);
+        vi.mocked(getTronTransactionInfo).mockResolvedValue({
+            result: "FAILED",
+            resMessage: "0x4f55545f4f465f454e45524759",
+        } as TronTransactionInfo);
+
+        const transaction = await createTronOftContract({
+            sourceAsset: "USDT0-TRON",
+            contractAddress,
+            walletProvider,
+        }).send([...sendParam], [...msgFee], refundAddress);
+
+        await expect(transaction.wait()).rejects.toThrow("OUT_OF_ENERGY");
     });
 });

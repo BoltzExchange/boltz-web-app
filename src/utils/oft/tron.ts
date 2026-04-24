@@ -40,6 +40,7 @@ const quoteSendSelector =
 const sendSelector =
     "send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address)";
 const approveSelector = "approve(address,uint256)";
+const hexPattern = /^[0-9a-f]+$/i;
 
 type TronSignTransactionResponse =
     | TronSignedTransaction
@@ -67,6 +68,23 @@ const getTronAddressHexBody = (address: string): string =>
         .toLowerCase()
         .replace(/^0x/, "")
         .replace(/^41/, "");
+
+const decodeHexToUtf8 = (message: string): string => {
+    const hexMessage = message.replace(/^0x/i, "");
+    if (
+        hexMessage.length === 0 ||
+        hexMessage.length % 2 !== 0 ||
+        !hexPattern.test(hexMessage)
+    ) {
+        return message;
+    }
+
+    try {
+        return decodeURIComponent(hexMessage.replace(/../g, "%$&"));
+    } catch {
+        return message;
+    }
+};
 
 const normalizeTronSignedTransaction = (
     response: TronSignTransactionResponse,
@@ -230,9 +248,12 @@ const waitForSuccessfulTronTransaction = async (
         txHash,
     );
     if (isFailedTronTransaction(transactionInfo)) {
-        throw new Error(
-            transactionInfo.resMessage ?? `Tron transaction ${txHash} failed`,
-        );
+        const failureMessage =
+            transactionInfo.resMessage !== undefined
+                ? decodeHexToUtf8(transactionInfo.resMessage)
+                : `Tron transaction ${txHash} failed`;
+
+        throw new Error(failureMessage);
     }
 
     return transactionInfo;
