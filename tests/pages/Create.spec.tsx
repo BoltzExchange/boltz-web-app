@@ -350,6 +350,93 @@ describe("Create", () => {
         }
     });
 
+    test.each([
+        {
+            side: "send",
+            inputTestId: "sendAmount",
+            quoteMethod: "calculateReceiveAmount",
+            counterAmount: 90_000,
+        },
+        {
+            side: "receive",
+            inputTestId: "receiveAmount",
+            quoteMethod: "calculateSendAmount",
+            counterAmount: 110_000,
+        },
+    ] as const)(
+        "should preserve the typed $side amount when destination changes during a pending quote",
+        async ({ inputTestId, quoteMethod, counterAmount }) => {
+            vi.useFakeTimers();
+
+            try {
+                render(
+                    () => (
+                        <>
+                            <TestComponent />
+                            <Create />
+                        </>
+                    ),
+                    {
+                        wrapper: contextWrapper,
+                    },
+                );
+
+                setPairAssets(LN, BTC);
+
+                const currentPair = signals.pair();
+                let resolveFirstQuote:
+                    | ((amount: BigNumber) => void)
+                    | undefined;
+                const firstQuote = new Promise<BigNumber>((resolve) => {
+                    resolveFirstQuote = resolve;
+                });
+
+                Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                    configurable: true,
+                    get: () => true,
+                });
+                currentPair[quoteMethod] = vi
+                    .fn()
+                    .mockImplementationOnce(() => firstQuote)
+                    .mockImplementation(() =>
+                        Promise.resolve(BigNumber(counterAmount)),
+                    )
+                    .mockName(quoteMethod);
+
+                fireEvent.input(await screen.findByTestId(inputTestId), {
+                    target: { value: "100000" },
+                });
+
+                await flushQuoteDebounce();
+
+                await waitFor(() => {
+                    expect(currentPair[quoteMethod]).toHaveBeenCalledTimes(1);
+                });
+
+                fireEvent.input(await screen.findByTestId("onchainAddress"), {
+                    target: {
+                        value: "bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm",
+                    },
+                });
+
+                await flushQuoteDebounce();
+
+                await waitFor(() => {
+                    expect(currentPair[quoteMethod]).toHaveBeenCalledTimes(2);
+                });
+
+                const latestCall = vi
+                    .mocked(currentPair[quoteMethod])
+                    .mock.calls.at(-1);
+                expect(latestCall?.[0]?.toString()).toBe("100000");
+
+                resolveFirstQuote?.(BigNumber(counterAmount));
+            } finally {
+                vi.useRealTimers();
+            }
+        },
+    );
+
     test("should block creation when a routed quote resolves to zero", async () => {
         vi.useFakeTimers();
 
@@ -868,7 +955,7 @@ describe("Create", () => {
 
         fireEvent.input(sendInput, { target: { value: "123456" } });
 
-        expect(sendInput.value).toBe("123456");
+        expect(sendInput.value).toBe("123 456");
     });
 
     test("should keep send amount at zero when receive amount is zero", async () => {
