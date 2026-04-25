@@ -203,6 +203,15 @@ class WalletConnectProvider implements EIP1193Provider {
         return provider as SolanaWalletProvider;
     };
 
+    public static getTronProvider = (): TronConnector => {
+        const provider = WalletConnectProvider.providers[NetworkTransport.Tron];
+        if (provider === undefined) {
+            throw new Error("wallet connect tron provider not initialized");
+        }
+
+        return provider as TronConnector;
+    };
+
     public static connect = (
         transport: NetworkTransport,
     ): Promise<WalletConnectAccount> => {

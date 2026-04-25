@@ -62,12 +62,14 @@ const ApproveErc20 = (props: {
                 props.setNeedsApproval(false);
             }}
             children={<ConnectWallet asset={props.asset} />}
-            buttonText={t("approve_erc20")}
+            buttonText={t("approve")}
             promptText={
                 props.resetAllowanceFirst
-                    ? t("approve_erc20_reset_line")
-                    : t("approve_erc20_line", {
-                          button: t("approve_erc20"),
+                    ? t("approve_allowance_reset_line", {
+                          tokenStandard: "ERC20",
+                      })
+                    : t("approve_allowance_line", {
+                          tokenStandard: "ERC20",
                       })
             }
             waitingText={t("tx_in_mempool_subline")}

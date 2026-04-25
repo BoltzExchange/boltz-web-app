@@ -28,12 +28,17 @@ import { bridgeRegistry } from "../utils/bridge";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { getSolanaConnection } from "../utils/chains/solana";
 import {
+    getTronTransactionInfo,
+    isFailedTronTransaction,
+} from "../utils/chains/tron";
+import {
     emptyPreimageHash,
     isEmptyPreimageHash,
     postCommitmentSignatureForTransaction,
 } from "../utils/commitment";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
+import { getTronOftGuidFromTransactionInfo } from "../utils/oft/tron";
 import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -433,6 +438,52 @@ export const SwapExecutionWorker = () => {
         }
     };
 
+    const waitForTronBridgeSendConfirmation = async (
+        swapId: string,
+        sourceAsset: string,
+        txHash: string,
+    ) => {
+        log.debug(
+            "Swap execution waiting for Tron bridge send confirmation",
+            getSwapExecutionLogContext(swapId, {
+                sourceAsset,
+                txHash,
+            }),
+        );
+
+        while (true) {
+            const currentSwap = await getSwap<SomeSwap>(swapId);
+            if (!needsPreBridgeLockup(currentSwap)) {
+                log.debug(
+                    "Swap execution stopped waiting for Tron bridge send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                    }),
+                );
+                return undefined;
+            }
+
+            const transactionInfo = await getTronTransactionInfo(
+                sourceAsset,
+                txHash,
+            );
+            if (transactionInfo !== undefined) {
+                log.info(
+                    "Swap execution found Tron bridge send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                        blockNumber: transactionInfo.blockNumber,
+                    }),
+                );
+                return transactionInfo;
+            }
+
+            await sleep(retryIntervalMs);
+        }
+    };
+
     const waitForBridgeReceiptByGuid = async (
         swapId: string,
         destinationAsset: string,
@@ -604,10 +655,32 @@ export const SwapExecutionWorker = () => {
                 break;
             }
 
-            case NetworkTransport.Tron:
-                throw new Error(
-                    `Unsupported bridge source transport for pre-lockup execution: ${sourceTransport}`,
+            case NetworkTransport.Tron: {
+                const transactionInfo = await waitForTronBridgeSendConfirmation(
+                    currentSwap.id,
+                    currentSwap.bridge.sourceAsset,
+                    currentSwap.bridge.txHash,
                 );
+                if (transactionInfo === undefined) {
+                    return;
+                }
+
+                if (isFailedTronTransaction(transactionInfo)) {
+                    await abandonFailedBridgeSend(
+                        currentSwap.id,
+                        currentSwap.bridge.sourceAsset,
+                        currentSwap.bridge.txHash,
+                        transactionInfo.blockNumber,
+                    );
+                    return;
+                }
+
+                guid = getTronOftGuidFromTransactionInfo(
+                    transactionInfo,
+                    sourceBridge.address,
+                );
+                break;
+            }
 
             default: {
                 const exhaustive: never = sourceTransport;

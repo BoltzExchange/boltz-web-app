@@ -51,11 +51,15 @@ export const WalletConnect = () => {
         const {
             appKit,
             EthersAdapter,
+            MetaMaskAdapter,
             SolanaAdapter,
             TronAdapter,
+            TronLinkAdapter,
             solana,
             tronMainnet,
         } = await loader.get();
+        const location = getLocation();
+        const appIcon = `${location}/android-chrome-512x512.png`;
         let nets: [AppKitNetwork, ...AppKitNetwork[]];
         try {
             nets = [
@@ -76,14 +80,22 @@ export const WalletConnect = () => {
             adapters: [
                 new EthersAdapter(),
                 new SolanaAdapter(),
-                new TronAdapter(),
+                new TronAdapter({
+                    walletAdapters: [
+                        new TronLinkAdapter({
+                            dappIcon: appIcon,
+                            dappName: "Boltz",
+                        }),
+                        new MetaMaskAdapter(),
+                    ],
+                }),
             ],
             networks: nets,
             metadata: {
                 name: "Boltz",
                 description: "Boltz Web App",
-                url: getLocation(),
-                icons: [`${getLocation()}/android-chrome-512x512.png`],
+                url: location,
+                icons: [appIcon],
             },
             features: {
                 email: false,

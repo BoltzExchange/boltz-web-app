@@ -1,4 +1,5 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Contract, ContractRunner } from "ethers";
 
 import type { NetworkTransport } from "../../configs/base";
@@ -69,6 +70,7 @@ export type OftReceivedEvent = {
 export type OftTransportRunner =
     | ContractRunner
     | SolanaWalletProvider
+    | TronConnector
     | undefined;
 
 export type OftTransportClient = {

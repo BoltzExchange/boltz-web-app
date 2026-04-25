@@ -19,8 +19,10 @@ import {
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { bridgeRegistry } from "../utils/bridge";
+import { getTronTokenAllowance } from "../utils/oft/oft";
 import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
+import ApproveTrc20 from "./ApproveTrc20";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import InsufficientBalance from "./InsufficientBalance";
@@ -75,14 +77,20 @@ const SendToBridge = (props: {
                     connectedWallet()?.transport === NetworkTransport.Solana &&
                     connectedWallet()?.address !== undefined
                 );
+            case NetworkTransport.Tron:
+                return (
+                    connectedWallet()?.transport === NetworkTransport.Tron &&
+                    connectedWallet()?.address !== undefined
+                );
             case NetworkTransport.Evm:
                 return (
                     signer() !== undefined &&
                     signerChainId() === expectedChainId()
                 );
             default: {
+                const exhaustiveTransport: never = transport;
                 throw new Error(
-                    `Unsupported bridge source transport: ${transport}`,
+                    `Unsupported bridge source transport: ${String(exhaustiveTransport)}`,
                 );
             }
         }
@@ -253,6 +261,55 @@ const SendToBridge = (props: {
         };
     };
 
+    const refreshTronBridgeSendState = async (walletAddress: string) => {
+        const recipient = getBridgeRecipient();
+        const { bridgeRoute, msgFee } = await quoteBridgeSendState(recipient);
+        const bridgeInstance = await bridgeDriver().createContract(bridgeRoute);
+        const [balance, nativeBalance] = await Promise.all([
+            bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
+            bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
+        ]);
+        const requiredNativeBalance = msgFee[0];
+        const hasEnoughTokenBalance = balance >= props.amount;
+        const hasEnoughNativeBalanceForMsgFee =
+            nativeBalance >= requiredNativeBalance;
+        const approvalRequired =
+            (await bridgeInstance.approvalRequired?.()) ?? false;
+        let needsUpdatedApproval = false;
+        let spenderAddress: string | undefined;
+
+        if (approvalRequired) {
+            spenderAddress = (await bridgeDriver().getContract(bridgeRoute))
+                .address;
+            const allowance = await getTronTokenAllowance(
+                props.bridge.sourceAsset,
+                walletAddress,
+                spenderAddress,
+            );
+            needsUpdatedApproval = allowance < props.amount;
+        }
+
+        syncBridgeSendBalanceState(
+            "Tron bridge",
+            balance,
+            props.amount,
+            nativeBalance,
+            requiredNativeBalance,
+            {
+                trackRequiredTokenBalance: false,
+                needsApproval: needsUpdatedApproval,
+                approvalTarget: spenderAddress,
+            },
+        );
+
+        return {
+            balance,
+            hasEnoughTokenBalance,
+            hasEnoughNativeBalanceForMsgFee,
+            needsUpdatedApproval,
+        };
+    };
+
     const syncBridgeSendState = async () => {
         const transport = sourceTransport();
 
@@ -267,6 +324,18 @@ const SendToBridge = (props: {
                 }
 
                 await refreshSolanaBridgeSendState(wallet.address);
+                return;
+            }
+            case NetworkTransport.Tron: {
+                const wallet = connectedWallet();
+                if (
+                    wallet?.transport !== NetworkTransport.Tron ||
+                    wallet.address === undefined
+                ) {
+                    return;
+                }
+
+                await refreshTronBridgeSendState(wallet.address);
                 return;
             }
             case NetworkTransport.Evm: {
@@ -286,8 +355,9 @@ const SendToBridge = (props: {
                 return;
             }
             default: {
+                const exhaustiveTransport: never = transport;
                 throw new Error(
-                    `Unsupported bridge source transport: ${transport}`,
+                    `Unsupported bridge source transport: ${String(exhaustiveTransport)}`,
                 );
             }
         }
@@ -336,6 +406,64 @@ const SendToBridge = (props: {
             recipient,
             props.amount,
         );
+
+        log.debug("Quoted bridge send", {
+            swapId: props.swapId,
+            sourceAsset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
+            recipient,
+            amount: props.amount.toString(),
+            nativeFee: msgFee[0].toString(),
+            lzTokenFee: msgFee[1].toString(),
+        });
+
+        return (await bridgeInstance.send(sendParam, msgFee, wallet.address))
+            .hash;
+    };
+
+    const sendBridgeFromTron = async () => {
+        const wallet = connectedWallet();
+        if (
+            wallet?.transport !== NetworkTransport.Tron ||
+            wallet.address === undefined
+        ) {
+            throw new Error(
+                "connected Tron wallet is required for bridge send",
+            );
+        }
+
+        const recipient = getBridgeRecipient();
+        const {
+            hasEnoughTokenBalance,
+            hasEnoughNativeBalanceForMsgFee,
+            needsUpdatedApproval,
+        } = await refreshTronBridgeSendState(wallet.address);
+
+        if (!hasEnoughTokenBalance) {
+            throw new Error(
+                "Token balance is no longer sufficient for the updated bridge quote.",
+            );
+        }
+        if (needsUpdatedApproval) {
+            throw new Error(
+                "Approval is no longer sufficient for the updated bridge quote. Please approve the new amount and try again.",
+            );
+        }
+        if (!hasEnoughNativeBalanceForMsgFee) {
+            throw new Error(
+                "Native balance is no longer sufficient for the updated bridge message fee.",
+            );
+        }
+
+        log.debug(
+            `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
+        );
+
+        const bridgeInstance = await bridgeDriver().createContract(
+            props.bridge,
+            WalletConnectProvider.getTronProvider(),
+        );
+        const { sendParam, msgFee } = await quoteBridgeSendState(recipient);
 
         log.debug("Quoted bridge send", {
             swapId: props.swapId,
@@ -418,9 +546,7 @@ const SendToBridge = (props: {
             case NetworkTransport.Evm:
                 return await sendBridgeFromEvm();
             case NetworkTransport.Tron:
-                throw new Error(
-                    "Bridge sending is not implemented for tron yet",
-                );
+                return await sendBridgeFromTron();
             default: {
                 const exhaustiveTransport: never = transport;
                 throw new Error(
@@ -500,15 +626,24 @@ const SendToBridge = (props: {
                         <Show
                             when={!needsApproval()}
                             fallback={
-                                <ApproveErc20
-                                    asset={props.bridge.sourceAsset}
-                                    value={() =>
-                                        requiredTokenBalance() ?? props.amount
-                                    }
-                                    setNeedsApproval={setNeedsApproval}
-                                    approvalTarget={approvalTarget()}
-                                    resetAllowanceFirst={true}
-                                />
+                                sourceTransport() === NetworkTransport.Tron ? (
+                                    <ApproveTrc20
+                                        asset={props.bridge.sourceAsset}
+                                        setNeedsApproval={setNeedsApproval}
+                                        approvalTarget={approvalTarget()!}
+                                    />
+                                ) : (
+                                    <ApproveErc20
+                                        asset={props.bridge.sourceAsset}
+                                        value={() =>
+                                            requiredTokenBalance() ??
+                                            props.amount
+                                        }
+                                        setNeedsApproval={setNeedsApproval}
+                                        approvalTarget={approvalTarget()}
+                                        resetAllowanceFirst={true}
+                                    />
+                                )
                             }>
                             <ContractTransaction
                                 asset={props.bridge.sourceAsset}

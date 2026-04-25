@@ -5,6 +5,16 @@ let mockNetworkTransport = "evm";
 const mockQueryFilter = vi.fn();
 const mockLockupParseLog = vi.fn();
 const mockGetTransaction = vi.fn();
+const mockGetTronTransactionInfo = vi.fn();
+const mockGetTronOftGuidFromTransactionInfo = vi.fn().mockReturnValue("0xguid");
+const isFailedTronTransaction = (transactionInfo: {
+    result?: string;
+    receipt?: {
+        result?: string;
+    };
+}) =>
+    transactionInfo.result === "FAILED" ||
+    transactionInfo.receipt?.result !== "SUCCESS";
 
 const mockSetSwapStorage = vi.fn((swap: Record<string, unknown>) => {
     currentSwap = { ...swap };
@@ -149,6 +159,11 @@ vi.mock("../../src/utils/chains/solana", () => ({
     })),
 }));
 
+vi.mock("../../src/utils/chains/tron", () => ({
+    getTronTransactionInfo: mockGetTronTransactionInfo,
+    isFailedTronTransaction,
+}));
+
 vi.mock("../../src/utils/commitment", () => ({
     emptyPreimageHash: `0x${"00".repeat(32)}`,
     isEmptyPreimageHash: (preimageHash?: string) =>
@@ -183,6 +198,10 @@ vi.mock("../../src/utils/oft/registry", () => ({
 
 vi.mock("../../src/utils/oft/solana", () => ({
     getSolanaOftGuidFromLogs: vi.fn().mockReturnValue("0xguid"),
+}));
+
+vi.mock("../../src/utils/oft/tron", () => ({
+    getTronOftGuidFromTransactionInfo: mockGetTronOftGuidFromTransactionInfo,
 }));
 
 vi.mock("../../src/utils/oft/oft", () => ({
@@ -227,6 +246,10 @@ describe("SwapExecutionWorker", () => {
         vi.clearAllMocks();
         mockNetworkTransport = "evm";
         mockGetTransaction.mockReset();
+        mockGetTronTransactionInfo.mockReset();
+        mockGetTronOftGuidFromTransactionInfo
+            .mockReset()
+            .mockReturnValue("0xguid");
         mockSendPopulatedTransaction
             .mockReset()
             .mockResolvedValue("0xcommitment");
@@ -478,6 +501,61 @@ describe("SwapExecutionWorker", () => {
                 }),
             }),
         );
+    });
+
+    test("should abandon a failed Tron OFT send before decoding the guid", async () => {
+        mockNetworkTransport = "tron";
+        mockGetTronTransactionInfo.mockResolvedValue({
+            blockNumber: 123,
+            receipt: {
+                result: "FAILED",
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSetSwapStorage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    bridge: expect.objectContaining({
+                        txHash: undefined,
+                    }),
+                }),
+            );
+        });
+
+        expect(mockGetTronOftGuidFromTransactionInfo).not.toHaveBeenCalled();
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+    });
+
+    test("should decode the guid from a confirmed Tron OFT send", async () => {
+        mockNetworkTransport = "tron";
+        mockGetTronTransactionInfo.mockResolvedValue({
+            blockNumber: 123,
+            receipt: {
+                result: "SUCCESS",
+            },
+            log: [],
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockGetTronOftGuidFromTransactionInfo).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    blockNumber: 123,
+                    receipt: expect.objectContaining({
+                        result: "SUCCESS",
+                    }),
+                    log: [],
+                }),
+                "0x1111111111111111111111111111111111111111",
+            );
+            expect(mockSendPopulatedTransaction).toHaveBeenCalled();
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalled();
+        });
     });
 
     test("should ignore stale pre-OFT swaps that already moved past the pre-lockup stage", async () => {

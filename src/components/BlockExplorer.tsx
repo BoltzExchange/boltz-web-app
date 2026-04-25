@@ -1,4 +1,7 @@
+import { prefixHex } from "../alchemy/Alchemy";
 import { chooseUrl, config } from "../config";
+import { NetworkTransport } from "../configs/base";
+import { getNetworkTransport } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import ExternalLink from "./ExternalLink";
 
@@ -31,6 +34,23 @@ const getExplorerBaseUrl = (asset: string, explorer: ExplorerKind) => {
     }
 };
 
+const normalizeExplorerValue = (
+    asset: string,
+    isTxId: boolean,
+    val: string,
+    explorer: ExplorerKind,
+): string => {
+    if (
+        isTxId &&
+        explorer === ExplorerKind.LayerZero &&
+        getNetworkTransport(asset) === NetworkTransport.Tron
+    ) {
+        return prefixHex(val);
+    }
+
+    return val;
+};
+
 const blockExplorerLink = (
     asset: string,
     isTxId: boolean,
@@ -38,7 +58,12 @@ const blockExplorerLink = (
     explorer: ExplorerKind = ExplorerKind.Asset,
 ) => {
     const basePath = getExplorerBaseUrl(asset, explorer);
-    return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
+    return `${basePath}/${isTxId ? "tx" : "address"}/${normalizeExplorerValue(
+        asset,
+        isTxId,
+        val,
+        explorer,
+    )}`;
 };
 
 const BlockExplorer = (props: PropsTxId | PropsAddress) => {

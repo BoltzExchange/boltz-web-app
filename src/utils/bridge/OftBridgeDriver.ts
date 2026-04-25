@@ -11,6 +11,7 @@ import { BridgeKind, NetworkTransport } from "../../configs/base";
 import { getTokenAddress } from "../../consts/Assets";
 import type { Signer } from "../../context/Web3";
 import { getSolanaNativeBalance } from "../chains/solana";
+import { getTronNativeBalance } from "../chains/tron";
 import {
     getOftDirectRequiredNativeBalance,
     getOftDirectRequiredTokenAmount,
@@ -30,6 +31,7 @@ import {
     getOftTransport,
     getQuotedOftContract,
     getSolanaOftTokenBalance,
+    getTronOftTokenBalance,
     isExecutorNativeAmountExceedsCapError,
     quoteOftAmountInForAmountOut,
     quoteOftReceiveAmount,
@@ -254,9 +256,7 @@ export class OftBridgeDriver extends BridgeDriver {
                 return await tokenContract.balanceOf(ownerAddress);
             }
             case NetworkTransport.Tron:
-                throw new Error(
-                    "Bridge source token balance is not implemented for tron yet",
-                );
+                return await getTronOftTokenBalance(route, ownerAddress);
             default: {
                 const exhaustiveTransport: never = transport;
                 throw new Error(
@@ -283,8 +283,9 @@ export class OftBridgeDriver extends BridgeDriver {
                     ownerAddress,
                 );
             case NetworkTransport.Tron:
-                throw new Error(
-                    "Bridge source native balance is not implemented for tron yet",
+                return await getTronNativeBalance(
+                    route.sourceAsset,
+                    ownerAddress,
                 );
             default: {
                 const exhaustiveTransport: never = transport;

@@ -34,7 +34,6 @@ describe("ApproveErc20", () => {
     }));
     const mockSigner = {
         getAddress: vi.fn(),
-        getNonce: vi.fn(),
     };
     const mockContract = {
         allowance: vi.fn(),
@@ -64,8 +63,6 @@ describe("ApproveErc20", () => {
         mockGetErc20Swap.mockClear();
         mockSigner.getAddress.mockReset();
         mockSigner.getAddress.mockResolvedValue(walletAddress);
-        mockSigner.getNonce.mockReset();
-        mockSigner.getNonce.mockResolvedValue(7);
         mockContract.allowance.mockReset();
         mockContract.allowance.mockResolvedValue(0n);
         mockContract.approve.mockReset();
@@ -96,7 +93,7 @@ describe("ApproveErc20", () => {
         mockContract.approve.mockResolvedValue(finalTx);
 
         renderApprove();
-        fireEvent.click(screen.getByRole("button", { name: "approve_erc20" }));
+        fireEvent.click(screen.getByRole("button", { name: "approve" }));
 
         await waitFor(() => {
             expect(mockContract.approve).toHaveBeenCalledWith(
@@ -105,7 +102,6 @@ describe("ApproveErc20", () => {
             );
         });
         expect(mockContract.allowance).not.toHaveBeenCalled();
-        expect(mockSigner.getNonce).not.toHaveBeenCalled();
         expect(finalTx.wait).toHaveBeenCalledWith(1);
         await waitFor(() => {
             expect(mockSetNeedsApproval).toHaveBeenCalledWith(false);
@@ -127,9 +123,9 @@ describe("ApproveErc20", () => {
             .mockResolvedValueOnce(finalTx);
 
         renderApprove({ resetAllowanceFirst: true });
-        expect(screen.getByText("approve_erc20_reset_line")).toBeDefined();
+        expect(screen.getByText("approve_allowance_reset_line")).toBeDefined();
 
-        fireEvent.click(screen.getByRole("button", { name: "approve_erc20" }));
+        fireEvent.click(screen.getByRole("button", { name: "approve" }));
 
         await waitFor(() => {
             expect(mockContract.allowance).toHaveBeenCalledWith(
@@ -147,7 +143,6 @@ describe("ApproveErc20", () => {
                 42n,
             );
         });
-        expect(mockSigner.getNonce).not.toHaveBeenCalled();
         expect(resetTx.wait).toHaveBeenCalledWith(1);
         expect(finalTx.wait).toHaveBeenCalledWith(1);
         expect(mockSetNeedsApproval).toHaveBeenCalledWith(false);
@@ -162,7 +157,7 @@ describe("ApproveErc20", () => {
         mockContract.approve.mockResolvedValue(finalTx);
 
         renderApprove({ resetAllowanceFirst: true });
-        fireEvent.click(screen.getByRole("button", { name: "approve_erc20" }));
+        fireEvent.click(screen.getByRole("button", { name: "approve" }));
 
         await waitFor(() => {
             expect(mockContract.approve).toHaveBeenCalledWith(
@@ -170,7 +165,6 @@ describe("ApproveErc20", () => {
                 42n,
             );
         });
-        expect(mockSigner.getNonce).not.toHaveBeenCalled();
         expect(finalTx.wait).toHaveBeenCalledWith(1);
         await waitFor(() => {
             expect(mockSetNeedsApproval).toHaveBeenCalledWith(false);

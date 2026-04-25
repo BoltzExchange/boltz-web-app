@@ -4,8 +4,20 @@ import BigNumber from "bignumber.js";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
 vi.mock("ethers", () => {
+    const encodedFunctionData =
+        "0x123456780000000000000000000000000000000000000000000000000000000000000000";
+    const encodedAbiData =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
     const stripPrefix = (value: string) =>
         value.startsWith("0x") ? value.slice(2) : value;
+    const decodeFunctionResult = (name: string, value: string) => {
+        const normalized = stripPrefix(value);
+        if (name === "approvalRequired") {
+            return [normalized !== "" && BigInt(`0x${normalized}`) !== 0n];
+        }
+
+        return [normalized === "" ? 0n : BigInt(`0x${normalized}`)];
+    };
     const zeroPadValue = (value: string, length: number) =>
         `0x${stripPrefix(value).padStart(length * 2, "0")}`;
     const getBytes = (value: string) =>
@@ -89,7 +101,8 @@ vi.mock("ethers", () => {
     }
 
     class Interface {
-        public encodeFunctionData = vi.fn(() => "0xencoded");
+        public encodeFunctionData = vi.fn(() => encodedFunctionData);
+        public decodeFunctionResult = vi.fn(decodeFunctionResult);
 
         public encodeFilterTopics = vi.fn(() => []);
 
@@ -99,7 +112,7 @@ vi.mock("ethers", () => {
     return {
         AbiCoder: {
             defaultAbiCoder: () => ({
-                encode: vi.fn(() => "0xencoded"),
+                encode: vi.fn(() => encodedAbiData),
             }),
         },
         BrowserProvider: MockBrowserProvider,

@@ -93,6 +93,8 @@
         "@solid-primitives/storage": "^4.3.4",
         "@solidjs/router": "^0.16.1",
         "@trezor/connect-web": "^9.7.2",
+        "@tronweb3/tronwallet-adapter-metamask-tron": "^1.0.4",
+        "@tronweb3/tronwallet-adapter-tronlink": "^1.1.16",
         "@vulpemventures/secp256k1-zkp": "^3.2.1",
         "bignumber.js": "^11.0.0",
         "bolt11": "^1.4.1",
@@ -107,6 +109,7 @@
         "qr-scanner": "^1.4.2",
         "qrcode": "^1.5.4",
         "solid-icons": "^1.2.0",
-        "solid-js": "^1.9.12"
+        "solid-js": "^1.9.12",
+        "tronweb": "^6.2.2"
     }
 }
