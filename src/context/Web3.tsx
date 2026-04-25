@@ -71,6 +71,9 @@ declare global {
     interface Window {
         // @ts-expect-error - conflicts with @reown/appkit-utils non-optional declaration
         ethereum?: EIP1193Provider;
+        tron?: unknown;
+        tronLink?: unknown;
+        tronWeb?: unknown;
     }
 }
 
@@ -139,7 +142,7 @@ export const createRouterContract = (
 
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
-    hasBrowserWallet: Accessor<boolean>;
+    browserWalletTransports: Accessor<Set<NetworkTransport>>;
 
     connectProvider: (
         rdns: string,
@@ -211,8 +214,17 @@ const Web3SignerProvider = (props: {
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
-    const [hasBrowserWallet, setHasBrowserWallet] =
-        createSignal<boolean>(false);
+    const [browserWalletTransports, setBrowserWalletTransports] = createSignal<
+        Set<NetworkTransport>
+    >(new Set());
+    const addBrowserWalletTransport = (transport: NetworkTransport) => {
+        setBrowserWalletTransports((prev) => {
+            if (prev.has(transport)) {
+                return prev;
+            }
+            return new Set(prev).add(transport);
+        });
+    };
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
@@ -239,7 +251,7 @@ const Web3SignerProvider = (props: {
 
     onMount(() => {
         if (window.ethereum !== undefined) {
-            setHasBrowserWallet(true);
+            addBrowserWalletTransport(NetworkTransport.Evm);
             setProviders({
                 ...providers(),
                 [browserRdns]: {
@@ -252,6 +264,14 @@ const Web3SignerProvider = (props: {
                     },
                 },
             });
+        }
+
+        if (
+            window.tron !== undefined ||
+            window.tronLink !== undefined ||
+            window.tronWeb !== undefined
+        ) {
+            addBrowserWalletTransport(NetworkTransport.Tron);
         }
 
         if (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID !== undefined) {
@@ -276,7 +296,7 @@ const Web3SignerProvider = (props: {
                 log.debug(
                     `Found EIP-6963 wallet: ${event.detail.info.rdns}: ${event.detail.info.name}`,
                 );
-                setHasBrowserWallet(true);
+                addBrowserWalletTransport(NetworkTransport.Evm);
 
                 const existingProviders = { ...providers() };
 
@@ -674,7 +694,7 @@ const Web3SignerProvider = (props: {
                 getErc20Swap,
                 switchNetwork,
                 connectProvider,
-                hasBrowserWallet,
+                browserWalletTransports,
                 openWalletConnectModal,
                 setOpenWalletConnectModal,
                 walletConnected,
