@@ -55,8 +55,12 @@ const Modal = (props: {
     setShow: Setter<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
-    const { providers, connectProvider, setWalletConnected, hasBrowserWallet } =
-        useWeb3Signer();
+    const {
+        providers,
+        connectProvider,
+        setWalletConnected,
+        browserWalletTransports,
+    } = useWeb3Signer();
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
@@ -129,7 +133,8 @@ const Modal = (props: {
                 <Show
                     when={
                         getNetworkTransport(props.asset) ===
-                            NetworkTransport.Evm && !hasBrowserWallet()
+                            NetworkTransport.Evm &&
+                        !browserWalletTransports().has(NetworkTransport.Evm)
                     }>
                     <hr />
 

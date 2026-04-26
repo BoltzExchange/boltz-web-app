@@ -14,9 +14,10 @@ type BackupDownloadContentProps = {
 
 const BackupDownloadContent = (props: BackupDownloadContentProps) => {
     const { t, rescueFile, notify } = useGlobalContext();
-    const { hasBrowserWallet } = useWeb3Signer();
+    const { browserWalletTransports } = useWeb3Signer();
 
-    const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
+    const isMobileWalletBrowser = () =>
+        isMobile() && browserWalletTransports().size > 0;
     const downloadKey = () => {
         try {
             downloadRescueFile(rescueFile);
@@ -38,7 +39,7 @@ const BackupDownloadContent = (props: BackupDownloadContentProps) => {
                     {t("download_new_key")}
                 </button>
             </div>
-            <Show when={isMobileEvmBrowser()}>
+            <Show when={isMobileWalletBrowser()}>
                 <button
                     class="btn btn-light"
                     data-testid="show-mnemonic-backup"
