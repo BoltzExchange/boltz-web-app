@@ -17,8 +17,19 @@ RUN if [ "$NETWORK" = "pro" ]; then bun run build:pro; else bun run build:regula
 
 FROM nginx:alpine AS final
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
+# Template for nginx config that gets substituted at runtime
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Startup script that substitutes environment variables in nginx config
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 80
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

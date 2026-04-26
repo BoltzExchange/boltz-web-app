@@ -1,0 +1,21 @@
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: boltz-webapp:latest
+    container_name: boltz-webapp
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    # Optional: uncomment and set values to customize your deployment
+    # environment:
+    #   # BTC block explorer URLs (self-hosted mempool)
+    #   - VITE_BTC_EXPLORER_URL=https://mempool.your-domain.com
+    #   - VITE_BTC_EXPLORER_TOR_URL=http://your-mempool-onion.onion
+    #   - VITE_BTC_EXPLORER_API_URL=https://mempool.your-domain.com/api
+    #   - VITE_BTC_EXPLORER_API_TOR_URL=http://your-mempool-onion.onion/api
+    #   # Web app Tor hidden service URL (for footer onion link)
+    #   - VITE_TOR_URL=http://your-webapp-onion.onion
+    #   # Onion-Location header for browser Tor integration
+    #   - ONION_LOCATION=http://your-webapp-onion.onion

@@ -1,4 +1,4 @@
-import type { Config } from "src/configs/base";
+import type { Config, ExplorerUrl } from "src/configs/base";
 import {
     BridgeKind,
     Explorer,
@@ -12,6 +12,30 @@ import { arbitrumRpcUrls, rskRpcUrls } from "src/configs/rpcs";
 import { usdt0VariantAssets } from "src/configs/usdt0";
 import { AssetKind } from "src/consts/AssetKind";
 import { Network } from "src/consts/Network";
+
+// Self-hosting overrides from environment variables
+// When set, these replace the default URLs for BTC block explorer and Tor endpoint.
+// If not set, the defaults below are used.
+
+const envBtcExplorerNormal = import.meta.env.VITE_BTC_EXPLORER_URL;
+const envBtcExplorerTor = import.meta.env.VITE_BTC_EXPLORER_TOR_URL;
+const envBtcExplorerApiNormal = import.meta.env.VITE_BTC_EXPLORER_API_URL;
+const envBtcExplorerApiTor = import.meta.env.VITE_BTC_EXPLORER_API_TOR_URL;
+
+const envTorUrl = import.meta.env.VITE_TOR_URL;
+
+// Default URLs (used when env var is not set)
+const defaults = {
+    torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
+    btcExplorer: {
+        normal: "https://mempool.space",
+        tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion",
+    },
+    btcExplorerApi: {
+        normal: "https://mempool.space/api",
+        tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api",
+    },
+} as const;
 
 const arbitrumExplorer = {
     id: Explorer.Blockscout,
@@ -32,34 +56,47 @@ const arbitrumNetwork = {
     },
 };
 
+// Helper to build an ExplorerUrl object from env + defaults
+const makeExplorerUrl = (
+    id: Explorer,
+    normalEnv: string | undefined,
+    torEnv: string | undefined,
+    normalDefault: string,
+    torDefault: string,
+): ExplorerUrl => ({
+    id,
+    normal: normalEnv || normalDefault,
+    tor: torEnv || torDefault,
+});
+
 const config = {
     ...baseConfig,
-    torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
+    torUrl: envTorUrl || defaults.torUrl,
     network: "mainnet",
     loglevel: "debug",
-    apiUrl: {
-        normal: "https://api.boltz.exchange",
-        tor: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api",
-    },
     assets: {
         BTC: {
             type: AssetKind.UTXO,
-            blockExplorerUrl: {
-                id: Explorer.Mempool,
-                normal: "https://mempool.space",
-                tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion",
-            },
+            blockExplorerUrl: makeExplorerUrl(
+                Explorer.Mempool,
+                envBtcExplorerNormal,
+                envBtcExplorerTor,
+                defaults.btcExplorer.normal,
+                defaults.btcExplorer.tor,
+            ),
             blockExplorerApis: [
                 {
                     id: Explorer.Esplora,
                     normal: "https://blockstream.info/api",
                     tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/api",
                 },
-                {
-                    id: Explorer.Mempool,
-                    normal: "https://mempool.space/api",
-                    tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api",
-                },
+                makeExplorerUrl(
+                    Explorer.Mempool,
+                    envBtcExplorerApiNormal,
+                    envBtcExplorerApiTor,
+                    defaults.btcExplorerApi.normal,
+                    defaults.btcExplorerApi.tor,
+                ),
             ],
         },
         "L-BTC": {
