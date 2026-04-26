@@ -11,6 +11,23 @@ COPY . .
 
 ARG NETWORK=mainnet
 
+# Self-hosting env variables (optional, passed as build args)
+ARG VITE_BTC_EXPLORER_URL=
+ARG VITE_BTC_EXPLORER_TOR_URL=
+ARG VITE_BTC_EXPLORER_API_URL=
+ARG VITE_BTC_EXPLORER_API_TOR_URL=
+ARG VITE_TOR_URL=
+
+# Write env vars to .env file so Vite picks them up at build time
+RUN printf \
+    "VITE_BTC_EXPLORER_URL=%s\nVITE_BTC_EXPLORER_TOR_URL=%s\nVITE_BTC_EXPLORER_API_URL=%s\nVITE_BTC_EXPLORER_API_TOR_URL=%s\nVITE_TOR_URL=%s\n" \
+    "$VITE_BTC_EXPLORER_URL" \
+    "$VITE_BTC_EXPLORER_TOR_URL" \
+    "$VITE_BTC_EXPLORER_API_URL" \
+    "$VITE_BTC_EXPLORER_API_TOR_URL" \
+    "$VITE_TOR_URL" \
+    > .env
+
 RUN bun run generate
 RUN bun run $NETWORK
 RUN if [ "$NETWORK" = "pro" ]; then bun run build:pro; else bun run build:regular; fi
