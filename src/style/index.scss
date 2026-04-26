@@ -434,12 +434,18 @@ hr.spacer {
         background-color: var(--color-secondary-200);
     }
 }
-.btn-danger {
+.btn.btn-danger,
+.btn.btn-danger:disabled,
+.btn.btn-danger:disabled:hover,
+.btn.btn-error,
+.btn.btn-error:disabled,
+.btn.btn-error:disabled:hover {
     background-color: var(--color-error-700);
     color: var(--color-text);
 }
 @media (hover: hover) {
-    .btn-danger:hover {
+    .btn-danger:hover,
+    .btn-error:hover {
         background: var(--color-secondary-200);
     }
 }

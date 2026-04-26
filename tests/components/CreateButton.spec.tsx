@@ -6,6 +6,8 @@ import CreateButton, {
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
 import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
+import { useCreateContext } from "../../src/context/Create";
+import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
@@ -20,6 +22,7 @@ import {
     globalSignals,
     signals,
 } from "../helper";
+import { pairs as testPairs } from "../pairs";
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -152,6 +155,56 @@ describe("CreateButton", () => {
         render(() => <CreateButton />, {
             wrapper: contextWrapper,
         });
+    });
+
+    test("should show a loading spinner while pairs are loading", async () => {
+        render(() => <CreateButton />, {
+            wrapper: contextWrapper,
+        });
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        expect(btn.disabled).toBeTruthy();
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+        expect(btn.classList.contains("btn-error")).toBe(false);
+
+        expect(await screen.findByTestId("loading-spinner")).not.toBeNull();
+        expect(screen.queryByText(i18n.en.invalid_pair)).toBeNull();
+    });
+
+    test("should clear spinner and show label once pairs load", async () => {
+        let global: ReturnType<typeof useGlobalContext> | undefined;
+        let create: ReturnType<typeof useCreateContext> | undefined;
+        const Capture = () => {
+            global = useGlobalContext();
+            create = useCreateContext();
+            return null;
+        };
+
+        render(
+            () => (
+                <>
+                    <Capture />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        expect(await screen.findByTestId("loading-spinner")).not.toBeNull();
+
+        global!.setPairs(testPairs);
+        global!.setRegularPairs(testPairs);
+        create!.setMinimum(50_000);
+
+        const btn = (await screen.findByText(
+            i18n.en.minimum_amount
+                .replace("{{ amount }}", "50 000")
+                .replace("{{ denomination }}", "sats"),
+        )) as HTMLButtonElement;
+        expect(btn).not.toBeUndefined();
+        expect(screen.queryByTestId("loading-spinner")).toBeNull();
     });
 
     test("should use rif relay gas abstraction for low-balance RBTC claims", async () => {
@@ -383,6 +436,36 @@ describe("CreateButton", () => {
         expect(btn.disabled).toBeTruthy();
     });
 
+    test("should apply btn-error class for maximum_amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(250_000));
+        signals.setReceiveAmount(BigNumber(200_000));
+        signals.setMinimum(50_000);
+        signals.setMaximum(200_000);
+        signals.setAmountValid(false);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssets(LBTC, LN);
+
+        const btn = (await screen.findByText(
+            i18n.en.maximum_amount
+                .replace("{{ amount }}", "200 000")
+                .replace("{{ denomination }}", "sats"),
+        )) as HTMLButtonElement;
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
     test("should be enabled with create_swap label", async () => {
         render(
             () => (
@@ -394,7 +477,7 @@ describe("CreateButton", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setOnline(true);
-        signals.setValid(true);
+        setPairAssets(LBTC, BTC);
         signals.setAmountValid(true);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
@@ -505,6 +588,7 @@ describe("CreateButton", () => {
         signals.setInvoiceError("invalid_0_amount");
         expect(btn.disabled).toBeTruthy();
         expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
+        expect(btn.classList.contains("btn-error")).toBe(true);
         signals.setAmountValid(false);
         expect(btn.disabled).toBeTruthy();
         expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
@@ -612,6 +696,66 @@ describe("CreateButton", () => {
             expect(btn.disabled).toBe(true);
             expect(btn.textContent).toBe(i18n.en.invalid_send_asset);
         });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should show btn-error for invalid pairs with sendable assets", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", "USDT0-CFX");
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.invalid_pair);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should not show a loading spinner for invalid pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-CFX", LN);
+        signals.setQuoteLoading(true);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.invalid_send_asset);
+        });
+        expect(screen.queryByTestId("loading-spinner")).toBeNull();
     });
 
     test("should be disabled with LNURL min amount error", async () => {
@@ -660,6 +804,58 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
         expect(errorBtn.disabled).toBeTruthy();
+        expect(errorBtn.classList.contains("btn-error")).toBe(true);
+        expect(errorBtn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should apply btn-error class only for user-error labels", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        // Default in-progress state (initial load shows minimum_amount): no
+        // btn-error class should be applied.
+        globalSignals.setOnline(true);
+        signals.setMinimum(50_000);
+        await waitFor(() => {
+            expect(btn.textContent).toBe(
+                i18n.en.minimum_amount
+                    .replace("{{ amount }}", "50 000")
+                    .replace("{{ denomination }}", "sats"),
+            );
+        });
+        expect(btn.classList.contains("btn-error")).toBe(false);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+
+        // User-error state: invalid send asset triggers btn-error.
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-CFX", LN);
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.invalid_send_asset);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+
+        // Offline takes precedence over user-error: btn-danger, not btn-error.
+        globalSignals.setOnline(false);
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.api_offline);
+        });
+        expect(btn.classList.contains("btn-danger")).toBe(true);
+        expect(btn.classList.contains("btn-error")).toBe(false);
     });
 
     test("should be disabled with LNURL max amount error", async () => {
@@ -708,5 +904,7 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
         expect(errorBtn.disabled).toBeTruthy();
+        expect(errorBtn.classList.contains("btn-error")).toBe(true);
+        expect(errorBtn.classList.contains("btn-danger")).toBe(false);
     });
 });
