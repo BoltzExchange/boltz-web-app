@@ -1,16 +1,7 @@
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { defineConfig } from "vitepress";
+import llmstxt from "vitepress-plugin-llms";
 
 const docsRoot = "https://docs.boltz.exchange";
-const siteUrl = "https://web.docs.boltz.exchange";
-
-const sidebarItems = [
-    { text: "🖥️ Run from Source", link: "/index" },
-    { text: "📲 Install as App", link: "/pwa" },
-    { text: "🔍 URL Parameters", link: "/urlParams" },
-    { text: "🏠 Docs Home", link: docsRoot, target: "_self" },
-];
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -26,7 +17,16 @@ export default defineConfig({
             },
         },
         nav: [{ text: "🏠 Docs Home", link: docsRoot, target: "_self" }],
-        sidebar: [{ items: sidebarItems }],
+        sidebar: [
+            {
+                items: [
+                    { text: "🖥️ Run from Source", link: "/index" },
+                    { text: "📲 Install as App", link: "/pwa" },
+                    { text: "🔍 URL Parameters", link: "/urlParams" },
+                    { text: "🏠 Docs Home", link: docsRoot, target: "_self" },
+                ],
+            },
+        ],
         socialLinks: [
             {
                 icon: "github",
@@ -36,25 +36,9 @@ export default defineConfig({
     },
     // Ignore dead links to localhost
     ignoreDeadLinks: [/https?:\/\/localhost/],
-
-    async buildEnd(siteConfig) {
-        await Promise.all(
-            siteConfig.pages.map(async (page) => {
-                const src = join(siteConfig.srcDir, page);
-                const dest = join(siteConfig.outDir, page);
-                await mkdir(dirname(dest), { recursive: true });
-                await copyFile(src, dest);
-            }),
-        );
-
-        const links = sidebarItems
-            .filter((item) => item.link.startsWith("/"))
-            .map((item) => `- [${item.text}](${siteUrl}${item.link}.md)`)
-            .join("\n");
-
-        await writeFile(
-            join(siteConfig.outDir, "llms.txt"),
-            `# Boltz Web App\n\n> Boltz Web App Docs\n\n## Docs\n\n${links}\n`,
-        );
+    vite: {
+        // `index.md` is real content for us ("Run from Source"), not just a
+        // hero landing page, so opt it back into the LLM artifacts.
+        plugins: [llmstxt({ excludeIndexPage: false })],
     },
 });

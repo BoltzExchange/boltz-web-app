@@ -2,6 +2,8 @@
 next:
     text: "📲 Install as App"
     link: "/pwa"
+description:
+    How to run the Boltz Web App locally from source, natively or via Docker.
 ---
 
 # 🖥 Run from Source
