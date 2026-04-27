@@ -64,6 +64,7 @@
         "vite-plugin-solid": "^2.11.12",
         "vite-plugin-wasm": "^3.6.0",
         "vitepress": "^1.6.4",
+        "vitepress-plugin-llms": "^1.12.1",
         "vitest": "^4.1.4"
     },
     "dependencies": {

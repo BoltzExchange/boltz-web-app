@@ -1,5 +1,8 @@
 ---
 next: false
+description:
+    URL query parameters supported by the Boltz Web App to prefill assets,
+    amounts, destination and language.
 ---
 
 # 🔍 URL query parameters

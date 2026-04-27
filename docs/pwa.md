@@ -1,3 +1,9 @@
+---
+description:
+    How to install the Boltz Web App as a Progressive Web App on Android, iOS
+    and desktop.
+---
+
 # 📲 Install as App
 
 For improved censorship resistance and privacy, Boltz is not available in app
