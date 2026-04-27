@@ -20,3 +20,4 @@ docs/.vitepress/cache/
 index.html
 .index-build-cache
 .vercel
+.eslintcache
