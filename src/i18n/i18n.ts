@@ -49,6 +49,8 @@ const dict = {
         new_swap: "New Swap",
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
+        amount_limits_changed:
+            "Swap limits changed. Please confirm new amounts and continue with swap.",
         create_and_paste:
             "Paste a Lightning invoice, BOLT12 or LNURL to receive funds",
         congrats: "Congratulations!",
@@ -545,6 +547,8 @@ const dict = {
         new_swap: "Neuer Swap",
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
+        amount_limits_changed:
+            "Swap-Limits haben sich geändert. Bitte bestätige die neuen Beträge und fahre mit dem Swap fort.",
         create_and_paste:
             "Füge eine Lightning-Rechnung, BOLT12 oder LNURL des Empfängers ein",
         congrats: "Herzlichen Glückwunsch!",
@@ -1056,6 +1060,8 @@ const dict = {
         new_swap: "Nuevo intercambio",
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
+        amount_limits_changed:
+            "Los límites del intercambio han cambiado. Por favor, confirma los nuevos importes y continúa con el intercambio.",
         create_and_paste:
             "Pega una factura Lightning, una dirección BOLT12 o una LNURL para recibir los fondos",
         congrats: "¡Felicitaciones!",
@@ -1564,6 +1570,8 @@ const dict = {
         new_swap: "Nova troca",
         feecheck:
             "A taxa da rede foi atualizada conforme a situação atual, por favor confirme os novos valores e continue a troca.",
+        amount_limits_changed:
+            "Os limites da troca mudaram. Por favor confirme os novos valores e continue a troca.",
         create_and_paste:
             "Cole um invoice Lightning, um endereço BOLT12 ou um LNURL para receber os fundos",
         congrats: "Parabéns!",
@@ -2066,6 +2074,7 @@ const dict = {
         get_gas_token_for_gas: "获取{{ gasToken }}作为 Gas 费",
         new_swap: "新的交换",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
+        amount_limits_changed: "兑换限额已变更，请确认新的金额并继续进行兑换。",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
@@ -2523,6 +2532,8 @@ const dict = {
         new_swap: "新しいスワップ",
         feecheck:
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
+        amount_limits_changed:
+            "スワップの上限／下限が変更されました。新しい金額を確認し、スワップを続行してください。",
         create_and_paste:
             "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
         congrats: "おめでとうございます！",
