@@ -204,6 +204,7 @@ describe("Assets", () => {
             ${USDC}        | ${true}
             ${"USDC-ETH"}  | ${true}
             ${"USDC-POL"}  | ${true}
+            ${"USDC-SOL"}  | ${true}
         `("$input -> $expected", ({ input, expected }) => {
             expect(isStablecoinAsset(input)).toBe(expected);
         });

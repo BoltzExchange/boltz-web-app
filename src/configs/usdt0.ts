@@ -1,10 +1,5 @@
 import type { Asset, Usdt0Variant } from "src/configs/base";
-import {
-    BridgeKind,
-    Explorer,
-    NetworkTransport,
-    Usdt0Kind,
-} from "src/configs/base";
+import { BridgeKind, NetworkTransport, Usdt0Kind } from "src/configs/base";
 import {
     berachainExplorerUrl,
     confluxExplorerUrl,
@@ -56,19 +51,8 @@ import {
     xlayerRpcUrls,
 } from "src/configs/rpcs";
 import { AssetKind } from "src/consts/AssetKind";
-
-const getExplorerId = (transport: NetworkTransport): Explorer => {
-    switch (transport) {
-        case NetworkTransport.Evm:
-            return Explorer.Blockscout;
-
-        case NetworkTransport.Solana:
-            return Explorer.Solscan;
-
-        case NetworkTransport.Tron:
-            return Explorer.Tronscan;
-    }
-};
+import { solanaMinGasTopUpLamports } from "src/consts/Solana";
+import { getExplorerId } from "src/utils/explorer";
 
 const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     const transport = variant.transport ?? NetworkTransport.Evm;
@@ -322,7 +306,7 @@ export const usdt0Variants = [
         gasToken: "SOL",
         transport: NetworkTransport.Solana,
         nativeDecimals: 9,
-        minGas: 1_500_000n,
+        minGas: solanaMinGasTopUpLamports,
         oftQuotePayer: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: solanaExplorerUrl,

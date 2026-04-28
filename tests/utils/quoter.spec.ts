@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type * as ConfigModule from "../../src/config";
 import { NetworkTransport, Usdt0Kind } from "../../src/configs/base";
+import { solanaMinGasTopUpLamports } from "../../src/consts/Solana";
 import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
@@ -77,7 +78,7 @@ vi.mock("../../src/config", async () => {
                             name: "SOL",
                             symbol: "SOL",
                             decimals: 9,
-                            minGas: 1_500_000n,
+                            minGas: solanaMinGasTopUpLamports,
                         },
                     },
                 },
@@ -125,7 +126,7 @@ describe("quoter gas top-up", () => {
         } as unknown as Response);
 
         await expect(getGasTopUpNativeAmount("USDT0-SOL")).resolves.toBe(
-            1_500_000n,
+            solanaMinGasTopUpLamports,
         );
     });
 

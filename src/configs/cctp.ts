@@ -2,7 +2,6 @@ import type { Asset } from "src/configs/base";
 import {
     BridgeKind,
     CctpTransferMode,
-    Explorer,
     NetworkTransport,
 } from "src/configs/base";
 import {
@@ -17,6 +16,7 @@ import {
     plumeExplorerUrl,
     polygonExplorerUrl,
     seiExplorerUrl,
+    solanaExplorerUrl,
     sonicExplorerUrl,
     unichainExplorerUrl,
     worldChainExplorerUrl,
@@ -34,12 +34,15 @@ import {
     plumeRpcUrls,
     polygonRpcUrls,
     seiRpcUrls,
+    solanaRpcUrls,
     sonicRpcUrls,
     unichainRpcUrls,
     worldChainRpcUrls,
     xdcRpcUrls,
 } from "src/configs/rpcs";
 import { AssetKind } from "src/consts/AssetKind";
+import { solanaMinGasTopUpLamports } from "src/consts/Solana";
+import { getExplorerId } from "src/utils/explorer";
 
 // CCTP v2 TokenMessenger is deployed at the same address on every EVM chain
 // except EDGE (domain 28), which uses a distinct deployment. If / when we add
@@ -48,61 +51,78 @@ import { AssetKind } from "src/consts/AssetKind";
 export const tokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 export const messageTransmitterV2 =
     "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+export const solanaMessageTransmitterV2 =
+    "CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC";
+export const solanaTokenMessengerMinterV2 =
+    "CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe";
 
 type CctpVariant = {
     asset: string;
     chainName: string;
     // Short chain symbol shown in the asset selector.
     symbol: string;
-    chainId: number;
+    chainId?: number;
     // Circle's domain id for the chain (https://developers.circle.com/cctp/evm-smart-contracts).
     domain: number;
     tokenAddress: string;
     rpcUrls: readonly string[];
     blockExplorerUrl: string;
+    transport?: NetworkTransport;
+    nativeDecimals?: number;
+    minGas?: bigint;
     // Overrides `tokenMessengerV2` (only needed for EDGE).
     tokenMessenger?: string;
+    // Overrides `messageTransmitterV2` (needed for non-EVM chains).
+    messageTransmitter?: string;
     // Native gas symbol (defaults to the chain symbol — correct for most L2s
     // that use ETH as gas, so callers supply it explicitly).
     gasToken: string;
     canSend?: boolean;
 };
 
-const createCctpVariantAsset = (variant: CctpVariant): Asset => ({
-    type: AssetKind.ERC20,
-    canSend: variant.canSend ?? true,
-    blockExplorerUrl: {
-        id: Explorer.Blockscout,
-        normal: variant.blockExplorerUrl,
-    },
-    network: {
-        symbol: variant.symbol,
-        gasToken: variant.gasToken,
-        chainName: variant.chainName,
-        transport: NetworkTransport.Evm,
-        chainId: variant.chainId,
-        rpcUrls: variant.rpcUrls,
-        nativeCurrency: {
-            name: variant.gasToken,
-            symbol: variant.gasToken,
-            decimals: 18,
+const createCctpVariantAsset = (variant: CctpVariant): Asset => {
+    const transport = variant.transport ?? NetworkTransport.Evm;
+    const asset: Asset = {
+        type: AssetKind.ERC20,
+        canSend: variant.canSend ?? true,
+        blockExplorerUrl: {
+            id: getExplorerId(transport),
+            normal: variant.blockExplorerUrl,
         },
-    },
-    bridge: {
-        kind: BridgeKind.Cctp,
-        canonicalAsset: "USDC",
-        cctp: {
-            domain: variant.domain,
-            tokenMessenger: variant.tokenMessenger ?? tokenMessengerV2,
-            messageTransmitter: messageTransmitterV2,
-            transferMode: CctpTransferMode.Fast,
+        network: {
+            symbol: variant.symbol,
+            gasToken: variant.gasToken,
+            chainName: variant.chainName,
+            transport,
+            rpcUrls: variant.rpcUrls,
+            nativeCurrency: {
+                name: variant.gasToken,
+                symbol: variant.gasToken,
+                decimals: variant.nativeDecimals ?? 18,
+                minGas: variant.minGas,
+            },
         },
-    },
-    token: {
-        address: variant.tokenAddress,
-        decimals: 6,
-    },
-});
+        bridge: {
+            kind: BridgeKind.Cctp,
+            canonicalAsset: "USDC",
+            cctp: {
+                domain: variant.domain,
+                tokenMessenger: variant.tokenMessenger ?? tokenMessengerV2,
+                messageTransmitter:
+                    variant.messageTransmitter ?? messageTransmitterV2,
+                transferMode: CctpTransferMode.Fast,
+            },
+        },
+        token: {
+            address: variant.tokenAddress,
+            decimals: 6,
+        },
+    };
+    if (transport === NetworkTransport.Evm) {
+        asset.network!.chainId = variant.chainId;
+    }
+    return asset;
+};
 
 // USDC contract addresses sourced from Circle's official list:
 // https://developers.circle.com/stablecoins/usdc-contract-addresses
@@ -271,6 +291,22 @@ export const cctpVariants: CctpVariant[] = [
         rpcUrls: plumeRpcUrls,
         blockExplorerUrl: plumeExplorerUrl,
         gasToken: "PLUME",
+    },
+    {
+        asset: "USDC-SOL",
+        chainName: "Solana",
+        symbol: "SOL",
+        domain: 5,
+        tokenAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        rpcUrls: solanaRpcUrls,
+        blockExplorerUrl: solanaExplorerUrl,
+        transport: NetworkTransport.Solana,
+        nativeDecimals: 9,
+        minGas: solanaMinGasTopUpLamports,
+        tokenMessenger: solanaTokenMessengerMinterV2,
+        messageTransmitter: solanaMessageTransmitterV2,
+        gasToken: "SOL",
+        canSend: false,
     },
 ];
 

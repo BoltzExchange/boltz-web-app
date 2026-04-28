@@ -56,17 +56,25 @@ export const getConnectedSolanaWalletAddress = async (
 export const getSolanaAssociatedTokenAddress = async (
     mintAddress: string,
     ownerAddress: string,
+    allowOwnerOffCurve = false,
 ): Promise<string> => {
     const { web3, splToken } = await lazySolana.get();
+    const mint = new web3.PublicKey(mintAddress);
+    const owner = new web3.PublicKey(ownerAddress);
+    if (!allowOwnerOffCurve && !web3.PublicKey.isOnCurve(owner.toBuffer())) {
+        throw new Error(`Invalid Solana token owner address: ${ownerAddress}`);
+    }
+    const tokenProgram = new web3.PublicKey(
+        splToken.TOKEN_PROGRAM_ID.toBase58(),
+    );
+    const associatedTokenProgram = new web3.PublicKey(
+        splToken.ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
+    );
 
-    return splToken
-        .getAssociatedTokenAddressSync(
-            new web3.PublicKey(mintAddress),
-            new web3.PublicKey(ownerAddress),
-            false,
-            splToken.TOKEN_PROGRAM_ID,
-        )
-        .toBase58();
+    return web3.PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
+        associatedTokenProgram,
+    )[0].toBase58();
 };
 
 const createSolanaConnection = async (rpcUrl: string): Promise<Connection> => {

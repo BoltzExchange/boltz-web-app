@@ -132,6 +132,10 @@ const Create = () => {
             normalize(onchainAddress()) === normalize(walletAddress)
         );
     };
+    const walletConnectAsset = () =>
+        isWalletConnectableAsset(pair().toAsset)
+            ? pair().toAsset
+            : pair().fromAsset;
     const receiveAmountQuoteLoading = createMemo(
         () => quoteLoading() && amountChanged() === Side.Send,
     );
@@ -884,12 +888,11 @@ const Create = () => {
                         isWalletConnectableAsset,
                     )}>
                     <ConnectWallet
-                        asset={
-                            isWalletConnectableAsset(pair().toAsset)
-                                ? pair().toAsset
-                                : pair().fromAsset
-                        }
+                        asset={walletConnectAsset()}
                         syncAddress={isWalletConnectableAsset(pair().toAsset)}
+                        hideWhenUnavailable={
+                            walletConnectAsset() === pair().toAsset
+                        }
                         disabled={() => !pair().isRoutable}
                     />
                     {/* We have no gas abstraction for RBTC */}

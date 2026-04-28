@@ -70,6 +70,7 @@ export const getCctpFee = async (
     destDomainId: number,
     transferMode: CctpTransferMode,
     receiveMode: CctpReceiveMode = CctpReceiveMode.Forwarded,
+    includeRecipientSetup = false,
 ): Promise<CctpFee> => {
     const { opts, requestTimeout } = constructRequestOptions(
         {
@@ -84,10 +85,16 @@ export const getCctpFee = async (
         // `forward=true` makes Circle return the Forwarding Service fee tiers
         // alongside the protocol fee. Manual receives omit it because we submit
         // the destination mint ourselves.
-        const forwardQuery =
-            receiveMode === CctpReceiveMode.Forwarded ? "?forward=true" : "";
+        const params = new URLSearchParams();
+        if (receiveMode === CctpReceiveMode.Forwarded) {
+            params.set("forward", "true");
+            if (includeRecipientSetup) {
+                params.set("includeRecipientSetup", "true");
+            }
+        }
+        const query = params.size === 0 ? "" : `?${params.toString()}`;
         const response = await fetch(
-            `${getCctpFeeApiUrl()}/v2/burn/USDC/fees/${sourceDomainId}/${destDomainId}${forwardQuery}`,
+            `${getCctpFeeApiUrl()}/v2/burn/USDC/fees/${sourceDomainId}/${destDomainId}${query}`,
             opts,
         );
 

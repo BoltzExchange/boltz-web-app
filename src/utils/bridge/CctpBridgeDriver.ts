@@ -8,8 +8,9 @@ import {
     BridgeKind,
     CctpReceiveMode,
     CctpTransferMode,
+    NetworkTransport,
 } from "../../configs/base";
-import type { Asset, NetworkTransport } from "../../configs/base";
+import type { Asset } from "../../configs/base";
 import {
     getAssetBridge,
     getNetworkTransport,
@@ -37,10 +38,12 @@ import {
     cctpForwardHookData,
     cctpStandardFinalityThreshold,
     cctpZeroBytes32,
+    createCctpSolanaForwardHookData,
     hashCctpData,
 } from "../cctp/evm";
 import { type CctpFee, cctpFeeBpsDenominator, getCctpFee } from "../cctp/fee";
 import type { CctpData, CctpSendParam } from "../cctp/types";
+import * as solanaChain from "../chains/solana";
 import { createAssetProvider } from "../provider";
 import type { Provider } from "../provider";
 import {
@@ -99,19 +102,29 @@ export class CctpBridgeDriver extends BridgeDriver {
         return route.sourceAsset;
     };
 
-    public buildQuoteOptions = (
+    public buildQuoteOptions = async (
         destinationAsset: string,
         destination: string,
         getGasToken: boolean,
     ): Promise<BridgeQuoteOptions> => {
         void getGasToken;
 
-        return Promise.resolve({
+        const destinationTransport = this.getTransport(destinationAsset);
+        const cctpIncludeRecipientSetup =
+            destinationTransport === NetworkTransport.Solana
+                ? await solanaChain.shouldCreateSolanaTokenAccount(
+                      destinationAsset,
+                      destination,
+                  )
+                : false;
+
+        return {
             recipient: destination,
             cctpTransferMode:
                 this.requireCctpConfig(destinationAsset).transferMode,
             cctpReceiveMode: this.getDefaultReceiveMode(destinationAsset),
-        });
+            ...(cctpIncludeRecipientSetup ? { cctpIncludeRecipientSetup } : {}),
+        };
     };
 
     public quoteReceiveAmount = async (
@@ -194,17 +207,22 @@ export class CctpBridgeDriver extends BridgeDriver {
         const sendParam: CctpSendParam = {
             amount,
             destinationDomain: destinationConfig.domain,
-            mintRecipient: addressToBytes32(mintRecipient),
+            mintRecipient: await this.encodeMintRecipient(
+                route.destinationAsset,
+                mintRecipient,
+            ),
             destinationCaller: cctpZeroBytes32,
             maxFee: bufferedMaxFee,
             minFinalityThreshold:
                 transferMode === CctpTransferMode.Fast
                     ? cctpFastFinalityThreshold
                     : cctpStandardFinalityThreshold,
-            hookData:
-                receiveMode === CctpReceiveMode.Forwarded
-                    ? cctpForwardHookData
-                    : cctpEmptyHookData,
+            hookData: this.getHookData(
+                route.destinationAsset,
+                receiveMode,
+                mintRecipient,
+                options,
+            ),
         };
 
         return {
@@ -573,6 +591,56 @@ export class CctpBridgeDriver extends BridgeDriver {
         );
     };
 
+    private encodeMintRecipient = async (
+        destinationAsset: string,
+        recipient: string,
+    ): Promise<string> => {
+        const destinationTransport = this.getTransport(destinationAsset);
+        switch (destinationTransport) {
+            case NetworkTransport.Evm:
+                return addressToBytes32(recipient);
+
+            case NetworkTransport.Solana: {
+                const ata = await solanaChain.getSolanaAssociatedTokenAddress(
+                    getTokenAddress(destinationAsset),
+                    recipient,
+                    true,
+                );
+                return solanaChain.encodeSolanaRecipient(ata);
+            }
+
+            case NetworkTransport.Tron:
+                throw new Error("CCTP does not support Tron destinations");
+
+            default: {
+                const exhaustiveTransport: never = destinationTransport;
+                throw new Error(
+                    `Unsupported CCTP destination transport: ${String(exhaustiveTransport)}`,
+                );
+            }
+        }
+    };
+
+    private getHookData = (
+        destinationAsset: string,
+        receiveMode: CctpReceiveMode,
+        recipient: string,
+        options: BridgeQuoteOptions,
+    ): string => {
+        if (receiveMode === CctpReceiveMode.Manual) {
+            return cctpEmptyHookData;
+        }
+
+        if (
+            this.getTransport(destinationAsset) === NetworkTransport.Solana &&
+            options.cctpIncludeRecipientSetup === true
+        ) {
+            return createCctpSolanaForwardHookData(recipient);
+        }
+
+        return cctpForwardHookData;
+    };
+
     private getFee = async (
         route: BridgeRoute,
         options: BridgeQuoteOptions,
@@ -587,6 +655,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             destinationConfig.domain,
             this.getTransferMode(route.destinationAsset, options),
             this.getReceiveMode(route.destinationAsset, options),
+            options.cctpIncludeRecipientSetup === true,
         );
     };
 
