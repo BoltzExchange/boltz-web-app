@@ -3,12 +3,14 @@ import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
-import { isTor } from "../configs/base";
+import { BridgeKind, CctpReceiveMode, isTor } from "../configs/base";
 import {
     AssetKind,
     BTC,
     LN,
     TBTC,
+    USDC,
+    getAssetBridge,
     getCanonicalAsset,
     getRouteViaAsset,
     isBridgeAsset,
@@ -592,10 +594,15 @@ export default class Pair {
     ) => {
         this.latestBridgeFee = {
             sendAmount: sendAmountKey,
-            messaging: {
-                value: quote.msgFee[0],
-                token: this.bridgeMessagingFeeToken,
-            },
+            messaging:
+                quote.messagingFee === undefined
+                    ? undefined
+                    : {
+                          value: quote.messagingFee.amount,
+                          token:
+                              quote.messagingFee.token ??
+                              this.bridgeMessagingFeeToken,
+                      },
             transfer: BigNumber((quote.amountIn - quote.amountOut).toString()),
         };
     };
@@ -656,6 +663,22 @@ export default class Pair {
             postBridgeRecipient,
             getGasToken,
         );
+    };
+
+    private getPreBridgeQuoteOptions = (
+        route: BridgeRoute,
+    ): BridgeQuoteOptions | undefined => {
+        const bridge = getAssetBridge(route.sourceAsset);
+        if (
+            bridge?.kind === BridgeKind.Cctp &&
+            route.destinationAsset === USDC
+        ) {
+            return {
+                cctpReceiveMode: CctpReceiveMode.Manual,
+            };
+        }
+
+        return undefined;
     };
 
     private getNativeDropFailure = (
@@ -812,6 +835,7 @@ export default class Pair {
         const quote = await pre.driver.quoteReceiveAmount(
             pre.route,
             BigInt(sendAmount.toFixed(0)),
+            this.getPreBridgeQuoteOptions(pre.route),
         );
 
         if (sendAmountKey !== undefined) {
@@ -843,10 +867,12 @@ export default class Pair {
         const requiredAmount = await pre.driver.quoteAmountInForAmountOut(
             pre.route,
             BigInt(amount.toFixed(0)),
+            this.getPreBridgeQuoteOptions(pre.route),
         );
         const quote = await pre.driver.quoteReceiveAmount(
             pre.route,
             requiredAmount,
+            this.getPreBridgeQuoteOptions(pre.route),
         );
 
         return {
@@ -918,16 +944,17 @@ export default class Pair {
                 BigInt(quotedBridgeAmount.toFixed(0)),
                 postBridgeQuoteOptions,
             );
+            const bridgeMessagingFee = quote.messagingFee?.amount ?? 0n;
             const messagingFeeCost = await this.quoteMessagingFeeCost(
                 this.postBridgeClaimAsset,
                 this.postBridgeFeeQuoteDetails,
-                quote.msgFee[0],
+                bridgeMessagingFee,
             );
 
             log.info("Applied post-bridge quote", {
                 destinationAsset: this.to,
                 quotedBridgeAmount: quotedBridgeAmount.toFixed(),
-                messagingFee: quote.msgFee[0].toString(),
+                messagingFee: bridgeMessagingFee.toString(),
                 messagingFeeCost: messagingFeeCost.toFixed(),
                 quotedAmountOut: quote.amountOut.toString(),
             });
@@ -1019,6 +1046,7 @@ export default class Pair {
                 requiredAmount,
                 postBridgeQuoteOptions,
             );
+            const bridgeMessagingFee = quote.messagingFee?.amount ?? 0n;
             const requiredClaimAmount =
                 await this.convertBridgeAmountToClaimAmount(
                     BigNumber(requiredAmount.toString()),
@@ -1026,13 +1054,13 @@ export default class Pair {
             const messagingFeeCost = await this.quoteMessagingFeeCost(
                 this.postBridgeClaimAsset,
                 this.postBridgeFeeQuoteDetails,
-                quote.msgFee[0],
+                bridgeMessagingFee,
             );
             log.info("Inverted post-bridge quote", {
                 destinationAsset: this.to,
                 requiredAmount: requiredAmount.toString(),
                 requiredClaimAmount: requiredClaimAmount.toFixed(),
-                messagingFee: quote.msgFee[0].toString(),
+                messagingFee: bridgeMessagingFee.toString(),
                 messagingFeeCost: messagingFeeCost.toFixed(),
             });
 

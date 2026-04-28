@@ -90,6 +90,35 @@ describe("BlockExplorer", () => {
         );
     });
 
+    test("should link CCTP bridge transactions when requested", async () => {
+        const txId =
+            "0x3ca4451e3008d523eec1c64e617663894e47cabd335654bd9f65724772682de8";
+
+        render(
+            () => (
+                <BlockExplorer
+                    asset="USDC-BASE"
+                    txId={txId}
+                    explorer={ExplorerKind.Cctp}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const button = await screen.findByText(
+            i18n.en.blockexplorer.replace(
+                "{{ typeLabel }}",
+                i18n.en.blockexplorer_claim_tx,
+            ),
+        );
+
+        expect((button as HTMLAnchorElement).href).toEqual(
+            `${config.cctpExplorerUrl}/transactions?s=${txId}`,
+        );
+    });
+
     test("should prefix Tron LayerZero transaction hashes with 0x", async () => {
         const txId =
             "2ae5f8e33daf1d608f7aad172b52fb00dbf98a43735c2ed07e203049bcc19815";

@@ -86,3 +86,8 @@
     background-size: 76%;
     background-position: center;
 }
+.swaplist-asset span[data-asset="USDC"] {
+    background-image: vars.$usdc_icon;
+    background-size: 80%;
+    background-position: center;
+}

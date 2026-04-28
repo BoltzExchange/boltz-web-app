@@ -2,6 +2,7 @@ import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import BigNumber from "bignumber.js";
 import { createEffect, createMemo, createSignal } from "solid-js";
+import { keccak256, toBytes } from "viem";
 
 vi.mock("ethers", () => {
     const encodedFunctionData =
@@ -134,7 +135,10 @@ vi.mock("ethers", () => {
         Wallet: MockWallet,
         ZeroAddress: "0x0000000000000000000000000000000000000000",
         concat,
+        getAddress: (value: string) => value,
         getBytes,
+        id: (value: string) => keccak256(toBytes(value)),
+        keccak256: vi.fn(() => "0xkeccak"),
         solidityPacked,
         zeroPadValue,
     };

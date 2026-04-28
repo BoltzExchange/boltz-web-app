@@ -12,7 +12,7 @@ import { Buffer } from "buffer";
 import log from "loglevel";
 
 import { config } from "../../config";
-import { NetworkTransport } from "../../configs/base";
+import { BridgeKind, NetworkTransport } from "../../configs/base";
 import lazySolanaOft from "../../lazy/solanaOft";
 import { getCachedValue } from "../cache";
 import {
@@ -201,7 +201,9 @@ const getQuotePayer = async (
         return walletAddress;
     }
 
-    const configuredQuotePayer = config.assets?.[asset]?.bridge?.quotePayer;
+    const bridge = config.assets?.[asset]?.bridge;
+    const configuredQuotePayer =
+        bridge?.kind === BridgeKind.Oft ? bridge.oft?.quotePayer : undefined;
     if (configuredQuotePayer !== undefined) {
         return configuredQuotePayer;
     }

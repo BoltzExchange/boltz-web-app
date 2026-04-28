@@ -1,6 +1,7 @@
 import type { ExplorerKind } from "../../components/BlockExplorer";
 import type { BridgeKind } from "../../configs/base";
 import { getAssetBridge } from "../../consts/Assets";
+import { CctpBridgeDriver } from "./CctpBridgeDriver";
 import { OftBridgeDriver } from "./OftBridgeDriver";
 import type { BridgeDriver } from "./driver";
 import type { BridgeRoute } from "./types";
@@ -57,4 +58,7 @@ export class BridgeRegistry {
     };
 }
 
-export const bridgeRegistry = new BridgeRegistry([new OftBridgeDriver()]);
+export const bridgeRegistry = new BridgeRegistry([
+    new OftBridgeDriver(),
+    new CctpBridgeDriver(),
+]);

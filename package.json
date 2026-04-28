@@ -100,7 +100,7 @@
         "bignumber.js": "^11.0.0",
         "bolt11": "^1.4.1",
         "bolt12-utils": "^0.1.1",
-        "boltz-core": "^4.0.3",
+        "boltz-core": "^4.0.4",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ethers": "^6.16.0",

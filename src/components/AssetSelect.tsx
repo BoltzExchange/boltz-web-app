@@ -74,7 +74,9 @@ const SelectAsset = () => {
     createEffect(() => scrollToFocused(listRef, focusedIndex()));
 
     const selectFocused = () => handleAssetClick(assets()[focusedIndex()]);
-    const close = () => setAssetSelection(null);
+    const close = () => {
+        setAssetSelection(null);
+    };
 
     const handleKeyDown = (e: KeyboardEvent) =>
         handleListKeyDown(

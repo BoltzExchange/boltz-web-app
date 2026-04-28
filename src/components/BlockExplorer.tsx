@@ -7,6 +7,7 @@ import ExternalLink from "./ExternalLink";
 
 export enum ExplorerKind {
     Asset = "asset",
+    Cctp = "cctp",
     LayerZero = "layerzero",
 }
 
@@ -31,6 +32,9 @@ const getExplorerBaseUrl = (asset: string, explorer: ExplorerKind) => {
 
         case ExplorerKind.LayerZero:
             return config.layerZeroExplorerUrl;
+
+        case ExplorerKind.Cctp:
+            return config.cctpExplorerUrl;
     }
 };
 
@@ -58,6 +62,12 @@ const blockExplorerLink = (
     explorer: ExplorerKind = ExplorerKind.Asset,
 ) => {
     const basePath = getExplorerBaseUrl(asset, explorer);
+    if (isTxId && explorer === ExplorerKind.Cctp) {
+        return `${basePath}/transactions?${new URLSearchParams({
+            s: val,
+        }).toString()}`;
+    }
+
     return `${basePath}/${isTxId ? "tx" : "address"}/${normalizeExplorerValue(
         asset,
         isTxId,

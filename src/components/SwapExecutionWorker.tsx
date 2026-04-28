@@ -9,8 +9,8 @@ import {
     waitForPreparedCallTransactionHash,
 } from "../alchemy/Alchemy";
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
-import { getTokenAddress } from "../consts/Assets";
+import { BridgeKind, NetworkTransport } from "../configs/base";
+import { USDC, getAssetBridge, getTokenAddress } from "../consts/Assets";
 import { SwapPosition, SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -26,6 +26,14 @@ import {
 } from "../utils/boltzClient";
 import { bridgeRegistry } from "../utils/bridge";
 import { calculateAmountOutMin } from "../utils/calculate";
+import { getCctpAttestation } from "../utils/cctp/attestation";
+import { decodeCctpGuid, parseCctpBurnMessage } from "../utils/cctp/events";
+import {
+    addressToBytes32,
+    cctpZeroBytes32,
+    encodeCctpReceiveMessage,
+    isCctpNonceUsed,
+} from "../utils/cctp/evm";
 import { getSolanaConnection } from "../utils/chains/solana";
 import {
     getTronTransactionInfo,
@@ -112,6 +120,13 @@ const needsPreBridgeLockup = (swap: SomeSwap | null | undefined) =>
     swap.dex !== undefined &&
     swap.dex.position === SwapPosition.Pre &&
     swap.dex.hops.length > 0;
+
+const usesManualCctpReceive = (swap: SomeSwap | null | undefined) =>
+    swap !== undefined &&
+    swap !== null &&
+    swap.bridge?.kind === BridgeKind.Cctp &&
+    swap.bridge.position === SwapPosition.Pre &&
+    swap.bridge.destinationAsset === USDC;
 
 const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
     swap !== undefined &&
@@ -312,6 +327,125 @@ export const SwapExecutionWorker = () => {
         return {
             status: PreBridgeCommitmentLockupRecoveryStatus.NotFound,
         };
+    };
+
+    const requireCctpConfig = (asset: string) => {
+        const bridge = getAssetBridge(asset);
+        if (bridge?.kind !== BridgeKind.Cctp) {
+            throw new Error(`missing CCTP config for asset ${asset}`);
+        }
+        return bridge.cctp;
+    };
+
+    const waitForManualCctpReceive = async (
+        currentSwap: SomeSwap,
+        guid: string,
+        gasAbstractionSigner: { address: string },
+    ) => {
+        const decoded = decodeCctpGuid(guid);
+        if (decoded === undefined) {
+            throw new Error(`invalid CCTP guid: ${guid}`);
+        }
+
+        const sourceConfig = requireCctpConfig(currentSwap.bridge.sourceAsset);
+        const destinationConfig = requireCctpConfig(
+            currentSwap.bridge.destinationAsset,
+        );
+        if (decoded.sourceDomain !== sourceConfig.domain) {
+            throw new Error("CCTP guid source domain does not match route");
+        }
+
+        const destinationProvider = createAssetProvider(
+            currentSwap.bridge.destinationAsset,
+        );
+        const expectedMintRecipient = addressToBytes32(
+            gasAbstractionSigner.address,
+        ).toLowerCase();
+
+        log.debug(
+            "Swap execution waiting for manual CCTP attestation",
+            getSwapExecutionLogContext(currentSwap.id, {
+                guid,
+                sourceAsset: currentSwap.bridge.sourceAsset,
+                destinationAsset: currentSwap.bridge.destinationAsset,
+            }),
+        );
+
+        while (true) {
+            const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
+            if (!needsPreBridgeLockup(latestSwap)) {
+                log.debug(
+                    "Swap execution stopped waiting for manual CCTP attestation",
+                    getSwapExecutionLogContext(currentSwap.id, { guid }),
+                );
+                return undefined;
+            }
+
+            const attestation = await getCctpAttestation(
+                decoded.sourceDomain,
+                decoded.sourceTxHash,
+            );
+            if (attestation === undefined) {
+                await sleep(retryIntervalMs);
+                continue;
+            }
+
+            const burn = parseCctpBurnMessage(attestation.message);
+            if (
+                burn.sourceDomain !== sourceConfig.domain ||
+                burn.destinationDomain !== destinationConfig.domain
+            ) {
+                throw new Error("CCTP attestation domains do not match route");
+            }
+            if (burn.destinationCaller.toLowerCase() !== cctpZeroBytes32) {
+                throw new Error("CCTP attestation is not permissionless");
+            }
+            if (burn.mintRecipient.toLowerCase() !== expectedMintRecipient) {
+                throw new Error(
+                    "CCTP attestation mint recipient does not match",
+                );
+            }
+
+            const [fromBlock, nonceUsed] = await Promise.all([
+                destinationProvider.getBlockNumber(),
+                isCctpNonceUsed(
+                    destinationConfig.messageTransmitter,
+                    destinationProvider,
+                    burn.nonce,
+                ),
+            ]);
+            log.info(
+                "Swap execution found manual CCTP attestation",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    guid,
+                    amountReceivedLD: burn.amountReceived.toString(),
+                    sourceDomain: burn.sourceDomain,
+                    destinationDomain: burn.destinationDomain,
+                    nonceUsed,
+                }),
+            );
+
+            return {
+                receiveCall: nonceUsed
+                    ? undefined
+                    : ({
+                          to: destinationConfig.messageTransmitter,
+                          value: "0",
+                          data: encodeCctpReceiveMessage(
+                              attestation.message,
+                              attestation.attestation,
+                          ),
+                      } satisfies AlchemyCall),
+                receivedEvent: {
+                    guid,
+                    srcEid: BigInt(burn.sourceDomain),
+                    toAddress: burn.mintRecipient,
+                    amountReceivedLD: burn.amountReceived,
+                    blockNumber: fromBlock,
+                    logIndex: 0,
+                },
+            };
+        }
     };
 
     const abandonFailedBridgeSend = async (
@@ -701,12 +835,28 @@ export const SwapExecutionWorker = () => {
                 contractAddress: sourceBridge.address,
             }),
         );
-        const receivedEvent = await waitForBridgeReceiptByGuid(
-            currentSwap.id,
-            currentSwap.bridge.destinationAsset,
-            guid,
-            currentSwap.bridge.sourceAsset,
-        );
+        const manualCctpReceive = usesManualCctpReceive(currentSwap)
+            ? await waitForManualCctpReceive(
+                  currentSwap,
+                  guid,
+                  getGasAbstractionSigner(currentSwap.bridge.destinationAsset),
+              )
+            : undefined;
+        if (
+            usesManualCctpReceive(currentSwap) &&
+            manualCctpReceive === undefined
+        ) {
+            return;
+        }
+
+        const receivedEvent =
+            manualCctpReceive?.receivedEvent ??
+            (await waitForBridgeReceiptByGuid(
+                currentSwap.id,
+                currentSwap.bridge.destinationAsset,
+                guid,
+                currentSwap.bridge.sourceAsset,
+            ));
         if (receivedEvent === undefined) {
             return;
         }
@@ -792,6 +942,9 @@ export const SwapExecutionWorker = () => {
             receivedAmount,
         ]);
         const calls: AlchemyCall[] = [
+            ...(manualCctpReceive?.receiveCall === undefined
+                ? []
+                : [manualCctpReceive.receiveCall]),
             {
                 to: getTokenAddress(latestSwap.bridge.destinationAsset),
                 value: "0",

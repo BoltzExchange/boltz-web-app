@@ -1,13 +1,16 @@
 import type * as ConfigModule from "../../src/config";
-import type * as MainnetConfigModule from "../../src/configs/mainnet";
+import { Usdt0Kind } from "../../src/configs/base";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
 import {
     BTC,
     LBTC,
     LN,
     RBTC,
     TBTC,
+    USDC,
     USDT0,
     getAssetDisplaySymbol,
+    getBridgeMesh,
     getBridgeVariants,
     getCanonicalAsset,
     getRouteViaAsset,
@@ -22,13 +25,10 @@ import {
 vi.mock("../../src/config", async () => {
     const actual =
         await vi.importActual<typeof ConfigModule>("../../src/config");
-    const mainnet = await vi.importActual<typeof MainnetConfigModule>(
-        "../../src/configs/mainnet",
-    );
 
     return {
         ...actual,
-        config: mainnet.config,
+        config: mainnetConfig,
     };
 });
 
@@ -41,9 +41,11 @@ describe("Assets", () => {
             ${LN}           | ${LN}
             ${RBTC}         | ${RBTC}
             ${USDT0}        | ${USDT0}
+            ${USDC}         | ${USDC}
             ${"USDT0-ETH"}  | ${USDT0}
             ${"USDT0-POL"}  | ${USDT0}
             ${"USDT0-BERA"} | ${USDT0}
+            ${"USDC-BASE"}  | ${USDC}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getCanonicalAsset(input)).toBe(expected);
         });
@@ -57,9 +59,11 @@ describe("Assets", () => {
             ${LN}           | ${"LN"}
             ${RBTC}         | ${"RBTC"}
             ${USDT0}        | ${"USDT"}
+            ${USDC}         | ${"USDC"}
             ${"USDT0-ETH"}  | ${"USDT"}
             ${"USDT0-POL"}  | ${"USDT"}
             ${"USDT0-BERA"} | ${"USDT"}
+            ${"USDC-BASE"}  | ${"USDC"}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getAssetDisplaySymbol(input)).toBe(expected);
         });
@@ -118,6 +122,20 @@ describe("Assets", () => {
         });
     });
 
+    describe("getBridgeMesh", () => {
+        test("returns legacy when either OFT asset is on the legacy mesh", () => {
+            expect(getBridgeMesh("USDT0-ETH", "USDT0-SOL")).toBe(
+                Usdt0Kind.Legacy,
+            );
+        });
+
+        test("throws for non-OFT bridge assets", () => {
+            expect(() => getBridgeMesh("USDC-ETH", "USDT0-SOL")).toThrow(
+                /requires OFT bridge assets/,
+            );
+        });
+    });
+
     describe("getRouteViaAsset", () => {
         test.each`
             input             | expected
@@ -134,7 +152,7 @@ describe("Assets", () => {
     });
 
     describe("getRouterAddress", () => {
-        const tbtcRouter = "0x6EA68e965fcd19b6fbC6553BABbF87a5018F9B28";
+        const tbtcRouter = mainnetConfig.assets.TBTC.contracts!.router;
 
         test("resolves the canonical asset's routeVia hop router", () => {
             expect(getRouterAddress(USDT0)).toBe(tbtcRouter);
@@ -183,6 +201,9 @@ describe("Assets", () => {
             ${USDT0}       | ${true}
             ${"USDT0-ETH"} | ${true}
             ${"USDT0-POL"} | ${true}
+            ${USDC}        | ${true}
+            ${"USDC-ETH"}  | ${true}
+            ${"USDC-POL"}  | ${true}
         `("$input -> $expected", ({ input, expected }) => {
             expect(isStablecoinAsset(input)).toBe(expected);
         });
