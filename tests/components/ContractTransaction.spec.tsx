@@ -1,6 +1,7 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { createMemo } from "solid-js";
+import { keccak256, toBytes } from "viem";
 
 vi.mock("ethers", () => {
     const encodedFunctionData =
@@ -135,6 +136,7 @@ vi.mock("ethers", () => {
         concat,
         getAddress: (value: string) => value,
         getBytes,
+        id: (value: string) => keccak256(toBytes(value)),
         keccak256: vi.fn(() => "0xkeccak"),
         solidityPacked,
         zeroPadValue,

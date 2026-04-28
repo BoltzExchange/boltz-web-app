@@ -135,8 +135,12 @@ const WaitForCctp = (props: {
         undefined,
     );
 
-    const sourceDomain = () =>
-        getAssetBridge(props.bridge.sourceAsset)?.cctp?.domain;
+    const sourceDomain = () => {
+        const bridge = getAssetBridge(props.bridge.sourceAsset);
+        return bridge?.kind === BridgeKind.Cctp
+            ? bridge.cctp.domain
+            : undefined;
+    };
 
     createEffect(() => {
         const domain = sourceDomain();

@@ -409,6 +409,10 @@ const SendToBridge = (props: {
         const quotedBridgeInstance = await bridgeDriver().getQuotedContract(
             props.bridge,
         );
+        const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
+            props.bridge,
+            props.amount,
+        );
         const bridgeInstance = await bridgeDriver().createContract(
             props.bridge,
             WalletConnectProvider.getSolanaProvider(),
@@ -417,7 +421,7 @@ const SendToBridge = (props: {
             quotedBridgeInstance,
             props.bridge,
             recipient,
-            props.amount,
+            tokenAmount,
         );
 
         log.debug("Quoted bridge send", {
@@ -425,7 +429,7 @@ const SendToBridge = (props: {
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: props.amount.toString(),
+            amount: tokenAmount.toString(),
             nativeFee: msgFee[0].toString(),
             lzTokenFee: msgFee[1].toString(),
         });

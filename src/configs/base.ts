@@ -23,8 +23,8 @@ export const enum Usdt0Kind {
     Legacy = "legacy",
 }
 
-export type AssetBridge = {
-    kind: BridgeKind;
+type OftAssetBridge = {
+    kind: BridgeKind.Oft;
     canonicalAsset: string;
     oft?: {
         mesh?: Usdt0Kind;
@@ -32,12 +32,19 @@ export type AssetBridge = {
         // is connected. Only needed on Solana
         quotePayer?: string;
     };
-    cctp?: {
+};
+
+type CctpAssetBridge = {
+    kind: BridgeKind.Cctp;
+    canonicalAsset: string;
+    cctp: {
         domain: number;
         tokenMessenger: string;
         transferMode: CctpTransferMode;
     };
 };
+
+export type AssetBridge = OftAssetBridge | CctpAssetBridge;
 
 // TODO: which properties do we really need?
 export type Usdt0Variant = {

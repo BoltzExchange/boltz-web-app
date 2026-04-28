@@ -66,13 +66,13 @@ const buildCctpMessage = ({
 };
 
 describe("cctp events", () => {
-    test("topic constants are 32-byte hex strings", () => {
-        // The actual hashes were verified against a real keccak256 out of
-        // band (see the CI / dev script); here we just sanity-check the
-        // constants didn't get mangled. The global test mock stubs
-        // keccak256, so we can't recompute in-process.
-        expect(cctpMessageSentTopic).toMatch(/^0x[0-9a-f]{64}$/);
-        expect(cctpMintAndWithdrawTopic).toMatch(/^0x[0-9a-f]{64}$/);
+    test("event topics match known Circle signature fixtures", () => {
+        expect(cctpMessageSentTopic).toBe(
+            "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036",
+        );
+        expect(cctpMintAndWithdrawTopic).toBe(
+            "0x50c55e915134d457debfa58eb6f4342956f8b0616d51a89a3659360178e1ab63",
+        );
     });
 
     test("parseCctpMessageSent decodes a MessageSent log", () => {

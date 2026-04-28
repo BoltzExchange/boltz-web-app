@@ -1,7 +1,7 @@
 import { config } from "../config";
 import {
     type AssetBridge,
-    type BridgeKind,
+    BridgeKind,
     NetworkTransport,
     Usdt0Kind,
 } from "../configs/base";
@@ -124,11 +124,12 @@ export const getRouteViaAsset = (asset: string): string | undefined =>
 export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
         .filter((candidate): candidate is string => candidate !== undefined)
-        .map(
-            (candidate) =>
-                config.assets?.[candidate]?.bridge?.oft?.mesh ??
-                Usdt0Kind.Native,
-        );
+        .map((candidate) => {
+            const bridge = config.assets?.[candidate]?.bridge;
+            return bridge?.kind === BridgeKind.Oft
+                ? (bridge.oft?.mesh ?? Usdt0Kind.Native)
+                : Usdt0Kind.Native;
+        });
 
     return meshKinds.includes(Usdt0Kind.Legacy)
         ? Usdt0Kind.Legacy

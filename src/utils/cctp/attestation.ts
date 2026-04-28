@@ -36,12 +36,14 @@ const getCctpApiUrl = (): string => {
 const fetchCctpForwardTxHash = async (
     sourceDomainId: number,
     sourceTxHash: string,
+    signal?: AbortSignal,
 ): Promise<CctpForwardResult | CctpForwardProgress> => {
     const { opts, requestTimeout } = constructRequestOptions(
         {
             headers: {
                 Accept: "application/json",
             },
+            signal,
         },
         requestTimeoutDuration,
     );
@@ -111,6 +113,7 @@ export const waitForCctpForwardTxHash = async (
         const result = await fetchCctpForwardTxHash(
             sourceDomainId,
             sourceTxHash,
+            options.signal,
         );
         if ("forwardTxHash" in result) {
             return result;

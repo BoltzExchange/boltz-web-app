@@ -18,7 +18,8 @@ import type { Signer } from "src/context/Web3";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
-import { NetworkTransport, Usdt0Kind } from "../../configs/base";
+import { BridgeKind, NetworkTransport, Usdt0Kind } from "../../configs/base";
+import { getAssetBridge } from "../../consts/Assets";
 import { clearCache, getCachedValue } from "../cache";
 import {
     encodeSolanaAtaCreationOption,
@@ -619,8 +620,9 @@ export const quoteOftAmountInForAmountOut = async (
     }
 
     if (
+        getAssetBridge(route.sourceAsset)?.kind === BridgeKind.Oft &&
         getBridgeMesh(route.sourceAsset, route.destinationAsset) ===
-        Usdt0Kind.Legacy
+            Usdt0Kind.Legacy
     ) {
         return getLegacyMeshSourceAmount(amountOut);
     }

@@ -1,13 +1,15 @@
+import { id } from "ethers";
+
 // keccak256("MessageSent(bytes)") — event on `MessageTransmitterV2` emitted
 // once per `depositForBurn*` call.
-export const cctpMessageSentTopic =
-    "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";
+export const cctpMessageSentTopic = id("MessageSent(bytes)");
 
-// keccak256("MintAndWithdraw(address,uint256,address)") — event on
+// keccak256("MintAndWithdraw(address,uint256,address,uint256)") — event on
 // `TokenMinterV2` emitted by a destination mint. `mintRecipient` and
-// `mintToken` are indexed; `amount` is in data.
-export const cctpMintAndWithdrawTopic =
-    "0x50c55e915134d457debfa58eb6f4342956f8b0616d51a89a3659360178e1ab63";
+// `mintToken` are indexed; `amount` and `feeCollected` are in data.
+export const cctpMintAndWithdrawTopic = id(
+    "MintAndWithdraw(address,uint256,address,uint256)",
+);
 
 // CCTP v2 outer message header byte offsets (see Circle's MessageV2.sol).
 const sourceDomainOffset = 4; // uint32

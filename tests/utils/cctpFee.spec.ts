@@ -1,6 +1,5 @@
 import { config } from "../../src/config";
 import { CctpTransferMode } from "../../src/configs/base";
-import { clearCache } from "../../src/utils/cache";
 import { cctpFeeBpsDenominator, getCctpFee } from "../../src/utils/cctp/fee";
 
 const oneBps = cctpFeeBpsDenominator / 10_000n;
@@ -23,12 +22,10 @@ describe("cctpFee", () => {
     const originalFeeApiUrl = config.cctpApiUrl;
 
     beforeEach(() => {
-        clearCache();
         config.cctpApiUrl = "https://iris-api.circle.com";
     });
 
     afterEach(() => {
-        clearCache();
         vi.restoreAllMocks();
     });
 
@@ -87,7 +84,7 @@ describe("cctpFee", () => {
         });
     });
 
-    test("should cache route fee lookups", async () => {
+    test("should fetch route fees on each lookup", async () => {
         const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
             ok: true,
             json: () =>
@@ -110,7 +107,7 @@ describe("cctpFee", () => {
             forwardFee: 2n,
         });
 
-        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
     });
 
     test("should throw when the expected finality threshold is missing", async () => {

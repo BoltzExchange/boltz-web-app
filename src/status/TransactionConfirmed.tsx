@@ -185,7 +185,7 @@ const getAcceptedQuoteAmount = async (
     }
 
     if (adjustedClaimAmount <= 0n) {
-        throw new Error("amount too small to cover bridge messaging fee");
+        throw new Error("adjusted claim amount must be greater than zero");
     }
 
     const adjustedTradeQuote = await fetchDexQuote(

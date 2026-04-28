@@ -13,7 +13,10 @@ export const arbitrumRpcUrls = prependEnv(
 
 export const avalancheRpcUrls = prependEnv(
     import.meta.env.VITE_AVALANCHE_RPC_ENDPOINT,
-    ["https://api.avax.network/ext/bc/C/rpc"],
+    [
+        "https://api.avax.network/ext/bc/C/rpc",
+        "https://avalanche-c-chain-rpc.publicnode.com",
+    ],
 );
 
 export const baseRpcUrls = prependEnv(import.meta.env.VITE_BASE_RPC_ENDPOINT, [
@@ -140,7 +143,7 @@ export const solanaRpcUrls = prependEnv(
 
 export const sonicRpcUrls = prependEnv(
     import.meta.env.VITE_SONIC_RPC_ENDPOINT,
-    ["https://rpc.soniclabs.com"],
+    ["https://rpc.soniclabs.com", "https://sonic.api.pocket.network"],
 );
 
 export const stableRpcUrls = prependEnv(
@@ -165,11 +168,15 @@ export const unichainRpcUrls = prependEnv(
 
 export const worldChainRpcUrls = prependEnv(
     import.meta.env.VITE_WORLD_CHAIN_RPC_ENDPOINT,
-    ["https://worldchain-mainnet.g.alchemy.com/public"],
+    [
+        "https://worldchain-mainnet.g.alchemy.com/public",
+        "https://480.rpc.thirdweb.com",
+    ],
 );
 
 export const xdcRpcUrls = prependEnv(import.meta.env.VITE_XDC_RPC_ENDPOINT, [
     "https://rpc.xdc.org",
+    "https://rpc.ankr.com/xdc",
 ]);
 
 export const xlayerRpcUrls = prependEnv(

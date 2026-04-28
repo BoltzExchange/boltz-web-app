@@ -1,5 +1,5 @@
 import { config as runtimeConfig } from "../../src/config";
-import { CctpTransferMode } from "../../src/configs/base";
+import { BridgeKind, CctpTransferMode } from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { CctpBridgeDriver } from "../../src/utils/bridge/CctpBridgeDriver";
 import { clearCache } from "../../src/utils/cache";
@@ -26,6 +26,13 @@ describe("CctpBridgeDriver", () => {
     const route = {
         sourceAsset: "USDC",
         destinationAsset: "USDC-BASE",
+    };
+    const requireUsdcCctpBridge = () => {
+        const bridge = mainnetConfig.assets.USDC.bridge;
+        if (bridge?.kind !== BridgeKind.Cctp) {
+            throw new Error("USDC is not configured as CCTP");
+        }
+        return bridge;
     };
 
     beforeAll(() => {
@@ -133,7 +140,7 @@ describe("CctpBridgeDriver", () => {
             destinationDomain: 6,
             mintRecipient: addressToBytes32(recipient),
             destinationCaller: cctpZeroBytes32,
-            maxFee: 130n,
+            maxFee: 131n,
             minFinalityThreshold: cctpFastFinalityThreshold,
             hookData: cctpForwardHookData,
         });
@@ -195,8 +202,7 @@ describe("CctpBridgeDriver", () => {
         );
 
         const sendParam = quote.sendParam as CctpSendParam;
-        // 100_000_000 * 1.3bps = 13_000 protocol fee; + 207_543 forwarding med tier.
-        expect(sendParam.maxFee).toBe(220_543n);
+        expect(sendParam.maxFee).toBe(220_588n);
         expect(quote.minAmount).toBe(99_779_457n);
     });
 
@@ -234,7 +240,7 @@ describe("CctpBridgeDriver", () => {
     test("getContract resolves the source-chain TokenMessenger address", async () => {
         await expect(driver.getContract(route)).resolves.toMatchObject({
             name: "CCTP",
-            address: mainnetConfig.assets.USDC.bridge!.cctp!.tokenMessenger,
+            address: requireUsdcCctpBridge().cctp.tokenMessenger,
         });
     });
 
@@ -376,7 +382,7 @@ describe("CctpBridgeDriver", () => {
         const target = await driver.getDirectSendTarget(route);
         expect(target).toEqual({
             executionContract: {
-                address: mainnetConfig.assets.USDC.bridge!.cctp!.tokenMessenger,
+                address: requireUsdcCctpBridge().cctp.tokenMessenger,
             },
             burnToken: mainnetConfig.assets.USDC.token!.address,
         });
@@ -444,7 +450,7 @@ describe("CctpBridgeDriver", () => {
             addressToBytes32(recipient), // mintRecipient
             target.burnToken, // burnToken
             cctpZeroBytes32, // destinationCaller
-            130n, // maxFee
+            131n, // maxFee
             cctpFastFinalityThreshold, // minFinalityThreshold
             cctpForwardHookData, // hookData
         );

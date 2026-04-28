@@ -1,6 +1,4 @@
 // @vitest-environment node
-import { expect, test } from "vitest";
-
 import { config as runtimeConfig } from "../../src/config";
 import { BridgeKind, CctpTransferMode } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";

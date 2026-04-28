@@ -1,5 +1,6 @@
 import axios from "axios";
 import log from "loglevel";
+import { keccak256, toBytes } from "viem";
 
 import { config as runtimeConfig } from "../src/config";
 import { config as mainnetConfig } from "../src/configs/mainnet";
@@ -142,6 +143,7 @@ vi.mock("ethers", () => {
         formatUnits,
         getAddress: (value: string) => value,
         getBytes,
+        id: (value: string) => keccak256(toBytes(value)),
         keccak256: vi.fn((value: string) => value),
         solidityPacked,
         zeroPadValue,

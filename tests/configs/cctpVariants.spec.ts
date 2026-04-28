@@ -13,13 +13,14 @@ describe("CCTP variant assets", () => {
     test.each(entries)(
         "%s declares the canonical CCTP bridge shape",
         (asset, config) => {
-            expect(config.bridge).toBeDefined();
-            expect(config.bridge!.kind).toBe(BridgeKind.Cctp);
-            expect(config.bridge!.canonicalAsset).toBe("USDC");
-            expect(config.bridge!.cctp).toBeDefined();
+            const bridge = config.bridge;
+            expect(bridge?.kind).toBe(BridgeKind.Cctp);
+            if (bridge?.kind !== BridgeKind.Cctp) {
+                throw new Error(`${asset} is not configured as CCTP`);
+            }
+            expect(bridge.canonicalAsset).toBe("USDC");
 
-            const { domain, tokenMessenger, transferMode } =
-                config.bridge!.cctp!;
+            const { domain, tokenMessenger, transferMode } = bridge.cctp;
             expect(Number.isInteger(domain)).toBe(true);
             expect(domain).toBeGreaterThanOrEqual(0);
             expect(tokenMessenger).toMatch(addressPattern);
@@ -33,9 +34,13 @@ describe("CCTP variant assets", () => {
     );
 
     test("each variant has a unique domain id", () => {
-        const domains = entries.map(
-            ([, config]) => config.bridge!.cctp!.domain,
-        );
+        const domains = entries.map(([asset, config]) => {
+            const bridge = config.bridge;
+            if (bridge?.kind !== BridgeKind.Cctp) {
+                throw new Error(`${asset} is not configured as CCTP`);
+            }
+            return bridge.cctp.domain;
+        });
         expect(new Set(domains).size).toBe(domains.length);
     });
 
@@ -54,8 +59,12 @@ describe("CCTP variant assets", () => {
         // Currently no chain overrides the default; EDGE (domain 28) would be
         // the expected exception when added. Tightening this test ensures we
         // don't accidentally introduce a typo'd address.
-        for (const [, config] of entries) {
-            expect(config.bridge!.cctp!.tokenMessenger).toBe(tokenMessengerV2);
+        for (const [asset, config] of entries) {
+            const bridge = config.bridge;
+            if (bridge?.kind !== BridgeKind.Cctp) {
+                throw new Error(`${asset} is not configured as CCTP`);
+            }
+            expect(bridge.cctp.tokenMessenger).toBe(tokenMessengerV2);
         }
     });
 

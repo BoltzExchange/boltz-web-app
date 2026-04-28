@@ -2,7 +2,7 @@ import log from "loglevel";
 import { getAssetBridge, getBridgeMesh } from "src/consts/Assets";
 
 import { config } from "../../config";
-import { Usdt0Kind } from "../../configs/base";
+import { BridgeKind, Usdt0Kind } from "../../configs/base";
 import { getCachedValue } from "../cache";
 import { formatError } from "../errors";
 import type { OftRoute } from "./types";
@@ -72,7 +72,7 @@ export const getOftChain = async (
 
     const assetConfig = config.assets?.[asset];
     const meshKind =
-        getAssetBridge(route.sourceAsset)?.kind !== undefined
+        getAssetBridge(route.sourceAsset)?.kind === BridgeKind.Oft
             ? getBridgeMesh(route.sourceAsset, route.destinationAsset)
             : Usdt0Kind.Native;
     const registryKey: keyof OftTokenConfig =

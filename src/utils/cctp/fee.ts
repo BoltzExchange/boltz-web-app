@@ -2,7 +2,6 @@ import BigNumber from "bignumber.js";
 
 import { config } from "../../config";
 import { CctpTransferMode } from "../../configs/base";
-import { getCachedValue } from "../cache";
 import { constructRequestOptions } from "../helper";
 
 const requestTimeoutDuration = 6_000;
@@ -35,14 +34,6 @@ const cctpFinalityThresholds = {
     [CctpTransferMode.Standard]: 2000,
 } as const;
 
-const cctpFeePrefix = "cctpFee:";
-
-const getFeeCacheKey = (
-    sourceDomainId: number,
-    destDomainId: number,
-    transferMode: CctpTransferMode,
-) => `${sourceDomainId}:${destDomainId}:${transferMode}`;
-
 const parseScaledDecimal = (value: number | string): bigint => {
     const bn = new BigNumber(value);
     if (!bn.isFinite() || bn.isNegative()) {
@@ -74,7 +65,7 @@ const getCctpFeeApiUrl = (): string => {
     return cctpApiUrl.endsWith("/") ? cctpApiUrl.slice(0, -1) : cctpApiUrl;
 };
 
-const fetchCctpFeeUncached = async (
+const fetchCctpFee = async (
     sourceDomainId: number,
     destDomainId: number,
     transferMode: CctpTransferMode,
@@ -147,8 +138,4 @@ export const getCctpFee = async (
     destDomainId: number,
     transferMode: CctpTransferMode,
 ): Promise<CctpFee> =>
-    await getCachedValue(
-        cctpFeePrefix,
-        getFeeCacheKey(sourceDomainId, destDomainId, transferMode),
-        () => fetchCctpFeeUncached(sourceDomainId, destDomainId, transferMode),
-    );
+    await fetchCctpFee(sourceDomainId, destDomainId, transferMode);

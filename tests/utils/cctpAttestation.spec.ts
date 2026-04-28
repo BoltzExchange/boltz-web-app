@@ -135,6 +135,34 @@ describe("cctpAttestation", () => {
         await expect(promise).rejects.toThrow("aborted");
     });
 
+    test("waitForCctpForwardTxHash aborts an in-flight request", async () => {
+        const controller = new AbortController();
+        const abortReason = new Error("request aborted");
+        const fetchSpy = vi
+            .spyOn(globalThis, "fetch")
+            .mockImplementation((_url, init) => {
+                const signal = init?.signal;
+                return new Promise<Response>((_resolve, reject) => {
+                    signal?.addEventListener(
+                        "abort",
+                        () => reject(signal.reason),
+                        { once: true },
+                    );
+                });
+            });
+
+        const promise = waitForCctpForwardTxHash(3, "0xburn", {
+            intervalMs: 1_000,
+            signal: controller.signal,
+        });
+        await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+        expect(fetchSpy.mock.calls[0][1]?.signal).toBe(controller.signal);
+
+        controller.abort(abortReason);
+
+        await expect(promise).rejects.toThrow("request aborted");
+    });
+
     test("waitForCctpForwardTxHash surfaces non-404 HTTP errors", async () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue({
             ok: false,

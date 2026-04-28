@@ -2,8 +2,13 @@
 import { base58, hex } from "@scure/base";
 
 import { config as runtimeConfig } from "../../src/config";
-import { NetworkTransport } from "../../src/configs/base";
+import {
+    BridgeKind,
+    CctpTransferMode,
+    NetworkTransport,
+} from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { AssetKind } from "../../src/consts/AssetKind";
 import type * as SolanaChainsModule from "../../src/utils/chains/solana";
 
 vi.mock("../../src/utils/chains/solana", async () => {
@@ -329,6 +334,40 @@ describe("oft", () => {
         ).resolves.toEqual(1_000_300_091n);
 
         expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    test("should not use legacy mesh amount shortcut for CCTP assets", async () => {
+        runtimeConfig.assets = {
+            ...runtimeConfig.assets,
+            "CCTP-TEST": {
+                type: AssetKind.ERC20,
+                network: {
+                    transport: NetworkTransport.Evm,
+                    chainId: 1,
+                    chainName: "Ethereum",
+                    symbol: "ETH",
+                    gasToken: "ETH",
+                    rpcUrls: [],
+                },
+                bridge: {
+                    kind: BridgeKind.Cctp,
+                    canonicalAsset: "USDC",
+                    cctp: {
+                        domain: 0,
+                        tokenMessenger:
+                            "0x0000000000000000000000000000000000000001",
+                        transferMode: CctpTransferMode.Fast,
+                    },
+                },
+            },
+        };
+
+        await expect(
+            quoteOftAmountInForAmountOut(
+                getOftRoute("CCTP-TEST", "USDT0-SOL"),
+                1_000_000_000n,
+            ),
+        ).rejects.toThrow("missing RPC configuration for asset: CCTP-TEST");
     });
 
     test("should throw when a route has no OFT contract", async () => {

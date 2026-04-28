@@ -61,7 +61,13 @@ import type {
     BridgeTransportRunner,
 } from "./types";
 
-type CctpConfig = NonNullable<NonNullable<Asset["bridge"]>["cctp"]>;
+type CctpConfig = Extract<
+    NonNullable<Asset["bridge"]>,
+    { kind: BridgeKind.Cctp }
+>["cctp"];
+
+const cctpMaxFeeBufferBps = 2n;
+const bpsDenominator = 10_000n;
 
 export class CctpBridgeDriver extends BridgeDriver {
     public readonly kind = BridgeKind.Cctp;
@@ -170,14 +176,18 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
-        const fee = await this.getFee(route, options);
-        const maxFee = this.computeTotalFee(amount, fee);
+        const unbufferedFee = await this.getFee(route, options);
+        const unbufferedMaxFee = this.computeTotalFee(amount, unbufferedFee);
+        const bufferedMaxFee = this.addBps(
+            unbufferedMaxFee,
+            cctpMaxFeeBufferBps,
+        );
         const sendParam: CctpSendParam = {
             amount,
             destinationDomain: destinationConfig.domain,
             mintRecipient: addressToBytes32(mintRecipient),
             destinationCaller: cctpZeroBytes32,
-            maxFee,
+            maxFee: bufferedMaxFee,
             minFinalityThreshold:
                 transferMode === CctpTransferMode.Fast
                     ? cctpFastFinalityThreshold
@@ -190,7 +200,8 @@ export class CctpBridgeDriver extends BridgeDriver {
         return {
             sendParam,
             msgFee: [0n, 0n],
-            minAmount: amount > maxFee ? amount - maxFee : 0n,
+            minAmount:
+                amount > unbufferedMaxFee ? amount - unbufferedMaxFee : 0n,
         };
     };
 
@@ -524,7 +535,7 @@ export class CctpBridgeDriver extends BridgeDriver {
 
     private requireCctpConfig = (asset: string): CctpConfig => {
         const bridge = getAssetBridge(asset);
-        if (bridge?.kind !== BridgeKind.Cctp || bridge.cctp === undefined) {
+        if (bridge?.kind !== BridgeKind.Cctp) {
             throw new Error(`missing CCTP config for asset ${asset}`);
         }
 
@@ -561,6 +572,10 @@ export class CctpBridgeDriver extends BridgeDriver {
     // flat Forwarding Service fee that Circle deducts off-chain.
     private computeTotalFee = (amount: bigint, fee: CctpFee): bigint => {
         return (amount * fee.bpsUnits) / cctpFeeBpsDenominator + fee.forwardFee;
+    };
+
+    private addBps = (amount: bigint, bps: bigint): bigint => {
+        return this.ceilDiv(amount * (bpsDenominator + bps), bpsDenominator);
     };
 
     private ceilDiv = (numerator: bigint, denominator: bigint): bigint => {
