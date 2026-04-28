@@ -3,12 +3,10 @@ import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { BridgeKind } from "../configs/base";
 import { useGlobalContext } from "../context/Global";
-import { bridgeRegistry } from "../utils/bridge";
 import { formatError } from "../utils/errors";
 import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
 import type { BridgeDetail } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
 import LoadingSpinner from "./LoadingSpinner";
 
 const WaitForOft = (props: {
@@ -117,22 +115,13 @@ const WaitForOft = (props: {
     );
 };
 
-const WaitForGenericBridge = (props: {
-    bridge: BridgeDetail;
-    transactionHash: string;
-}) => {
+const WaitForGenericBridge = () => {
     const { t } = useGlobalContext();
 
     return (
         <>
             <h2>{t("waiting_for_bridge")}</h2>
             <LoadingSpinner />
-            <BlockExplorer
-                asset={props.bridge.sourceAsset}
-                txId={props.transactionHash}
-                explorer={bridgeRegistry.getExplorerKind(props.bridge)}
-                typeLabel={"lockup_tx"}
-            />
         </>
     );
 };
@@ -142,13 +131,7 @@ const WaitForBridge = (props: {
     transactionHash: string;
 }) => {
     return (
-        <Switch
-            fallback={
-                <WaitForGenericBridge
-                    bridge={props.bridge}
-                    transactionHash={props.transactionHash}
-                />
-            }>
+        <Switch fallback={<WaitForGenericBridge />}>
             <Match when={props.bridge.kind === BridgeKind.Oft}>
                 <WaitForOft
                     sourceAsset={props.bridge.sourceAsset}

@@ -13,6 +13,7 @@ import type { Signer } from "../../context/Web3";
 import { getSolanaNativeBalance } from "../chains/solana";
 import { getTronNativeBalance } from "../chains/tron";
 import {
+    type OftDirectSendTarget,
     getOftDirectRequiredNativeBalance,
     getOftDirectRequiredTokenAmount,
     getOftDirectSendTarget,
@@ -39,6 +40,7 @@ import {
 } from "../oft/oft";
 import { getOftContract } from "../oft/registry";
 import { getSolanaOftGuidFromLogs } from "../oft/solana";
+import type { OftTransportClient, SendParam } from "../oft/types";
 import type { Provider } from "../provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../quoter";
 import {
@@ -134,7 +136,10 @@ export class OftBridgeDriver extends BridgeDriver {
         return {
             amountIn: quote.amountIn,
             amountOut: quote.amountOut,
-            msgFee: quote.msgFee,
+            messagingFee: {
+                amount: quote.msgFee[0],
+                token: this.getMessagingFeeToken(route),
+            },
             bridgeLimit: quote.oftLimit,
             bridgeFeeDetails: quote.oftFeeDetails,
             bridgeReceipt: quote.oftReceipt,
@@ -160,15 +165,22 @@ export class OftBridgeDriver extends BridgeDriver {
         amount: bigint,
         options: BridgeQuoteOptions = {},
     ): Promise<BridgeSendQuote> => {
-        const quote = await quoteOftSend(contract, route, recipient, amount, {
-            recipient: options.recipient,
-            nativeDrop: options.nativeDrop,
-            oftName: options.bridgeName,
-        });
+        const quote = await quoteOftSend(
+            contract as OftTransportClient,
+            route,
+            recipient,
+            amount,
+            {
+                recipient: options.recipient,
+                nativeDrop: options.nativeDrop,
+                oftName: options.bridgeName,
+            },
+        );
 
         return {
             sendParam: quote.sendParam,
             msgFee: quote.msgFee,
+            minAmount: quote.sendParam[3],
             bridgeLimit: quote.oftLimit,
             bridgeFeeDetails: quote.oftFeeDetails,
             bridgeReceipt: quote.oftReceipt,
@@ -211,16 +223,21 @@ export class OftBridgeDriver extends BridgeDriver {
         contract: BridgeTransportClient,
         receipt: BridgeSentReceipt,
         contractAddress: string,
-    ): BridgeSentEvent => getOftSentEvent(contract, receipt, contractAddress);
+    ): BridgeSentEvent =>
+        getOftSentEvent(
+            contract as OftTransportClient,
+            receipt,
+            contractAddress,
+        );
 
     public getReceivedEventByGuid = async (
         contract: BridgeTransportClient,
-        provider: Pick<Provider, "getLogs">,
+        provider: Pick<Provider, "getLogs" | "getTransactionReceipt">,
         contractAddress: string,
         guid: string,
     ): Promise<BridgeReceivedEvent | undefined> => {
         return await getOftReceivedEventByGuid(
-            contract,
+            contract as OftTransportClient,
             provider,
             contractAddress,
             guid,
@@ -313,19 +330,31 @@ export class OftBridgeDriver extends BridgeDriver {
         target: BridgeDirectSendTarget,
         runner: BridgeDirectSendRunner,
     ): Promise<boolean> => {
-        return await requiresOftDirectUserApproval(target, runner);
+        return await requiresOftDirectUserApproval(
+            target as OftDirectSendTarget,
+            runner,
+        );
     };
 
     public getDirectRequiredTokenAmount = (
         target: BridgeDirectSendTarget,
         amount: bigint,
         msgFee: BridgeMsgFee,
-    ): bigint => getOftDirectRequiredTokenAmount(target, amount, msgFee);
+    ): bigint =>
+        getOftDirectRequiredTokenAmount(
+            target as OftDirectSendTarget,
+            amount,
+            msgFee,
+        );
 
     public getDirectRequiredNativeBalance = (
         target: BridgeDirectSendTarget,
         msgFee: BridgeMsgFee,
-    ): bigint => getOftDirectRequiredNativeBalance(target, msgFee);
+    ): bigint =>
+        getOftDirectRequiredNativeBalance(
+            target as OftDirectSendTarget,
+            msgFee,
+        );
 
     public sendDirect = async (args: {
         target: BridgeDirectSendTarget;
@@ -333,7 +362,12 @@ export class OftBridgeDriver extends BridgeDriver {
         sendParam: BridgeSendParam;
         msgFee: BridgeMsgFee;
         refundAddress: string;
-    }): Promise<BridgeTransaction> => await sendOftDirect(args);
+    }): Promise<BridgeTransaction> =>
+        await sendOftDirect({
+            ...args,
+            target: args.target as OftDirectSendTarget,
+            sendParam: args.sendParam as SendParam,
+        });
 
     public encodeRouterExecuteData = (
         args: EncodeRouterExecuteArgs,
@@ -419,13 +453,16 @@ export class OftBridgeDriver extends BridgeDriver {
 
     // Structured projection of the positional OFT send-param tuple.
     // Tuple layout: [dstEid, to, amountLD, minAmountLD, extraOptions, composeMsg, oftCmd].
-    private toSendData = (sendParam: BridgeSendParam) => ({
-        dstEid: sendParam[0],
-        to: sendParam[1],
-        extraOptions: sendParam[4],
-        composeMsg: sendParam[5],
-        oftCmd: sendParam[6],
-    });
+    private toSendData = (sendParam: BridgeSendParam) => {
+        const oftSendParam = sendParam as SendParam;
+        return {
+            dstEid: oftSendParam[0],
+            to: oftSendParam[1],
+            extraOptions: oftSendParam[4],
+            composeMsg: oftSendParam[5],
+            oftCmd: oftSendParam[6],
+        };
+    };
 
     private hashSendData = async (
         router: Router,

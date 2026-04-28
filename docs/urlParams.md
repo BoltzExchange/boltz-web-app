@@ -51,6 +51,22 @@ are:
 - `USDT0-TRON`
 - `USDT0-UNI`
 - `USDT0-XLAYER`
+- `USDC` (Arbitrum)
+- `USDC-BASE`
+- `USDC-ETH`
+- `USDC-AVAX`
+- `USDC-OP`
+- `USDC-POL`
+- `USDC-UNI`
+- `USDC-LINEA`
+- `USDC-CODEX`
+- `USDC-SONIC`
+- `USDC-WORLD`
+- `USDC-MON`
+- `USDC-SEI`
+- `USDC-XDC`
+- `USDC-INK`
+- `USDC-PLUME`
 
 ## Amounts
 

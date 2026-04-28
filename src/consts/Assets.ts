@@ -1,7 +1,7 @@
 import { config } from "../config";
 import {
     type AssetBridge,
-    type BridgeKind,
+    BridgeKind,
     NetworkTransport,
     Usdt0Kind,
 } from "../configs/base";
@@ -15,6 +15,7 @@ export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
+export const USDC = "USDC";
 export const ETH = "ETH";
 
 export type AssetType =
@@ -23,7 +24,8 @@ export type AssetType =
     | typeof LBTC
     | typeof RBTC
     | typeof TBTC
-    | typeof USDT0;
+    | typeof USDT0
+    | typeof USDC;
 
 export type RefundableAssetType =
     | typeof BTC
@@ -37,7 +39,7 @@ export type blockChainsAssets =
     | typeof RBTC
     | typeof ETH;
 
-const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
+const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0, USDC];
 
 export const assets: string[] = [
     ...assetDisplayOrder.filter(
@@ -52,7 +54,7 @@ export const refundableAssets = [BTC, LBTC, RBTC, TBTC];
 
 export const btcChains = [BTC, LBTC];
 
-export const evmChains = [RBTC, TBTC, USDT0];
+export const evmChains = [RBTC, TBTC, USDT0, USDC];
 
 const networkBadgeAliases: Record<string, string> = {
     "Arbitrum One": "arbitrum",
@@ -63,7 +65,7 @@ const networkBadgeAliases: Record<string, string> = {
 // Canonical assets that are USD stablecoins. Their base-unit → USD conversion
 // is a simple power-of-ten, not a market-rate lookup. When a new stablecoin
 // bridge (e.g. USDC via CCTP) is added, include its canonical here.
-const stablecoinCanonicals = new Set<string>([USDT0]);
+const stablecoinCanonicals = new Set<string>([USDT0, USDC]);
 
 export const isStablecoinAsset = (asset: string): boolean => {
     if (stablecoinCanonicals.has(asset)) {
@@ -122,10 +124,20 @@ export const getRouteViaAsset = (asset: string): string | undefined =>
 export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
         .filter((candidate): candidate is string => candidate !== undefined)
-        .map(
-            (candidate) =>
-                config.assets?.[candidate]?.bridge?.mesh ?? Usdt0Kind.Native,
-        );
+        .map((candidate) => {
+            const bridge = config.assets?.[candidate]?.bridge;
+            if (bridge === undefined) {
+                return Usdt0Kind.Native;
+            }
+
+            if (bridge.kind !== BridgeKind.Oft) {
+                throw new Error(
+                    `getBridgeMesh requires OFT bridge assets; ${candidate} uses ${bridge.kind}`,
+                );
+            }
+
+            return bridge.oft?.mesh ?? Usdt0Kind.Native;
+        });
 
     return meshKinds.includes(Usdt0Kind.Legacy)
         ? Usdt0Kind.Legacy

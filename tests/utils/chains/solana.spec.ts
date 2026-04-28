@@ -13,7 +13,7 @@ import {
     shouldCreateSolanaTokenAccount,
 } from "../../../src/utils/chains/solana";
 
-const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+const originalAssets = structuredClone(runtimeConfig.assets);
 const originalNetwork = runtimeConfig.network;
 const knownRecipientWithUsdtAta =
     "6bGbFocpK9tzyDsZEWrQkixm6WCGsnqvYPcXpAR7Pc9t";

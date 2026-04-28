@@ -312,13 +312,13 @@ const buildRefundFollowUpCalls = async (
         });
     }
 
-    const { sendParam } = await bridgeDriver.quoteSend(
+    const { sendParam, minAmount } = await bridgeDriver.quoteSend(
         quotedBridge,
         reverseBridgeRoute,
         resolvedDestination,
         tradeAmountOutMin,
     );
-    const minAmountLd = calculateAmountOutMin(sendParam[3], slippage);
+    const minAmountLd = calculateAmountOutMin(minAmount, slippage);
     const executeBridgeData = bridgeDriver.encodeRouterExecuteData({
         router,
         route: reverseBridgeRoute,

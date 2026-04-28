@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { getAssetBridge, getBridgeMesh } from "src/consts/Assets";
+import { getBridgeMesh } from "src/consts/Assets";
 
 import { config } from "../../config";
 import { Usdt0Kind } from "../../configs/base";
@@ -71,10 +71,7 @@ export const getOftChain = async (
     }
 
     const assetConfig = config.assets?.[asset];
-    const meshKind =
-        getAssetBridge(route.sourceAsset)?.kind !== undefined
-            ? getBridgeMesh(route.sourceAsset, route.destinationAsset)
-            : Usdt0Kind.Native;
+    const meshKind = getBridgeMesh(route.sourceAsset, route.destinationAsset);
     const registryKey: keyof OftTokenConfig =
         meshKind === Usdt0Kind.Legacy ? "legacyMesh" : "native";
 

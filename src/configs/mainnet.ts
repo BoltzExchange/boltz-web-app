@@ -1,6 +1,7 @@
 import type { Config } from "src/configs/base";
 import {
     BridgeKind,
+    CctpTransferMode,
     Explorer,
     NetworkTransport,
     Usdt0Kind,
@@ -8,6 +9,12 @@ import {
     baseConfig,
     chooseUrl,
 } from "src/configs/base";
+import {
+    cctpVariantAssets,
+    messageTransmitterV2,
+    tokenMessengerV2,
+} from "src/configs/cctp";
+import { arbitrumExplorerUrl } from "src/configs/explorers";
 import { arbitrumRpcUrls, rskRpcUrls } from "src/configs/rpcs";
 import { usdt0VariantAssets } from "src/configs/usdt0";
 import { AssetKind } from "src/consts/AssetKind";
@@ -15,7 +22,7 @@ import { Network } from "src/consts/Network";
 
 const arbitrumExplorer = {
     id: Explorer.Blockscout,
-    normal: "https://arbiscan.io",
+    normal: arbitrumExplorerUrl,
 };
 
 const arbitrumNetwork = {
@@ -41,6 +48,7 @@ const config = {
         normal: "https://api.boltz.exchange",
         tor: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api",
     },
+    cctpApiUrl: "https://iris-api.circle.com",
     assets: {
         BTC: {
             type: AssetKind.UTXO,
@@ -119,7 +127,7 @@ const config = {
             },
             contracts: {
                 deployHeight: 435848678,
-                router: "0x6EA68e965fcd19b6fbC6553BABbF87a5018F9B28",
+                router: "0x182589d2A10384e12EE8C1Fe350F4dfba36C7b73",
             },
         },
         USDT0: {
@@ -129,7 +137,9 @@ const config = {
             bridge: {
                 kind: BridgeKind.Oft,
                 canonicalAsset: "USDT0",
-                mesh: Usdt0Kind.Native,
+                oft: {
+                    mesh: Usdt0Kind.Native,
+                },
             },
             token: {
                 address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
@@ -137,7 +147,28 @@ const config = {
                 routeVia: "TBTC",
             },
         },
+        USDC: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            bridge: {
+                kind: BridgeKind.Cctp,
+                canonicalAsset: "USDC",
+                cctp: {
+                    domain: 3,
+                    tokenMessenger: tokenMessengerV2,
+                    messageTransmitter: messageTransmitterV2,
+                    transferMode: CctpTransferMode.Fast,
+                },
+            },
+            token: {
+                address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                decimals: 6,
+                routeVia: "TBTC",
+            },
+        },
         ...usdt0VariantAssets,
+        ...cctpVariantAssets,
     },
 } as Config;
 

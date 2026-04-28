@@ -10,12 +10,47 @@ export const enum NetworkTransport {
 
 export const enum BridgeKind {
     Oft = "oft",
+    Cctp = "cctp",
+}
+
+export const enum CctpTransferMode {
+    Fast = "fast",
+    Standard = "standard",
+}
+
+export const enum CctpReceiveMode {
+    Forwarded = "forwarded",
+    Manual = "manual",
 }
 
 export const enum Usdt0Kind {
     Native = "native",
     Legacy = "legacy",
 }
+
+type OftAssetBridge = {
+    kind: BridgeKind.Oft;
+    canonicalAsset: string;
+    oft?: {
+        mesh?: Usdt0Kind;
+        // Address used to simulate bridge quote transactions when no wallet
+        // is connected. Only needed on Solana
+        quotePayer?: string;
+    };
+};
+
+type CctpAssetBridge = {
+    kind: BridgeKind.Cctp;
+    canonicalAsset: string;
+    cctp: {
+        domain: number;
+        tokenMessenger: string;
+        messageTransmitter: string;
+        transferMode: CctpTransferMode;
+    };
+};
+
+export type AssetBridge = OftAssetBridge | CctpAssetBridge;
 
 // TODO: which properties do we really need?
 export type Usdt0Variant = {
@@ -34,15 +69,6 @@ export type Usdt0Variant = {
     blockExplorerUrl: string;
     rpcUrls: readonly string[];
     mesh?: Usdt0Kind;
-};
-
-export type AssetBridge = {
-    kind: BridgeKind;
-    canonicalAsset: string;
-    mesh?: Usdt0Kind;
-    // Address used to simulate bridge quote transactions when no wallet
-    // is connected. Only needed on Solana
-    quotePayer?: string;
 };
 
 export type Asset = {
@@ -108,6 +134,7 @@ export type Config = {
     isBeta?: boolean;
     isPro?: boolean;
     assets?: Record<string, Asset>;
+    cctpApiUrl?: string;
     torUrl?: string;
 } & typeof defaults;
 
@@ -142,6 +169,7 @@ const defaults = {
     chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
     layerZeroExplorerUrl: "https://layerzeroscan.com",
+    cctpExplorerUrl: "https://usdc.range.org",
     rateProviders: {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",

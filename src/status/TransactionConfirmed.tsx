@@ -34,6 +34,7 @@ import {
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
 import {
+    type QuoteData,
     encodeDexQuote,
     quoteDexAmountIn,
     quoteDexAmountOut,
@@ -170,15 +171,21 @@ const getAcceptedQuoteAmount = async (
         quote.trade.amountOut,
         bridgeQuoteOptions,
     );
-    const [messagingFeeQuote] = await quoteDexAmountOut(
-        dexDetails.chain,
-        dexDetails.tokenIn,
-        ZeroAddress,
-        initialBridgeQuote.msgFee[0],
-    );
-    const adjustedClaimAmount = claimAmount - BigInt(messagingFeeQuote.quote);
+    const bridgeMessagingFee = initialBridgeQuote.messagingFee?.amount ?? 0n;
+    let adjustedClaimAmount = claimAmount;
+
+    if (bridgeMessagingFee > 0n) {
+        const [messagingFeeQuote] = await quoteDexAmountOut(
+            dexDetails.chain,
+            dexDetails.tokenIn,
+            ZeroAddress,
+            bridgeMessagingFee,
+        );
+        adjustedClaimAmount -= BigInt(messagingFeeQuote.quote);
+    }
+
     if (adjustedClaimAmount <= 0n) {
-        throw new Error("amount too small to cover bridge messaging fee");
+        throw new Error("adjusted claim amount must be greater than zero");
     }
 
     const adjustedTradeQuote = await fetchDexQuote(
@@ -456,16 +463,26 @@ const claimErc20ViaRouterBridge = async (
         quote.trade.amountOut,
         bridgeQuoteOptions,
     );
-    const msgFeeEthAmountOut = calculateAmountWithSlippage(msgFee[0], slippage);
-    const [msgFeeEthQuote] = await quoteDexAmountOut(
-        dexDetails.chain,
-        dexDetails.tokenIn,
-        ZeroAddress,
-        msgFeeEthAmountOut,
-    );
-    const tradeAmountIn = assetAmount - BigInt(msgFeeEthQuote.quote);
-    if (tradeAmountIn <= 0n) {
-        throw new Error("amount too small to cover bridge messaging fee");
+    // Bridges that charge a native-gas messaging fee (OFT) need a prepay leg
+    // that swaps part of the claim output into native; bridges without one
+    // (CCTP: msgFee = [0, 0]) skip this entirely.
+    let msgFeeEthQuote: QuoteData | undefined;
+    let tradeAmountIn = assetAmount;
+    if (msgFee[0] > 0n) {
+        const msgFeeEthAmountOut = calculateAmountWithSlippage(
+            msgFee[0],
+            slippage,
+        );
+        [msgFeeEthQuote] = await quoteDexAmountOut(
+            dexDetails.chain,
+            dexDetails.tokenIn,
+            ZeroAddress,
+            msgFeeEthAmountOut,
+        );
+        tradeAmountIn = assetAmount - BigInt(msgFeeEthQuote.quote);
+        if (tradeAmountIn <= 0n) {
+            throw new Error("amount too small to cover bridge messaging fee");
+        }
     }
 
     const [tradeQuote] = await quoteDexAmountIn(
@@ -477,14 +494,14 @@ const claimErc20ViaRouterBridge = async (
 
     const amountOut = BigInt(tradeQuote.quote);
     const amountOutMin = calculateAmountOutMin(amountOut, slippage);
-    const { sendParam } = await bridgeDriver.quoteSend(
+    const { sendParam, minAmount } = await bridgeDriver.quoteSend(
         bridgeQuoteInstance,
         bridge,
         destination,
         amountOutMin,
         bridgeQuoteOptions,
     );
-    const amountLdWithSlippage = calculateAmountOutMin(sendParam[3], slippage);
+    const amountLdWithSlippage = calculateAmountOutMin(minAmount, slippage);
 
     const calldata = await Promise.all([
         encodeDexQuote(
@@ -494,13 +511,17 @@ const claimErc20ViaRouterBridge = async (
             amountOutMin,
             tradeQuote.data,
         ),
-        encodeDexQuote(
-            dexDetails.chain,
-            routerAddress,
-            BigInt(msgFeeEthQuote.quote),
-            msgFee[0],
-            msgFeeEthQuote.data,
-        ),
+        ...(msgFeeEthQuote !== undefined
+            ? [
+                  encodeDexQuote(
+                      dexDetails.chain,
+                      routerAddress,
+                      BigInt(msgFeeEthQuote.quote),
+                      msgFee[0],
+                      msgFeeEthQuote.data,
+                  ),
+              ]
+            : []),
     ]);
 
     const tokenAddress = getTokenAddress(asset);

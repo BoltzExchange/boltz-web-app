@@ -5,8 +5,12 @@ let mockNetworkTransport = "evm";
 const mockQueryFilter = vi.fn();
 const mockLockupParseLog = vi.fn();
 const mockGetTransaction = vi.fn();
+const mockGetTransactionReceipt = vi.fn();
+const mockGetBlockNumber = vi.fn();
+const mockProviderCall = vi.fn();
 const mockGetTronTransactionInfo = vi.fn();
 const mockGetTronOftGuidFromTransactionInfo = vi.fn().mockReturnValue("0xguid");
+const mockGetCctpAttestation = vi.fn();
 const isFailedTronTransaction = (transactionInfo: {
     result?: string;
     receipt?: {
@@ -66,18 +70,56 @@ vi.mock("../../src/config", () => ({
                     chainId: 2,
                 },
             },
+            "CCTP-SRC": {
+                network: {
+                    chainId: 6,
+                },
+            },
+            USDC: {
+                network: {
+                    chainId: 3,
+                },
+            },
         },
     },
 }));
 
 vi.mock("../../src/consts/Assets", () => ({
+    USDC: "USDC",
     getAssetBridge: (asset: string) =>
-        asset === "SRC" || asset === "DST"
+        asset === "CCTP-SRC"
             ? {
-                  kind: "oft",
-                  canonicalAsset: "FINAL",
+                  kind: "cctp",
+                  canonicalAsset: "USDC",
+                  cctp: {
+                      domain: 6,
+                      tokenMessenger:
+                          "0x5100000000000000000000000000000000000000",
+                      messageTransmitter:
+                          "0x5200000000000000000000000000000000000000",
+                      transferMode: "fast",
+                  },
               }
-            : undefined,
+            : asset === "USDC"
+              ? {
+                    kind: "cctp",
+                    canonicalAsset: "USDC",
+                    cctp: {
+                        domain: 3,
+                        tokenMessenger:
+                            "0x5300000000000000000000000000000000000000",
+                        messageTransmitter:
+                            "0x5400000000000000000000000000000000000000",
+                        transferMode: "fast",
+                    },
+                }
+              : asset === "SRC" || asset === "DST"
+                ? {
+                      kind: "oft",
+                      canonicalAsset: "FINAL",
+                  }
+                : undefined,
+    getNetworkTransport: () => "evm",
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -121,7 +163,7 @@ vi.mock("../../src/context/Web3", () => ({
         getErc20Swap: vi.fn(() => createMockErc20Swap()),
         getGasAbstractionSigner: vi.fn((asset: string) => ({
             address:
-                asset === "DST"
+                asset === "DST" || asset === "USDC"
                     ? "0x9000000000000000000000000000000000000000"
                     : "0xa000000000000000000000000000000000000000",
             provider: {
@@ -172,6 +214,11 @@ vi.mock("../../src/utils/commitment", () => ({
         mockPostCommitmentSignatureForTransaction(...args),
 }));
 
+vi.mock("../../src/utils/cctp/attestation", () => ({
+    getCctpAttestation: async (...args: unknown[]): Promise<unknown> =>
+        await mockGetCctpAttestation(...args),
+}));
+
 vi.mock("../../src/utils/evmTransaction", () => ({
     assertTransactionSignerProvider: (signer: { provider: unknown }) =>
         signer.provider,
@@ -181,7 +228,10 @@ vi.mock("../../src/utils/evmTransaction", () => ({
 
 vi.mock("../../src/utils/provider", () => ({
     createAssetProvider: vi.fn(() => ({
+        call: mockProviderCall,
         getLogs: vi.fn(),
+        getTransactionReceipt: mockGetTransactionReceipt,
+        getBlockNumber: mockGetBlockNumber,
     })),
 }));
 
@@ -241,11 +291,69 @@ const { SwapExecutionWorker } =
     await import("../../src/components/SwapExecutionWorker");
 const oftUtils = await import("../../src/utils/oft/oft");
 
+const cctpMessageSentTopic =
+    "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";
+const u32Hex = (n: number) => n.toString(16).padStart(8, "0");
+const u256Hex = (n: bigint) => n.toString(16).padStart(64, "0");
+const encodeUint256 = (n: bigint) => `0x${u256Hex(n)}`;
+const encodeBytesData = (hexValue: string): string => {
+    const stripped = hexValue.startsWith("0x") ? hexValue.slice(2) : hexValue;
+    const lengthBytes = stripped.length / 2;
+    const paddingBytes = (32 - (lengthBytes % 32)) % 32;
+    return `0x${"20".padStart(64, "0")}${lengthBytes
+        .toString(16)
+        .padStart(64, "0")}${stripped}${"00".repeat(paddingBytes)}`;
+};
+const buildCctpMessage = ({
+    sourceDomain,
+    destinationDomain,
+    mintRecipient,
+    amount,
+    feeExecuted = 0n,
+    nonce = "00".repeat(32),
+}: {
+    sourceDomain: number;
+    destinationDomain: number;
+    mintRecipient: string;
+    amount: bigint;
+    feeExecuted?: bigint;
+    nonce?: string;
+}) => {
+    const strip = (value: string) =>
+        value.startsWith("0x") ? value.slice(2) : value;
+    const sender = "000000000000000000000000" + "51".repeat(20);
+    const recipient = "000000000000000000000000" + "53".repeat(20);
+    const header =
+        u32Hex(2) +
+        u32Hex(sourceDomain) +
+        u32Hex(destinationDomain) +
+        strip(nonce).padStart(64, "0") +
+        sender +
+        recipient +
+        "00".repeat(32) +
+        u32Hex(1000) +
+        u32Hex(1000);
+    const body =
+        u32Hex(1) +
+        "00".repeat(32) +
+        strip(mintRecipient).padStart(64, "0") +
+        u256Hex(amount) +
+        "00".repeat(32) +
+        "00".repeat(32) +
+        u256Hex(feeExecuted) +
+        "00".repeat(32);
+    return `0x${header}${body}`;
+};
+
 describe("SwapExecutionWorker", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockNetworkTransport = "evm";
         mockGetTransaction.mockReset();
+        mockGetTransactionReceipt.mockReset();
+        mockGetBlockNumber.mockReset().mockResolvedValue(12);
+        mockProviderCall.mockReset().mockResolvedValue(encodeUint256(0n));
+        mockGetCctpAttestation.mockReset();
         mockGetTronTransactionInfo.mockReset();
         mockGetTronOftGuidFromTransactionInfo
             .mockReset()
@@ -319,6 +427,135 @@ describe("SwapExecutionWorker", () => {
             expect(mockSetSwapStorage).toHaveBeenCalledTimes(2);
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+        });
+    });
+
+    test("should mint manual CCTP before executing the pre-bridge lockup", async () => {
+        const mintRecipient =
+            "0x0000000000000000000000009000000000000000000000000000000000000000";
+        const message = buildCctpMessage({
+            sourceDomain: 6,
+            destinationDomain: 3,
+            mintRecipient,
+            amount: 151n,
+            feeExecuted: 1n,
+        });
+        mockGetTransactionReceipt.mockResolvedValue({
+            status: 1,
+            blockNumber: 10,
+            hash: "0xcctpsend",
+            logs: [
+                {
+                    topics: [cctpMessageSentTopic],
+                    data: encodeBytesData(message),
+                    index: 2,
+                },
+            ],
+        });
+        mockGetCctpAttestation.mockResolvedValue({
+            status: "complete",
+            message,
+            attestation: "0x12",
+        });
+        currentSwap = {
+            ...currentSwap,
+            bridge: {
+                kind: "cctp",
+                sourceAsset: "CCTP-SRC",
+                destinationAsset: "USDC",
+                position: "pre",
+                txHash: "0xcctpsend",
+            },
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).toHaveBeenCalled();
+            expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
+        });
+
+        const calls = mockSendPopulatedTransaction.mock.calls[0][2] as Array<{
+            to: string;
+            data?: string;
+            value?: string;
+        }>;
+        expect(calls).toHaveLength(3);
+        expect(calls[0]).toMatchObject({
+            to: "0x5400000000000000000000000000000000000000",
+            value: "0",
+        });
+        expect(calls[1]).toMatchObject({
+            to: "0xf200000000000000000000000000000000000000",
+            data: "0xtransfer",
+        });
+        expect(calls[2]).toMatchObject({
+            to: "0x7000000000000000000000000000000000000000",
+            data: "0xlock",
+        });
+        expect(mockGetCctpAttestation).toHaveBeenCalledWith(6, "0xcctpsend");
+    });
+
+    test("should skip manual CCTP mint when the nonce is already used", async () => {
+        const mintRecipient =
+            "0x0000000000000000000000009000000000000000000000000000000000000000";
+        const message = buildCctpMessage({
+            sourceDomain: 6,
+            destinationDomain: 3,
+            mintRecipient,
+            amount: 151n,
+            feeExecuted: 1n,
+            nonce: "01".repeat(32),
+        });
+        mockProviderCall.mockResolvedValue(encodeUint256(1n));
+        mockGetTransactionReceipt.mockResolvedValue({
+            status: 1,
+            blockNumber: 10,
+            hash: "0xcctpsend",
+            logs: [
+                {
+                    topics: [cctpMessageSentTopic],
+                    data: encodeBytesData(message),
+                    index: 2,
+                },
+            ],
+        });
+        mockGetCctpAttestation.mockResolvedValue({
+            status: "complete",
+            message,
+            attestation: "0x12",
+        });
+        currentSwap = {
+            ...currentSwap,
+            bridge: {
+                kind: "cctp",
+                sourceAsset: "CCTP-SRC",
+                destinationAsset: "USDC",
+                position: "pre",
+                txHash: "0xcctpsend",
+            },
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).toHaveBeenCalled();
+            expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
+        });
+
+        const calls = mockSendPopulatedTransaction.mock.calls[0][2] as Array<{
+            to: string;
+            data?: string;
+            value?: string;
+        }>;
+        expect(calls).toHaveLength(2);
+        expect(calls[0]).toMatchObject({
+            to: "0xf200000000000000000000000000000000000000",
+            data: "0xtransfer",
+        });
+        expect(calls[1]).toMatchObject({
+            to: "0x7000000000000000000000000000000000000000",
+            data: "0xlock",
         });
     });
 

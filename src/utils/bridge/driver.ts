@@ -196,7 +196,10 @@ export abstract class BridgeDriver {
 
     public abstract getReceivedEventByGuid: (
         contract: BridgeTransportClient,
-        provider: Pick<Provider, "getLogs">,
+        // CCTP needs `getTransactionReceipt` (reading the Circle-submitted
+        // mint tx by hash); OFT only reads `getLogs`. Required together so
+        // the type honestly describes what any implementation may use.
+        provider: Pick<Provider, "getLogs" | "getTransactionReceipt">,
         contractAddress: string,
         guid: string,
     ) => Promise<BridgeReceivedEvent | undefined>;
