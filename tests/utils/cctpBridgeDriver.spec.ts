@@ -1,5 +1,9 @@
 import { config as runtimeConfig } from "../../src/config";
-import { BridgeKind, CctpTransferMode } from "../../src/configs/base";
+import {
+    BridgeKind,
+    CctpReceiveMode,
+    CctpTransferMode,
+} from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { CctpBridgeDriver } from "../../src/utils/bridge/CctpBridgeDriver";
 import { clearCache } from "../../src/utils/cache";
@@ -11,6 +15,7 @@ import {
 } from "../../src/utils/cctp/events";
 import {
     addressToBytes32,
+    cctpEmptyHookData,
     cctpFastFinalityThreshold,
     cctpForwardHookData,
     cctpStandardFinalityThreshold,
@@ -91,6 +96,7 @@ describe("CctpBridgeDriver", () => {
         ).resolves.toEqual({
             recipient: "0xdestination",
             cctpTransferMode: CctpTransferMode.Fast,
+            cctpReceiveMode: CctpReceiveMode.Forwarded,
         });
     });
 
@@ -204,6 +210,46 @@ describe("CctpBridgeDriver", () => {
         const sendParam = quote.sendParam as CctpSendParam;
         expect(sendParam.maxFee).toBe(220_588n);
         expect(quote.minAmount).toBe(99_779_457n);
+    });
+
+    test("manual CCTP quotes omit forwarding fees and hook data", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            json: () =>
+                Promise.resolve([
+                    {
+                        finalityThreshold: 1000,
+                        minimumFee: 1.3,
+                    },
+                    {
+                        finalityThreshold: 2000,
+                        minimumFee: 0,
+                    },
+                ]),
+        } as Response);
+
+        const recipient = "0x1234567890123456789012345678901234567890";
+        const contract = await driver.getQuotedContract(route);
+        const options = { cctpReceiveMode: CctpReceiveMode.Manual };
+        await expect(
+            driver.quoteAmountInForAmountOut(route, 1_000_000n, options),
+        ).resolves.toBe(1_000_131n);
+        const quote = await driver.quoteSend(
+            contract,
+            route,
+            recipient,
+            1_000_000n,
+            options,
+        );
+
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(sendParam.maxFee).toBe(131n);
+        expect(sendParam.hookData).toBe(cctpEmptyHookData);
+        expect(quote.minAmount).toBe(999_870n);
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://iris-api.circle.com/v2/burn/USDC/fees/3/6",
+            expect.any(Object),
+        );
     });
 
     test("quoteSend falls back to options.recipient when direct recipient is missing", async () => {
@@ -405,7 +451,7 @@ describe("CctpBridgeDriver", () => {
         );
     });
 
-    test("sendDirect forwards depositForBurnWithHook args from sendParam", async () => {
+    test("sendDirect forwards non-empty hooks to depositForBurnWithHook", async () => {
         const { Contract } = await import("ethers");
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
@@ -454,6 +500,91 @@ describe("CctpBridgeDriver", () => {
             cctpFastFinalityThreshold, // minFinalityThreshold
             cctpForwardHookData, // hookData
         );
+    });
+
+    test("sendDirect uses depositForBurn when hook data is empty", async () => {
+        const { Contract } = await import("ethers");
+        const recipient = "0x1234567890123456789012345678901234567890";
+        const contract = await driver.getQuotedContract(route);
+        const quote = await driver.quoteSend(
+            contract,
+            route,
+            recipient,
+            1_000_000n,
+            { cctpReceiveMode: CctpReceiveMode.Manual },
+        );
+        const target = (await driver.getDirectSendTarget(
+            route,
+        )) as CctpDirectSendTarget;
+
+        const depositForBurn = vi
+            .fn()
+            .mockResolvedValue({ hash: "0xsent", wait: vi.fn() });
+        const depositForBurnWithHook = vi.fn();
+        vi.mocked(Contract).mockImplementation(function (this: {
+            depositForBurn: typeof depositForBurn;
+            depositForBurnWithHook: typeof depositForBurnWithHook;
+        }) {
+            this.depositForBurn = depositForBurn;
+            this.depositForBurnWithHook = depositForBurnWithHook;
+        } as never);
+
+        const tx = await driver.sendDirect({
+            target,
+            runner: {} as never,
+            sendParam: quote.sendParam,
+            msgFee: [0n, 0n],
+            refundAddress: "0x0000000000000000000000000000000000000000",
+        });
+
+        expect(tx).toEqual({ hash: "0xsent", wait: expect.any(Function) });
+        expect(depositForBurn).toHaveBeenCalledWith(
+            1_000_000n, // amount
+            6, // destinationDomain
+            addressToBytes32(recipient), // mintRecipient
+            target.burnToken, // burnToken
+            cctpZeroBytes32, // destinationCaller
+            131n, // maxFee
+            cctpFastFinalityThreshold, // minFinalityThreshold
+        );
+        expect(depositForBurnWithHook).not.toHaveBeenCalled();
+    });
+
+    test("sendDirect rejects malformed hook data", async () => {
+        const { Contract } = await import("ethers");
+        const recipient = "0x1234567890123456789012345678901234567890";
+        const contract = await driver.getQuotedContract(route);
+        const quote = await driver.quoteSend(
+            contract,
+            route,
+            recipient,
+            1_000_000n,
+            { cctpReceiveMode: CctpReceiveMode.Manual },
+        );
+        const target = (await driver.getDirectSendTarget(
+            route,
+        )) as CctpDirectSendTarget;
+
+        vi.mocked(Contract).mockImplementation(function (this: {
+            depositForBurn: () => Promise<never>;
+            depositForBurnWithHook: () => Promise<never>;
+        }) {
+            this.depositForBurn = vi.fn();
+            this.depositForBurnWithHook = vi.fn();
+        } as never);
+
+        await expect(
+            driver.sendDirect({
+                target,
+                runner: {} as never,
+                sendParam: {
+                    ...(quote.sendParam as CctpSendParam),
+                    hookData: "not-hex",
+                },
+                msgFee: [0n, 0n],
+                refundAddress: "0x0000000000000000000000000000000000000000",
+            }),
+        ).rejects.toThrow("invalid CCTP hook data");
     });
 
     // -- getSentEvent / getReceivedEventByGuid -----------------------------

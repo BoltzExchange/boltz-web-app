@@ -9,7 +9,11 @@ import {
     baseConfig,
     chooseUrl,
 } from "src/configs/base";
-import { cctpVariantAssets, tokenMessengerV2 } from "src/configs/cctp";
+import {
+    cctpVariantAssets,
+    messageTransmitterV2,
+    tokenMessengerV2,
+} from "src/configs/cctp";
 import { arbitrumExplorerUrl } from "src/configs/explorers";
 import { arbitrumRpcUrls, rskRpcUrls } from "src/configs/rpcs";
 import { usdt0VariantAssets } from "src/configs/usdt0";
@@ -153,6 +157,7 @@ const config = {
                 cctp: {
                     domain: 3,
                     tokenMessenger: tokenMessengerV2,
+                    messageTransmitter: messageTransmitterV2,
                     transferMode: CctpTransferMode.Fast,
                 },
             },

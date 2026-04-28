@@ -46,6 +46,8 @@ import { AssetKind } from "src/consts/AssetKind";
 // EDGE, pass its address via the `tokenMessenger` override in the variant.
 // https://developers.circle.com/cctp/evm-smart-contracts
 export const tokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+export const messageTransmitterV2 =
+    "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 
 type CctpVariant = {
     asset: string;
@@ -92,6 +94,7 @@ const createCctpVariantAsset = (variant: CctpVariant): Asset => ({
         cctp: {
             domain: variant.domain,
             tokenMessenger: variant.tokenMessenger ?? tokenMessengerV2,
+            messageTransmitter: messageTransmitterV2,
             transferMode: CctpTransferMode.Fast,
         },
     },

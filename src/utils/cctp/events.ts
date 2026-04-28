@@ -14,12 +14,16 @@ export const cctpMintAndWithdrawTopic = id(
 // CCTP v2 outer message header byte offsets (see Circle's MessageV2.sol).
 const sourceDomainOffset = 4; // uint32
 const destinationDomainOffset = 8; // uint32
+const nonceOffset = 12; // bytes32
 const senderOffset = 44; // bytes32 (after 12-byte header + 32-byte nonce)
 const recipientOffset = 76; // bytes32
+const destinationCallerOffset = 108; // bytes32
 const bodyOffset = 148; // messageBody starts here
 
 // BurnMessageV2 offsets (within messageBody).
 const burnAmountBodyOffset = 68; // uint256 after version(4) + burnToken(32) + mintRecipient(32)
+const burnMintRecipientBodyOffset = 36; // bytes32 after version(4) + burnToken(32)
+const burnFeeExecutedBodyOffset = 164; // uint256 after maxFee
 
 type LogLike = {
     topics: ReadonlyArray<string>;
@@ -67,11 +71,53 @@ export type CctpMessageSentInfo = {
     message: string;
     sourceDomain: number;
     destinationDomain: number;
+    nonce: string; // bytes32
     sender: string; // bytes32
     recipient: string; // bytes32
+    destinationCaller: string; // bytes32
     // Burn amount extracted from the inner BurnMessage body.
     amountSent: bigint;
     logIndex: number;
+};
+
+export type CctpBurnMessageInfo = {
+    sourceDomain: number;
+    destinationDomain: number;
+    nonce: string; // bytes32
+    sender: string; // bytes32
+    recipient: string; // bytes32
+    destinationCaller: string; // bytes32
+    mintRecipient: string; // bytes32
+    amount: bigint;
+    feeExecuted: bigint;
+    amountReceived: bigint;
+};
+
+export const parseCctpBurnMessage = (message: string): CctpBurnMessageInfo => {
+    const amount = readUint256(message, bodyOffset + burnAmountBodyOffset);
+    const feeExecuted = readUint256(
+        message,
+        bodyOffset + burnFeeExecutedBodyOffset,
+    );
+    if (feeExecuted > amount) {
+        throw new Error("CCTP feeExecuted exceeds burn amount");
+    }
+
+    return {
+        sourceDomain: readUint32(message, sourceDomainOffset),
+        destinationDomain: readUint32(message, destinationDomainOffset),
+        nonce: readBytes32(message, nonceOffset),
+        sender: readBytes32(message, senderOffset),
+        recipient: readBytes32(message, recipientOffset),
+        destinationCaller: readBytes32(message, destinationCallerOffset),
+        mintRecipient: readBytes32(
+            message,
+            bodyOffset + burnMintRecipientBodyOffset,
+        ),
+        amount,
+        feeExecuted,
+        amountReceived: amount - feeExecuted,
+    };
 };
 
 // Locates the single `MessageSent` log in a depositForBurn receipt and pulls
@@ -90,13 +136,16 @@ export const parseCctpMessageSent = (receipt: {
     }
 
     const message = decodeMessageBytes(log.data);
+    const burn = parseCctpBurnMessage(message);
     return {
         message,
-        sourceDomain: readUint32(message, sourceDomainOffset),
-        destinationDomain: readUint32(message, destinationDomainOffset),
-        sender: readBytes32(message, senderOffset),
-        recipient: readBytes32(message, recipientOffset),
-        amountSent: readUint256(message, bodyOffset + burnAmountBodyOffset),
+        sourceDomain: burn.sourceDomain,
+        destinationDomain: burn.destinationDomain,
+        nonce: burn.nonce,
+        sender: burn.sender,
+        recipient: burn.recipient,
+        destinationCaller: burn.destinationCaller,
+        amountSent: burn.amount,
         logIndex: log.index ?? 0,
     };
 };

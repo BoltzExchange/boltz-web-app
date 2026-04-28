@@ -1,3 +1,4 @@
+import { hex } from "@scure/base";
 import { Contract, type ContractRunner } from "ethers";
 
 import { getTokenAddress } from "../../consts/Assets";
@@ -5,10 +6,20 @@ import type { BridgeRoute } from "../bridge/types";
 import type { CctpSendParam } from "./types";
 
 const tokenMessengerV2Abi = [
+    "function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold) external returns (uint64 nonce)",
     "function depositForBurnWithHook(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold, bytes hookData) external returns (uint64 nonce)",
 ] as const;
 
 type TokenMessengerV2Instance = {
+    depositForBurn: (
+        amount: bigint,
+        destinationDomain: number,
+        mintRecipient: string,
+        burnToken: string,
+        destinationCaller: string,
+        maxFee: bigint,
+        minFinalityThreshold: number,
+    ) => Promise<CctpDirectSendTransaction>;
     depositForBurnWithHook: (
         amount: bigint,
         destinationDomain: number,
@@ -54,6 +65,14 @@ export const getCctpDirectRequiredNativeBalance = (): bigint => {
     return 0n;
 };
 
+const isEmptyHookData = (hookData: string): boolean => {
+    try {
+        return hex.decode(hookData.replace(/^0x/i, "")).length === 0;
+    } catch {
+        throw new Error("invalid CCTP hook data");
+    }
+};
+
 export const sendCctpDirect = async ({
     target,
     runner,
@@ -68,6 +87,18 @@ export const sendCctpDirect = async ({
         tokenMessengerV2Abi,
         runner,
     ) as unknown as TokenMessengerV2Instance;
+
+    if (isEmptyHookData(sendParam.hookData)) {
+        return await messenger.depositForBurn(
+            sendParam.amount,
+            sendParam.destinationDomain,
+            sendParam.mintRecipient,
+            target.burnToken,
+            sendParam.destinationCaller,
+            sendParam.maxFee,
+            sendParam.minFinalityThreshold,
+        );
+    }
 
     return await messenger.depositForBurnWithHook(
         sendParam.amount,

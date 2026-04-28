@@ -3,12 +3,14 @@ import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
-import { isTor } from "../configs/base";
+import { BridgeKind, CctpReceiveMode, isTor } from "../configs/base";
 import {
     AssetKind,
     BTC,
     LN,
     TBTC,
+    USDC,
+    getAssetBridge,
     getCanonicalAsset,
     getRouteViaAsset,
     isBridgeAsset,
@@ -663,6 +665,22 @@ export default class Pair {
         );
     };
 
+    private getPreBridgeQuoteOptions = (
+        route: BridgeRoute,
+    ): BridgeQuoteOptions | undefined => {
+        const bridge = getAssetBridge(route.sourceAsset);
+        if (
+            bridge?.kind === BridgeKind.Cctp &&
+            route.destinationAsset === USDC
+        ) {
+            return {
+                cctpReceiveMode: CctpReceiveMode.Manual,
+            };
+        }
+
+        return undefined;
+    };
+
     private getNativeDropFailure = (
         driver: BridgeDriver | undefined,
         error: unknown,
@@ -817,6 +835,7 @@ export default class Pair {
         const quote = await pre.driver.quoteReceiveAmount(
             pre.route,
             BigInt(sendAmount.toFixed(0)),
+            this.getPreBridgeQuoteOptions(pre.route),
         );
 
         if (sendAmountKey !== undefined) {
@@ -848,10 +867,12 @@ export default class Pair {
         const requiredAmount = await pre.driver.quoteAmountInForAmountOut(
             pre.route,
             BigInt(amount.toFixed(0)),
+            this.getPreBridgeQuoteOptions(pre.route),
         );
         const quote = await pre.driver.quoteReceiveAmount(
             pre.route,
             requiredAmount,
+            this.getPreBridgeQuoteOptions(pre.route),
         );
 
         return {

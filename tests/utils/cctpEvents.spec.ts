@@ -3,6 +3,7 @@ import {
     cctpMintAndWithdrawTopic,
     decodeCctpGuid,
     encodeCctpGuid,
+    parseCctpBurnMessage,
     parseCctpMessageSent,
     parseCctpMintAndWithdraws,
 } from "../../src/utils/cctp/events";
@@ -35,19 +36,23 @@ const buildCctpMessage = ({
     sender,
     recipient,
     amount,
+    feeExecuted = 0n,
+    nonce = "00".repeat(32),
 }: {
     sourceDomain: number;
     destinationDomain: number;
     sender: string;
     recipient: string;
     amount: bigint;
+    feeExecuted?: bigint;
+    nonce?: string;
 }): string => {
     const strip = (h: string) => (h.startsWith("0x") ? h.slice(2) : h);
     const header =
         u32Hex(2) + // version=2
         u32Hex(sourceDomain) +
         u32Hex(destinationDomain) +
-        "00".repeat(32) + // nonce
+        strip(nonce).padStart(64, "0") +
         strip(sender).padStart(64, "0") +
         strip(recipient).padStart(64, "0") +
         "00".repeat(32) + // destinationCaller
@@ -60,7 +65,7 @@ const buildCctpMessage = ({
         u256Hex(amount) +
         "00".repeat(32) + // messageSender
         "00".repeat(32) + // maxFee
-        "00".repeat(32) + // feeExecuted
+        u256Hex(feeExecuted) +
         "00".repeat(32); // expirationBlock
     return `0x${header}${body}`;
 };
@@ -78,12 +83,14 @@ describe("cctp events", () => {
     test("parseCctpMessageSent decodes a MessageSent log", () => {
         const recipient = "0x000000000000000000000000" + "11".repeat(20);
         const sender = "0x000000000000000000000000" + "22".repeat(20);
+        const nonce = "0x" + "33".repeat(32);
         const message = buildCctpMessage({
             sourceDomain: 3,
             destinationDomain: 6,
             sender,
             recipient,
             amount: 1_000_000n,
+            nonce,
         });
 
         const info = parseCctpMessageSent({
@@ -99,11 +106,53 @@ describe("cctp events", () => {
         expect(info).toBeDefined();
         expect(info!.sourceDomain).toBe(3);
         expect(info!.destinationDomain).toBe(6);
+        expect(info!.nonce).toBe(nonce);
         expect(info!.sender.toLowerCase()).toBe(sender.toLowerCase());
         expect(info!.recipient.toLowerCase()).toBe(recipient.toLowerCase());
+        expect(info!.destinationCaller).toBe("0x" + "00".repeat(32));
         expect(info!.amountSent).toBe(1_000_000n);
         expect(info!.logIndex).toBe(7);
         expect(info!.message).toBe(message);
+    });
+
+    test("parseCctpBurnMessage decodes net received amount", () => {
+        const recipient = "0x000000000000000000000000" + "11".repeat(20);
+        const sender = "0x000000000000000000000000" + "22".repeat(20);
+        const nonce = "0x" + "44".repeat(32);
+        const message = buildCctpMessage({
+            sourceDomain: 3,
+            destinationDomain: 6,
+            sender,
+            recipient,
+            amount: 1_000_000n,
+            feeExecuted: 130n,
+            nonce,
+        });
+
+        expect(parseCctpBurnMessage(message)).toMatchObject({
+            sourceDomain: 3,
+            destinationDomain: 6,
+            nonce,
+            mintRecipient: recipient,
+            amount: 1_000_000n,
+            feeExecuted: 130n,
+            amountReceived: 999_870n,
+        });
+    });
+
+    test("parseCctpBurnMessage rejects impossible net amounts", () => {
+        const recipient = "0x000000000000000000000000" + "11".repeat(20);
+        const sender = "0x000000000000000000000000" + "22".repeat(20);
+        const message = buildCctpMessage({
+            sourceDomain: 3,
+            destinationDomain: 6,
+            sender,
+            recipient,
+            amount: 1n,
+            feeExecuted: 2n,
+        });
+
+        expect(() => parseCctpBurnMessage(message)).toThrow(/feeExecuted/);
     });
 
     test("parseCctpMessageSent returns undefined when no MessageSent log", () => {

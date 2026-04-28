@@ -2,7 +2,8 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LBTC, LN, TBTC, USDT0 } from "../../src/consts/Assets";
+import { CctpReceiveMode } from "../../src/configs/base";
+import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
@@ -180,6 +181,58 @@ vi.mock("../../src/config", async () => {
                     token: {
                         address: "0x0000000000000000000000000000000000007777",
                         decimals: 6,
+                    },
+                },
+                USDC: {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    token: {
+                        address: "0x0000000000000000000000000000000000000006",
+                        decimals: 6,
+                    },
+                    bridge: {
+                        kind: "cctp",
+                        canonicalAsset: "USDC",
+                        cctp: {
+                            domain: 3,
+                            tokenMessenger:
+                                "0x0000000000000000000000000000000000000003",
+                            messageTransmitter:
+                                "0x0000000000000000000000000000000000000004",
+                            transferMode: "fast",
+                        },
+                    },
+                },
+                "USDC-POL": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Polygon PoS",
+                        symbol: "POL",
+                        gasToken: "POL",
+                        chainId: 137,
+                        nativeCurrency: {
+                            name: "POL",
+                            symbol: "POL",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        address: "0x0000000000000000000000000000000000001371",
+                        decimals: 6,
+                    },
+                    bridge: {
+                        kind: "cctp",
+                        canonicalAsset: "USDC",
+                        cctp: {
+                            domain: 7,
+                            tokenMessenger:
+                                "0x0000000000000000000000000000000000000001",
+                            messageTransmitter:
+                                "0x0000000000000000000000000000000000000002",
+                            transferMode: "fast",
+                        },
                     },
                 },
             },
@@ -674,6 +727,133 @@ describe("Pair", () => {
         expect(creationData?.sendAmount.toNumber()).toBe(1480);
         expect(creationData?.hops[0]?.from).toBe(USDT0);
         expect(creationData?.to).toBe(BTC);
+    });
+
+    test("should quote CCTP pre-bridge receives without forwarding fees", async () => {
+        const pairsWithUsdc: Pairs = {
+            ...pairs,
+            submarine: {
+                ...pairs.submarine,
+                [USDC]: {
+                    BTC: pairs.submarine.TBTC.BTC,
+                },
+            },
+        };
+        bridgeGetPreRouteMock.mockImplementation((asset: string) =>
+            asset === "USDC-POL"
+                ? {
+                      sourceAsset: "USDC-POL",
+                      destinationAsset: USDC,
+                  }
+                : undefined,
+        );
+        bridgeGetDriverForAssetMock.mockImplementation((asset: string) =>
+            asset === "USDC-POL"
+                ? {
+                      getPreRoute: bridgeGetPreRouteMock,
+                      getPostRoute: bridgeGetPostRouteMock,
+                      buildQuoteOptions: bridgeBuildQuoteOptionsMock,
+                      quoteReceiveAmount: bridgeQuoteReceiveAmountMock,
+                      quoteAmountInForAmountOut:
+                          bridgeQuoteAmountInForAmountOutMock,
+                      getMessagingFeeToken: bridgeGetMessagingFeeTokenMock,
+                      getTransferFeeAsset: bridgeGetTransferFeeAssetMock,
+                      getNativeDropFailure: bridgeGetNativeDropFailureMock,
+                  }
+                : undefined,
+        );
+        quoteDexAmountInMock.mockResolvedValue([
+            {
+                quote: "1000000",
+                data: { route: "exact-in" },
+            },
+        ]);
+        bridgeQuoteAmountInForAmountOutMock.mockResolvedValue(1_000_000n);
+        bridgeQuoteReceiveAmountMock.mockResolvedValue(
+            makeBridgeQuote({
+                amountIn: 1_000_000n,
+                amountOut: 999_990n,
+            }),
+        );
+
+        const pair = new Pair(pairsWithUsdc, "USDC-POL", LN);
+        await pair.calculateSendAmount(BigNumber(1_000_000), 0);
+
+        expect(bridgeQuoteAmountInForAmountOutMock).toHaveBeenCalledWith(
+            {
+                sourceAsset: "USDC-POL",
+                destinationAsset: USDC,
+            },
+            1_000_000n,
+            {
+                cctpReceiveMode: CctpReceiveMode.Manual,
+            },
+        );
+        expect(bridgeQuoteReceiveAmountMock).toHaveBeenCalledWith(
+            {
+                sourceAsset: "USDC-POL",
+                destinationAsset: USDC,
+            },
+            1_000_000n,
+            {
+                cctpReceiveMode: CctpReceiveMode.Manual,
+            },
+        );
+    });
+
+    test("should quote CCTP pre-bridge send amounts without forwarding fees", async () => {
+        const pairsWithUsdc: Pairs = {
+            ...pairs,
+            submarine: {
+                ...pairs.submarine,
+                [USDC]: {
+                    BTC: pairs.submarine.TBTC.BTC,
+                },
+            },
+        };
+        bridgeGetPreRouteMock.mockImplementation((asset: string) =>
+            asset === "USDC-POL"
+                ? {
+                      sourceAsset: "USDC-POL",
+                      destinationAsset: USDC,
+                  }
+                : undefined,
+        );
+        bridgeGetDriverForAssetMock.mockImplementation((asset: string) =>
+            asset === "USDC-POL"
+                ? {
+                      getPreRoute: bridgeGetPreRouteMock,
+                      getPostRoute: bridgeGetPostRouteMock,
+                      buildQuoteOptions: bridgeBuildQuoteOptionsMock,
+                      quoteReceiveAmount: bridgeQuoteReceiveAmountMock,
+                      quoteAmountInForAmountOut:
+                          bridgeQuoteAmountInForAmountOutMock,
+                      getMessagingFeeToken: bridgeGetMessagingFeeTokenMock,
+                      getTransferFeeAsset: bridgeGetTransferFeeAssetMock,
+                      getNativeDropFailure: bridgeGetNativeDropFailureMock,
+                  }
+                : undefined,
+        );
+        bridgeQuoteReceiveAmountMock.mockResolvedValue(
+            makeBridgeQuote({
+                amountIn: 1_000_000n,
+                amountOut: 999_990n,
+            }),
+        );
+
+        const pair = new Pair(pairsWithUsdc, "USDC-POL", LN);
+        await pair.calculateReceiveAmount(BigNumber(1_000_000), 0);
+
+        expect(bridgeQuoteReceiveAmountMock).toHaveBeenCalledWith(
+            {
+                sourceAsset: "USDC-POL",
+                destinationAsset: USDC,
+            },
+            1_000_000n,
+            {
+                cctpReceiveMode: CctpReceiveMode.Manual,
+            },
+        );
     });
 
     test("should cache bridge transfer fees in reverse quotes for post-bridge pairs", async () => {

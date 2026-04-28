@@ -1,5 +1,5 @@
 import { config } from "../../src/config";
-import { CctpTransferMode } from "../../src/configs/base";
+import { CctpReceiveMode, CctpTransferMode } from "../../src/configs/base";
 import { cctpFeeBpsDenominator, getCctpFee } from "../../src/utils/cctp/fee";
 
 const oneBps = cctpFeeBpsDenominator / 10_000n;
@@ -82,6 +82,31 @@ describe("cctpFee", () => {
             bpsUnits: 0n,
             forwardFee: 105_000n,
         });
+    });
+
+    test("should select fees without forwarding for manual receives", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            json: () =>
+                Promise.resolve([
+                    {
+                        finalityThreshold: 1000,
+                        minimumFee: 1.3,
+                    },
+                    feeEntry(2000, 0),
+                ]),
+        } as Response);
+
+        await expect(
+            getCctpFee(3, 6, CctpTransferMode.Fast, CctpReceiveMode.Manual),
+        ).resolves.toEqual({
+            bpsUnits: (oneBps * 13n) / 10n,
+            forwardFee: 0n,
+        });
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://iris-api.circle.com/v2/burn/USDC/fees/3/6",
+            expect.any(Object),
+        );
     });
 
     test("should fetch route fees on each lookup", async () => {

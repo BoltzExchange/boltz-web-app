@@ -126,9 +126,17 @@ export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
         .filter((candidate): candidate is string => candidate !== undefined)
         .map((candidate) => {
             const bridge = config.assets?.[candidate]?.bridge;
-            return bridge?.kind === BridgeKind.Oft
-                ? (bridge.oft?.mesh ?? Usdt0Kind.Native)
-                : Usdt0Kind.Native;
+            if (bridge === undefined) {
+                return Usdt0Kind.Native;
+            }
+
+            if (bridge.kind !== BridgeKind.Oft) {
+                throw new Error(
+                    `getBridgeMesh requires OFT bridge assets; ${candidate} uses ${bridge.kind}`,
+                );
+            }
+
+            return bridge.oft?.mesh ?? Usdt0Kind.Native;
         });
 
     return meshKinds.includes(Usdt0Kind.Legacy)

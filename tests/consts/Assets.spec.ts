@@ -1,4 +1,5 @@
 import type * as ConfigModule from "../../src/config";
+import { Usdt0Kind } from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import {
     BTC,
@@ -9,6 +10,7 @@ import {
     USDC,
     USDT0,
     getAssetDisplaySymbol,
+    getBridgeMesh,
     getBridgeVariants,
     getCanonicalAsset,
     getRouteViaAsset,
@@ -117,6 +119,20 @@ describe("Assets", () => {
         test("returns empty list for an asset with no variants", () => {
             expect(getBridgeVariants(BTC)).toEqual([]);
             expect(getBridgeVariants(RBTC)).toEqual([]);
+        });
+    });
+
+    describe("getBridgeMesh", () => {
+        test("returns legacy when either OFT asset is on the legacy mesh", () => {
+            expect(getBridgeMesh("USDT0-ETH", "USDT0-SOL")).toBe(
+                Usdt0Kind.Legacy,
+            );
+        });
+
+        test("throws for non-OFT bridge assets", () => {
+            expect(() => getBridgeMesh("USDC-ETH", "USDT0-SOL")).toThrow(
+                /requires OFT bridge assets/,
+            );
         });
     });
 

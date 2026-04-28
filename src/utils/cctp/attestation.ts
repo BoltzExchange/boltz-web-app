@@ -4,16 +4,15 @@ import { constructRequestOptions } from "../helper";
 const requestTimeoutDuration = 6_000;
 const defaultPollIntervalMs = 2_000;
 
-type CctpMessageEntry = {
-    // Present once Circle has attested and the Forwarding Service has
-    // submitted the mint on the destination chain.
-    forwardTxHash?: string;
-    // Textual status Circle exposes; useful for progress surfacing.
-    status?: string;
+type CctpMessagesResponse = {
+    messages?: unknown;
 };
 
-type CctpMessagesResponse = {
-    messages?: CctpMessageEntry[];
+type CctpMessageSnapshot = {
+    forwardTxHash?: string;
+    message?: string;
+    attestation?: string;
+    status?: string;
 };
 
 export type CctpForwardProgress = {
@@ -25,6 +24,12 @@ export type CctpForwardResult = {
     status?: string;
 };
 
+export type CctpAttestationResult = {
+    message: string;
+    attestation: string;
+    status?: string;
+};
+
 const getCctpApiUrl = (): string => {
     const { cctpApiUrl } = config;
     if (cctpApiUrl === undefined || cctpApiUrl === "") {
@@ -33,11 +38,38 @@ const getCctpApiUrl = (): string => {
     return cctpApiUrl.endsWith("/") ? cctpApiUrl.slice(0, -1) : cctpApiUrl;
 };
 
-const fetchCctpForwardTxHash = async (
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null;
+
+const readOptionalString = (
+    entry: Record<string, unknown>,
+    key: string,
+): string | undefined => {
+    const value = entry[key];
+    if (value === undefined || value === null) {
+        return undefined;
+    }
+    if (typeof value !== "string") {
+        throw new Error(`invalid CCTP message ${key}`);
+    }
+    return value;
+};
+
+const isCompleteAttestation = (entry: {
+    message?: string;
+    attestation?: string;
+    status?: string;
+}): entry is { message: string; attestation: string; status?: string } =>
+    entry.message !== undefined &&
+    entry.message !== "0x" &&
+    entry.attestation !== undefined &&
+    entry.attestation !== "PENDING";
+
+const fetchCctpMessage = async (
     sourceDomainId: number,
     sourceTxHash: string,
     signal?: AbortSignal,
-): Promise<CctpForwardResult | CctpForwardProgress> => {
+): Promise<CctpMessageSnapshot> => {
     const { opts, requestTimeout } = constructRequestOptions(
         {
             headers: {
@@ -64,14 +96,26 @@ const fetchCctpForwardTxHash = async (
         }
 
         const body = (await response.json()) as CctpMessagesResponse;
-        const entry = body.messages?.[0];
-        if (entry?.forwardTxHash) {
-            return {
-                forwardTxHash: entry.forwardTxHash,
-                status: entry.status,
-            };
+        if (!Array.isArray(body.messages)) {
+            throw new Error("invalid CCTP messages response");
         }
-        return { status: entry?.status };
+
+        const rawEntry = body.messages[0];
+        if (rawEntry === undefined) {
+            return {};
+        }
+        if (!isRecord(rawEntry)) {
+            throw new Error("invalid CCTP message entry");
+        }
+
+        const entry = {
+            forwardTxHash: readOptionalString(rawEntry, "forwardTxHash"),
+            message: readOptionalString(rawEntry, "message"),
+            attestation: readOptionalString(rawEntry, "attestation"),
+            status: readOptionalString(rawEntry, "status"),
+        };
+
+        return entry;
     } finally {
         clearTimeout(requestTimeout);
     }
@@ -110,17 +154,34 @@ export const waitForCctpForwardTxHash = async (
 
     while (true) {
         options.signal?.throwIfAborted();
-        const result = await fetchCctpForwardTxHash(
+        const result = await fetchCctpMessage(
             sourceDomainId,
             sourceTxHash,
             options.signal,
         );
-        if ("forwardTxHash" in result) {
-            return result;
+        if (result.forwardTxHash !== undefined) {
+            return {
+                forwardTxHash: result.forwardTxHash,
+                status: result.status,
+            };
         }
         options.onProgress?.(result);
         await sleep(intervalMs, options.signal);
     }
+};
+
+export const getCctpAttestation = async (
+    sourceDomainId: number,
+    sourceTxHash: string,
+): Promise<CctpAttestationResult | undefined> => {
+    const result = await fetchCctpMessage(sourceDomainId, sourceTxHash);
+    return isCompleteAttestation(result)
+        ? {
+              message: result.message,
+              attestation: result.attestation,
+              status: result.status,
+          }
+        : undefined;
 };
 
 // Non-polling single-shot check: returns the forward tx hash once available,
@@ -130,6 +191,6 @@ export const getCctpForwardTxHash = async (
     sourceDomainId: number,
     sourceTxHash: string,
 ): Promise<string | undefined> => {
-    const result = await fetchCctpForwardTxHash(sourceDomainId, sourceTxHash);
-    return "forwardTxHash" in result ? result.forwardTxHash : undefined;
+    const result = await fetchCctpMessage(sourceDomainId, sourceTxHash);
+    return result.forwardTxHash;
 };

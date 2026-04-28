@@ -1,5 +1,6 @@
 import { config } from "../../src/config";
 import {
+    getCctpAttestation,
     getCctpForwardTxHash,
     waitForCctpForwardTxHash,
 } from "../../src/utils/cctp/attestation";
@@ -67,6 +68,96 @@ describe("cctpAttestation", () => {
         await expect(
             getCctpForwardTxHash(3, "0xburn"),
         ).resolves.toBeUndefined();
+    });
+
+    test("getCctpForwardTxHash treats nullable pending fields as pending", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () =>
+                Promise.resolve({
+                    messages: [
+                        {
+                            status: "pending_confirmations",
+                            forwardTxHash: null,
+                        },
+                    ],
+                }),
+        } as Response);
+
+        await expect(
+            getCctpForwardTxHash(3, "0xburn"),
+        ).resolves.toBeUndefined();
+    });
+
+    test("getCctpAttestation returns message and attestation when complete", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () =>
+                Promise.resolve({
+                    messages: [
+                        {
+                            status: "complete",
+                            message: "0xmessage",
+                            attestation: "0xattestation",
+                        },
+                    ],
+                }),
+        } as Response);
+
+        await expect(getCctpAttestation(3, "0xburn")).resolves.toEqual({
+            status: "complete",
+            message: "0xmessage",
+            attestation: "0xattestation",
+        });
+    });
+
+    test("getCctpAttestation returns undefined while attestation is pending", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () =>
+                Promise.resolve({
+                    messages: [
+                        {
+                            status: "pending_confirmations",
+                            message: "0x",
+                            attestation: "PENDING",
+                        },
+                    ],
+                }),
+        } as Response);
+
+        await expect(getCctpAttestation(3, "0xburn")).resolves.toBeUndefined();
+    });
+
+    test("getCctpAttestation treats 404 as pending", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: false,
+            status: 404,
+        } as Response);
+
+        await expect(getCctpAttestation(3, "0xburn")).resolves.toBeUndefined();
+    });
+
+    test("getCctpAttestation treats nullable pending fields as pending", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () =>
+                Promise.resolve({
+                    messages: [
+                        {
+                            status: "pending_confirmations",
+                            message: null,
+                            attestation: null,
+                        },
+                    ],
+                }),
+        } as Response);
+
+        await expect(getCctpAttestation(3, "0xburn")).resolves.toBeUndefined();
     });
 
     test("waitForCctpForwardTxHash polls until forwardTxHash appears", async () => {
@@ -172,5 +263,32 @@ describe("cctpAttestation", () => {
         await expect(
             waitForCctpForwardTxHash(3, "0xburn", { intervalMs: 1 }),
         ).rejects.toThrow("HTTP 503");
+    });
+
+    test("throws on malformed messages response", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ messages: {} }),
+        } as Response);
+
+        await expect(getCctpForwardTxHash(3, "0xburn")).rejects.toThrow(
+            /messages response/,
+        );
+    });
+
+    test("throws on malformed message entry fields", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: () =>
+                Promise.resolve({
+                    messages: [{ forwardTxHash: 123 }],
+                }),
+        } as Response);
+
+        await expect(getCctpForwardTxHash(3, "0xburn")).rejects.toThrow(
+            /forwardTxHash/,
+        );
     });
 });

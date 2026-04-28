@@ -4,7 +4,11 @@ import type { TransactionRequest, Wallet } from "ethers";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import type { ExplorerKind } from "../../components/BlockExplorer";
-import { BridgeKind, CctpTransferMode } from "../../configs/base";
+import {
+    BridgeKind,
+    CctpReceiveMode,
+    CctpTransferMode,
+} from "../../configs/base";
 import type { Asset, NetworkTransport } from "../../configs/base";
 import {
     getAssetBridge,
@@ -28,6 +32,7 @@ import {
 } from "../cctp/events";
 import {
     addressToBytes32,
+    cctpEmptyHookData,
     cctpFastFinalityThreshold,
     cctpForwardHookData,
     cctpStandardFinalityThreshold,
@@ -106,6 +111,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             recipient: destination,
             cctpTransferMode:
                 this.requireCctpConfig(destinationAsset).transferMode,
+            cctpReceiveMode: CctpReceiveMode.Forwarded,
         });
     };
 
@@ -169,6 +175,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             route.destinationAsset,
             options,
         );
+        const receiveMode = this.getReceiveMode(options);
         const mintRecipient = recipient ?? options.recipient;
         if (mintRecipient === undefined) {
             throw new Error(
@@ -192,9 +199,10 @@ export class CctpBridgeDriver extends BridgeDriver {
                 transferMode === CctpTransferMode.Fast
                     ? cctpFastFinalityThreshold
                     : cctpStandardFinalityThreshold,
-            // Routes the burn through Circle's Forwarding Service so the mint
-            // on the destination chain happens automatically.
-            hookData: cctpForwardHookData,
+            hookData:
+                receiveMode === CctpReceiveMode.Forwarded
+                    ? cctpForwardHookData
+                    : cctpEmptyHookData,
         };
 
         return {
@@ -552,6 +560,10 @@ export class CctpBridgeDriver extends BridgeDriver {
         );
     };
 
+    private getReceiveMode = (options: BridgeQuoteOptions): CctpReceiveMode => {
+        return options.cctpReceiveMode ?? CctpReceiveMode.Forwarded;
+    };
+
     private getFee = async (
         route: BridgeRoute,
         options: BridgeQuoteOptions,
@@ -565,6 +577,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             sourceConfig.domain,
             destinationConfig.domain,
             this.getTransferMode(route.destinationAsset, options),
+            this.getReceiveMode(options),
         );
     };
 

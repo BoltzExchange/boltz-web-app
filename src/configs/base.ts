@@ -18,6 +18,11 @@ export const enum CctpTransferMode {
     Standard = "standard",
 }
 
+export const enum CctpReceiveMode {
+    Forwarded = "forwarded",
+    Manual = "manual",
+}
+
 export const enum Usdt0Kind {
     Native = "native",
     Legacy = "legacy",
@@ -40,6 +45,7 @@ type CctpAssetBridge = {
     cctp: {
         domain: number;
         tokenMessenger: string;
+        messageTransmitter: string;
         transferMode: CctpTransferMode;
     };
 };

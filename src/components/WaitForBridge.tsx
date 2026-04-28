@@ -1,23 +1,12 @@
 import log from "loglevel";
-import {
-    Match,
-    Show,
-    Switch,
-    createEffect,
-    createSignal,
-    onCleanup,
-} from "solid-js";
+import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { BridgeKind } from "../configs/base";
-import { getAssetBridge } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
-import { bridgeRegistry } from "../utils/bridge";
-import { waitForCctpForwardTxHash } from "../utils/cctp/attestation";
 import { formatError } from "../utils/errors";
 import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
 import type { BridgeDetail } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
 import LoadingSpinner from "./LoadingSpinner";
 
 const WaitForOft = (props: {
@@ -126,93 +115,13 @@ const WaitForOft = (props: {
     );
 };
 
-const WaitForCctp = (props: {
-    bridge: BridgeDetail;
-    transactionHash: string;
-}) => {
-    const { t } = useGlobalContext();
-    const [forwardTxHash, setForwardTxHash] = createSignal<string | undefined>(
-        undefined,
-    );
-
-    const sourceDomain = () => {
-        const bridge = getAssetBridge(props.bridge.sourceAsset);
-        return bridge?.kind === BridgeKind.Cctp
-            ? bridge.cctp.domain
-            : undefined;
-    };
-
-    createEffect(() => {
-        const domain = sourceDomain();
-        if (domain === undefined) {
-            return;
-        }
-
-        const controller = new AbortController();
-        onCleanup(() => controller.abort());
-
-        const sourceAsset = props.bridge.sourceAsset;
-        const transactionHash = props.transactionHash;
-        const poll = async () => {
-            try {
-                const { forwardTxHash: hash } = await waitForCctpForwardTxHash(
-                    domain,
-                    transactionHash,
-                    { signal: controller.signal },
-                );
-                setForwardTxHash(hash);
-            } catch (error) {
-                if (controller.signal.aborted) {
-                    return;
-                }
-                log.warn("Failed to poll CCTP forward tx", {
-                    sourceAsset,
-                    transactionHash,
-                    error: formatError(error),
-                });
-            }
-        };
-        void poll();
-    });
-
-    return (
-        <>
-            <h2>{t("waiting_for_bridge")}</h2>
-            <LoadingSpinner />
-            <BlockExplorer
-                asset={props.bridge.sourceAsset}
-                txId={props.transactionHash}
-                typeLabel={"lockup_tx"}
-            />
-            <Show when={forwardTxHash()}>
-                {(hash) => (
-                    <BlockExplorer
-                        asset={props.bridge.destinationAsset}
-                        txId={hash()}
-                        typeLabel={"claim_tx"}
-                    />
-                )}
-            </Show>
-        </>
-    );
-};
-
-const WaitForGenericBridge = (props: {
-    bridge: BridgeDetail;
-    transactionHash: string;
-}) => {
+const WaitForGenericBridge = () => {
     const { t } = useGlobalContext();
 
     return (
         <>
             <h2>{t("waiting_for_bridge")}</h2>
             <LoadingSpinner />
-            <BlockExplorer
-                asset={props.bridge.sourceAsset}
-                txId={props.transactionHash}
-                explorer={bridgeRegistry.getExplorerKind(props.bridge)}
-                typeLabel={"lockup_tx"}
-            />
         </>
     );
 };
@@ -222,24 +131,12 @@ const WaitForBridge = (props: {
     transactionHash: string;
 }) => {
     return (
-        <Switch
-            fallback={
-                <WaitForGenericBridge
-                    bridge={props.bridge}
-                    transactionHash={props.transactionHash}
-                />
-            }>
+        <Switch fallback={<WaitForGenericBridge />}>
             <Match when={props.bridge.kind === BridgeKind.Oft}>
                 <WaitForOft
                     sourceAsset={props.bridge.sourceAsset}
                     destinationAsset={props.bridge.destinationAsset}
                     txHash={props.transactionHash}
-                />
-            </Match>
-            <Match when={props.bridge.kind === BridgeKind.Cctp}>
-                <WaitForCctp
-                    bridge={props.bridge}
-                    transactionHash={props.transactionHash}
                 />
             </Match>
         </Switch>

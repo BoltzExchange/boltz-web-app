@@ -8,7 +8,9 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
+import { BridgeKind, CctpReceiveMode, NetworkTransport } from "../configs/base";
+import { USDC } from "../consts/Assets";
+import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
@@ -100,6 +102,13 @@ const SendToBridge = (props: {
     const getBridgeRecipient = () =>
         getGasAbstractionSigner(props.bridge.destinationAsset).address;
 
+    const cctpReceiveMode = () =>
+        props.bridge.kind === BridgeKind.Cctp &&
+        props.bridge.position === SwapPosition.Pre &&
+        props.bridge.destinationAsset === USDC
+            ? CctpReceiveMode.Manual
+            : CctpReceiveMode.Forwarded;
+
     const quoteBridgeSendState = async (recipient: string) => {
         const bridgeRoute = props.bridge;
         const quotedBridgeInstance =
@@ -112,12 +121,14 @@ const SendToBridge = (props: {
         const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
             bridgeRoute,
             props.amount,
+            { cctpReceiveMode: cctpReceiveMode() },
         );
         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
             quotedBridgeInstance,
             bridgeRoute,
             recipient,
             tokenAmount,
+            { cctpReceiveMode: cctpReceiveMode() },
         );
 
         return {
@@ -412,6 +423,7 @@ const SendToBridge = (props: {
         const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
             props.bridge,
             props.amount,
+            { cctpReceiveMode: cctpReceiveMode() },
         );
         const bridgeInstance = await bridgeDriver().createContract(
             props.bridge,
@@ -422,6 +434,7 @@ const SendToBridge = (props: {
             props.bridge,
             recipient,
             tokenAmount,
+            { cctpReceiveMode: cctpReceiveMode() },
         );
 
         log.debug("Quoted bridge send", {

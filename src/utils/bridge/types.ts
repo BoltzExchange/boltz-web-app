@@ -1,6 +1,10 @@
 import type { ContractRunner, TransactionReceipt } from "ethers";
 
-import type { CctpTransferMode, NetworkTransport } from "../../configs/base";
+import type {
+    CctpReceiveMode,
+    CctpTransferMode,
+    NetworkTransport,
+} from "../../configs/base";
 import type { CctpDirectSendTarget } from "../cctp/directSend";
 import type { CctpSendParam } from "../cctp/types";
 import type { OftDirectSendTarget } from "../oft/directSend";
@@ -49,6 +53,7 @@ export type BridgeQuoteOptions = {
     nativeDrop?: BridgeNativeDrop;
     bridgeName?: string;
     cctpTransferMode?: CctpTransferMode;
+    cctpReceiveMode?: CctpReceiveMode;
 };
 
 export type BridgeSendParam = SendParam | CctpSendParam;
@@ -73,7 +78,8 @@ export type BridgeSendQuote = {
     sendParam: BridgeSendParam;
     msgFee: BridgeMsgFee;
     // Minimum amount guaranteed to exit the bridge (net of bridge-side fees).
-    // For OFT this mirrors sendParam[3] (minAmountLD); for CCTP it's amountIn - maxFee.
+    // For OFT this mirrors sendParam[3] (minAmountLD); for CCTP it's the net
+    // after unbuffered protocol/forwarding fees.
     minAmount: bigint;
     bridgeLimit?: OftLimit;
     bridgeFeeDetails?: OftFeeDetail[];

@@ -336,7 +336,7 @@ describe("oft", () => {
         expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    test("should not use legacy mesh amount shortcut for CCTP assets", async () => {
+    test("should reject CCTP assets before OFT quoting", async () => {
         runtimeConfig.assets = {
             ...runtimeConfig.assets,
             "CCTP-TEST": {
@@ -356,6 +356,8 @@ describe("oft", () => {
                         domain: 0,
                         tokenMessenger:
                             "0x0000000000000000000000000000000000000001",
+                        messageTransmitter:
+                            "0x0000000000000000000000000000000000000002",
                         transferMode: CctpTransferMode.Fast,
                     },
                 },
@@ -367,7 +369,7 @@ describe("oft", () => {
                 getOftRoute("CCTP-TEST", "USDT0-SOL"),
                 1_000_000_000n,
             ),
-        ).rejects.toThrow("missing RPC configuration for asset: CCTP-TEST");
+        ).rejects.toThrow("requires OFT bridge assets");
     });
 
     test("should throw when a route has no OFT contract", async () => {

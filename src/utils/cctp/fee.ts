@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { config } from "../../config";
-import { CctpTransferMode } from "../../configs/base";
+import { CctpReceiveMode, CctpTransferMode } from "../../configs/base";
 import { constructRequestOptions } from "../helper";
 
 const requestTimeoutDuration = 6_000;
@@ -65,10 +65,11 @@ const getCctpFeeApiUrl = (): string => {
     return cctpApiUrl.endsWith("/") ? cctpApiUrl.slice(0, -1) : cctpApiUrl;
 };
 
-const fetchCctpFee = async (
+export const getCctpFee = async (
     sourceDomainId: number,
     destDomainId: number,
     transferMode: CctpTransferMode,
+    receiveMode: CctpReceiveMode = CctpReceiveMode.Forwarded,
 ): Promise<CctpFee> => {
     const { opts, requestTimeout } = constructRequestOptions(
         {
@@ -81,9 +82,12 @@ const fetchCctpFee = async (
 
     try {
         // `forward=true` makes Circle return the Forwarding Service fee tiers
-        // alongside the protocol fee. Without it `forwardFee` is omitted.
+        // alongside the protocol fee. Manual receives omit it because we submit
+        // the destination mint ourselves.
+        const forwardQuery =
+            receiveMode === CctpReceiveMode.Forwarded ? "?forward=true" : "";
         const response = await fetch(
-            `${getCctpFeeApiUrl()}/v2/burn/USDC/fees/${sourceDomainId}/${destDomainId}?forward=true`,
+            `${getCctpFeeApiUrl()}/v2/burn/USDC/fees/${sourceDomainId}/${destDomainId}${forwardQuery}`,
             opts,
         );
 
@@ -114,6 +118,13 @@ const fetchCctpFee = async (
             throw new Error("invalid minimum CCTP fee");
         }
 
+        if (receiveMode === CctpReceiveMode.Manual) {
+            return {
+                bpsUnits: parseScaledDecimal(match.minimumFee),
+                forwardFee: 0n,
+            };
+        }
+
         if (match.forwardFee === undefined) {
             throw new Error(
                 `missing CCTP forward fee for finality threshold ${finalityThreshold}`,
@@ -132,10 +143,3 @@ const fetchCctpFee = async (
 };
 
 export const cctpFeeBpsDenominator = 10_000n * cctpFeeScale;
-
-export const getCctpFee = async (
-    sourceDomainId: number,
-    destDomainId: number,
-    transferMode: CctpTransferMode,
-): Promise<CctpFee> =>
-    await fetchCctpFee(sourceDomainId, destDomainId, transferMode);
