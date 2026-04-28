@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { config as runtimeConfig } from "../../src/config";
-import { BridgeKind, CctpTransferMode } from "../../src/configs/base";
+import {
+    BridgeKind,
+    CctpReceiveMode,
+    CctpTransferMode,
+} from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 import { CctpBridgeDriver } from "../../src/utils/bridge/CctpBridgeDriver";
 import { clearCache } from "../../src/utils/cache";
@@ -28,6 +32,7 @@ type CctpRouteTestCase = {
     destinationAsset: string;
     sourceDomainId: number;
     destDomainId: number;
+    receiveMode: CctpReceiveMode;
 };
 
 const cctpRouteTestCases: CctpRouteTestCase[] = Object.entries(
@@ -54,28 +59,49 @@ const cctpRouteTestCases: CctpRouteTestCase[] = Object.entries(
             destinationAsset: asset,
             sourceDomainId: canonicalBridge.cctp.domain,
             destDomainId: bridge.cctp.domain,
+            receiveMode: CctpReceiveMode.Forwarded,
         },
         {
             sourceAsset: asset,
             destinationAsset: bridge.canonicalAsset,
             sourceDomainId: bridge.cctp.domain,
             destDomainId: canonicalBridge.cctp.domain,
+            receiveMode: CctpReceiveMode.Manual,
         },
     ];
 });
 
 test.each(cctpRouteTestCases)(
-    "$sourceAsset -> $destinationAsset should resolve live Iris fees with forwarding",
-    async ({ sourceDomainId, destDomainId }: CctpRouteTestCase) => {
+    "$sourceAsset -> $destinationAsset should resolve live Iris fees",
+    async ({
+        sourceDomainId,
+        destDomainId,
+        receiveMode,
+    }: CctpRouteTestCase) => {
         const [fastFee, standardFee] = await Promise.all([
-            getCctpFee(sourceDomainId, destDomainId, CctpTransferMode.Fast),
-            getCctpFee(sourceDomainId, destDomainId, CctpTransferMode.Standard),
+            getCctpFee(
+                sourceDomainId,
+                destDomainId,
+                CctpTransferMode.Fast,
+                receiveMode,
+            ),
+            getCctpFee(
+                sourceDomainId,
+                destDomainId,
+                CctpTransferMode.Standard,
+                receiveMode,
+            ),
         ]);
 
         expect(fastFee.bpsUnits).toBeGreaterThanOrEqual(0n);
         expect(standardFee.bpsUnits).toBeGreaterThanOrEqual(0n);
-        expect(fastFee.forwardFee).toBeGreaterThan(0n);
-        expect(standardFee.forwardFee).toBeGreaterThan(0n);
+        if (receiveMode === CctpReceiveMode.Forwarded) {
+            expect(fastFee.forwardFee).toBeGreaterThan(0n);
+            expect(standardFee.forwardFee).toBeGreaterThan(0n);
+        } else {
+            expect(fastFee.forwardFee).toBe(0n);
+            expect(standardFee.forwardFee).toBe(0n);
+        }
     },
     60_000,
 );

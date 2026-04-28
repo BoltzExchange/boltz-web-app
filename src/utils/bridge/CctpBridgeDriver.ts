@@ -110,7 +110,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             recipient: destination,
             cctpTransferMode:
                 this.requireCctpConfig(destinationAsset).transferMode,
-            cctpReceiveMode: CctpReceiveMode.Forwarded,
+            cctpReceiveMode: this.getDefaultReceiveMode(destinationAsset),
         });
     };
 
@@ -174,7 +174,10 @@ export class CctpBridgeDriver extends BridgeDriver {
             route.destinationAsset,
             options,
         );
-        const receiveMode = this.getReceiveMode(options);
+        const receiveMode = this.getReceiveMode(
+            route.destinationAsset,
+            options,
+        );
         const mintRecipient = recipient ?? options.recipient;
         if (mintRecipient === undefined) {
             throw new Error(
@@ -550,8 +553,24 @@ export class CctpBridgeDriver extends BridgeDriver {
         );
     };
 
-    private getReceiveMode = (options: BridgeQuoteOptions): CctpReceiveMode => {
-        return options.cctpReceiveMode ?? CctpReceiveMode.Forwarded;
+    private getDefaultReceiveMode = (
+        destinationAsset: string,
+    ): CctpReceiveMode => {
+        const destinationBridge = getAssetBridge(destinationAsset);
+        return destinationBridge?.kind === BridgeKind.Cctp &&
+            destinationBridge.canonicalAsset === destinationAsset
+            ? CctpReceiveMode.Manual
+            : CctpReceiveMode.Forwarded;
+    };
+
+    private getReceiveMode = (
+        destinationAsset: string,
+        options: BridgeQuoteOptions,
+    ): CctpReceiveMode => {
+        return (
+            options.cctpReceiveMode ??
+            this.getDefaultReceiveMode(destinationAsset)
+        );
     };
 
     private getFee = async (
@@ -567,7 +586,7 @@ export class CctpBridgeDriver extends BridgeDriver {
             sourceConfig.domain,
             destinationConfig.domain,
             this.getTransferMode(route.destinationAsset, options),
-            this.getReceiveMode(options),
+            this.getReceiveMode(route.destinationAsset, options),
         );
     };
 

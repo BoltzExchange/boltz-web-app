@@ -33,6 +33,10 @@ describe("CctpBridgeDriver", () => {
         sourceAsset: "USDC",
         destinationAsset: "USDC-BASE",
     };
+    const canonicalDestinationRoute = {
+        sourceAsset: "USDC-BASE",
+        destinationAsset: "USDC",
+    };
     const requireUsdcCctpBridge = () => {
         const bridge = mainnetConfig.assets.USDC.bridge;
         if (bridge?.kind !== BridgeKind.Cctp) {
@@ -105,6 +109,16 @@ describe("CctpBridgeDriver", () => {
         });
     });
 
+    test("should default canonical destination quote options to manual receive", async () => {
+        await expect(
+            driver.buildQuoteOptions("USDC", "0xdestination", false),
+        ).resolves.toEqual({
+            recipient: "0xdestination",
+            cctpTransferMode: CctpTransferMode.Fast,
+            cctpReceiveMode: CctpReceiveMode.Manual,
+        });
+    });
+
     test("should quote fast-transfer receive amounts", async () => {
         await expect(
             driver.quoteReceiveAmount(route, 1_000_000n),
@@ -114,6 +128,21 @@ describe("CctpBridgeDriver", () => {
         });
         expect(driver.getMessagingFeeToken(route)).toBeUndefined();
         expect(driver.getTransferFeeAsset(route)).toBe("USDC");
+    });
+
+    test("should default canonical destination quotes to manual receives", async () => {
+        const fetchSpy = vi.mocked(globalThis.fetch);
+
+        await expect(
+            driver.quoteReceiveAmount(canonicalDestinationRoute, 1_000_000n),
+        ).resolves.toEqual({
+            amountIn: 1_000_000n,
+            amountOut: 999_870n,
+        });
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://iris-api.circle.com/v2/burn/USDC/fees/6/3",
+            expect.any(Object),
+        );
     });
 
     test("should support standard-transfer quote overrides", async () => {
@@ -155,6 +184,24 @@ describe("CctpBridgeDriver", () => {
             minFinalityThreshold: cctpFastFinalityThreshold,
             hookData: cctpForwardHookData,
         });
+    });
+
+    test("quoteSend defaults canonical destination burns to empty hook data", async () => {
+        const recipient = "0x1234567890123456789012345678901234567890";
+        const contract = await driver.getQuotedContract(
+            canonicalDestinationRoute,
+        );
+        const quote = await driver.quoteSend(
+            contract,
+            canonicalDestinationRoute,
+            recipient,
+            1_000_000n,
+        );
+
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(sendParam.destinationDomain).toBe(3);
+        expect(sendParam.hookData).toBe(cctpEmptyHookData);
+        expect(quote.minAmount).toBe(999_870n);
     });
 
     test("quoteSend honors a standard transfer override", async () => {
