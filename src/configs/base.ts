@@ -169,6 +169,7 @@ const defaults = {
     chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
     layerZeroExplorerUrl: "https://layerzeroscan.com",
+    cctpExplorerUrl: "https://usdc.range.org",
     rateProviders: {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",

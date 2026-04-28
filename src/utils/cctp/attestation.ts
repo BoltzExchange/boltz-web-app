@@ -2,7 +2,6 @@ import { config } from "../../config";
 import { constructRequestOptions } from "../helper";
 
 const requestTimeoutDuration = 6_000;
-const defaultPollIntervalMs = 2_000;
 
 type CctpMessagesResponse = {
     messages?: unknown;
@@ -12,15 +11,6 @@ type CctpMessageSnapshot = {
     forwardTxHash?: string;
     message?: string;
     attestation?: string;
-    status?: string;
-};
-
-export type CctpForwardProgress = {
-    status?: string;
-};
-
-export type CctpForwardResult = {
-    forwardTxHash: string;
     status?: string;
 };
 
@@ -68,14 +58,12 @@ const isCompleteAttestation = (entry: {
 const fetchCctpMessage = async (
     sourceDomainId: number,
     sourceTxHash: string,
-    signal?: AbortSignal,
 ): Promise<CctpMessageSnapshot> => {
     const { opts, requestTimeout } = constructRequestOptions(
         {
             headers: {
                 Accept: "application/json",
             },
-            signal,
         },
         requestTimeoutDuration,
     );
@@ -118,55 +106,6 @@ const fetchCctpMessage = async (
         return entry;
     } finally {
         clearTimeout(requestTimeout);
-    }
-};
-
-const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
-    new Promise((resolve, reject) => {
-        if (signal?.aborted) {
-            reject(signal.reason);
-            return;
-        }
-        const timer = setTimeout(() => {
-            signal?.removeEventListener("abort", onAbort);
-            resolve();
-        }, ms);
-        const onAbort = () => {
-            clearTimeout(timer);
-            reject(signal?.reason);
-        };
-        signal?.addEventListener("abort", onAbort, { once: true });
-    });
-
-// Polls Circle's message API until the Forwarding Service has submitted the
-// mint on the destination chain, returning the forward tx hash. Callers can
-// subscribe to progress to surface Circle's textual status as polling advances.
-export const waitForCctpForwardTxHash = async (
-    sourceDomainId: number,
-    sourceTxHash: string,
-    options: {
-        intervalMs?: number;
-        signal?: AbortSignal;
-        onProgress?: (progress: CctpForwardProgress) => void;
-    } = {},
-): Promise<CctpForwardResult> => {
-    const intervalMs = options.intervalMs ?? defaultPollIntervalMs;
-
-    while (true) {
-        options.signal?.throwIfAborted();
-        const result = await fetchCctpMessage(
-            sourceDomainId,
-            sourceTxHash,
-            options.signal,
-        );
-        if (result.forwardTxHash !== undefined) {
-            return {
-                forwardTxHash: result.forwardTxHash,
-                status: result.status,
-            };
-        }
-        options.onProgress?.(result);
-        await sleep(intervalMs, options.signal);
     }
 };
 

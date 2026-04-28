@@ -3,7 +3,7 @@ import { Contract, Signature } from "ethers";
 import type { TransactionRequest, Wallet } from "ethers";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
-import type { ExplorerKind } from "../../components/BlockExplorer";
+import { ExplorerKind } from "../../components/BlockExplorer";
 import {
     BridgeKind,
     CctpReceiveMode,
@@ -86,9 +86,8 @@ export class CctpBridgeDriver extends BridgeDriver {
         return transport;
     };
 
-    public getExplorerKind = (route: BridgeRoute): ExplorerKind | undefined => {
-        void route;
-        return undefined;
+    public getExplorerKind = (): ExplorerKind => {
+        return ExplorerKind.Cctp;
     };
 
     public getMessagingFeeToken = (route: BridgeRoute): string | undefined => {
@@ -394,15 +393,6 @@ export class CctpBridgeDriver extends BridgeDriver {
     // (SendToBridge) then reads the actual allowance to decide whether the
     // approval is current.
     public requiresDirectUserApproval = (
-        target: BridgeDirectSendTarget,
-        runner: BridgeDirectSendRunner,
-    ): Promise<boolean> => {
-        void target;
-        void runner;
-        return Promise.resolve(true);
-    };
-
-    protected requiresDirectUserApprovalUnchecked = (
         target: BridgeDirectSendTarget,
         runner: BridgeDirectSendRunner,
     ): Promise<boolean> => {

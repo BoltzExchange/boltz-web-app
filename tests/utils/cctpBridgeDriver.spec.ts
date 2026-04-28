@@ -1,3 +1,4 @@
+import { ExplorerKind } from "../../src/components/BlockExplorer";
 import { config as runtimeConfig } from "../../src/config";
 import {
     BridgeKind,
@@ -88,6 +89,10 @@ describe("CctpBridgeDriver", () => {
         maxFee: sendParam.maxFee,
         minFinalityThreshold: sendParam.minFinalityThreshold,
         hookData: sendParam.hookData,
+    });
+
+    test("should use the CCTP bridge explorer", () => {
+        expect(driver.getExplorerKind()).toBe(ExplorerKind.Cctp);
     });
 
     test("should build quote options from the asset transfer mode", async () => {
