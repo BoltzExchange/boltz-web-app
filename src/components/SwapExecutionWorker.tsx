@@ -785,7 +785,11 @@ export const SwapExecutionWorker = () => {
                     return;
                 }
 
-                guid = bridgeDriver.getGuidFromSolanaLogs(logMessages);
+                guid = bridgeDriver.deriveSolanaSentGuid({
+                    sourceAsset: currentSwap.bridge.sourceAsset,
+                    txHash: currentSwap.bridge.txHash,
+                    logMessages,
+                });
                 break;
             }
 

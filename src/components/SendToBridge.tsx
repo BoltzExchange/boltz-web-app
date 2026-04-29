@@ -22,7 +22,7 @@ import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { bridgeRegistry } from "../utils/bridge";
 import { getTronTokenAllowance } from "../utils/oft/oft";
-import type { OftTransportClient, SendParam } from "../utils/oft/types";
+import type { OftTransportClient } from "../utils/oft/types";
 import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ApproveTrc20 from "./ApproveTrc20";
@@ -447,14 +447,13 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        // Solana bridge sends are OFT-only (CCTP has no Solana transport).
-        const oftBridgeInstance = bridgeInstance as OftTransportClient;
         return (
-            await oftBridgeInstance.send(
-                sendParam as SendParam,
+            await bridgeDriver().sendTransport({
+                contract: bridgeInstance,
+                sendParam,
                 msgFee,
-                wallet.address,
-            )
+                refundAddress: wallet.address,
+            })
         ).hash;
     };
 
@@ -512,14 +511,13 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        // Tron bridge sends are OFT-only (CCTP has no Tron transport).
-        const oftBridgeInstance = bridgeInstance as OftTransportClient;
         return (
-            await oftBridgeInstance.send(
-                sendParam as SendParam,
+            await bridgeDriver().sendTransport({
+                contract: bridgeInstance,
+                sendParam,
                 msgFee,
-                wallet.address,
-            )
+                refundAddress: wallet.address,
+            })
         ).hash;
     };
 

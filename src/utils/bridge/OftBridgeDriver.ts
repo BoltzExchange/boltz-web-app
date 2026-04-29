@@ -244,10 +244,14 @@ export class OftBridgeDriver extends BridgeDriver {
         );
     };
 
-    public getGuidFromSolanaLogs = (
-        logMessages: string[],
-    ): string | undefined => {
-        return getSolanaOftGuidFromLogs(logMessages);
+    public deriveSolanaSentGuid = (args: {
+        sourceAsset: string;
+        txHash: string;
+        logMessages: string[];
+    }): string | undefined => {
+        void args.sourceAsset;
+        void args.txHash;
+        return getSolanaOftGuidFromLogs(args.logMessages);
     };
 
     public getBufferedNativeFee = (nativeFee: bigint): bigint => {
@@ -368,6 +372,18 @@ export class OftBridgeDriver extends BridgeDriver {
             target: args.target as OftDirectSendTarget,
             sendParam: args.sendParam as SendParam,
         });
+
+    public sendTransport = async (args: {
+        contract: BridgeTransportClient;
+        sendParam: BridgeSendParam;
+        msgFee: BridgeMsgFee;
+        refundAddress: string;
+    }): Promise<BridgeTransaction> =>
+        await (args.contract as OftTransportClient).send(
+            args.sendParam as SendParam,
+            args.msgFee,
+            args.refundAddress,
+        );
 
     public encodeRouterExecuteData = (
         args: EncodeRouterExecuteArgs,

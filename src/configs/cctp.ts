@@ -306,7 +306,6 @@ export const cctpVariants: CctpVariant[] = [
         tokenMessenger: solanaTokenMessengerMinterV2,
         messageTransmitter: solanaMessageTransmitterV2,
         gasToken: "SOL",
-        canSend: false,
     },
 ];
 

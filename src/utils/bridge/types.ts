@@ -6,6 +6,7 @@ import type {
     NetworkTransport,
 } from "../../configs/base";
 import type { CctpDirectSendTarget } from "../cctp/directSend";
+import type { SolanaCctpTransportClient } from "../cctp/solana";
 import type { CctpSendParam } from "../cctp/types";
 import type { OftDirectSendTarget } from "../oft/directSend";
 import type { OftContract } from "../oft/registry";
@@ -65,9 +66,11 @@ export type BridgeDirectSendRunner = ContractRunner;
 // `getQuotedContract`. Used by cross-driver code (SendToBridge,
 // SwapExecutionWorker) to inspect the transport kind; driver-specific
 // contract methods live on the narrower variants.
-export type CctpTransportClient = {
-    transport: NetworkTransport;
-};
+export type CctpTransportClient =
+    | {
+          transport: NetworkTransport;
+      }
+    | SolanaCctpTransportClient;
 export type BridgeTransportClient = OftTransportClient | CctpTransportClient;
 export type BridgeProvider = Provider;
 

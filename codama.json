@@ -1,11 +1,21 @@
 {
-    "idl": "src/generated/idl.json",
+    "idl": "src/generated/solana-oft-idl.json",
     "before": [],
     "scripts": {
-        "js": {
+        "solana-oft": {
             "from": "@codama/renderers-js",
             "args": [
                 "src/generated/solana-oft",
+                {
+                    "formatCode": false,
+                    "syncPackageJson": false
+                }
+            ]
+        },
+        "solana-cctp": {
+            "from": "@codama/renderers-js",
+            "args": [
+                "src/generated/solana-cctp-token-messenger-minter",
                 {
                     "formatCode": false,
                     "syncPackageJson": false

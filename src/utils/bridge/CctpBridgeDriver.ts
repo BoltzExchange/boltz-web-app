@@ -1,3 +1,4 @@
+import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
 import { Contract, Signature } from "ethers";
 import type { TransactionRequest, Wallet } from "ethers";
@@ -42,6 +43,12 @@ import {
     hashCctpData,
 } from "../cctp/evm";
 import { type CctpFee, cctpFeeBpsDenominator, getCctpFee } from "../cctp/fee";
+import {
+    type SolanaCctpTransportClient,
+    createSolanaCctpContract,
+    getSolanaCctpRequiredNativeBalance,
+    getSolanaCctpTokenBalance,
+} from "../cctp/solana";
 import type { CctpData, CctpSendParam } from "../cctp/types";
 import * as solanaChain from "../chains/solana";
 import { createAssetProvider } from "../provider";
@@ -225,9 +232,19 @@ export class CctpBridgeDriver extends BridgeDriver {
             ),
         };
 
+        const msgFee: BridgeMsgFee =
+            this.getTransport(route.sourceAsset) === NetworkTransport.Solana
+                ? [
+                      await getSolanaCctpRequiredNativeBalance(
+                          route.sourceAsset,
+                      ),
+                      0n,
+                  ]
+                : [0n, 0n];
+
         return {
             sendParam,
-            msgFee: [0n, 0n],
+            msgFee,
             minAmount:
                 amount > unbufferedMaxFee ? amount - unbufferedMaxFee : 0n,
         };
@@ -258,7 +275,16 @@ export class CctpBridgeDriver extends BridgeDriver {
         route: BridgeRoute,
         runner?: BridgeTransportRunner,
     ): Promise<BridgeTransportClient> => {
-        void runner;
+        if (this.getTransport(route.sourceAsset) === NetworkTransport.Solana) {
+            return Promise.resolve(
+                createSolanaCctpContract({
+                    asset: route.sourceAsset,
+                    tokenMint: getTokenAddress(route.sourceAsset),
+                    walletProvider: runner as SolanaWalletProvider | undefined,
+                }),
+            );
+        }
+
         return Promise.resolve(this.buildTransportClient(route));
     };
 
@@ -357,11 +383,16 @@ export class CctpBridgeDriver extends BridgeDriver {
         };
     };
 
-    public getGuidFromSolanaLogs = (
-        logMessages: string[],
-    ): string | undefined => {
-        void logMessages;
-        return undefined;
+    public deriveSolanaSentGuid = (args: {
+        sourceAsset: string;
+        txHash: string;
+        logMessages: string[];
+    }): string | undefined => {
+        void args.logMessages;
+        return encodeCctpGuid(
+            this.requireCctpConfig(args.sourceAsset).domain,
+            args.txHash,
+        );
     };
 
     public getBufferedNativeFee = (nativeFee: bigint): bigint => {
@@ -372,6 +403,16 @@ export class CctpBridgeDriver extends BridgeDriver {
         route: BridgeRoute,
         ownerAddress: string,
     ): Promise<bigint> => {
+        if (this.getTransport(route.sourceAsset) === NetworkTransport.Solana) {
+            return await getSolanaCctpTokenBalance(
+                {
+                    asset: route.sourceAsset,
+                    tokenMint: getTokenAddress(route.sourceAsset),
+                },
+                ownerAddress,
+            );
+        }
+
         const tokenContract = new Contract(
             getTokenAddress(route.sourceAsset),
             ERC20Abi,
@@ -385,6 +426,13 @@ export class CctpBridgeDriver extends BridgeDriver {
         route: BridgeRoute,
         ownerAddress: string,
     ): Promise<bigint> => {
+        if (this.getTransport(route.sourceAsset) === NetworkTransport.Solana) {
+            return await solanaChain.getSolanaNativeBalance(
+                route.sourceAsset,
+                ownerAddress,
+            );
+        }
+
         return await this.getProvider(route.sourceAsset).getBalance(
             ownerAddress,
         );
@@ -394,6 +442,13 @@ export class CctpBridgeDriver extends BridgeDriver {
         sourceAsset: string,
         txHash: string,
     ): Promise<string | undefined> => {
+        if (this.getTransport(sourceAsset) === NetworkTransport.Solana) {
+            return await solanaChain.getSolanaTransactionSender(
+                sourceAsset,
+                txHash,
+            );
+        }
+
         const tx = await this.getProvider(sourceAsset).getTransaction(txHash);
         return tx?.from;
     };
@@ -455,6 +510,25 @@ export class CctpBridgeDriver extends BridgeDriver {
             runner: args.runner,
             sendParam: args.sendParam as CctpSendParam,
         });
+    };
+
+    public sendTransport = async (args: {
+        contract: BridgeTransportClient;
+        sendParam: BridgeSendParam;
+        msgFee: BridgeMsgFee;
+        refundAddress: string;
+    }): Promise<BridgeTransaction> => {
+        if (!("send" in args.contract)) {
+            throw new Error(
+                "CCTP transport sends are only supported on Solana",
+            );
+        }
+
+        return await (args.contract as SolanaCctpTransportClient).send(
+            args.sendParam as CctpSendParam,
+            args.msgFee,
+            args.refundAddress,
+        );
     };
 
     public encodeRouterExecuteData = (
