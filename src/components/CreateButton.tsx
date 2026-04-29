@@ -24,11 +24,7 @@ import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import Pair, { type EncodedHop } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
-import {
-    fetchBip21Invoice,
-    fetchBolt12Invoice,
-    getPairs,
-} from "../utils/boltzClient";
+import { fetchBip21Invoice, fetchBolt12Invoice } from "../utils/boltzClient";
 import { bridgeRegistry } from "../utils/bridge";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
@@ -39,6 +35,7 @@ import {
     miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { handleCreateSwapError } from "../utils/handleCreateSwapError";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { getDestinationAddress, getPair } from "../utils/helper";
 import {
@@ -222,6 +219,7 @@ const CreateButton = () => {
         setReceiveAmount,
         bolt12Loading,
         quoteLoading,
+        setAmountChanged,
     } = useCreateContext();
     const {
         signer,
@@ -781,10 +779,18 @@ const CreateButton = () => {
                 error: formatError(err),
             });
 
-            if (err === "invalid pair hash") {
-                setPairs(await getPairs());
-                notify("error", t("feecheck"));
-            } else {
+            const recovered = await handleCreateSwapError(
+                err,
+                notify,
+                t,
+                pair,
+                regularPairs,
+                setPairs,
+                setSendAmount,
+                setAmountChanged,
+            );
+
+            if (!recovered) {
                 notify("error", err);
             }
 
