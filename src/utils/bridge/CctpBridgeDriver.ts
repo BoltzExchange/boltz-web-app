@@ -4,7 +4,6 @@ import { Contract, Signature } from "ethers";
 import type { TransactionRequest, Wallet } from "ethers";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
-import { ExplorerKind } from "../../components/BlockExplorer";
 import {
     BridgeKind,
     CctpReceiveMode,
@@ -51,6 +50,7 @@ import {
 } from "../cctp/solana";
 import type { CctpData, CctpSendParam } from "../cctp/types";
 import * as solanaChain from "../chains/solana";
+import { ExplorerKind } from "../explorerLink";
 import { createAssetProvider } from "../provider";
 import type { Provider } from "../provider";
 import {

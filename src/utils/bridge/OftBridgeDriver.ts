@@ -5,13 +5,13 @@ import { AbiCoder, Contract, Signature, keccak256 } from "ethers";
 import type { TransactionRequest, Wallet } from "ethers";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
-import { ExplorerKind } from "../../components/BlockExplorer";
 import { config } from "../../config";
 import { BridgeKind, NetworkTransport } from "../../configs/base";
 import { getTokenAddress } from "../../consts/Assets";
 import type { Signer } from "../../context/Web3";
 import { getSolanaNativeBalance } from "../chains/solana";
 import { getTronNativeBalance } from "../chains/tron";
+import { ExplorerKind } from "../explorerLink";
 import {
     type OftDirectSendTarget,
     getOftDirectRequiredNativeBalance,

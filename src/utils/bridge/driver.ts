@@ -2,12 +2,12 @@ import type { Router } from "boltz-core/typechain/Router";
 import type { Signature, TransactionRequest, Wallet } from "ethers";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
-import type { ExplorerKind } from "../../components/BlockExplorer";
 import { config } from "../../config";
 import type { BridgeKind, NetworkTransport } from "../../configs/base";
 import { getAssetBridge } from "../../consts/Assets";
 import type { SwapPosition } from "../../consts/Enums";
 import type { Signer } from "../../context/Web3";
+import type { ExplorerKind } from "../explorerLink";
 import type { Provider } from "../provider";
 import type { BridgeDetail } from "../swapCreator";
 import type {

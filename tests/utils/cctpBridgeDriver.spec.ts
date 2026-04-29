@@ -1,4 +1,3 @@
-import { ExplorerKind } from "../../src/components/BlockExplorer";
 import { config as runtimeConfig } from "../../src/config";
 import {
     BridgeKind,
@@ -24,6 +23,7 @@ import {
 } from "../../src/utils/cctp/evm";
 import type { CctpSendParam } from "../../src/utils/cctp/types";
 import * as solanaChain from "../../src/utils/chains/solana";
+import { ExplorerKind } from "../../src/utils/explorerLink";
 
 describe("CctpBridgeDriver", () => {
     const driver = new CctpBridgeDriver();
