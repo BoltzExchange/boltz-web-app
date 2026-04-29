@@ -1,7 +1,6 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
 import type { Connection, TransactionInstruction } from "@solana/web3.js";
-import { Buffer } from "buffer";
 
 import { NetworkTransport } from "../../configs/base";
 import {
@@ -17,6 +16,7 @@ import {
 } from "../chains/solana";
 import { toLegacyInstruction } from "../solana/instruction";
 import { formatSolanaLogsMessage } from "../solana/logs";
+import { derivePda } from "../solana/pda";
 import { cctpEmptyHookData } from "./evm";
 import type { CctpSendParam } from "./types";
 
@@ -67,16 +67,6 @@ const hexBytes32ToSolanaAddress = (
 
     return new modules.web3.PublicKey(bytes).toBase58();
 };
-
-const derivePda = (
-    modules: SolanaCctpModules,
-    programId: string,
-    ...seeds: Uint8Array[]
-): string =>
-    modules.web3.PublicKey.findProgramAddressSync(
-        seeds.map((seed) => Buffer.from(seed)),
-        new modules.web3.PublicKey(programId),
-    )[0].toBase58();
 
 const deriveRemoteTokenMessenger = (
     modules: SolanaCctpModules,
@@ -149,6 +139,8 @@ const createDepositForBurnInstruction = async (
     const messageSentEventData = modules.solanaKit.createNoopSigner(
         modules.solanaKit.address(messageSentEventDataAddress),
     );
+    const derive = (...seeds: Uint8Array[]) =>
+        derivePda(modules, solanaTokenMessengerMinterV2, ...seeds);
 
     return toLegacyInstruction(
         modules,
@@ -157,11 +149,7 @@ const createDepositForBurnInstruction = async (
                 owner,
                 eventRentPayer: owner,
                 senderAuthorityPda: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
-                        textEncoder.encode("sender_authority"),
-                    ),
+                    derive(textEncoder.encode("sender_authority")),
                 ),
                 burnTokenAccount: modules.solanaKit.address(
                     await getSolanaAssociatedTokenAddress(
@@ -170,9 +158,7 @@ const createDepositForBurnInstruction = async (
                     ),
                 ),
                 denylistAccount: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
+                    derive(
                         textEncoder.encode("denylist_account"),
                         new modules.web3.PublicKey(ownerAddress).toBytes(),
                     ),
@@ -185,11 +171,7 @@ const createDepositForBurnInstruction = async (
                     ),
                 ),
                 tokenMessenger: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
-                        textEncoder.encode("token_messenger"),
-                    ),
+                    derive(textEncoder.encode("token_messenger")),
                 ),
                 remoteTokenMessenger: modules.solanaKit.address(
                     deriveRemoteTokenMessenger(
@@ -198,16 +180,10 @@ const createDepositForBurnInstruction = async (
                     ),
                 ),
                 tokenMinter: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
-                        textEncoder.encode("token_minter"),
-                    ),
+                    derive(textEncoder.encode("token_minter")),
                 ),
                 localToken: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
+                    derive(
                         textEncoder.encode("local_token"),
                         burnTokenMint.toBytes(),
                     ),
@@ -215,11 +191,7 @@ const createDepositForBurnInstruction = async (
                 burnTokenMint: modules.solanaKit.address(context.tokenMint),
                 messageSentEventData,
                 eventAuthority: modules.solanaKit.address(
-                    derivePda(
-                        modules,
-                        solanaTokenMessengerMinterV2,
-                        textEncoder.encode("__event_authority"),
-                    ),
+                    derive(textEncoder.encode("__event_authority")),
                 ),
                 program: programAddress,
                 amount: sendParam.amount,

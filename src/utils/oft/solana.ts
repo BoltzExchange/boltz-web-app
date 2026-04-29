@@ -23,6 +23,7 @@ import {
 import { formatError } from "../errors";
 import { toLegacyInstruction } from "../solana/instruction";
 import { formatSolanaLogsMessage } from "../solana/logs";
+import { derivePda } from "../solana/pda";
 import type { MsgFee, OftTransportClient, SendParam } from "./types";
 
 type SolanaOftModules = Awaited<ReturnType<(typeof lazySolanaOft)["get"]>>;
@@ -124,16 +125,6 @@ const appendRemainingAccounts = (
         data: instruction.data,
     });
 };
-
-const derivePda = (
-    modules: SolanaOftModules,
-    programId: string,
-    ...seeds: Uint8Array[]
-): string =>
-    modules.web3.PublicKey.findProgramAddressSync(
-        seeds.map((seed) => Buffer.from(seed)),
-        new modules.web3.PublicKey(programId),
-    )[0].toBase58();
 
 const derivePeerAddress = (
     modules: SolanaOftModules,
