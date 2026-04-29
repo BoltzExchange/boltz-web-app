@@ -739,3 +739,79 @@ export const getOftTransactionConfirmationTimestamp = async (
         }
     }
 };
+
+const oftConfirmationPollInterval = 5_000;
+
+const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
+    new Promise((resolve, reject) => {
+        if (signal?.aborted) {
+            reject(signal.reason);
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            signal?.removeEventListener("abort", onAbort);
+            resolve();
+        }, ms);
+        const onAbort = () => {
+            clearTimeout(timeout);
+            reject(signal?.reason);
+        };
+        signal?.addEventListener("abort", onAbort, { once: true });
+    });
+
+const isAbortError = (error: unknown, signal?: AbortSignal): boolean =>
+    signal?.aborted === true ||
+    (error instanceof Error && error.name === "AbortError");
+
+export const waitForOftTransactionConfirmationTimestamp = async (
+    sourceAsset: string,
+    txHash: string,
+    options: {
+        signal?: AbortSignal;
+        intervalMs?: number;
+    } = {},
+): Promise<number | undefined> => {
+    const intervalMs = options.intervalMs ?? oftConfirmationPollInterval;
+
+    while (!options.signal?.aborted) {
+        let confirmationTimestamp: number | undefined;
+        try {
+            confirmationTimestamp =
+                await getOftTransactionConfirmationTimestamp(
+                    sourceAsset,
+                    txHash,
+                );
+        } catch (error) {
+            if (isAbortError(error, options.signal)) {
+                return undefined;
+            }
+
+            log.warn("OFT confirmation polling request failed; retrying", {
+                sourceAsset,
+                txHash,
+                error,
+            });
+        }
+
+        if (options.signal?.aborted) {
+            return undefined;
+        }
+
+        if (confirmationTimestamp !== undefined) {
+            return confirmationTimestamp;
+        }
+
+        try {
+            await sleep(intervalMs, options.signal);
+        } catch (error) {
+            if (isAbortError(error, options.signal)) {
+                return undefined;
+            }
+
+            throw error;
+        }
+    }
+
+    return undefined;
+};

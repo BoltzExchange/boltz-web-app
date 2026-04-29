@@ -4,7 +4,7 @@ import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
 import { BridgeKind } from "../configs/base";
 import { useGlobalContext } from "../context/Global";
 import { formatError } from "../utils/errors";
-import { getOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
+import { waitForOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
 import type { BridgeDetail } from "../utils/swapCreator";
 import LoadingSpinner from "./LoadingSpinner";
@@ -63,24 +63,43 @@ const WaitForOft = (props: {
         const txHash = props.txHash;
         const sourceAsset = props.sourceAsset;
 
-        getOftTransactionConfirmationTimestamp(sourceAsset, txHash)
+        const updateRemainingFromConfirmation = (
+            confirmationTimeSecs: number,
+        ) => {
+            const elapsedSecs = Date.now() / 1_000 - confirmationTimeSecs;
+            const remainingSecs = Math.max(Math.ceil(eta - elapsedSecs), 0);
+            setRemaining(remainingSecs);
+        };
+
+        const controller = new AbortController();
+        setRemaining(undefined);
+
+        waitForOftTransactionConfirmationTimestamp(sourceAsset, txHash, {
+            signal: controller.signal,
+        })
             .then((confirmationTimeSecs) => {
-                if (confirmationTimeSecs === undefined) {
-                    setRemaining(Math.ceil(eta));
+                if (
+                    controller.signal.aborted ||
+                    confirmationTimeSecs === undefined
+                ) {
                     return;
                 }
 
-                const elapsedSecs = Date.now() / 1_000 - confirmationTimeSecs;
-                setRemaining(Math.max(Math.ceil(eta - elapsedSecs), 0));
+                updateRemainingFromConfirmation(confirmationTimeSecs);
             })
             .catch((e) => {
+                if (controller.signal.aborted) {
+                    return;
+                }
+
                 log.warn("Failed to fetch OFT tx confirmation time", {
                     sourceAsset,
                     txHash,
                     error: formatError(e),
                 });
-                setRemaining(Math.ceil(eta));
             });
+
+        onCleanup(() => controller.abort());
     });
 
     const timer = setInterval(() => {
