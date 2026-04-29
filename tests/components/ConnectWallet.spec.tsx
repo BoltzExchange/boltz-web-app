@@ -391,4 +391,76 @@ describe("ConnectWallet", () => {
             );
         });
     });
+
+    describe("unavailable providers", () => {
+        const noWalletLabel = "No wallet installed";
+
+        const importConnectWalletWithoutProviders = async () => {
+            vi.resetModules();
+            vi.doMock("../../src/context/Global", () => ({
+                useGlobalContext: () => ({
+                    notify: vi.fn(),
+                    privacyMode: () => false,
+                    t: (key: string) =>
+                        key === "no_wallet" ? noWalletLabel : key,
+                }),
+            }));
+            vi.doMock("../../src/context/Web3", () => ({
+                useWeb3Signer: () => ({
+                    browserWalletTransports: () => new Set(),
+                    clearSigner: vi.fn(),
+                    connectProvider: vi.fn(),
+                    connectedWallet: () => undefined,
+                    providers: () => ({}),
+                    setWalletConnected: vi.fn(),
+                    switchNetwork: vi.fn(),
+                }),
+            }));
+            vi.doMock("../../src/context/Create", () => ({
+                useCreateContext: () => ({
+                    onchainAddress: () => "",
+                    setAddressValid: vi.fn(),
+                    setOnchainAddress: vi.fn(),
+                }),
+            }));
+
+            return await import("../../src/components/ConnectWallet");
+        };
+
+        afterEach(() => {
+            vi.doUnmock("../../src/context/Global");
+            vi.doUnmock("../../src/context/Web3");
+            vi.doUnmock("../../src/context/Create");
+            vi.resetModules();
+        });
+
+        test("shows a disabled no-wallet button by default", async () => {
+            const { default: IsolatedConnectWallet } =
+                await importConnectWalletWithoutProviders();
+
+            render(() => <IsolatedConnectWallet asset={RBTC} />);
+
+            const noWallet = screen.getByRole("button", {
+                name: noWalletLabel,
+            });
+            expect(noWallet).toBeDisabled();
+        });
+
+        test("hides the no-wallet fallback when requested", async () => {
+            const { default: IsolatedConnectWallet } =
+                await importConnectWalletWithoutProviders();
+
+            render(() => (
+                <IsolatedConnectWallet
+                    asset={RBTC}
+                    hideWhenUnavailable={true}
+                />
+            ));
+
+            expect(
+                screen.queryByRole("button", { name: noWalletLabel }),
+            ).not.toBeInTheDocument();
+            expect(screen.queryByRole("button")).not.toBeInTheDocument();
+        });
+    });
 });

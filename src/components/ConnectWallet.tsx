@@ -306,6 +306,7 @@ const ConnectWallet = (props: {
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
     syncAddress?: boolean;
+    hideWhenUnavailable?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, connectedWallet } = useWeb3Signer();
@@ -411,13 +412,18 @@ const ConnectWallet = (props: {
         }
     });
 
+    const supportedProviders = () =>
+        getSupportedProviders(props.asset, providers());
+
     return (
         <Show
-            when={getSupportedProviders(props.asset, providers()).length > 0}
+            when={supportedProviders().length > 0}
             fallback={
-                <button class="btn" disabled>
-                    {t("no_wallet")}
-                </button>
+                <Show when={!props.hideWhenUnavailable}>
+                    <button class="btn" disabled>
+                        {t("no_wallet")}
+                    </button>
+                </Show>
             }>
             <Show
                 when={address() !== undefined && walletCompatible()}

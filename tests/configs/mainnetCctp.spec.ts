@@ -61,13 +61,17 @@ const cctpRouteTestCases: CctpRouteTestCase[] = Object.entries(
             destDomainId: bridge.cctp.domain,
             receiveMode: CctpReceiveMode.Forwarded,
         },
-        {
-            sourceAsset: asset,
-            destinationAsset: bridge.canonicalAsset,
-            sourceDomainId: bridge.cctp.domain,
-            destDomainId: canonicalBridge.cctp.domain,
-            receiveMode: CctpReceiveMode.Manual,
-        },
+        ...(assetConfig.canSend === false
+            ? []
+            : [
+                  {
+                      sourceAsset: asset,
+                      destinationAsset: bridge.canonicalAsset,
+                      sourceDomainId: bridge.cctp.domain,
+                      destDomainId: canonicalBridge.cctp.domain,
+                      receiveMode: CctpReceiveMode.Manual,
+                  },
+              ]),
     ];
 });
 

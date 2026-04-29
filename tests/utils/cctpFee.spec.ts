@@ -109,6 +109,38 @@ describe("cctpFee", () => {
         );
     });
 
+    test("should request recipient setup fees when forwarding with setup", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            ok: true,
+            json: () =>
+                Promise.resolve([
+                    feeEntry(1000, 1.3, {
+                        low: 300_000,
+                        med: 350_000,
+                        high: 400_000,
+                    }),
+                    feeEntry(2000, 0),
+                ]),
+        } as Response);
+
+        await expect(
+            getCctpFee(
+                3,
+                5,
+                CctpTransferMode.Fast,
+                CctpReceiveMode.Forwarded,
+                true,
+            ),
+        ).resolves.toEqual({
+            bpsUnits: (oneBps * 13n) / 10n,
+            forwardFee: 350_000n,
+        });
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://iris-api.circle.com/v2/burn/USDC/fees/3/5?forward=true&includeRecipientSetup=true",
+            expect.any(Object),
+        );
+    });
+
     test("should fetch route fees on each lookup", async () => {
         const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
             ok: true,

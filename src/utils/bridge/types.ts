@@ -54,6 +54,7 @@ export type BridgeQuoteOptions = {
     bridgeName?: string;
     cctpTransferMode?: CctpTransferMode;
     cctpReceiveMode?: CctpReceiveMode;
+    cctpIncludeRecipientSetup?: boolean;
 };
 
 export type BridgeSendParam = SendParam | CctpSendParam;

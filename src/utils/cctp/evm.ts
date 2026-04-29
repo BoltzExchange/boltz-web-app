@@ -1,12 +1,15 @@
+import { hex } from "@scure/base";
 import {
     AbiCoder,
     type ContractRunner,
     Interface,
+    concat,
     getAddress,
     keccak256,
     zeroPadValue,
 } from "ethers";
 
+import { decodeSolanaAddress } from "../chains/solana";
 import type { CctpData } from "./types";
 
 export const cctpFastFinalityThreshold = 1000;
@@ -25,6 +28,21 @@ export const cctpEmptyHookData = "0x";
 // Ref: https://developers.circle.com/cctp/howtos/transfer-usdc-with-forwarding-service
 export const cctpForwardHookData =
     "0x636374702d666f72776172640000000000000000000000000000000000000000";
+
+const cctpForwardPrefix = cctpForwardHookData.slice(0, 58);
+
+export const createCctpSolanaForwardHookData = (
+    recipientWallet: string,
+): string => {
+    const length = "00000021";
+    const ataCreationFlag = "01";
+    const wallet = hex.encode(decodeSolanaAddress(recipientWallet));
+
+    return concat([
+        cctpForwardPrefix,
+        `0x${length}${ataCreationFlag}${wallet}`,
+    ]);
+};
 
 const messageTransmitterV2Interface = new Interface([
     "function receiveMessage(bytes message, bytes attestation) external returns (bool)",

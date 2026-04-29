@@ -1,7 +1,11 @@
 import { BridgeKind } from "../../src/configs/base";
+import { NetworkTransport } from "../../src/configs/base";
 import { cctpVariantAssets, tokenMessengerV2 } from "../../src/configs/cctp";
 
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
+const solanaAddressPattern = /^[1-9A-HJ-NP-Za-km-z]+$/;
+const isSolana = (config: (typeof cctpVariantAssets)[string]) =>
+    config.network?.transport === NetworkTransport.Solana;
 
 describe("CCTP variant assets", () => {
     const entries = Object.entries(cctpVariantAssets);
@@ -23,11 +27,15 @@ describe("CCTP variant assets", () => {
             const { domain, tokenMessenger, transferMode } = bridge.cctp;
             expect(Number.isInteger(domain)).toBe(true);
             expect(domain).toBeGreaterThanOrEqual(0);
-            expect(tokenMessenger).toMatch(addressPattern);
+            expect(tokenMessenger).toMatch(
+                isSolana(config) ? solanaAddressPattern : addressPattern,
+            );
             // `CctpTransferMode` is a const enum; compare against its literal values.
             expect(["fast", "standard"]).toContain(transferMode);
 
-            expect(config.token?.address).toMatch(addressPattern);
+            expect(config.token?.address).toMatch(
+                isSolana(config) ? solanaAddressPattern : addressPattern,
+            );
             expect(config.token?.decimals).toBe(6);
             expect(asset).toMatch(/^USDC-/);
         },
@@ -47,7 +55,7 @@ describe("CCTP variant assets", () => {
     test("each variant has a unique (chainId, tokenAddress) tuple", () => {
         const seen = new Set<string>();
         for (const [asset, config] of entries) {
-            const key = `${config.network!.chainId}:${config.token!.address.toLowerCase()}`;
+            const key = `${config.network!.symbol}:${config.network!.chainId ?? ""}:${config.token!.address.toLowerCase()}`;
             expect(seen.has(key), `duplicate deployment for ${asset}`).toBe(
                 false,
             );
@@ -64,14 +72,18 @@ describe("CCTP variant assets", () => {
             if (bridge?.kind !== BridgeKind.Cctp) {
                 throw new Error(`${asset} is not configured as CCTP`);
             }
-            expect(bridge.cctp.tokenMessenger).toBe(tokenMessengerV2);
+            if (config.network?.transport === NetworkTransport.Evm) {
+                expect(bridge.cctp.tokenMessenger).toBe(tokenMessengerV2);
+            }
         }
     });
 
-    test("every variant has a populated EVM network config", () => {
+    test("every variant has a populated network config", () => {
         for (const [asset, config] of entries) {
             expect(config.network, `${asset} missing network`).toBeDefined();
-            expect(config.network!.chainId).toBeGreaterThan(0);
+            if (config.network!.transport === NetworkTransport.Evm) {
+                expect(config.network!.chainId).toBeGreaterThan(0);
+            }
             expect(config.network!.rpcUrls.length).toBeGreaterThan(0);
             expect(config.network!.chainName.length).toBeGreaterThan(0);
         }

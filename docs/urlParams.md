@@ -28,16 +28,16 @@ are:
 - `RBTC`
 - `TBTC`
 - `USDT0` (Arbitrum)
-- `USDT0-ETH`
 - `USDT0-BERA`
 - `USDT0-CFX`
 - `USDT0-CORN`
+- `USDT0-ETH`
 - `USDT0-FLR`
-- `USDT0-HYPE`
 - `USDT0-HBAR`
+- `USDT0-HYPE`
 - `USDT0-INK`
-- `USDT0-MNT`
 - `USDT0-MEGAETH`
+- `USDT0-MNT`
 - `USDT0-MON`
 - `USDT0-MORPH`
 - `USDT0-OP`
@@ -52,21 +52,22 @@ are:
 - `USDT0-UNI`
 - `USDT0-XLAYER`
 - `USDC` (Arbitrum)
-- `USDC-BASE`
-- `USDC-ETH`
 - `USDC-AVAX`
-- `USDC-OP`
-- `USDC-POL`
-- `USDC-UNI`
-- `USDC-LINEA`
+- `USDC-BASE`
 - `USDC-CODEX`
-- `USDC-SONIC`
-- `USDC-WORLD`
-- `USDC-MON`
-- `USDC-SEI`
-- `USDC-XDC`
+- `USDC-ETH`
 - `USDC-INK`
+- `USDC-LINEA`
+- `USDC-MON`
+- `USDC-OP`
 - `USDC-PLUME`
+- `USDC-POL`
+- `USDC-SEI`
+- `USDC-SOL`
+- `USDC-SONIC`
+- `USDC-UNI`
+- `USDC-WORLD`
+- `USDC-XDC`
 
 ## Amounts
 

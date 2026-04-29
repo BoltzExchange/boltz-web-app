@@ -23,6 +23,7 @@ import {
     cctpZeroBytes32,
 } from "../../src/utils/cctp/evm";
 import type { CctpSendParam } from "../../src/utils/cctp/types";
+import * as solanaChain from "../../src/utils/chains/solana";
 
 describe("CctpBridgeDriver", () => {
     const driver = new CctpBridgeDriver();
@@ -37,6 +38,17 @@ describe("CctpBridgeDriver", () => {
         sourceAsset: "USDC-BASE",
         destinationAsset: "USDC",
     };
+    const solanaDestinationRoute = {
+        sourceAsset: "USDC",
+        destinationAsset: "USDC-SOL",
+    };
+    const solanaRecipient = "EwwMqF8sFZRBGLchFfq61g5U7mPB14EnXxLQDWb5VAe5";
+    const solanaRecipientAtaAddress =
+        "GCdpTuRBNAj27vo1i6oeummWWc6EwbMS7LLHa2ths6RN";
+    const solanaRecipientAta =
+        "0xe1da52cc25e50ea64ae64ce209264e165a2e553b9d29256a82a92829f69ec729";
+    const solanaRecipientSetupHookData =
+        "0x636374702d666f7277617264000000000000000000000000000000000000002101cf3ac201d92eadcae0cd69b431f4c0e6d96c06bdb2fa28271b00409b5f1622ca";
     const requireUsdcCctpBridge = () => {
         const bridge = mainnetConfig.assets.USDC.bridge;
         if (bridge?.kind !== BridgeKind.Cctp) {
@@ -50,6 +62,7 @@ describe("CctpBridgeDriver", () => {
             ...runtimeConfig.assets,
             USDC: structuredClone(mainnetConfig.assets.USDC),
             "USDC-BASE": structuredClone(mainnetConfig.assets["USDC-BASE"]),
+            "USDC-SOL": structuredClone(mainnetConfig.assets["USDC-SOL"]),
         };
     });
 
@@ -116,6 +129,22 @@ describe("CctpBridgeDriver", () => {
             recipient: "0xdestination",
             cctpTransferMode: CctpTransferMode.Fast,
             cctpReceiveMode: CctpReceiveMode.Manual,
+        });
+    });
+
+    test("should request recipient setup in Solana destination quote options when needed", async () => {
+        vi.spyOn(
+            solanaChain,
+            "shouldCreateSolanaTokenAccount",
+        ).mockResolvedValue(true);
+
+        await expect(
+            driver.buildQuoteOptions("USDC-SOL", solanaRecipient, false),
+        ).resolves.toEqual({
+            recipient: solanaRecipient,
+            cctpTransferMode: CctpTransferMode.Fast,
+            cctpReceiveMode: CctpReceiveMode.Forwarded,
+            cctpIncludeRecipientSetup: true,
         });
     });
 
@@ -202,6 +231,49 @@ describe("CctpBridgeDriver", () => {
         expect(sendParam.destinationDomain).toBe(3);
         expect(sendParam.hookData).toBe(cctpEmptyHookData);
         expect(quote.minAmount).toBe(999_870n);
+    });
+
+    test("quoteSend encodes Solana destination recipients as USDC ATAs", async () => {
+        vi.spyOn(
+            solanaChain,
+            "getSolanaAssociatedTokenAddress",
+        ).mockResolvedValue(solanaRecipientAtaAddress);
+        const contract = await driver.getQuotedContract(solanaDestinationRoute);
+        const quote = await driver.quoteSend(
+            contract,
+            solanaDestinationRoute,
+            solanaRecipient,
+            1_000_000n,
+        );
+
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(sendParam.destinationDomain).toBe(5);
+        expect(sendParam.mintRecipient).toBe(solanaRecipientAta);
+        expect(sendParam.hookData).toBe(cctpForwardHookData);
+    });
+
+    test("quoteSend requests Solana ATA setup in fees and hook data", async () => {
+        const fetchSpy = vi.mocked(globalThis.fetch);
+        vi.spyOn(
+            solanaChain,
+            "getSolanaAssociatedTokenAddress",
+        ).mockResolvedValue(solanaRecipientAtaAddress);
+        const contract = await driver.getQuotedContract(solanaDestinationRoute);
+        const quote = await driver.quoteSend(
+            contract,
+            solanaDestinationRoute,
+            solanaRecipient,
+            1_000_000n,
+            { cctpIncludeRecipientSetup: true },
+        );
+
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(sendParam.mintRecipient).toBe(solanaRecipientAta);
+        expect(sendParam.hookData).toBe(solanaRecipientSetupHookData);
+        expect(fetchSpy).toHaveBeenCalledWith(
+            "https://iris-api.circle.com/v2/burn/USDC/fees/3/5?forward=true&includeRecipientSetup=true",
+            expect.any(Object),
+        );
     });
 
     test("quoteSend honors a standard transfer override", async () => {
