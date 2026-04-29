@@ -1,12 +1,23 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 
 import WaitForBridge from "../../src/components/WaitForBridge";
+import type * as ConfigModule from "../../src/config";
 import { BridgeKind } from "../../src/configs/base";
+import type * as MainnetConfigModule from "../../src/configs/mainnet";
 import { SwapPosition } from "../../src/consts/Enums";
 import { waitForOftTransactionConfirmationTimestamp } from "../../src/utils/oft/oft";
 
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+    const { config: mainnetConfig } = await vi.importActual<
+        typeof MainnetConfigModule
+    >("../../src/configs/mainnet");
+    return { ...actual, config: mainnetConfig };
+});
+
 const mockTranslations = vi.hoisted(() => ({
-    waiting_for_oft: "Waiting for OFT",
+    waiting_for_bridge: "Waiting for {{ symbol }} bridge",
     oft_eta: "Estimated arrival in about {{ time }}",
     oft_eta_day_unit: "{{ value }}d",
     oft_eta_hour_unit: "{{ value }}h",
@@ -68,6 +79,10 @@ describe("WaitForBridge", () => {
                 transactionHash="tx-hash"
             />
         ));
+
+        expect(
+            screen.getByRole("heading", { name: "Waiting for USDT bridge" }),
+        ).toBeInTheDocument();
 
         await waitFor(() =>
             expect(
