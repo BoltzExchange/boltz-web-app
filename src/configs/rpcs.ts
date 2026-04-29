@@ -45,7 +45,11 @@ export const cornRpcUrls = prependEnv(import.meta.env.VITE_CORN_RPC_ENDPOINT, [
 
 export const ethereumRpcUrls = prependEnv(
     import.meta.env.VITE_ETHEREUM_RPC_ENDPOINT,
-    ["https://ethereum-rpc.publicnode.com"],
+    [
+        "https://ethereum-rpc.publicnode.com",
+        "https://mainnet.gateway.tenderly.co",
+        "https://eth.api.pocket.network",
+    ],
 );
 
 export const flareRpcUrls = prependEnv(
