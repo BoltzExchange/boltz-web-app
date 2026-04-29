@@ -115,7 +115,7 @@ describe("BlockExplorer", () => {
         );
 
         expect((button as HTMLAnchorElement).href).toEqual(
-            `${config.cctpExplorerUrl}/transactions?s=${txId}`,
+            `${config.cctpExplorerUrl}/messages?transactionHash=${txId}`,
         );
     });
 

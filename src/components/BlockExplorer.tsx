@@ -63,8 +63,8 @@ const blockExplorerLink = (
 ) => {
     const basePath = getExplorerBaseUrl(asset, explorer);
     if (isTxId && explorer === ExplorerKind.Cctp) {
-        return `${basePath}/transactions?${new URLSearchParams({
-            s: val,
+        return `${basePath}/messages?${new URLSearchParams({
+            transactionHash: val,
         }).toString()}`;
     }
 
