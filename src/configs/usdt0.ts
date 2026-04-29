@@ -124,6 +124,32 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     return asset;
 };
 
+export const usdt0EnvByAsset = {
+    "USDT0-BERA": import.meta.env.VITE_USDT0_BERA_OFT_ETA_SECONDS,
+    "USDT0-CFX": import.meta.env.VITE_USDT0_CFX_OFT_ETA_SECONDS,
+    "USDT0-CORN": import.meta.env.VITE_USDT0_CORN_OFT_ETA_SECONDS,
+    "USDT0-ETH": import.meta.env.VITE_USDT0_ETH_OFT_ETA_SECONDS,
+    "USDT0-FLR": import.meta.env.VITE_USDT0_FLR_OFT_ETA_SECONDS,
+    "USDT0-HBAR": import.meta.env.VITE_USDT0_HBAR_OFT_ETA_SECONDS,
+    "USDT0-HYPE": import.meta.env.VITE_USDT0_HYPE_OFT_ETA_SECONDS,
+    "USDT0-INK": import.meta.env.VITE_USDT0_INK_OFT_ETA_SECONDS,
+    "USDT0-MEGAETH": import.meta.env.VITE_USDT0_MEGAETH_OFT_ETA_SECONDS,
+    "USDT0-MNT": import.meta.env.VITE_USDT0_MNT_OFT_ETA_SECONDS,
+    "USDT0-MON": import.meta.env.VITE_USDT0_MON_OFT_ETA_SECONDS,
+    "USDT0-MORPH": import.meta.env.VITE_USDT0_MORPH_OFT_ETA_SECONDS,
+    "USDT0-OP": import.meta.env.VITE_USDT0_OP_OFT_ETA_SECONDS,
+    "USDT0-PLASMA": import.meta.env.VITE_USDT0_PLASMA_OFT_ETA_SECONDS,
+    "USDT0-POL": import.meta.env.VITE_USDT0_POL_OFT_ETA_SECONDS,
+    "USDT0-RBTC": import.meta.env.VITE_USDT0_RBTC_OFT_ETA_SECONDS,
+    "USDT0-SEI": import.meta.env.VITE_USDT0_SEI_OFT_ETA_SECONDS,
+    "USDT0-SOL": import.meta.env.VITE_USDT0_SOL_OFT_ETA_SECONDS,
+    "USDT0-STABLE": import.meta.env.VITE_USDT0_STABLE_OFT_ETA_SECONDS,
+    "USDT0-TEMPO": import.meta.env.VITE_USDT0_TEMPO_OFT_ETA_SECONDS,
+    "USDT0-TRON": import.meta.env.VITE_USDT0_TRON_OFT_ETA_SECONDS,
+    "USDT0-UNI": import.meta.env.VITE_USDT0_UNI_OFT_ETA_SECONDS,
+    "USDT0-XLAYER": import.meta.env.VITE_USDT0_XLAYER_OFT_ETA_SECONDS,
+};
+
 export const usdt0Variants = [
     {
         asset: "USDT0-ETH",
