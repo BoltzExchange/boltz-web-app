@@ -38,7 +38,14 @@ export class TestBridgeDriver extends BridgeDriver {
     public getProvider = notImplemented("getProvider");
     public getSentEvent = notImplemented("getSentEvent");
     public getReceivedEventByGuid = notImplemented("getReceivedEventByGuid");
-    public getGuidFromSolanaLogs = () => undefined;
+    public deriveSolanaSentGuid = (args: {
+        sourceAsset: string;
+        txHash: string;
+        logMessages: string[];
+    }) => {
+        void args;
+        return undefined;
+    };
     public getBufferedNativeFee = (nativeFee: bigint) => nativeFee;
     public getSourceTokenBalance = notImplemented("getSourceTokenBalance");
     public getSourceNativeBalance = notImplemented("getSourceNativeBalance");
@@ -54,6 +61,7 @@ export class TestBridgeDriver extends BridgeDriver {
         "getDirectRequiredNativeBalance",
     );
     public sendDirect = notImplemented("sendDirect");
+    public sendTransport = notImplemented("sendTransport");
     public encodeRouterExecuteData = notImplemented("encodeRouterExecuteData");
     public populateRouterClaimBridgeTransaction = notImplemented(
         "populateRouterClaimBridgeTransaction",

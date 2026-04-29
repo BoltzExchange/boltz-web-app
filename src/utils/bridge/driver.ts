@@ -204,9 +204,11 @@ export abstract class BridgeDriver {
         guid: string,
     ) => Promise<BridgeReceivedEvent | undefined>;
 
-    public abstract getGuidFromSolanaLogs: (
-        logMessages: string[],
-    ) => string | undefined;
+    public abstract deriveSolanaSentGuid: (args: {
+        sourceAsset: string;
+        txHash: string;
+        logMessages: string[];
+    }) => string | undefined;
 
     public abstract getBufferedNativeFee: (nativeFee: bigint) => bigint;
 
@@ -248,6 +250,13 @@ export abstract class BridgeDriver {
     public abstract sendDirect: (args: {
         target: BridgeDirectSendTarget;
         runner: BridgeDirectSendRunner;
+        sendParam: BridgeSendParam;
+        msgFee: BridgeMsgFee;
+        refundAddress: string;
+    }) => Promise<BridgeTransaction>;
+
+    public abstract sendTransport: (args: {
+        contract: BridgeTransportClient;
         sendParam: BridgeSendParam;
         msgFee: BridgeMsgFee;
         refundAddress: string;

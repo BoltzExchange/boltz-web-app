@@ -19,6 +19,7 @@ export default [
             "vite.config.mjs",
             "src/utils/dnssec/dnssec_prover*",
             "src/generated/solana-oft/src/generated/**",
+            "src/generated/solana-cctp-token-messenger-minter/src/generated/**",
             "playwright-report",
         ],
     },
@@ -71,6 +72,8 @@ export default [
                                 "@solana/kit",
                                 "**/generated/solana-oft/src/generated",
                                 "**/generated/solana-oft/src/generated/**",
+                                "**/generated/solana-cctp-token-messenger-minter/src/generated",
+                                "**/generated/solana-cctp-token-messenger-minter/src/generated/**",
                             ],
                             allowTypeImports: true,
                         },
@@ -107,6 +110,8 @@ export default [
         files: ["tests/**/*.ts", "e2e/**/*.ts"],
         rules: {
             "no-console": "off",
+            "no-restricted-imports": "off",
+            "@typescript-eslint/no-restricted-imports": "off",
         },
     },
 ];

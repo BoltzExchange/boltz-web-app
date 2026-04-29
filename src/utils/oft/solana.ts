@@ -2,7 +2,6 @@ import type { Umi } from "@metaplex-foundation/umi";
 import type { WalletAdapter as UmiWalletAdapter } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
-import type { AccountRole, ReadonlyUint8Array } from "@solana/kit";
 import type {
     AccountMeta,
     Connection,
@@ -22,6 +21,9 @@ import {
     getSolanaConnection,
 } from "../chains/solana";
 import { formatError } from "../errors";
+import { toLegacyInstruction } from "../solana/instruction";
+import { formatSolanaLogsMessage } from "../solana/logs";
+import { derivePda } from "../solana/pda";
 import type { MsgFee, OftTransportClient, SendParam } from "./types";
 
 type SolanaOftModules = Awaited<ReturnType<(typeof lazySolanaOft)["get"]>>;
@@ -108,29 +110,6 @@ const getSendParamArgs = (
     composeMsg: sendParam[5] === "0x" ? null : hexToBytes(sendParam[5]),
 });
 
-type SolanaKitInstruction = {
-    programAddress: string;
-    accounts: ReadonlyArray<{
-        address: string;
-        role: AccountRole;
-    }>;
-    data: ReadonlyUint8Array;
-};
-
-const toLegacyInstruction = (
-    modules: SolanaOftModules,
-    instruction: SolanaKitInstruction,
-): TransactionInstruction =>
-    new modules.web3.TransactionInstruction({
-        programId: new modules.web3.PublicKey(instruction.programAddress),
-        keys: instruction.accounts.map((account) => ({
-            pubkey: new modules.web3.PublicKey(account.address),
-            isSigner: modules.solanaKit.isSignerRole(account.role),
-            isWritable: modules.solanaKit.isWritableRole(account.role),
-        })),
-        data: Buffer.from(instruction.data),
-    });
-
 const appendRemainingAccounts = (
     modules: SolanaOftModules,
     instruction: TransactionInstruction,
@@ -146,16 +125,6 @@ const appendRemainingAccounts = (
         data: instruction.data,
     });
 };
-
-const derivePda = (
-    modules: SolanaOftModules,
-    programId: string,
-    ...seeds: Uint8Array[]
-): string =>
-    modules.web3.PublicKey.findProgramAddressSync(
-        seeds.map((seed) => Buffer.from(seed)),
-        new modules.web3.PublicKey(programId),
-    )[0].toBase58();
 
 const derivePeerAddress = (
     modules: SolanaOftModules,
@@ -486,11 +455,6 @@ const getRemainingAccounts = async (
         },
     );
 };
-
-const formatSolanaLogsMessage = (logs: string[] | undefined | null): string =>
-    logs === undefined || logs === null || logs.length === 0
-        ? ""
-        : `\nLogs:\n${logs.join("\n")}`;
 
 const createTransaction = async (
     context: Context,

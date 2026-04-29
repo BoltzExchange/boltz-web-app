@@ -42,6 +42,10 @@ describe("CctpBridgeDriver", () => {
         sourceAsset: "USDC",
         destinationAsset: "USDC-SOL",
     };
+    const solanaSourceRoute = {
+        sourceAsset: "USDC-SOL",
+        destinationAsset: "USDC",
+    };
     const solanaRecipient = "EwwMqF8sFZRBGLchFfq61g5U7mPB14EnXxLQDWb5VAe5";
     const solanaRecipientAtaAddress =
         "GCdpTuRBNAj27vo1i6oeummWWc6EwbMS7LLHa2ths6RN";
@@ -230,6 +234,34 @@ describe("CctpBridgeDriver", () => {
         const sendParam = quote.sendParam as CctpSendParam;
         expect(sendParam.destinationDomain).toBe(3);
         expect(sendParam.hookData).toBe(cctpEmptyHookData);
+        expect(quote.minAmount).toBe(999_870n);
+    });
+
+    test("quoteSend supports Solana source burns to canonical USDC", async () => {
+        vi.spyOn(
+            solanaChain,
+            "getSolanaRentExemptMinimumBalance",
+        ).mockResolvedValue(2_039_280n);
+        const recipient = "0x1234567890123456789012345678901234567890";
+        const contract = await driver.getQuotedContract(solanaSourceRoute);
+        const quote = await driver.quoteSend(
+            contract,
+            solanaSourceRoute,
+            recipient,
+            1_000_000n,
+        );
+
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(sendParam).toEqual({
+            amount: 1_000_000n,
+            destinationDomain: 3,
+            mintRecipient: addressToBytes32(recipient),
+            destinationCaller: cctpZeroBytes32,
+            maxFee: 131n,
+            minFinalityThreshold: cctpFastFinalityThreshold,
+            hookData: cctpEmptyHookData,
+        });
+        expect(quote.msgFee).toEqual([2_039_280n, 0n]);
         expect(quote.minAmount).toBe(999_870n);
     });
 
@@ -768,6 +800,16 @@ describe("CctpBridgeDriver", () => {
         expect(event.amountSentLD).toBe(1_000_000n);
         expect(event.amountReceivedLD).toBe(1_000_000n);
         expect(event.logIndex).toBe(5);
+    });
+
+    test("deriveSolanaSentGuid packs Solana CCTP guid from source tx hash", () => {
+        expect(
+            driver.deriveSolanaSentGuid({
+                sourceAsset: "USDC-SOL",
+                txHash: "solana-signature",
+                logMessages: [],
+            }),
+        ).toBe(encodeCctpGuid(5, "solana-signature"));
     });
 
     test("getSentEvent throws when no MessageSent log is present", () => {

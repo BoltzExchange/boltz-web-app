@@ -9,7 +9,7 @@ ts-out/
 coverage/
 node_modules/
 src/generated/*
-!src/generated/idl.json
+!src/generated/*-idl.json
 !src/generated/README.md
 src/config.ts
 /test-results/
