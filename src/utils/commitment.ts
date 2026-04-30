@@ -2,8 +2,10 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { Wallet } from "ethers";
 import log from "loglevel";
 
+import { SwapType } from "../consts/Enums";
 import type { Signer } from "../context/Web3";
 import {
+    getEipRefundSignature,
     postCommitmentRefundSignature,
     postCommitmentSignature,
 } from "./boltzClient";
@@ -208,5 +210,68 @@ export const getCommitmentRefundSignature = async ({
         logIndex,
     });
 
+    return signature;
+};
+
+type GetEvmRefundCooperativeSignatureParams = {
+    isCommitmentLockup: boolean;
+    asset: string;
+    swapId?: string;
+    swapType?: SwapType;
+    commitmentTxHash?: string;
+    logIndex?: number;
+    signer: Signer | Wallet;
+};
+
+export const getEvmRefundCooperativeSignature = async ({
+    isCommitmentLockup,
+    asset,
+    swapId,
+    swapType,
+    commitmentTxHash,
+    logIndex,
+    signer,
+}: GetEvmRefundCooperativeSignatureParams): Promise<string> => {
+    const fetchUnlinked = () => {
+        if (commitmentTxHash === undefined) {
+            throw new Error("commitment lockup transaction hash is required");
+        }
+        return getCommitmentRefundSignature({
+            chainSymbol: asset,
+            transactionHash: commitmentTxHash,
+            logIndex,
+            signer,
+        });
+    };
+
+    if (isCommitmentLockup) {
+        // Try the swap refund path first: a commitment funded with positive
+        // slippage links to the swap, and /commitment/refund then errors with
+        // "linked commitment cannot be marked as refunded".
+        if (swapId !== undefined) {
+            try {
+                const { signature } = await getEipRefundSignature(
+                    swapId,
+                    swapType ?? SwapType.Submarine,
+                );
+                return signature;
+            } catch (linkedRefundError) {
+                log.warn(
+                    "linked commitment refund signature failed, falling back to unlinked endpoint",
+                    linkedRefundError,
+                );
+                return await fetchUnlinked();
+            }
+        }
+        return await fetchUnlinked();
+    }
+
+    if (swapId === undefined) {
+        throw new Error("swap id is required for cooperative refunds");
+    }
+    const { signature } = await getEipRefundSignature(
+        swapId,
+        swapType ?? SwapType.Submarine,
+    );
     return signature;
 };

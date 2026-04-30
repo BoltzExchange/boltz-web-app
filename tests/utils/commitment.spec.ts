@@ -1,17 +1,21 @@
 const mockPostCommitmentSignature = vi.fn();
 const mockPostCommitmentRefundSignature = vi.fn();
+const mockGetEipRefundSignature = vi.fn();
 
 vi.mock("../../src/utils/boltzClient", () => ({
     postCommitmentSignature: mockPostCommitmentSignature,
     postCommitmentRefundSignature: mockPostCommitmentRefundSignature,
+    getEipRefundSignature: mockGetEipRefundSignature,
 }));
 
+const { SwapType } = await import("../../src/consts/Enums");
 const {
     emptyPreimageHash,
     isEmptyPreimageHash,
     postCommitmentSignatureForTransaction,
     buildCommitmentRefundAuthMessage,
     getCommitmentRefundSignature,
+    getEvmRefundCooperativeSignature,
 } = await import("../../src/utils/commitment");
 
 describe("commitment", () => {
@@ -205,6 +209,159 @@ describe("commitment", () => {
                 "0xcommitment",
                 "0xauthSig",
                 undefined,
+            );
+        });
+    });
+
+    describe("getEvmRefundCooperativeSignature", () => {
+        const buildSigner = () => ({
+            signMessage: vi.fn().mockResolvedValue("0xauthSig"),
+        });
+
+        test("non-commitment lockup uses the swap refund endpoint", async () => {
+            mockGetEipRefundSignature.mockResolvedValue({
+                signature: "0xswapSig",
+            });
+
+            const signature = await getEvmRefundCooperativeSignature({
+                isCommitmentLockup: false,
+                asset: "RBTC",
+                swapId: "swap-1",
+                swapType: SwapType.Submarine,
+                commitmentTxHash: undefined,
+                signer: buildSigner() as never,
+            });
+
+            expect(signature).toEqual("0xswapSig");
+            expect(mockGetEipRefundSignature).toHaveBeenCalledWith(
+                "swap-1",
+                SwapType.Submarine,
+            );
+            expect(mockPostCommitmentRefundSignature).not.toHaveBeenCalled();
+        });
+
+        test("non-commitment lockup without swapId throws", async () => {
+            await expect(
+                getEvmRefundCooperativeSignature({
+                    isCommitmentLockup: false,
+                    asset: "RBTC",
+                    swapId: undefined,
+                    signer: buildSigner() as never,
+                }),
+            ).rejects.toThrow("swap id is required for cooperative refunds");
+            expect(mockGetEipRefundSignature).not.toHaveBeenCalled();
+        });
+
+        test("commitment lockup with swapId tries the swap refund endpoint first", async () => {
+            mockGetEipRefundSignature.mockResolvedValue({
+                signature: "0xlinkedSig",
+            });
+
+            const signer = buildSigner();
+            const signature = await getEvmRefundCooperativeSignature({
+                isCommitmentLockup: true,
+                asset: "USDC",
+                swapId: "swap-2",
+                swapType: SwapType.Chain,
+                commitmentTxHash: "0xcommitmentTx",
+                logIndex: 1,
+                signer: signer as never,
+            });
+
+            expect(signature).toEqual("0xlinkedSig");
+            expect(mockGetEipRefundSignature).toHaveBeenCalledWith(
+                "swap-2",
+                SwapType.Chain,
+            );
+            // Linked path succeeded so the unlinked endpoint must not be hit.
+            expect(mockPostCommitmentRefundSignature).not.toHaveBeenCalled();
+            expect(signer.signMessage).not.toHaveBeenCalled();
+        });
+
+        test("commitment lockup falls back to the unlinked endpoint when the swap refund fails", async () => {
+            mockGetEipRefundSignature.mockRejectedValue(
+                new Error("not eligible for cooperative refund"),
+            );
+            mockPostCommitmentRefundSignature.mockResolvedValue({
+                signature: "0xunlinkedSig",
+            });
+            const signer = buildSigner();
+
+            const signature = await getEvmRefundCooperativeSignature({
+                isCommitmentLockup: true,
+                asset: "USDC",
+                swapId: "swap-3",
+                swapType: SwapType.Chain,
+                commitmentTxHash: "0xcommitmentTx",
+                logIndex: 2,
+                signer: signer as never,
+            });
+
+            expect(signature).toEqual("0xunlinkedSig");
+            expect(mockGetEipRefundSignature).toHaveBeenCalledWith(
+                "swap-3",
+                SwapType.Chain,
+            );
+            expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
+                "USDC",
+                "0xcommitmentTx",
+                "0xauthSig",
+                2,
+            );
+        });
+
+        test("commitment lockup without swapId calls the unlinked endpoint directly", async () => {
+            mockPostCommitmentRefundSignature.mockResolvedValue({
+                signature: "0xrescueSig",
+            });
+            const signer = buildSigner();
+
+            const signature = await getEvmRefundCooperativeSignature({
+                isCommitmentLockup: true,
+                asset: "USDC",
+                swapId: undefined,
+                commitmentTxHash: "0xcommitmentTx",
+                logIndex: undefined,
+                signer: signer as never,
+            });
+
+            expect(signature).toEqual("0xrescueSig");
+            expect(mockGetEipRefundSignature).not.toHaveBeenCalled();
+            expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
+                "USDC",
+                "0xcommitmentTx",
+                "0xauthSig",
+                undefined,
+            );
+        });
+
+        test("commitment lockup without commitmentTxHash throws", async () => {
+            await expect(
+                getEvmRefundCooperativeSignature({
+                    isCommitmentLockup: true,
+                    asset: "USDC",
+                    swapId: undefined,
+                    commitmentTxHash: undefined,
+                    signer: buildSigner() as never,
+                }),
+            ).rejects.toThrow("commitment lockup transaction hash is required");
+        });
+
+        test("defaults swapType to Submarine when omitted", async () => {
+            mockGetEipRefundSignature.mockResolvedValue({
+                signature: "0xdefaultSig",
+            });
+
+            await getEvmRefundCooperativeSignature({
+                isCommitmentLockup: false,
+                asset: "RBTC",
+                swapId: "swap-4",
+                signer: buildSigner() as never,
+            });
+
+            expect(mockGetEipRefundSignature).toHaveBeenCalledWith(
+                "swap-4",
+                SwapType.Submarine,
             );
         });
     });
