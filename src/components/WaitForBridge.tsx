@@ -142,6 +142,7 @@ const WaitForBridge = (props: {
                     symbol: getAssetDisplaySymbol(props.bridge.sourceAsset),
                 })}
             </h2>
+            <h3>{t("tx_in_mempool_warning")}</h3>
             <LoadingSpinner />
             <Show when={props.bridge.kind === BridgeKind.Oft}>
                 <OftCountdown
