@@ -1,7 +1,8 @@
 import log from "loglevel";
-import { Match, Switch, createEffect, createSignal, onCleanup } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import { BridgeKind } from "../configs/base";
+import { getAssetDisplaySymbol } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { formatError } from "../utils/errors";
 import { waitForOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
@@ -9,7 +10,7 @@ import { computeOftEtaSeconds } from "../utils/oftEta";
 import type { BridgeDetail } from "../utils/swapCreator";
 import LoadingSpinner from "./LoadingSpinner";
 
-const WaitForOft = (props: {
+const OftCountdown = (props: {
     sourceAsset: string;
     destinationAsset: string;
     txHash: string;
@@ -125,40 +126,31 @@ const WaitForOft = (props: {
         return t("oft_eta", { time: formatEta(secs) });
     };
 
-    return (
-        <>
-            <h2>{t("waiting_for_oft")}</h2>
-            <LoadingSpinner />
-            <p>{countdownLabel()}</p>
-        </>
-    );
-};
-
-const WaitForGenericBridge = () => {
-    const { t } = useGlobalContext();
-
-    return (
-        <>
-            <h2>{t("waiting_for_bridge")}</h2>
-            <LoadingSpinner />
-        </>
-    );
+    return <p>{countdownLabel()}</p>;
 };
 
 const WaitForBridge = (props: {
     bridge: BridgeDetail;
     transactionHash: string;
 }) => {
+    const { t } = useGlobalContext();
+
     return (
-        <Switch fallback={<WaitForGenericBridge />}>
-            <Match when={props.bridge.kind === BridgeKind.Oft}>
-                <WaitForOft
+        <>
+            <h2>
+                {t("waiting_for_bridge", {
+                    symbol: getAssetDisplaySymbol(props.bridge.sourceAsset),
+                })}
+            </h2>
+            <LoadingSpinner />
+            <Show when={props.bridge.kind === BridgeKind.Oft}>
+                <OftCountdown
                     sourceAsset={props.bridge.sourceAsset}
                     destinationAsset={props.bridge.destinationAsset}
                     txHash={props.transactionHash}
                 />
-            </Match>
-        </Switch>
+            </Show>
+        </>
     );
 };
 

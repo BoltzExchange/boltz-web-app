@@ -212,7 +212,6 @@ const dict = {
         error_no_quote:
             "A quote could not be obtained. Please check your connection and try again.",
         error_zero_quote: "Increase send amount",
-        waiting_for_oft: "Waiting for OFT",
         oft_eta: "Estimated arrival in about {{ time }}",
         oft_eta_day_unit: "{{ value }}d",
         oft_eta_hour_unit: "{{ value }}h",
@@ -220,7 +219,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Arriving soon...",
         oft_transfer_in_progress: "Transfer in progress",
-        waiting_for_bridge: "Waiting for bridge",
+        waiting_for_bridge: "Waiting for {{ symbol }} bridge",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -716,7 +715,6 @@ const dict = {
         error_no_quote:
             "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
         error_zero_quote: "Sendebetrag erhöhen",
-        waiting_for_oft: "Warte auf OFT",
         oft_eta: "Voraussichtliche Ankunft in etwa {{ time }}",
         oft_eta_day_unit: "{{ value }}T",
         oft_eta_hour_unit: "{{ value }}Std",
@@ -724,7 +722,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Gleich da...",
         oft_transfer_in_progress: "Übertragung läuft",
-        waiting_for_bridge: "Warte auf Bridge",
+        waiting_for_bridge: "Warte auf {{ symbol }}-Bridge",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1229,7 +1227,6 @@ const dict = {
         error_no_quote:
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
         error_zero_quote: "Aumenta la cantidad a enviar",
-        waiting_for_oft: "Esperando OFT",
         oft_eta: "Llegada estimada en aproximadamente {{ time }}",
         oft_eta_day_unit: "{{ value }}d",
         oft_eta_hour_unit: "{{ value }}h",
@@ -1237,7 +1234,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Llegando pronto...",
         oft_transfer_in_progress: "Transferencia en curso",
-        waiting_for_bridge: "Esperando el puente",
+        waiting_for_bridge: "Esperando el puente {{ symbol }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1736,7 +1733,6 @@ const dict = {
         error_no_quote:
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
         error_zero_quote: "Aumente o valor a enviar",
-        waiting_for_oft: "Aguardando OFT",
         oft_eta: "Chegada estimada em cerca de {{ time }}",
         oft_eta_day_unit: "{{ value }}d",
         oft_eta_hour_unit: "{{ value }}h",
@@ -1744,7 +1740,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}s",
         oft_arriving_soon: "Chegando em breve...",
         oft_transfer_in_progress: "Transferência em andamento",
-        waiting_for_bridge: "Aguardando a ponte",
+        waiting_for_bridge: "Aguardando a ponte {{ symbol }}",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -2218,7 +2214,6 @@ const dict = {
         retry: "重试",
         error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
         error_zero_quote: "提高发送金额",
-        waiting_for_oft: "等待 OFT",
         oft_eta: "预计约{{ time }}后到达",
         oft_eta_day_unit: "{{ value }}天",
         oft_eta_hour_unit: "{{ value }}小时",
@@ -2226,7 +2221,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}秒",
         oft_arriving_soon: "即将到达...",
         oft_transfer_in_progress: "转账进行中",
-        waiting_for_bridge: "等待桥接",
+        waiting_for_bridge: "等待 {{ symbol }} 桥接",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
@@ -2697,7 +2692,6 @@ const dict = {
         error_no_quote:
             "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
         error_zero_quote: "送信額を増やす",
-        waiting_for_oft: "OFTを待機中",
         oft_eta: "到着予定 約{{ time }}",
         oft_eta_day_unit: "{{ value }}日",
         oft_eta_hour_unit: "{{ value }}時間",
@@ -2705,7 +2699,7 @@ const dict = {
         oft_eta_second_unit: "{{ value }}秒",
         oft_arriving_soon: "まもなく到着...",
         oft_transfer_in_progress: "転送中",
-        waiting_for_bridge: "ブリッジを待機中",
+        waiting_for_bridge: "{{ symbol }}ブリッジを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
