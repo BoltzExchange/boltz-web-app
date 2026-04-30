@@ -39,7 +39,6 @@ import {
 } from "../context/Web3";
 import {
     encodeDexQuote,
-    getEipRefundSignature,
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
@@ -49,7 +48,7 @@ import {
     calculateAmountWithSlippage,
 } from "../utils/calculate";
 import {
-    getCommitmentRefundSignature,
+    getEvmRefundCooperativeSignature,
     isEmptyPreimageHash,
 } from "../utils/commitment";
 import { validateAddress } from "../utils/compat";
@@ -655,37 +654,18 @@ export const RefundEvm = (props: {
                                 currentRefundData.preimageHash,
                             );
 
-                            let signatureHex: string;
-                            if (isCommitmentLockup) {
-                                const commitmentTxHash =
-                                    props.lockupTxHash ??
-                                    props.commitmentLockupTxHash;
-                                if (commitmentTxHash === undefined) {
-                                    throw new Error(
-                                        "commitment lockup transaction hash is required",
-                                    );
-                                }
-                                signatureHex =
-                                    await getCommitmentRefundSignature({
-                                        chainSymbol: props.asset,
-                                        transactionHash: commitmentTxHash,
-                                        logIndex: currentRefundData.logIndex,
-                                        signer: currentTransactionSigner,
-                                    });
-                            } else {
-                                if (props.swapId === undefined) {
-                                    throw new Error(
-                                        "swap id is required for cooperative refunds",
-                                    );
-                                }
-
-                                const { signature } =
-                                    await getEipRefundSignature(
-                                        props.swapId,
-                                        props.swapType ?? SwapType.Submarine,
-                                    );
-                                signatureHex = signature;
-                            }
+                            const signatureHex =
+                                await getEvmRefundCooperativeSignature({
+                                    isCommitmentLockup,
+                                    asset: props.asset,
+                                    swapId: props.swapId,
+                                    swapType: props.swapType,
+                                    commitmentTxHash:
+                                        props.lockupTxHash ??
+                                        props.commitmentLockupTxHash,
+                                    logIndex: currentRefundData.logIndex,
+                                    signer: currentTransactionSigner,
+                                });
                             const decSignature = Signature.from(signatureHex);
 
                             if (currentContractKind === AssetKind.ERC20) {
