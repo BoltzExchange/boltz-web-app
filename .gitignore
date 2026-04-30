@@ -2,7 +2,7 @@ tags
 .idea/
 .vscode/
 
-.env
+.env.local
 *.log
 dist/
 ts-out/
