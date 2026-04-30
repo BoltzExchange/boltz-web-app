@@ -8,6 +8,7 @@ import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import rbtc from "../assets/rootstock-icon.svg";
 import tbtc from "../assets/tbtc-icon.svg";
+import usdc from "../assets/usdc.svg";
 import usdt from "../assets/usdt-icon.svg";
 import ExternalLink from "../components/ExternalLink";
 import { config } from "../config";
@@ -107,8 +108,10 @@ export const Hero = () => {
                                 class="padded"
                             />
                             <img src={rbtc} alt="Rootstock Bitcoin" />
+                            <div class="hero-icons-break" />
                             <img src={tbtc} alt="tBTC" class="full-bleed" />
                             <img src={usdt} alt="USDT" class="full-bleed" />
+                            <img src={usdc} alt="USDC" class="full-bleed" />
                         </div>
                     </div>
                 </div>

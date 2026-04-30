@@ -80,10 +80,17 @@ const Privacy: Component = () => {
                 <li>
                     Third-party liquidity protocols and token issuers: Swaps may
                     interact with third-party smart contracts, liquidity
-                    protocols, or cross-chain messaging protocols (e.g.
-                    LayerZero). The respective protocol operators or token
-                    issuers may collect data independently. Boltz has no control
-                    over these third parties' data practices.
+                    protocols, or cross-chain messaging protocols (e.g.{" "}
+                    <ExternalLink href="https://layerzero.network/">
+                        LayerZero
+                    </ExternalLink>
+                    ,{" "}
+                    <ExternalLink href="https://www.circle.com/cross-chain-transfer-protocol">
+                        CCTP
+                    </ExternalLink>
+                    ). The respective protocol operators or token issuers may
+                    collect data independently. Boltz has no control over these
+                    third parties' data practices.
                 </li>
             </ul>
 
