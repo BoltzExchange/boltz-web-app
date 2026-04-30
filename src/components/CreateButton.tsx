@@ -288,6 +288,8 @@ const CreateButton = () => {
                 denomination,
                 sendAmount,
                 receiveAmount,
+                onchainAddress,
+                invoice,
             ],
             () => {
                 setButtonDisable(false);
@@ -315,13 +317,27 @@ const CreateButton = () => {
                 const isSubmarineSwapInvoiceValid = () =>
                     swapType() === SwapType.Submarine && !invoiceError();
 
+                const hasInvalidDestinationInput = () => {
+                    if (swapType() === SwapType.Submarine) {
+                        return (
+                            Boolean(invoiceError()) ||
+                            (invoice() !== "" &&
+                                !invoiceValid() &&
+                                lnurl() === "" &&
+                                bolt12Offer() === undefined)
+                        );
+                    }
+                    return onchainAddress() !== "" && !addressValid();
+                };
+
                 const shouldShowAmountError = () =>
                     !amountValid() &&
                     // Chain swaps with 0-amount that do not have RBTC as sending asset
                     // can skip this check
                     !isChainSwapWithZeroAmount() &&
                     (isSubmarineSwapInvoiceValid() ||
-                        swapType() !== SwapType.Submarine);
+                        swapType() !== SwapType.Submarine) &&
+                    !(sendAmount().isZero() && hasInvalidDestinationInput());
 
                 if (shouldShowAmountError()) {
                     if (
@@ -332,7 +348,9 @@ const CreateButton = () => {
                         return;
                     }
 
-                    const lessThanMin = Number(sendAmount()) < minimum();
+                    const lessThanMin =
+                        sendAmount().isZero() ||
+                        Number(sendAmount()) < minimum();
                     setButtonLabel({
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",
                         params: {

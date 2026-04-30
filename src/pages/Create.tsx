@@ -508,7 +508,7 @@ const Create = () => {
             return;
         }
 
-        const lessThanMin = amount < minimum();
+        const lessThanMin = amount === 0 || amount < minimum();
 
         if (lessThanMin || amount > maximum()) {
             const params = {
