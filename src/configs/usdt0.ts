@@ -124,7 +124,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     return asset;
 };
 
-export const usdt0EnvByAsset = {
+export const usdt0EnvByAsset: Record<Usdt0VariantAsset, string | undefined> = {
     "USDT0-BERA": import.meta.env.VITE_USDT0_BERA_OFT_ETA_SECONDS,
     "USDT0-CFX": import.meta.env.VITE_USDT0_CFX_OFT_ETA_SECONDS,
     "USDT0-CORN": import.meta.env.VITE_USDT0_CORN_OFT_ETA_SECONDS,

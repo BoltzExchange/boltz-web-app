@@ -78,9 +78,16 @@ if network != "regtest":
     oft_eta_env = {
         key: value for key, value in env.items() if oft_eta_env_var_pattern.match(key)
     }
+    expected_oft_eta_vars = {
+        key
+        for key in read_env_file(".env.sample")
+        if oft_eta_env_var_pattern.match(key)
+    }
 
-    if is_production_deploy and len(oft_eta_env) == 0:
-        errors.append("no VITE_USDT0_*_OFT_ETA_SECONDS values are defined")
+    if is_production_deploy:
+        missing = sorted(expected_oft_eta_vars - oft_eta_env.keys())
+        for var in missing:
+            errors.append(f"{var} is required for production builds")
 
     for var, value in sorted(oft_eta_env.items()):
         try:
