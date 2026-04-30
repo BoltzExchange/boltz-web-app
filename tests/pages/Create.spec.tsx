@@ -781,6 +781,304 @@ describe("Create", () => {
         });
     });
 
+    test.each`
+        fromAsset | toAsset | description
+        ${LN}     | ${BTC}  | ${"reverse swap to BTC"}
+        ${LN}     | ${LBTC} | ${"reverse swap to LBTC"}
+        ${BTC}    | ${LN}   | ${"submarine swap from BTC"}
+        ${LBTC}   | ${LN}   | ${"submarine swap from LBTC"}
+    `(
+        "should show minimum amount error (not address/invoice) on initial page load for $description",
+        async ({ fromAsset, toAsset }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+            globalSignals.setOnline(true);
+            globalSignals.setPairs(pairs);
+            setPairAssets(fromAsset, toAsset);
+
+            await waitFor(() => {
+                expect(signals.minimum()).toBeGreaterThan(0);
+            });
+
+            const createButton = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            await waitFor(() => {
+                expect(createButton.disabled).toEqual(true);
+                expect(createButton.textContent).toMatch(/^Minimum amount is /);
+            });
+        },
+    );
+
+    test("should re-prioritize the minimum amount error after clearing the send amount (reverse swap)", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(LN, BTC);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        const createButton = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+
+        await waitFor(() => {
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: `${pairs.reverse[BTC][BTC].limits.minimal}`,
+            },
+        });
+
+        await waitFor(() => {
+            expect(createButton.textContent).toEqual(
+                i18n.en.invalid_address.replace("{{ asset }}", BTC),
+            );
+        });
+
+        fireEvent.input(sendAmountInput, {
+            target: { value: "" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+    });
+
+    test("should re-prioritize the minimum amount error after clearing the send amount (submarine swap)", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LN);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        const createButton = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+
+        await waitFor(() => {
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: `${signals.minimum()}`,
+            },
+        });
+
+        await waitFor(() => {
+            expect(createButton.textContent).toEqual(i18n.en.invalid_invoice);
+        });
+
+        fireEvent.input(sendAmountInput, {
+            target: { value: "" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+    });
+
+    test("should show invalid address error when amount is empty and an invalid address is entered", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(LN, BTC);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        const createButton = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        const addressInput = (await screen.findByTestId(
+            "onchainAddress",
+        )) as HTMLInputElement;
+
+        await waitFor(() => {
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+
+        fireEvent.input(addressInput, {
+            target: { value: "totally invalid address" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toEqual(
+                i18n.en.invalid_address.replace("{{ asset }}", BTC),
+            );
+        });
+
+        fireEvent.input(addressInput, {
+            target: { value: "" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+    });
+
+    test("should show invalid invoice error when amount is empty and an invalid invoice is entered", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LN);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        const createButton = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        const invoiceInput = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        await waitFor(() => {
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+
+        fireEvent.input(invoiceInput, {
+            target: { value: "totally invalid invoice" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toEqual(i18n.en.invalid_invoice);
+        });
+
+        fireEvent.input(invoiceInput, {
+            target: { value: "" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
+    });
+
+    test("should re-show invalid address error after clearing a previously entered destination address", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(LN, BTC);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        const createButton = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+        const addressInput = (await screen.findByTestId(
+            "onchainAddress",
+        )) as HTMLInputElement;
+
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: `${pairs.reverse[BTC][BTC].limits.minimal}`,
+            },
+        });
+
+        fireEvent.input(addressInput, {
+            target: { value: "totally invalid address" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.textContent).toEqual(
+                i18n.en.invalid_address.replace("{{ asset }}", BTC),
+            );
+        });
+
+        fireEvent.input(addressInput, {
+            target: { value: "" },
+        });
+
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.textContent).toEqual(
+                i18n.en.invalid_address.replace("{{ asset }}", BTC),
+            );
+        });
+    });
+
     test("should allow comma in pasted amounts", async () => {
         render(
             () => (
