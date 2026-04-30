@@ -3,6 +3,73 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.0](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.3..v2.1.0) - 2026-04-30
+
+### Bug Fixes
+
+- asset routes (#1365) - ([8bf2c72](https://github.com/BoltzExchange/boltz-web-app/commit/8bf2c72c6fa8d8082f19d7e4bfbeaefee60faeff))
+- Tron SVG (#1368) - ([7bf4285](https://github.com/BoltzExchange/boltz-web-app/commit/7bf4285be4c5af2456f979dafd46e87ddc080a49))
+- network badge background size (#1369) - ([fe46b5d](https://github.com/BoltzExchange/boltz-web-app/commit/fe46b5dd7f4c8903655e1d3dae67fe8c092c6eec))
+- spammy WalletConnect logs (#1372) - ([d483aa2](https://github.com/BoltzExchange/boltz-web-app/commit/d483aa2c6c26da0d6f5d130e0acf6fb647981e94))
+- allow entering amounts for invalid pairs (#1378) - ([8a87705](https://github.com/BoltzExchange/boltz-web-app/commit/8a87705875c56234ac31dfb144500fccbd9e5aca))
+- normalize Trust Wallet payload (#1367) - ([2f5c68a](https://github.com/BoltzExchange/boltz-web-app/commit/2f5c68ac912615f07bb6635d2fe3083399d95f13))
+- claim tx display for bridged chain swaps (#1381) - ([b2600d6](https://github.com/BoltzExchange/boltz-web-app/commit/b2600d6de7800a667bffc6cd20f654593f982b9b))
+- preserve amounts when pasting address during quote fetch (#1377) - ([d85bbef](https://github.com/BoltzExchange/boltz-web-app/commit/d85bbef4ed9573dce3b78b4e60022db334a47a28))
+- Tron mobile wallet detection (#1388) - ([4a12fb3](https://github.com/BoltzExchange/boltz-web-app/commit/4a12fb38e2309126696040d2583a6656ee2380da))
+- delete button CSS (#1392) - ([4867f6f](https://github.com/BoltzExchange/boltz-web-app/commit/4867f6fbe082ec0d35642415185266dbc9eb7c43))
+- no CCTP forwarding fee for Arbitrum - ([86fd156](https://github.com/BoltzExchange/boltz-web-app/commit/86fd156f675868642fd464205430f61726321013))
+- wait for tx confirmation for oft eta (#1393) - ([fd33232](https://github.com/BoltzExchange/boltz-web-app/commit/fd33232dee7f0a29566c6bb5972314d6f0dc8cb4))
+- Blockstream logo on Firefox (#1398) - ([0956678](https://github.com/BoltzExchange/boltz-web-app/commit/09566789b19c821bf44db6dca064052c8f3156f5))
+- refunding of linked commitments (#1411) - ([7fce8f9](https://github.com/BoltzExchange/boltz-web-app/commit/7fce8f91d8980662486fb57111a8faa5abe89f95))
+- create button error states (#1415) - ([29067c8](https://github.com/BoltzExchange/boltz-web-app/commit/29067c8e628ae88cf720d96e585b0604665ee7b5))
+
+### Documentation
+
+- add llms.txt and expose raw .md on docs urls (#1387) - ([d3fbb56](https://github.com/BoltzExchange/boltz-web-app/commit/d3fbb5636caed7352fc03646816985efc4f7aa2e))
+- use vitepress-plugin-llms (#1391) - ([95819e4](https://github.com/BoltzExchange/boltz-web-app/commit/95819e4888ba6d3cf8ac292c078be1127432e817))
+
+### Features
+
+- make all RPCs configurable via env (#1358) - ([76f5ac9](https://github.com/BoltzExchange/boltz-web-app/commit/76f5ac966f7cdad9a667e51558b236056f98d171))
+- Tron sends (#1354) - ([64b501d](https://github.com/BoltzExchange/boltz-web-app/commit/64b501db2c02296b7d508f77b32d06745ab1c5dd))
+- separate swap button errors (#1376) - ([eeb0e3f](https://github.com/BoltzExchange/boltz-web-app/commit/eeb0e3fe978e1277453d6e40d59dc94cd25498bd))
+- implement CCTP bridge - ([0037e46](https://github.com/BoltzExchange/boltz-web-app/commit/0037e46b641c0a698f5141f40e88331ce68871e7))
+- CCTP explorer - ([3b225c7](https://github.com/BoltzExchange/boltz-web-app/commit/3b225c71810b5951fd4ee1694fcfc14252f4c895))
+- recover from out-of-bound amount errors (#1396) - ([aa7fc97](https://github.com/BoltzExchange/boltz-web-app/commit/aa7fc978ca509db562bf9340a06aedf5f5ec071f))
+- CCTP sends to Solana (#1397) - ([408569e](https://github.com/BoltzExchange/boltz-web-app/commit/408569ec607aa32a7c0ffb9205871de6d85f251c))
+- CCTP receives on Solana - ([72f3910](https://github.com/BoltzExchange/boltz-web-app/commit/72f3910c6275fbb5b561cd5cac7f014129bad74b))
+- normalize to "waiting for {asset} bridge" (#1404) - ([b6d0c5e](https://github.com/BoltzExchange/boltz-web-app/commit/b6d0c5e1e2a3c77382334fc916c01e92caa52b52))
+- make sendable USDT0 variants configurable (#1406) - ([c454fe5](https://github.com/BoltzExchange/boltz-web-app/commit/c454fe5ce38458df74ad1ff76d3b510297857b14))
+- make OFT ETA configurable via env (#1405) - ([18478f6](https://github.com/BoltzExchange/boltz-web-app/commit/18478f60f8a78e833f1d0c453e1ea35628532b35))
+- show warning on OFT/CCTP transfer ETA page (#1414) - ([2959deb](https://github.com/BoltzExchange/boltz-web-app/commit/2959deb3483302dd832ede7597f635c2a1665478))
+
+### Miscellaneous Chores
+
+- install git in Dockerfiles (#1364) - ([55b3742](https://github.com/BoltzExchange/boltz-web-app/commit/55b37429b12a61d87ef352bdf2b4f07f9247700a))
+- add second RPC for Unichain - ([ea26044](https://github.com/BoltzExchange/boltz-web-app/commit/ea2604442ace22a6426fcf3b485b7a9d9f3a2886))
+- set Tron decimals to 6 - ([92545bc](https://github.com/BoltzExchange/boltz-web-app/commit/92545bc39c10b5e9f719817625f9928ffe226c47))
+- address review feedback - ([6b42893](https://github.com/BoltzExchange/boltz-web-app/commit/6b42893e6feed8c753e1563392ea66e9c863bf5d))
+- add missing asset URL params (#1366) - ([b28f24a](https://github.com/BoltzExchange/boltz-web-app/commit/b28f24aec8603e0bb2d33d348b4c529b25b5e944))
+- replace HyperEVM logo (#1370) - ([c255a6d](https://github.com/BoltzExchange/boltz-web-app/commit/c255a6d8ec48907098a52400b0585664ef7802fc))
+- speed up ESLint and prettier (#1394) - ([f3d674a](https://github.com/BoltzExchange/boltz-web-app/commit/f3d674a8e00f3cd5537d79d997e2f5ad6c716f57))
+- update Router contract - ([c1a0da8](https://github.com/BoltzExchange/boltz-web-app/commit/c1a0da8dfc7b4101a0e80cdf0fd295d19a383a80))
+- address feedback - ([3d6c2a1](https://github.com/BoltzExchange/boltz-web-app/commit/3d6c2a1e7aac6b16337bfb42c19c503743320517))
+- add fallback ETH L1 RPCs (#1401) - ([9908883](https://github.com/BoltzExchange/boltz-web-app/commit/9908883e013189f430a348d377056a53d0778b99))
+- add USDC logo to landing page (#1410) - ([67720c9](https://github.com/BoltzExchange/boltz-web-app/commit/67720c9d21d7a7a9b787f914d3b3da40fd4563a5))
+
+### Refactoring
+
+- generic bridge interface - ([0b22016](https://github.com/BoltzExchange/boltz-web-app/commit/0b22016ac84c7660e23e3e9ab6e3d64943e2a7f0))
+- avoid CCTP forwarding service for mints - ([fe52928](https://github.com/BoltzExchange/boltz-web-app/commit/fe52928ec59d6a3ff40cde9979e650f3dc4abd9b))
+- share derivePda helper across CCTP and OFT - ([7997acb](https://github.com/BoltzExchange/boltz-web-app/commit/7997acb26b4677ec32ed4c07b47c6010c76768a1))
+- use ccxp.space as CCTP explorer - ([8fae674](https://github.com/BoltzExchange/boltz-web-app/commit/8fae674f41f9f67f1452f40557fecbeb147c5871))
+- cleanup BlockExplorer component - ([68386b2](https://github.com/BoltzExchange/boltz-web-app/commit/68386b2a40c6efb5c052a15b391e01508ad2b0a3))
+
+### Tests
+
+- update e2e amounts (#1379) - ([1bcbe6f](https://github.com/BoltzExchange/boltz-web-app/commit/1bcbe6f38b15ee976001cdeaa124b75e9e56305f))
+
+---
 ## [2.0.3](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.2..v2.0.3) - 2026-04-20
 
 ### Bug Fixes
@@ -21,6 +88,7 @@ All notable changes to this project will be documented in this file. See [conven
 - migrate from npm to bun (#1350) - ([98e378e](https://github.com/BoltzExchange/boltz-web-app/commit/98e378e65ab815779159542600c82760e504b96f))
 - disable USDT0 OFT - ([6ba9b4e](https://github.com/BoltzExchange/boltz-web-app/commit/6ba9b4efa2325acc48e042b30e14bb6a173431bb))
 - use max allowed commitment slippage - ([319172b](https://github.com/BoltzExchange/boltz-web-app/commit/319172b5e29db129b1cd9dfa70b2891f74321397))
+- bump version to v2.0.3 (#1363) - ([87bde35](https://github.com/BoltzExchange/boltz-web-app/commit/87bde35dc2a849c192338a8d39bfbe6db5572a2e))
 
 ### Refactoring
 
