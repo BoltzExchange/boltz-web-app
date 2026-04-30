@@ -1,12 +1,11 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import BlockExplorer, {
-    ExplorerKind,
-} from "../../src/components/BlockExplorer";
+import BlockExplorer from "../../src/components/BlockExplorer";
 import { config } from "../../src/config";
 import { NetworkTransport } from "../../src/configs/base";
 import * as assets from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
+import { ExplorerKind } from "../../src/utils/explorerLink";
 import { contextWrapper } from "../helper";
 
 describe("BlockExplorer", () => {
@@ -115,7 +114,7 @@ describe("BlockExplorer", () => {
         );
 
         expect((button as HTMLAnchorElement).href).toEqual(
-            `${config.cctpExplorerUrl}/transactions?s=${txId}`,
+            `${config.cctpExplorerUrl}/messages?transactionHash=${txId}`,
         );
     });
 

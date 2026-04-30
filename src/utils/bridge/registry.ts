@@ -1,6 +1,6 @@
-import type { ExplorerKind } from "../../components/BlockExplorer";
 import type { BridgeKind } from "../../configs/base";
 import { getAssetBridge } from "../../consts/Assets";
+import type { ExplorerKind } from "../explorerLink";
 import { CctpBridgeDriver } from "./CctpBridgeDriver";
 import { OftBridgeDriver } from "./OftBridgeDriver";
 import type { BridgeDriver } from "./driver";
