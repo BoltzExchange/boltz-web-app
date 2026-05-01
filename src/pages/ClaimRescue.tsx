@@ -216,6 +216,7 @@ const ClaimRescue = () => {
         } catch (e) {
             throw Error(
                 `failed to construct claimable swap ${params.id}: ${formatError(e)}`,
+                { cause: e },
             );
         }
     });

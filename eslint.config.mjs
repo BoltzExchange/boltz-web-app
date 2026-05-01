@@ -92,6 +92,7 @@ export default [
     {
         rules: {
             "require-await": "error",
+            "no-unassigned-vars": "off",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/consistent-type-imports": "warn",
 

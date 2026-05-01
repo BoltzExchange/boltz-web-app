@@ -100,6 +100,7 @@ const getKrakenPrice = async (
             `failed to get ${asset} price from Kraken in ${currency}: ${formatError(
                 e,
             )}`,
+            { cause: e },
         );
     } finally {
         clearTimeout(requestTimeout);
@@ -122,6 +123,7 @@ export const getBtcPriceYadio = async (currency: Currency) => {
     } catch (e) {
         throw new Error(
             `failed to get BTC price from Yadio: ${formatError(e)}`,
+            { cause: e },
         );
     } finally {
         clearTimeout(requestTimeout);
@@ -163,6 +165,7 @@ const getCoinGeckoPrice = async (
             `failed to get ${asset} price from CoinGecko in ${currency}: ${formatError(
                 e,
             )}`,
+            { cause: e },
         );
     } finally {
         clearTimeout(requestTimeout);
@@ -229,6 +232,7 @@ export const getBtcPriceMempool = async (currency: Currency) => {
     } catch (e) {
         throw new Error(
             `failed to get BTC price from Mempool: ${formatError(e)}`,
+            { cause: e },
         );
     } finally {
         clearTimeout(requestTimeout);

@@ -676,7 +676,7 @@ const CreateButton = () => {
                             bip21Amount: bip21Amount.toString(),
                             error: formatError(e),
                         });
-                        throw new Error(t("invalid_invoice"));
+                        throw new Error(t("invalid_invoice"), { cause: e });
                     }
                 }
 

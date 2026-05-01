@@ -274,6 +274,7 @@ export const getSolanaLegacyMeshContext = async ({
         );
         throw new Error(
             `Failed to initialize Solana OFT context for ${asset}: ${formatError(error)}`,
+            { cause: error },
         );
     }
 };
