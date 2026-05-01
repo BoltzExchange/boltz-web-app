@@ -87,6 +87,9 @@ test.describe("Rescue file", () => {
             .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);
+        await page
+            .getByRole("button", { name: dict.en.search, exact: true })
+            .click();
         const entry = page.locator(".swaplist-item").first();
         await expect(entry).toHaveClass("swaplist-item disabled");
     });
@@ -138,6 +141,9 @@ test.describe("Rescue file", () => {
             .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);
+        await page
+            .getByRole("button", { name: dict.en.search, exact: true })
+            .click();
         await page.locator(".swaplist-item").first().click();
 
         await page.getByTestId("refundAddress").fill(await getLiquidAddress());

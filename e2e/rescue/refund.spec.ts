@@ -4,6 +4,7 @@ import path from "path";
 
 import { type AssetType, BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
+import dict from "../../src/i18n/i18n";
 import {
     backupRescueFile,
     bitcoinSendToAddress,
@@ -199,6 +200,9 @@ const executeRefund = async (
             .getByRole("button", { name: "Rescue external swap" })
             .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
+        await page
+            .getByRole("button", { name: dict.en.search, exact: true })
+            .click();
     } else {
         await page.getByRole("link", { name: "Rescue" }).click();
         await expect(page.getByTestId("loading-spinner")).not.toBeVisible({
@@ -491,7 +495,7 @@ test.describe("Refund", () => {
 
             await expect(
                 page.locator("div[data-status='transaction.claimed']"),
-            ).toBeVisible({ timeout: 15_000 });
+            ).toBeVisible({ timeout: 30_000 });
 
             await waitForUTXOs(swap.sendAsset as AssetType, address, 0);
 

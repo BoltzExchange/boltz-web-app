@@ -1,12 +1,14 @@
 import { useSearchParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Match, Show, Switch } from "solid-js";
+import { IoKey } from "solid-icons/io";
+import { Match, Show, Switch, createEffect } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
 import { formatError } from "../utils/errors";
-import { type RescueFile, validateRescueFile } from "../utils/rescueFile";
+import type { RescueFile } from "../utils/rescueFile";
+import { validateRescueFile } from "../utils/rescueFile";
 import MnemonicInput from "./MnemonicInput";
 import RescueFileInput from "./RescueFileInput";
 
@@ -14,11 +16,20 @@ export enum RescueFileError {
     InvalidData,
 }
 
+export type RescueFileResult = {
+    data: RescueFile;
+    fileName?: string;
+};
+
 type RescueFileUploadProps = {
-    onFileValidated: (data: RescueFile) => void;
+    onFileValidated: (result: RescueFileResult) => void;
     onError: (error: RescueFileError) => void;
     onReset?: () => void;
     showMnemonicOption?: boolean;
+    autoSubmitMnemonic?: boolean;
+    mnemonicBackLabel?: string;
+    fileName?: string | null;
+    error?: string;
 };
 
 export const checkRefundJsonKeys = (
@@ -26,12 +37,12 @@ export const checkRefundJsonKeys = (
 ): RescueFile => {
     log.debug("checking refund json");
 
-    if (!("mnemonic" in json)) {
-        throw new Error("not a rescue file");
+    if ("mnemonic" in json) {
+        log.info("Found rescue file");
+        return validateRescueFile(json);
     }
 
-    log.info("Found rescue file");
-    return validateRescueFile(json);
+    throw new Error("not a rescue file");
 };
 
 export const processUploadedFile = async (
@@ -60,8 +71,10 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const showMnemonicOption = () => props.showMnemonicOption ?? true;
+    let submittedMnemonic: string | undefined;
 
     const handleReset = () => {
+        submittedMnemonic = undefined;
         props.onReset?.();
         resetRescueKey();
         setSearchParams({
@@ -81,8 +94,13 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
 
         try {
             const result = await processUploadedFile(inputFile);
+
             setRescueFile(result);
-            props.onFileValidated(result);
+
+            props.onFileValidated({
+                data: result,
+                fileName: inputFile.name,
+            });
         } catch (e) {
             log.error("invalid file upload", formatError(e));
             props.onError(RescueFileError.InvalidData);
@@ -93,26 +111,45 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
         const data = rescueFile();
         if (!data) return;
 
-        props.onFileValidated(data);
+        props.onFileValidated({
+            data,
+            fileName: t("rescue_key"),
+        });
 
         setSearchParams({
             mode: null,
         });
     };
 
+    createEffect(() => {
+        if (!props.autoSubmitMnemonic || searchParams.mode !== rescueKeyMode) {
+            return;
+        }
+
+        const data = rescueFile();
+        if (!validRescueKey() || !data || data.mnemonic === submittedMnemonic) {
+            return;
+        }
+
+        submittedMnemonic = data.mnemonic;
+        handleMnemonicSubmit();
+    });
+
     return (
         <>
             <Show when={searchParams.mode === rescueKeyMode}>
                 <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
                 <MnemonicInput />
-                <button
-                    class="btn btn-yellow"
-                    data-testid="import-key-button"
-                    aria-invalid={!validRescueKey()}
-                    disabled={!validRescueKey()}
-                    onClick={handleMnemonicSubmit}>
-                    <span>{t("verify_key")}</span>
-                </button>
+                <Show when={!props.autoSubmitMnemonic}>
+                    <button
+                        class="btn btn-yellow"
+                        data-testid="import-key-button"
+                        aria-invalid={!validRescueKey()}
+                        disabled={!validRescueKey()}
+                        onClick={handleMnemonicSubmit}>
+                        <span>{t("verify_key")}</span>
+                    </button>
+                </Show>
             </Show>
             <Switch>
                 <Match when={searchParams.mode !== rescueKeyMode}>
@@ -120,24 +157,29 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                         required
                         id="refundUpload"
                         data-testid="refundUpload"
+                        displayFileName={props.fileName ?? undefined}
+                        error={props.error}
                         onChange={(e) => uploadChange(e)}
                         onClear={handleReset}
                     />
-                    <p style={{ margin: "5px 0" }}>{t("or")}</p>
-                    <Show when={showMnemonicOption()}>
-                        <button
-                            class="btn btn-light"
-                            data-testid="enterMnemonicBtn"
-                            onClick={() => {
-                                handleReset();
-                                setRescuableSwaps([]);
-                                setSearchParams({
-                                    page: null,
-                                    mode: rescueKeyMode,
-                                });
-                            }}>
-                            {t("enter_mnemonic")}
-                        </button>
+                    <Show when={!props.fileName && !props.error}>
+                        <p style={{ margin: "5px 0" }}>{t("or")}</p>
+                        <Show when={showMnemonicOption()}>
+                            <button
+                                class="btn btn-light"
+                                data-testid="enterMnemonicBtn"
+                                onClick={() => {
+                                    handleReset();
+                                    setRescuableSwaps([]);
+                                    setSearchParams({
+                                        page: null,
+                                        mode: rescueKeyMode,
+                                    });
+                                }}>
+                                <IoKey size={14} />
+                                {t("enter_mnemonic")}
+                            </button>
+                        </Show>
                     </Show>
                 </Match>
                 <Match when={searchParams.mode === rescueKeyMode}>
@@ -145,12 +187,13 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                         class="btn btn-light"
                         data-testid="backBtn"
                         onClick={() => {
+                            submittedMnemonic = undefined;
                             resetRescueKey();
                             setSearchParams({
                                 mode: null,
                             });
                         }}>
-                        {t("back")}
+                        {props.mnemonicBackLabel ?? t("back")}
                     </button>
                 </Match>
             </Switch>

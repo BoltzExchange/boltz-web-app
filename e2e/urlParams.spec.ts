@@ -141,7 +141,8 @@ test.describe("URL params", () => {
         await assertMnemonicVisible();
 
         await page.goto("/rescue/external/rsk?mode=rescue-key");
-        await page.getByTestId("rsk-rescue-refund-button").click();
+        await assertMnemonicVisible();
+        await expect(page.getByText("EVM")).not.toBeVisible();
         await expect(page.getByText(/connect wallet/i)).toBeVisible();
     });
 

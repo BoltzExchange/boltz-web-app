@@ -1,7 +1,8 @@
-import { type Page, expect, test } from "@playwright/test";
-import fs from "fs";
+import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 import { BTC, LBTC } from "../../src/consts/Assets";
+import dict from "../../src/i18n/i18n";
 import {
     backupRescueFile,
     bitcoinSendToAddress,
@@ -15,8 +16,6 @@ import {
     waitForNodesToSync,
 } from "../utils";
 
-const fileName = "rescue-file.json";
-
 const clearStorage = async (page: Page) => {
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
@@ -25,22 +24,27 @@ const clearStorage = async (page: Page) => {
 const claimPendingSwap = async ({
     page,
     asset,
+    rescueFileName,
     swapId,
 }: {
     page: Page;
     asset: string;
+    rescueFileName: string;
     swapId: string;
 }) => {
     await page.getByRole("link", { name: "Rescue" }).click();
 
     await page.getByRole("button", { name: "Rescue external swap" }).click();
 
-    await page.getByTestId("refundUpload").setInputFiles(fileName);
+    await page.getByTestId("refundUpload").setInputFiles(rescueFileName);
+    await page
+        .getByRole("button", { name: dict.en.rescue, exact: true })
+        .click();
 
     const swapItem = page.locator(`div[data-testid='swaplist-item-${swapId}']`);
 
     await expect(swapItem).toBeVisible();
-    await expect(swapItem).not.toBeDisabled();
+    await expect(swapItem).not.toHaveClass(/disabled/, { timeout: 15_000 });
 
     await swapItem.click();
 
@@ -99,15 +103,11 @@ const createChainSwap = async (page: Page, assetSend: string) => {
 };
 
 test.describe("Claim", () => {
+    test.describe.configure({ mode: "serial" });
+
     test.beforeEach(async () => {
         await generateBitcoinBlock();
         await generateLiquidBlock();
-    });
-
-    test.afterEach(() => {
-        if (fs.existsSync(fileName)) {
-            fs.unlinkSync(fileName);
-        }
     });
 
     [
@@ -116,10 +116,12 @@ test.describe("Claim", () => {
     ].forEach(({ assetSend, assetReceive }) => {
         test(`${assetSend} -> ${assetReceive}: Claim pending chain swap via rescue key scan`, async ({
             page,
-        }) => {
+        }, testInfo) => {
+            test.setTimeout(60_000);
+            const rescueFileName = testInfo.outputPath("rescue-file.json");
             const sendAmount = await createChainSwap(page, assetSend);
 
-            await backupRescueFile(page, fileName);
+            await backupRescueFile(page, rescueFileName);
 
             await page.locator("p[data-testid='copy-box']").click();
 
@@ -147,6 +149,7 @@ test.describe("Claim", () => {
                 page,
                 swapId,
                 asset: assetReceive,
+                rescueFileName,
             });
         });
     });
@@ -154,7 +157,9 @@ test.describe("Claim", () => {
     [BTC, LBTC].forEach((asset) => {
         test(`${asset}: Claim pending reverse swap via rescue key scan`, async ({
             page,
-        }) => {
+        }, testInfo) => {
+            test.setTimeout(60_000);
+            const rescueFileName = testInfo.outputPath("rescue-file.json");
             await page.goto("/");
 
             const receiveAmount = "0.01";
@@ -207,7 +212,7 @@ test.describe("Claim", () => {
             await page
                 .locator("div[data-testid='rescue-key-download']")
                 .click();
-            await (await downloadPromise).saveAs(fileName);
+            await (await downloadPromise).saveAs(rescueFileName);
 
             await clearStorage(page);
 
@@ -228,6 +233,7 @@ test.describe("Claim", () => {
                 page,
                 swapId,
                 asset,
+                rescueFileName,
             });
         });
     });

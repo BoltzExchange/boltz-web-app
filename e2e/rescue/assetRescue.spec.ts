@@ -96,6 +96,9 @@ test.describe("Asset Rescue", () => {
             .getByRole("button", { name: dict.en.rescue_external_swap })
             .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
+        await page
+            .getByRole("button", { name: dict.en.search, exact: true })
+            .click();
         await page.locator(".swaplist-item").first().click();
 
         await performRefund(page, asset);

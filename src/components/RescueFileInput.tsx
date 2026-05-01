@@ -1,11 +1,6 @@
 import { IoClose, IoKey } from "solid-icons/io";
-import {
-    type ComponentProps,
-    Show,
-    createEffect,
-    createSignal,
-    splitProps,
-} from "solid-js";
+import type { ComponentProps } from "solid-js";
+import { Show, createEffect, createSignal, splitProps } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/rescueFileInput.scss";
@@ -17,6 +12,7 @@ type RescueFileInputProps = Omit<
 > & {
     id: string;
     displayFileName?: string;
+    error?: string;
     onChange: (event: Event) => void;
     onClear?: () => void;
 };
@@ -25,6 +21,7 @@ const RescueFileInput = (props: RescueFileInputProps) => {
     const { t } = useGlobalContext();
     const [, inputProps] = splitProps(props, [
         "displayFileName",
+        "error",
         "onChange",
         "onClear",
     ]);
@@ -55,7 +52,10 @@ const RescueFileInput = (props: RescueFileInputProps) => {
     };
 
     return (
-        <div class="rescue-file-input">
+        <div
+            class="rescue-file-input"
+            data-uploaded={fileName() && !props.error ? "true" : "false"}
+            data-error={props.error ? "true" : "false"}>
             <input
                 {...inputProps}
                 accept={rescueFileTypes}
@@ -71,17 +71,39 @@ const RescueFileInput = (props: RescueFileInputProps) => {
                 class="rescue-file-input-area"
                 aria-disabled={inputProps.disabled}>
                 <Show
-                    when={fileName()}
+                    when={!props.error}
                     fallback={
-                        <span class="rescue-file-input-title">
-                            <IoKey size={14} />
-                            {t("upload_rescue_key")}
+                        <span class="rescue-file-input-error">
+                            <IoKey
+                                size={14}
+                                class="rescue-file-input-error-icon"
+                            />
+                            <span class="rescue-file-input-error-message">
+                                {props.error}
+                            </span>
                         </span>
                     }>
-                    <span class="rescue-file-input-filename">{fileName()}</span>
+                    <Show
+                        when={fileName()}
+                        fallback={
+                            <span class="rescue-file-input-title">
+                                <IoKey size={14} />
+                                {t("upload_rescue_key")}
+                            </span>
+                        }>
+                        <span class="rescue-file-input-success">
+                            <IoKey
+                                size={14}
+                                class="rescue-file-input-key-icon"
+                            />
+                            <span class="rescue-file-input-filename">
+                                {fileName()}
+                            </span>
+                        </span>
+                    </Show>
                 </Show>
             </label>
-            <Show when={fileName()}>
+            <Show when={fileName() || props.error}>
                 <button
                     type="button"
                     class="rescue-file-input-clear"

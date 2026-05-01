@@ -154,27 +154,45 @@ export const fetcher = async <T = unknown>(
     try {
         const referral = getReferral();
 
+        const signal =
+            options?.signal != null
+                ? AbortSignal.any([controller.signal, options.signal])
+                : controller.signal;
+
         let opts: RequestInit = {
             headers: {
                 referral,
             },
-            signal: controller.signal,
+            signal,
         };
 
         if (params) {
             opts = {
+                ...opts,
+                ...options,
                 method: "POST",
                 headers: {
-                    ...(options ? options.headers : opts.headers),
+                    ...opts.headers,
+                    ...options?.headers,
                     "Content-Type": "application/json",
                 },
-                signal: controller.signal,
+                signal,
                 body: JSON.stringify(params),
+            };
+        } else {
+            opts = {
+                ...opts,
+                ...options,
+                headers: {
+                    ...opts.headers,
+                    ...options?.headers,
+                },
+                signal,
             };
         }
 
         const apiUrl = getApiUrl() + url;
-        const response = await fetch(apiUrl, options || opts);
+        const response = await fetch(apiUrl, opts);
 
         if (!response.ok) {
             try {
