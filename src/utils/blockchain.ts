@@ -164,7 +164,9 @@ const fetchBlockExplorerParallel = async <T>(
                 );
             });
         }
-        throw new Error(`all external fetch attempts to ${endpoint} failed`);
+        throw new Error(`all external fetch attempts to ${endpoint} failed`, {
+            cause: err,
+        });
     }
 };
 

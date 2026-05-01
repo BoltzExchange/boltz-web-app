@@ -93,11 +93,14 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
             (error instanceof DOMException && error.name === "AbortError") ||
             opts.signal?.aborted === true;
         if (isAbortError) {
-            throw new Error(`Alchemy request timed out for ${method}`);
+            throw new Error(`Alchemy request timed out for ${method}`, {
+                cause: error,
+            });
         }
 
         throw new Error(
             `Alchemy request failed for ${method}: ${formatError(error)}`,
+            { cause: error },
         );
     } finally {
         clearTimeout(requestTimeout);

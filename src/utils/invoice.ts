@@ -186,13 +186,11 @@ export const decodeInvoice = (
                 (tag) => tag.tagName === "payment_hash",
             ).data as string,
         };
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         try {
             const { fields } = decodeBolt12Invoice(invoice);
             if (fields.invoice_payment_hash === undefined) {
-                throw new Error("missing bolt12 payment hash");
+                throw new Error("missing bolt12 payment hash", { cause: e });
             }
 
             return {
@@ -202,10 +200,8 @@ export const decodeInvoice = (
                 ),
                 preimageHash: hex.encode(fields.invoice_payment_hash),
             };
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
-            throw new Error("invalid_invoice");
+            throw new Error("invalid_invoice", { cause: e });
         }
     }
 };
