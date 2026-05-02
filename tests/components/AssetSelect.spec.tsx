@@ -4,7 +4,15 @@ import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
-import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    TBTC,
+    USDC,
+    USDT0,
+} from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import {
@@ -226,6 +234,7 @@ describe("AssetSelect", () => {
             `select-${RBTC}`,
             `select-${TBTC}`,
             `select-${USDT0}`,
+            `select-${USDC}`,
         ]);
     });
 

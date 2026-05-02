@@ -8,11 +8,12 @@ import { config as mainnetConfig } from "../src/configs/mainnet";
 log.setLevel("error");
 
 // Tests run against the regtest config, which intentionally omits TBTC and
-// USDT0 (they're mainnet-only assets). Inject them from the mainnet config so
+// USDT0 and USDC (they're mainnet-only assets). Inject them from the mainnet config so
 // tests that read their shape (token decimals, bridge metadata, etc.) work.
 if (runtimeConfig.assets && mainnetConfig.assets) {
     runtimeConfig.assets.TBTC ??= mainnetConfig.assets.TBTC;
     runtimeConfig.assets.USDT0 ??= mainnetConfig.assets.USDT0;
+    runtimeConfig.assets.USDC ??= mainnetConfig.assets.USDC;
 }
 
 // Replace jsdom's fetch with axios-based fetch to fix AbortController compatibility
