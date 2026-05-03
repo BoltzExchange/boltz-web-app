@@ -37,7 +37,7 @@ const InvoiceSet = () => {
                 swapId={submarine.id}
                 gasAbstraction={getLockupGasAbstraction(submarine)}
                 amount={submarine.expectedAmount}
-                claimAddress={submarine.claimAddress}
+                claimAddress={submarine.claimAddress!}
                 preimageHash={preimageHash()}
                 timeoutBlockHeight={submarine.timeoutBlockHeight}
                 asset={submarine.assetSend}

@@ -221,7 +221,7 @@ export const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
         data:
             typeof transaction.data === "string" ? transaction.data : undefined,
         value:
-            transaction.value !== undefined
+            transaction.value !== undefined && transaction.value !== null
                 ? transaction.value.toString()
                 : undefined,
     };
@@ -297,6 +297,9 @@ const signPreparedCalls = async (
         );
     }
     const signature = await signer.signMessage(getBytes(payload));
+    if (result.chainId === undefined) {
+        throw new Error("Alchemy prepareCalls response is missing chainId");
+    }
 
     return {
         type: result.type,

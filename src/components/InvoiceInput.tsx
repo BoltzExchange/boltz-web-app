@@ -5,6 +5,7 @@ import { LN, isBitcoinOnlyAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import type { DictKey } from "../i18n/i18n";
 import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { btcToSat } from "../utils/denomination";
@@ -18,7 +19,7 @@ import {
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
-    let inputRef: HTMLTextAreaElement;
+    let inputRef!: HTMLTextAreaElement;
     let validationRequest = 0;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
@@ -75,7 +76,7 @@ const InvoiceInput = () => {
             }
 
             const address = extractAddress(inputValue);
-            const invoiceValue = extractInvoice(inputValue);
+            const invoiceValue = extractInvoice(inputValue) ?? "";
 
             const actualAsset =
                 probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
@@ -165,10 +166,11 @@ const InvoiceInput = () => {
             if (isStale()) {
                 return;
             }
+            const message = e instanceof Error ? e.message : String(e);
             input.classList.add("invalid");
-            input.setCustomValidity(t(e.message));
+            input.setCustomValidity(t(message as DictKey));
             resetInvoiceState();
-            setInvoiceError(e.message);
+            setInvoiceError(message as DictKey);
         } finally {
             if (!isStale()) {
                 setQuoteLoading(false);

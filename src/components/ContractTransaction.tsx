@@ -15,7 +15,7 @@ import LoadingSpinner from "./LoadingSpinner";
 const ContractTransaction = (props: {
     asset: string;
     disabled?: boolean;
-    signerOverride?: Accessor<Signer | Wallet>;
+    signerOverride?: Accessor<Signer | Wallet | undefined>;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
     showHr?: boolean;
@@ -73,7 +73,7 @@ const ContractTransaction = (props: {
                     }>
                     <ConnectAddress
                         asset={props.asset}
-                        address={props.address}
+                        address={props.address!}
                     />
                 </Show>
             }>

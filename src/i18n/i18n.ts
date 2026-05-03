@@ -2998,14 +2998,18 @@ type NestedKeyOf<T> = {
 
 export type DictKey = NestedKeyOf<typeof dict.en>;
 
+export type Language = keyof typeof dict;
+
 export const rawDict = JSON.parse(JSON.stringify(dict));
 
 Object.entries(dict)
     .filter(([lang]) => lang !== "en")
     .map(([, langDict]) => {
         Object.entries(dict.en).map(([key, enVal]) => {
-            if (langDict[key] === undefined) {
-                langDict[key] = enVal;
+            const dictKey = key as keyof typeof dict.en;
+            if (langDict[dictKey] === undefined) {
+                (langDict as Record<keyof typeof dict.en, unknown>)[dictKey] =
+                    enVal;
             }
         });
     });

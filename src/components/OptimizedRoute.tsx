@@ -32,7 +32,7 @@ const getTotalChainFees = ({
     unconfidentialExtra,
 }: {
     sendAmount: Accessor<BigNumber>;
-    pairs: Accessor<Pairs>;
+    pairs: Accessor<Pairs | undefined>;
     assetSend: Accessor<string>;
     unconfidentialExtra: number;
 }) => {
@@ -60,7 +60,7 @@ const getTotalSubmarineFees = ({
     sendAmount,
     assetSend,
 }: {
-    pairs: Accessor<Pairs>;
+    pairs: Accessor<Pairs | undefined>;
     sendAmount: Accessor<BigNumber>;
     assetSend: Accessor<string>;
 }) => {
@@ -84,7 +84,7 @@ const getTotalReverseFees = ({
     sendAmount,
     unconfidentialExtra,
 }: {
-    pairs: Accessor<Pairs>;
+    pairs: Accessor<Pairs | undefined>;
     sendAmount: Accessor<BigNumber>;
     unconfidentialExtra: number;
 }) => {
@@ -115,7 +115,7 @@ export const getMagicRoutingHintSavedFees = ({
     addressValid,
     onchainAddress,
 }: {
-    pairs: Accessor<Pairs>;
+    pairs: Accessor<Pairs | undefined>;
     assetSend: Accessor<string>;
     sendAmount: Accessor<BigNumber>;
     assetReceive: Accessor<string>;
@@ -176,7 +176,7 @@ const OptimizedRoute = () => {
                 ✨{" "}
                 {t("optimized_route_amount", {
                     amount: formatAmount(
-                        BigNumber(swap().magicRoutingHintSavedFees),
+                        BigNumber(swap()?.magicRoutingHintSavedFees ?? 0),
                         denomination(),
                         separator(),
                         pair().fromAsset,

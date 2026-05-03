@@ -51,7 +51,9 @@ import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
+    type BridgeDetail,
     type ChainSwap,
+    type DexDetail,
     GasAbstractionType,
     type SomeSwap,
     type SubmarineSwap,
@@ -110,7 +112,12 @@ const getSwapPreimageHash = (swap: SomeSwap): string => {
     }
 };
 
-const needsPreBridgeLockup = (swap: SomeSwap | null | undefined) =>
+const needsPreBridgeLockup = (
+    swap: SomeSwap | null | undefined,
+): swap is SomeSwap & {
+    bridge: BridgeDetail & { txHash: string };
+    dex: DexDetail;
+} =>
     swap !== undefined &&
     swap !== null &&
     swap.bridge?.position === SwapPosition.Pre &&
@@ -121,14 +128,18 @@ const needsPreBridgeLockup = (swap: SomeSwap | null | undefined) =>
     swap.dex.position === SwapPosition.Pre &&
     swap.dex.hops.length > 0;
 
-const usesManualCctpReceive = (swap: SomeSwap | null | undefined) =>
+const usesManualCctpReceive = (
+    swap: SomeSwap | null | undefined,
+): swap is SomeSwap & { bridge: BridgeDetail } =>
     swap !== undefined &&
     swap !== null &&
     swap.bridge?.kind === BridgeKind.Cctp &&
     swap.bridge.position === SwapPosition.Pre &&
     swap.bridge.destinationAsset === USDC;
 
-const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
+const needsCommitmentPost = (
+    swap: SomeSwap | null | undefined,
+): swap is SomeSwap & { commitmentLockupTxHash: string } =>
     swap !== undefined &&
     swap !== null &&
     swap.commitmentLockupTxHash !== undefined &&
@@ -347,16 +358,19 @@ export const SwapExecutionWorker = () => {
             throw new Error(`invalid CCTP guid: ${guid}`);
         }
 
-        const sourceConfig = requireCctpConfig(currentSwap.bridge.sourceAsset);
-        const destinationConfig = requireCctpConfig(
-            currentSwap.bridge.destinationAsset,
-        );
+        const bridge = currentSwap.bridge;
+        if (bridge === undefined) {
+            throw new Error("missing bridge details for CCTP receive");
+        }
+
+        const sourceConfig = requireCctpConfig(bridge.sourceAsset);
+        const destinationConfig = requireCctpConfig(bridge.destinationAsset);
         if (decoded.sourceDomain !== sourceConfig.domain) {
             throw new Error("CCTP guid source domain does not match route");
         }
 
         const destinationProvider = createAssetProvider(
-            currentSwap.bridge.destinationAsset,
+            bridge.destinationAsset,
         );
         const expectedMintRecipient = addressToBytes32(
             gasAbstractionSigner.address,
@@ -366,8 +380,8 @@ export const SwapExecutionWorker = () => {
             "Swap execution waiting for manual CCTP attestation",
             getSwapExecutionLogContext(currentSwap.id, {
                 guid,
-                sourceAsset: currentSwap.bridge.sourceAsset,
-                destinationAsset: currentSwap.bridge.destinationAsset,
+                sourceAsset: bridge.sourceAsset,
+                destinationAsset: bridge.destinationAsset,
             }),
         );
 
@@ -874,6 +888,9 @@ export const SwapExecutionWorker = () => {
             latestSwap.assetSend,
         );
         const hop = latestSwap.dex.hops[0];
+        if (hop.dexDetails === undefined) {
+            throw new Error("missing DEX details for pre-bridge hop");
+        }
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.bridge.destinationAsset,
         );
@@ -965,10 +982,15 @@ export const SwapExecutionWorker = () => {
                 amountReceived: receivedAmount.toString(),
             }),
         );
+        const preBridgeClaimAddress =
+            getPreBridgeCommitmentClaimAddress(latestSwap);
+        if (preBridgeClaimAddress === undefined) {
+            throw new Error("missing pre-bridge commitment claim address");
+        }
         const tx = await router.executeAndLockERC20.populateTransaction(
             emptyPreimageHash,
             getTokenAddress(latestSwap.assetSend),
-            getPreBridgeCommitmentClaimAddress(latestSwap),
+            preBridgeClaimAddress,
             gasAbstractionSigner.address,
             commitmentLockupDetails.timelock,
             encoded.calls.map((call) => ({
@@ -1140,6 +1162,9 @@ export const SwapExecutionWorker = () => {
 
         if (needsCommitmentPost(currentSwap)) {
             void runTask(currentSwap.id, "commitment", async (storedSwap) => {
+                if (!needsCommitmentPost(storedSwap)) {
+                    return;
+                }
                 const commitmentAsset = getCommitmentChainAsset(storedSwap);
                 const transactionSigner =
                     storedSwap.bridge?.position === SwapPosition.Pre

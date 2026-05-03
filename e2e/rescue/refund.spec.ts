@@ -228,7 +228,7 @@ const validateRefundTransaction = async (
     address: string,
 ) => {
     const refundTxLink = page.getByText("open refund transaction");
-    const txId = (await refundTxLink.getAttribute("href")).split("/").pop();
+    const txId = (await refundTxLink.getAttribute("href"))!.split("/").pop();
 
     expect(txId).toBeDefined();
     await waitForUTXOs(sendAsset as AssetType, address, 0); // check that all UTXOs were refunded
@@ -447,7 +447,7 @@ test.describe("Refund", () => {
 
             await waitForUTXOs(sendAsset as AssetType, address, 1);
 
-            if (viaRescue) {
+            if (viaRescue && swapId !== undefined) {
                 await navigateToSwapRescue(page, swapId);
             }
 

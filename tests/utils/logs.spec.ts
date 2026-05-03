@@ -19,7 +19,7 @@ describe("logs", () => {
         // Mock navigator.locks API
         vi.stubGlobal("navigator", {
             locks: {
-                request: vi.fn((name, callback) => {
+                request: vi.fn((_name, callback) => {
                     return Promise.resolve(callback());
                 }),
             },

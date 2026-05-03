@@ -29,7 +29,7 @@ describe("blockchain", () => {
                 mockGetFeeEstimations.mockResolvedValue(0.5);
 
                 const feeEstimations = await getFeeEstimations(
-                    config.assets[asset].blockExplorerApis.find(
+                    config.assets![asset].blockExplorerApis!.find(
                         (api) => api.id === type,
                     )!,
                 );

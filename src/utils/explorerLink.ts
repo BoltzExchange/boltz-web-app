@@ -9,10 +9,13 @@ export enum ExplorerKind {
     LayerZero = "layerzero",
 }
 
-const getExplorerBaseUrl = (asset: string, explorer: ExplorerKind) => {
+const getExplorerBaseUrl = (
+    asset: string,
+    explorer: ExplorerKind,
+): string | undefined => {
     switch (explorer) {
         case ExplorerKind.Asset:
-            return chooseUrl(config.assets[asset].blockExplorerUrl);
+            return chooseUrl(config.assets?.[asset]?.blockExplorerUrl);
 
         case ExplorerKind.LayerZero:
             return config.layerZeroExplorerUrl;
@@ -53,8 +56,11 @@ export const blockExplorerLink = (
     isTxId: boolean,
     val: string,
     explorer: ExplorerKind = ExplorerKind.Asset,
-) => {
+): string | undefined => {
     const basePath = getExplorerBaseUrl(asset, explorer);
+    if (basePath === undefined) {
+        return undefined;
+    }
     if (isTxId && explorer === ExplorerKind.Cctp) {
         return encodeExplorerUrl(basePath, "messages", {
             transactionHash: val,

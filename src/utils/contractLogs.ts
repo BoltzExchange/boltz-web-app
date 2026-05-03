@@ -172,10 +172,10 @@ const buildLockupFilter = (
         const erc20 = contract as ERC20Swap;
         if (scanConfig.action === RskRescueMode.Refund && !hasExtra) {
             return erc20.filters.Lockup(
-                null,
-                null,
-                null,
-                null,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
                 scanConfig.filter.address,
             );
         }
@@ -185,9 +185,9 @@ const buildLockupFilter = (
             !hasExtra
         ) {
             return erc20.filters.Lockup(
-                null,
-                null,
-                null,
+                undefined,
+                undefined,
+                undefined,
                 scanConfig.filter.address,
             );
         }
@@ -197,9 +197,9 @@ const buildLockupFilter = (
     const etherSwap = contract as EtherSwap;
     if (scanConfig.action === RskRescueMode.Refund && !hasExtra) {
         return etherSwap.filters.Lockup(
-            null,
-            null,
-            null,
+            undefined,
+            undefined,
+            undefined,
             scanConfig.filter.address,
         );
     }
@@ -208,7 +208,11 @@ const buildLockupFilter = (
         version >= 6 &&
         !hasExtra
     ) {
-        return etherSwap.filters.Lockup(null, null, scanConfig.filter.address);
+        return etherSwap.filters.Lockup(
+            undefined,
+            undefined,
+            scanConfig.filter.address,
+        );
     }
     return etherSwap.filters.Lockup();
 };
@@ -226,7 +230,7 @@ const createScanContext = async (
     const provider = new JsonRpcProvider(providerUrl);
     const connected = contract.connect(provider) as SwapContract;
     const contractAddress = await connected.getAddress();
-    const minBlock = config.assets[asset].contracts.deployHeight;
+    const minBlock = config.assets?.[asset]?.contracts?.deployHeight ?? 0;
 
     const [latestBlock, version] = await Promise.all([
         provider.getBlockNumber(),
@@ -442,11 +446,11 @@ export async function* scanLockupEvents(
     const worker = needsPreimages ? new PreimageHashesWorker() : null;
     if (worker) {
         log.info("Starting preimage derivation in background");
-        worker.start(
-            scanConfig.mnemonic,
-            config.assets[scanConfig.asset].network.chainId,
-            abortSignal,
-        );
+        const chainId = config.assets?.[scanConfig.asset]?.network?.chainId;
+        if (scanConfig.mnemonic === undefined || chainId === undefined) {
+            return;
+        }
+        worker.start(scanConfig.mnemonic, chainId, abortSignal);
     }
 
     let blocksScanned = 0;

@@ -1,4 +1,5 @@
 import { useNavigate } from "@solidjs/router";
+import type { Accessor } from "solid-js";
 import { Show, createResource, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -68,7 +69,7 @@ const Rescue = () => {
                         <h2 class="frame-title">{t("rescue_swap")}</h2>
                     </header>
                     <Show
-                        when={allSwaps()?.length > 0}
+                        when={(allSwaps()?.length ?? 0) > 0}
                         fallback={
                             <>
                                 <p class="frame-text">
@@ -83,7 +84,7 @@ const Rescue = () => {
                                 <div
                                     class="center"
                                     style={getSwapListHeight(
-                                        allSwaps(),
+                                        allSwaps() ?? [],
                                         isMobile(),
                                     )}>
                                     <LoadingSpinner />
@@ -91,11 +92,15 @@ const Rescue = () => {
                             }>
                             <div
                                 style={getSwapListHeight(
-                                    allSwaps(),
+                                    allSwaps() ?? [],
                                     isMobile(),
                                 )}>
                                 <SwapList
-                                    swapsSignal={refundList}
+                                    swapsSignal={
+                                        refundList as unknown as Accessor<
+                                            Swap[]
+                                        >
+                                    }
                                     action={(swap) => {
                                         return rescueListAction({ t, swap });
                                     }}
@@ -114,12 +119,18 @@ const Rescue = () => {
                             </div>
                         </Show>
                         <Pagination
-                            items={allSwaps}
+                            items={
+                                allSwaps as unknown as Accessor<SubmarineSwap[]>
+                            }
                             setDisplayedItems={(swaps: SubmarineSwap[]) =>
                                 setCurrentSwaps(swaps)
                             }
-                            sort={sortSwaps}
-                            totalItems={allSwaps().length}
+                            sort={
+                                sortSwaps as unknown as (
+                                    items: SubmarineSwap[],
+                                ) => SubmarineSwap[]
+                            }
+                            totalItems={allSwaps()?.length ?? 0}
                             currentPage={currentPage}
                             setCurrentPage={setCurrentPage}
                             itemsPerPage={

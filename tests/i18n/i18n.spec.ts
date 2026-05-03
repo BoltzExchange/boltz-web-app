@@ -99,7 +99,9 @@ describe("i18n", () => {
 
         // Check each language against the reference (English)
         for (const [lang, langStrs] of langs) {
-            const langKeys = new Set(Object.keys(langStrs));
+            const langKeys = new Set(
+                Object.keys(langStrs as Record<string, unknown>),
+            );
 
             const missing = Array.from(referenceKeys).filter(
                 (key) => !langKeys.has(key),
@@ -158,7 +160,7 @@ describe("i18n", () => {
                 }
             });
 
-            langStructure.forEach((langType, path) => {
+            langStructure.forEach((_langType, path) => {
                 if (!enStructure.has(path)) {
                     mismatches.push(
                         `  - "${path}": extra key in ${lang} (not in English)`,

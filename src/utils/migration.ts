@@ -33,7 +33,7 @@ const noGasAbstraction = (): ParsedGasAbstraction =>
 const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal([], {
+        createSignal<{ id: string }[]>([], {
             // Because arrays are the same object when changed,
             // we have to override the equality checker
             equals: () => false,
@@ -80,6 +80,7 @@ const migrateStorageToChainSwaps = async (swapsForage: LocalForage) => {
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null) continue;
         await swapsForage.setItem(swapId, migrateSwapToChainSwapFormat(swap));
     }
 
@@ -205,7 +206,7 @@ const normalizeSwapPosition = (position: unknown): SwapPosition | undefined => {
 
 export const migrateSwapDexPositionShape = (swap: SomeSwap): SomeSwap => {
     const position = normalizeSwapPosition(swap.dex?.position);
-    if (position === undefined) {
+    if (position === undefined || swap.dex === undefined) {
         return swap as SomeSwap;
     }
     swap.dex.position = position;
@@ -217,6 +218,9 @@ const migrateStorageGasAbstraction = async (swapsForage: LocalForage) => {
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null) {
+            continue;
+        }
         await swapsForage.setItem(swapId, migrateSwapGasAbstraction(swap));
     }
 
@@ -228,6 +232,9 @@ const migrateStorageGasAbstractionShape = async (swapsForage: LocalForage) => {
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null) {
+            continue;
+        }
         await swapsForage.setItem(swapId, migrateSwapGasAbstractionShape(swap));
     }
 
@@ -239,6 +246,9 @@ const migrateStorageDexPositionShape = async (swapsForage: LocalForage) => {
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null) {
+            continue;
+        }
         await swapsForage.setItem(
             swapId,
             migrateSwapDexPositionShape(swap as SomeSwap),
@@ -335,6 +345,9 @@ const migrateStorageBridgeShape = async (swapsForage: LocalForage) => {
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null) {
+            continue;
+        }
         await swapsForage.setItem(swapId, migrateSwapBridgeShape(swap));
     }
 

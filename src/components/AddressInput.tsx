@@ -27,7 +27,7 @@ import {
 } from "../utils/invoice";
 
 const AddressInput = () => {
-    let inputRef: HTMLInputElement;
+    let inputRef!: HTMLInputElement;
     let validationRequest = 0;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
@@ -63,7 +63,7 @@ const AddressInput = () => {
         }
 
         const address = extractAddress(inputValue);
-        const invoice = extractInvoice(inputValue);
+        const invoice = extractInvoice(inputValue) ?? "";
 
         try {
             const currentPair = pair();
@@ -175,6 +175,8 @@ const AddressInput = () => {
                 }
 
                 case null:
+                    break;
+                case undefined:
                     break;
 
                 default: {

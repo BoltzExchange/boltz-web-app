@@ -166,8 +166,15 @@ const buildRefundFollowUpCalls = async (
         throw new Error("missing refund destination for routed refund");
     }
 
-    const desiredToken = dexDetails.hops[0].dexDetails.tokenIn;
-    const quoteChain = dexDetails.hops[0].dexDetails.chain;
+    const hopDexDetails = dexDetails.hops[0].dexDetails;
+    if (hopDexDetails === undefined) {
+        throw new Error("missing DEX details on refund hop");
+    }
+    const desiredToken = hopDexDetails.tokenIn;
+    const quoteChain = hopDexDetails.chain;
+    if (refundData.tokenAddress === undefined) {
+        throw new Error("missing token address for refund");
+    }
     const [quote] = await quoteDexAmountIn(
         quoteChain,
         refundData.tokenAddress,
@@ -369,43 +376,32 @@ const buildErc20RefundTransaction = async ({
     cooperative: boolean;
     commitmentRefund?: boolean;
 }): Promise<TransactionRequest | AlchemyCall[]> => {
-    if (cooperative && signature === undefined) {
-        throw new Error("missing cooperative refund signature");
+    if (refundData.tokenAddress === undefined) {
+        throw new Error("missing token address for ERC20 refund");
     }
 
-    const refundTransaction: TransactionRequest = {
-        to: await contract.getAddress(),
-        data: cooperative
-            ? commitmentRefund
-                ? contract.interface.encodeFunctionData(
-                      "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)",
-                      [
-                          refundData.preimageHash,
-                          refundData.amount,
-                          refundData.tokenAddress,
-                          refundData.claimAddress,
-                          refundData.timelock,
-                          signature?.v,
-                          signature?.r,
-                          signature?.s,
-                      ],
-                  )
-                : contract.interface.encodeFunctionData(
-                      "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
-                      [
-                          refundData.preimageHash,
-                          refundData.amount,
-                          refundData.tokenAddress,
-                          refundData.claimAddress,
-                          refundData.refundAddress,
-                          refundData.timelock,
-                          signature?.v,
-                          signature?.r,
-                          signature?.s,
-                      ],
-                  )
+    let data: string;
+    if (cooperative) {
+        if (signature === undefined) {
+            throw new Error("missing cooperative refund signature");
+        }
+
+        data = commitmentRefund
+            ? contract.interface.encodeFunctionData(
+                  "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)",
+                  [
+                      refundData.preimageHash,
+                      refundData.amount,
+                      refundData.tokenAddress,
+                      refundData.claimAddress,
+                      refundData.timelock,
+                      signature.v,
+                      signature.r,
+                      signature.s,
+                  ],
+              )
             : contract.interface.encodeFunctionData(
-                  "refund(bytes32,uint256,address,address,address,uint256)",
+                  "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
                   [
                       refundData.preimageHash,
                       refundData.amount,
@@ -413,8 +409,28 @@ const buildErc20RefundTransaction = async ({
                       refundData.claimAddress,
                       refundData.refundAddress,
                       refundData.timelock,
+                      signature.v,
+                      signature.r,
+                      signature.s,
                   ],
-              ),
+              );
+    } else {
+        data = contract.interface.encodeFunctionData(
+            "refund(bytes32,uint256,address,address,address,uint256)",
+            [
+                refundData.preimageHash,
+                refundData.amount,
+                refundData.tokenAddress,
+                refundData.claimAddress,
+                refundData.refundAddress,
+                refundData.timelock,
+            ],
+        );
+    }
+
+    const refundTransaction: TransactionRequest = {
+        to: await contract.getAddress(),
+        data,
     };
 
     if (gasAbstraction !== GasAbstractionType.Signer) {
@@ -434,7 +450,10 @@ const buildErc20RefundTransaction = async ({
         return [toAlchemyCall(refundTransaction), ...followUpCalls];
     }
 
-    if (getAddress(destination) === getAddress(refundData.refundAddress)) {
+    if (
+        destination !== undefined &&
+        getAddress(destination) === getAddress(refundData.refundAddress)
+    ) {
         return [toAlchemyCall(refundTransaction)];
     }
 
@@ -460,12 +479,12 @@ export const RefundEvm = (props: {
     transactionSigner?: Signer | Wallet;
     disabled?: boolean;
     swapId?: string;
-    signerAddress: string;
+    signerAddress?: string;
     derivationPath?: string;
     swapType?: SwapType;
     lockupTxHash?: string;
     commitmentLockupTxHash?: string;
-    setRefundTxId: Setter<string>;
+    setRefundTxId: Setter<string | undefined>;
     dexDetails?: DexDetail;
     destination?: string;
     bridge?: BridgeDetail;
@@ -493,12 +512,13 @@ export const RefundEvm = (props: {
     );
 
     createEffect(() => {
-        if (transactionSigner() === undefined) {
+        const ts = transactionSigner();
+        if (ts === undefined) {
             setSignerNetwork(undefined);
             return;
         }
-        void transactionSigner()
-            .provider?.getNetwork()
+        void ts.provider
+            ?.getNetwork()
             .then((network) => setSignerNetwork(Number(network?.chainId)))
             .catch(() => setSignerNetwork(undefined));
     });
@@ -559,9 +579,16 @@ export const RefundEvm = (props: {
             ).connect(createAssetProvider(asset));
 
             log.debug("Fetching lockup data");
-            const receipt = await assertTransactionSignerProvider(
-                transactionSigner,
-            ).getTransactionReceipt(lockupTx ?? commitmentLockupTxHash);
+            const txHash = lockupTx ?? commitmentLockupTxHash;
+            if (txHash === undefined) {
+                throw new Error(
+                    "missing lockup or commitment transaction hash",
+                );
+            }
+            const receipt =
+                await assertTransactionSignerProvider(
+                    transactionSigner,
+                ).getTransactionReceipt(txHash);
             if (receipt === null) {
                 throw new Error("could not fetch lockup transaction receipt");
             }
@@ -574,6 +601,11 @@ export const RefundEvm = (props: {
 
             let swapHash: string;
             if (contractKind === AssetKind.ERC20) {
+                if (data.tokenAddress === undefined) {
+                    throw new Error(
+                        "missing token address in lockup data for ERC20 swap",
+                    );
+                }
                 swapHash = await (contract as ERC20Swap).hashValues(
                     data.preimageHash,
                     data.amount,
@@ -629,7 +661,9 @@ export const RefundEvm = (props: {
                 <ContractTransaction
                     address={{
                         address:
-                            transactionSigner()?.address ?? props.signerAddress,
+                            transactionSigner()?.address ??
+                            props.signerAddress ??
+                            "",
                         derivationPath: props.derivationPath,
                     }}
                     disabled={props.disabled}
@@ -776,10 +810,8 @@ export const RefundBtc = (props: {
         useGlobalContext();
     const { refundableUTXOs, failureReason } = usePayContext();
 
-    const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
-    const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<
-        number | null
-    >(null);
+    const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
+    const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<number>(0);
 
     const [valid, setValid] = createSignal<boolean>(false);
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
@@ -803,25 +835,34 @@ export const RefundBtc = (props: {
 
         const asset = props.swap()?.assetSend;
         if (!asset) return;
+        const address = refundAddress();
+        if (address === null) {
+            setValid(false);
+            return;
+        }
 
-        setValid(validateAddress(asset, refundAddress()));
+        setValid(validateAddress(asset, address));
     };
 
     const refundAction = async () => {
         setRefundRunning(true);
 
         try {
+            const address = refundAddress();
+            if (address === null) {
+                throw new Error("missing refund address");
+            }
             const refundTxId = await refund(
                 props.deriveKeyFn || deriveKey,
                 props.swap(),
-                refundAddress(),
+                address,
                 refundableUTXOs(),
                 failureReason() === incorrectAssetError
                     ? RefundType.AssetRescue
                     : RefundType.Cooperative,
             );
 
-            props.setRefundTxId(refundTxId);
+            props.setRefundTxId?.(refundTxId);
 
             setRefundAddress("");
         } catch (error) {
@@ -843,8 +884,8 @@ export const RefundBtc = (props: {
                         (tx) => tx.timeoutEta && tx.timeoutBlockHeight,
                     );
                     if (legacyTx) {
-                        setTimeoutEta(legacyTx.timeoutEta);
-                        setTimeoutBlockheight(legacyTx.timeoutBlockHeight);
+                        setTimeoutEta(legacyTx.timeoutEta ?? 0);
+                        setTimeoutBlockheight(legacyTx.timeoutBlockHeight ?? 0);
                     }
                 }
                 log.error(msg);
@@ -890,7 +931,7 @@ export const RefundBtc = (props: {
                 <input
                     data-testid="refundAddress"
                     id="refundAddress"
-                    value={refundAddress()}
+                    value={refundAddress() ?? ""}
                     onInput={(e) => {
                         setRefundAddress(e.target.value.trim());
                         validateRefundAddress();
@@ -966,7 +1007,7 @@ const RefundButton = (props: {
                     signerAddress={props.swap().signer}
                     derivationPath={props.swap().derivationPath}
                     swapType={props.swap().type}
-                    setRefundTxId={setRefundTxId}
+                    setRefundTxId={setRefundTxId as Setter<string | undefined>}
                     asset={props.swap().assetSend}
                     commitmentLockupTxHash={props.swap().commitmentLockupTxHash}
                     lockupTxHash={props.swap().lockupTx}

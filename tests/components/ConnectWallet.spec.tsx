@@ -1,6 +1,7 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import BigNumber from "bignumber.js";
+import type { JSX } from "solid-js";
 import { createEffect, createMemo, createSignal } from "solid-js";
 import { keccak256, toBytes } from "viem";
 
@@ -151,7 +152,7 @@ vi.mock("../../src/utils/boltzClient", async () => {
         getContracts: vi.fn().mockResolvedValue({
             rbtc: {
                 network: {
-                    chainId: config.assets.RBTC.network.chainId,
+                    chainId: config.assets!.RBTC.network!.chainId,
                 },
                 supportedContracts: {},
                 swapContracts: {},
@@ -217,7 +218,7 @@ class MockEthereumProvider {
     };
 }
 
-const wrapper = (props: { children: Element }) => {
+const wrapper = (props: { children: JSX.Element }) => {
     const App = () => (
         <GlobalProvider>
             <Web3SignerProvider>
@@ -342,12 +343,12 @@ describe("ConnectWallet", () => {
         });
 
         provider.emitChainChanged(
-            `0x${config.assets.RBTC.network.chainId.toString(16)}`,
+            `0x${config.assets!.RBTC.network!.chainId!.toString(16)}`,
         );
 
         await waitFor(() => {
             expect(screen.getByTestId("chain-id").textContent).toBe(
-                String(config.assets.RBTC.network.chainId),
+                String(config.assets!.RBTC.network!.chainId),
             );
         });
         await waitFor(() => {

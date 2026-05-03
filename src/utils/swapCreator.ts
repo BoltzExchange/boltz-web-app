@@ -97,6 +97,7 @@ export type SwapBase = {
 
 export type SubmarineSwap = SwapBase &
     SubmarineCreatedResponse & {
+        type: SwapType.Submarine;
         invoice: string;
         preimage?: string;
         refundPrivateKeyIndex?: number;
@@ -107,6 +108,7 @@ export type SubmarineSwap = SwapBase &
 
 export type ReverseSwap = SwapBase &
     ReverseCreatedResponse & {
+        type: SwapType.Reverse;
         preimage: string;
         claimAddress: string;
         claimPrivateKeyIndex?: number;
@@ -117,6 +119,7 @@ export type ReverseSwap = SwapBase &
 
 export type ChainSwap = SwapBase &
     ChainSwapCreatedResponse & {
+        type: SwapType.Chain;
         preimage: string;
         claimAddress: string;
         claimPrivateKeyIndex?: number;
@@ -143,6 +146,17 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 
         default:
             return swap.assetReceive;
+    }
+};
+
+export const getSwapAddress = (swap: SomeSwap): string => {
+    switch (swap.type) {
+        case SwapType.Submarine:
+            return swap.address;
+        case SwapType.Reverse:
+            return swap.lockupAddress;
+        case SwapType.Chain:
+            return swap.lockupDetails.lockupAddress;
     }
 };
 
@@ -351,15 +365,15 @@ export const createChain = async (
     };
 };
 
-const annotateSwapBaseData = <T>(
+const annotateSwapBaseData = <T, K extends SwapType>(
     createdResponse: T,
-    type: SwapType,
+    type: K,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     gasAbstraction: GasAbstraction,
-): T & SwapBase => ({
+): T & SwapBase & { type: K } => ({
     ...createdResponse,
     type,
     gasAbstraction,

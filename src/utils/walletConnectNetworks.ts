@@ -49,6 +49,12 @@ export const buildWalletConnectNetworks = (
         }
 
         const network = assetConfig.network;
+        if (
+            network.chainId === undefined ||
+            network.nativeCurrency === undefined
+        ) {
+            continue;
+        }
 
         if (networks.some((n) => n.id === network.chainId)) {
             continue;

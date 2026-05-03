@@ -1,4 +1,6 @@
 import log from "loglevel";
+// We have to use the server entry point because
+// the client one does not work in Tor Browser
 import QRCode from "qrcode/lib/server";
 import { createResource, createSignal } from "solid-js";
 
@@ -21,9 +23,9 @@ export const Qrcode = (params: QrCodeProps) => {
     createResource(async () => {
         try {
             setDataUrl(
-                await (QRCode.toDataURL(params.data, {
+                await QRCode.toDataURL(params.data, {
                     width: 300,
-                }) as Promise<string>),
+                }),
             );
         } catch (e) {
             log.error(`QR code generation failed: ${formatError(e)}`);

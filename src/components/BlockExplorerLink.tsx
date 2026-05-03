@@ -4,18 +4,14 @@ import { Match, Show, Switch } from "solid-js";
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { bridgeRegistry } from "../utils/bridge";
-import type {
-    ChainSwap,
-    ReverseSwap,
-    SomeSwap,
-    SubmarineSwap,
-} from "../utils/swapCreator";
+import type { SomeSwap } from "../utils/swapCreator";
 import {
     getPostBridgeDetail,
     getRelevantAssetForSwap,
+    getSwapAddress,
     isEvmSwap,
 } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
+import BlockExplorer, { BlockExplorerTargetKind } from "./BlockExplorer";
 
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
@@ -32,17 +28,19 @@ const ChainSwapLink = (props: {
             fallback={
                 <BlockExplorer
                     asset={asset()}
-                    txId={props.swap().claimTx}
+                    kind={
+                        hasBeenClaimed()
+                            ? BlockExplorerTargetKind.Tx
+                            : BlockExplorerTargetKind.Address
+                    }
+                    id={
+                        hasBeenClaimed()
+                            ? props.swap().claimTx!
+                            : getSwapAddress(props.swap())
+                    }
                     explorer={bridgeRegistry.getExplorerKind(
                         getPostBridgeDetail(props.swap().bridge),
                     )}
-                    address={
-                        // When it has been claimed, the "txId" is populated
-                        hasBeenClaimed()
-                            ? undefined
-                            : (props.swap() as ChainSwap).lockupDetails
-                                  .lockupAddress
-                    }
                 />
             }>
             {/* Showing addresses makes no sense for EVM based chains.
@@ -50,7 +48,8 @@ const ChainSwapLink = (props: {
             <Show when={props.swap().lockupTx}>
                 <BlockExplorer
                     asset={asset()}
-                    txId={props.swap().lockupTx}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={props.swap().lockupTx!}
                     typeLabel={"lockup_tx"}
                 />
             </Show>
@@ -58,7 +57,7 @@ const ChainSwapLink = (props: {
     );
 };
 
-const BlockExplorerLink = (props: {
+const BlockExplorerLinkInner = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
@@ -77,7 +76,8 @@ const BlockExplorerLink = (props: {
             fallback={
                 <BlockExplorer
                     asset={props.swap().bridge!.sourceAsset}
-                    txId={props.swap().bridge!.txHash}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={props.swap().bridge!.txHash!}
                     explorer={bridgeRegistry.getExplorerKind(
                         props.swap().bridge,
                     )}
@@ -104,17 +104,19 @@ const BlockExplorerLink = (props: {
                             }>
                             <BlockExplorer
                                 asset={getRelevantAssetForSwap(props.swap())}
-                                txId={props.swap().claimTx}
+                                kind={
+                                    props.swap().claimTx !== undefined
+                                        ? BlockExplorerTargetKind.Tx
+                                        : BlockExplorerTargetKind.Address
+                                }
+                                id={
+                                    props.swap().claimTx !== undefined
+                                        ? props.swap().claimTx!
+                                        : getSwapAddress(props.swap())
+                                }
                                 explorer={bridgeRegistry.getExplorerKind(
                                     props.swap().bridge,
                                 )}
-                                address={
-                                    props.swap().type === SwapType.Submarine
-                                        ? (props.swap() as SubmarineSwap)
-                                              .address
-                                        : (props.swap() as ReverseSwap)
-                                              .lockupAddress
-                                }
                             />
                         </Show>
                     </Match>
@@ -129,14 +131,16 @@ const BlockExplorerLink = (props: {
                                         asset={getRelevantAssetForSwap(
                                             props.swap(),
                                         )}
-                                        txId={props.swap().lockupTx}
+                                        kind={BlockExplorerTargetKind.Tx}
+                                        id={props.swap().lockupTx!}
                                         typeLabel={"lockup_tx"}
                                     />
                                 </Show>
                             }>
                             <BlockExplorer
                                 asset={getRelevantAssetForSwap(props.swap())}
-                                txId={props.swap().claimTx}
+                                kind={BlockExplorerTargetKind.Tx}
+                                id={props.swap().claimTx!}
                                 explorer={bridgeRegistry.getExplorerKind(
                                     props.swap().bridge,
                                 )}
@@ -146,6 +150,22 @@ const BlockExplorerLink = (props: {
                     </Match>
                 </Switch>
             </Show>
+        </Show>
+    );
+};
+
+const BlockExplorerLink = (props: {
+    swap: Accessor<SomeSwap | null>;
+    swapStatus: Accessor<string>;
+}) => {
+    return (
+        <Show when={props.swap()}>
+            {(swap) => (
+                <BlockExplorerLinkInner
+                    swap={swap}
+                    swapStatus={props.swapStatus}
+                />
+            )}
         </Show>
     );
 };

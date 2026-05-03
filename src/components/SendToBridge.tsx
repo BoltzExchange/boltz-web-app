@@ -54,18 +54,27 @@ const SendToBridge = (props: {
     const sourceGasToken = () =>
         config.assets?.[props.bridge.sourceAsset]?.network?.gasToken;
 
-    const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
-    const [requiredTokenBalance, setRequiredTokenBalance] =
-        createSignal<bigint>(undefined);
-    const [hasEnoughMsgFee, setHasEnoughMsgFee] =
-        createSignal<boolean>(undefined);
+    const [signerBalance, setSignerBalance] = createSignal<bigint | undefined>(
+        undefined,
+    );
+    const [requiredTokenBalance, setRequiredTokenBalance] = createSignal<
+        bigint | undefined
+    >(undefined);
+    const [hasEnoughMsgFee, setHasEnoughMsgFee] = createSignal<
+        boolean | undefined
+    >(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
-    const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
+    const [approvalTarget, setApprovalTarget] = createSignal<
+        string | undefined
+    >(undefined);
     const txSent = createMemo(() => {
         return swap()?.bridge?.txHash;
     });
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
+        if (currentSigner.provider === null) {
+            return undefined;
+        }
         return await currentSigner.provider
             .getNetwork()
             .then((n) => Number(n.chainId));
@@ -606,7 +615,10 @@ const SendToBridge = (props: {
 
     const persistBridgeSend = async (txHash: string) => {
         const currentSwap = await getSwap(props.swapId);
-        if (currentSwap?.bridge !== undefined) {
+        if (currentSwap === null) {
+            return;
+        }
+        if (currentSwap.bridge !== undefined) {
             currentSwap.bridge = {
                 ...currentSwap.bridge,
                 txHash,
@@ -633,7 +645,7 @@ const SendToBridge = (props: {
             fallback={
                 <WaitForBridge
                     bridge={props.bridge}
-                    transactionHash={txSent()}
+                    transactionHash={txSent()!}
                 />
             }>
             <Show
@@ -652,7 +664,7 @@ const SendToBridge = (props: {
                 }>
                 <Show
                     when={
-                        signerBalance() >=
+                        signerBalance()! >=
                         (requiredTokenBalance() ?? props.amount)
                     }
                     fallback={

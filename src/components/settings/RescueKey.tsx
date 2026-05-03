@@ -36,7 +36,11 @@ const RescueFile = () => {
     const [copied, setCopied] = createSignal(false);
 
     const copy = () => {
-        clipboard(rescueFile().mnemonic);
+        const file = rescueFile();
+        if (file === null) {
+            return;
+        }
+        clipboard(file.mnemonic);
         setCopied(true);
         setTimeout(() => setCopied(false), copyIconTimeout);
     };

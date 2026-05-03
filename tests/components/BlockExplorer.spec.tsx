@@ -1,6 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import BlockExplorer from "../../src/components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../../src/components/BlockExplorer";
 import { config } from "../../src/config";
 import { NetworkTransport } from "../../src/configs/base";
 import * as assets from "../../src/consts/Assets";
@@ -18,9 +20,18 @@ describe("BlockExplorer", () => {
         ${"BTC"}   | ${"bcrt1qh47qjmkkdxmg8cjxhe7gnnuluwddcw692cfjsv"}
         ${"L-BTC"} | ${"el1qqfvxkyk2973r8y0dd42ce34r33gplzaharn0sj69qs6gvkua0r0evkk6skde36hgfx2gufy8s8ppdz54kqwkcn9az63n5pcj3"}
     `("should link to $asset addresses", async ({ asset, address }) => {
-        render(() => <BlockExplorer asset={asset} address={address} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <BlockExplorer
+                    asset={asset}
+                    kind={BlockExplorerTargetKind.Address}
+                    id={address}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         const button = await screen.findByText(
             i18n.en.blockexplorer.replace(
@@ -28,7 +39,7 @@ describe("BlockExplorer", () => {
                 i18n.en.blockexplorer_lockup_address,
             ),
         );
-        const baseLink = config.assets[asset].blockExplorerUrl.normal;
+        const baseLink = config.assets![asset].blockExplorerUrl!.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
         expect((button as HTMLAnchorElement).href).toEqual(
@@ -41,9 +52,18 @@ describe("BlockExplorer", () => {
         ${"BTC"}   | ${"813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d"}
         ${"L-BTC"} | ${"9193b769c217808a17a86890195851eab78fdfd2f14d877163587327620324af"}
     `("should link to $asset transactions", async ({ asset, txId }) => {
-        render(() => <BlockExplorer asset={asset} txId={txId} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <BlockExplorer
+                    asset={asset}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={txId}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         const button = await screen.findByText(
             i18n.en.blockexplorer.replace(
@@ -51,7 +71,7 @@ describe("BlockExplorer", () => {
                 i18n.en.blockexplorer_claim_tx,
             ),
         );
-        const baseLink = config.assets[asset].blockExplorerUrl.normal;
+        const baseLink = config.assets![asset].blockExplorerUrl!.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
         expect((button as HTMLAnchorElement).href).toEqual(
@@ -67,7 +87,8 @@ describe("BlockExplorer", () => {
             () => (
                 <BlockExplorer
                     asset="BTC"
-                    txId={txId}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={txId}
                     explorer={ExplorerKind.LayerZero}
                 />
             ),
@@ -97,7 +118,8 @@ describe("BlockExplorer", () => {
             () => (
                 <BlockExplorer
                     asset="USDC-BASE"
-                    txId={txId}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={txId}
                     explorer={ExplorerKind.Cctp}
                 />
             ),
@@ -118,6 +140,23 @@ describe("BlockExplorer", () => {
         );
     });
 
+    test("does not render a link when no explorer base URL is configured", () => {
+        const { container } = render(
+            () => (
+                <BlockExplorer
+                    asset="UNKNOWN-ASSET"
+                    kind={BlockExplorerTargetKind.Tx}
+                    id="deadbeef"
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        expect(container.querySelector("a.btn-explorer")).toBeNull();
+    });
+
     test("should prefix Tron LayerZero transaction hashes with 0x", async () => {
         const txId =
             "2ae5f8e33daf1d608f7aad172b52fb00dbf98a43735c2ed07e203049bcc19815";
@@ -129,7 +168,8 @@ describe("BlockExplorer", () => {
             () => (
                 <BlockExplorer
                     asset="USDT0-TRON"
-                    txId={txId}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={txId}
                     explorer={ExplorerKind.LayerZero}
                 />
             ),

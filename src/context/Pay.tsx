@@ -118,6 +118,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 deriveKey,
                 swap,
             );
+            if (sig === undefined) {
+                return;
+            }
             await postChainSwapDetails(swap.id, undefined, sig);
         } catch (e) {
             log.warn(
@@ -240,7 +243,13 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     data.transaction as { hex: string },
                     true,
                 );
+                if (res === undefined) {
+                    return;
+                }
                 const claimedSwap = await getSwap(res.id);
+                if (claimedSwap === null) {
+                    return;
+                }
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 
@@ -260,6 +269,12 @@ const PayProvider = (props: { children: JSX.Element }) => {
                         e.includes("Transaction outputs already in utxo set") ||
                         e.includes("Inputs missing or spent"))
                 ) {
+                    if (
+                        data.transaction === undefined ||
+                        data.transaction.hex === undefined
+                    ) {
+                        return;
+                    }
                     const lockupTx = getTransaction(
                         currentSwap.assetReceive,
                     ).fromHex(data.transaction.hex);
@@ -274,6 +289,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
                             log.debug(
                                 `swap ${currentSwap.id}: checking for spent status of tx output ${data.transaction.id}:${vout}`,
                             );
+                            if (data.transaction.id === undefined) {
+                                return;
+                            }
                             const outspend = await getTransactionOutSpend(
                                 currentSwap.assetReceive,
                                 data.transaction.id,
@@ -316,12 +334,12 @@ const PayProvider = (props: { children: JSX.Element }) => {
             currentSwap.type === SwapType.Submarine &&
             data.status === swapStatusPending.TransactionClaimPending &&
             currentSwap.receiveAmount >=
-                getPair(
+                (getPair(
                     pairs(),
                     currentSwap.type,
                     currentSwap.assetSend,
                     currentSwap.assetReceive,
-                ).limits.minimal
+                )?.limits.minimal ?? Number.MAX_SAFE_INTEGER)
         ) {
             try {
                 await createSubmarineSignature(
@@ -359,6 +377,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
             // Attempt to claim eligible swaps when zeroConf changes to true
             const swaps = await getSwaps();
             for (const swap of swaps) {
+                if (swap.status === undefined) {
+                    continue;
+                }
                 if (
                     isSwapClaimable({
                         status: swap.status,

@@ -18,11 +18,11 @@ vi.mock("../../src/config", async () => {
         config: {
             ...actual.config,
             assets: {
-                ...actual.config.assets,
+                ...actual.config.assets!,
                 "USDT0-POL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Polygon PoS",
                         symbol: "POL",
                         gasToken: "POL",
@@ -35,9 +35,9 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 "USDT0-CORN": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Corn",
                         symbol: "CORN",
                         gasToken: "BTCN",
@@ -50,9 +50,9 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 "USDT0-STABLE": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Stable",
                         symbol: "STABLE",
                         gasToken: "USDT0",
@@ -65,9 +65,9 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 "USDT0-SOL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Solana",
                         symbol: "SOL",
                         gasToken: "SOL",

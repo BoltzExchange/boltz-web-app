@@ -12,8 +12,8 @@ export const mnemonicLength = 12;
 export const rescueKeyMode = "rescue-key";
 
 export type RescueContextType = {
-    rescueFile: Accessor<RescueFile>;
-    setRescueFile: Setter<RescueFile>;
+    rescueFile: Accessor<RescueFile | undefined>;
+    setRescueFile: Setter<RescueFile | undefined>;
 
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
@@ -47,9 +47,15 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
     };
 
     const deriveKeyWrapper = (index: number, asset: AssetType) => {
-        return ECPair.fromPrivateKey(
-            new Uint8Array(deriveKey(rescueFile(), index, asset).privateKey),
-        );
+        const rf = rescueFile();
+        if (rf === undefined) {
+            throw new Error("rescue file is not initialised");
+        }
+        const derived = deriveKey(rf, index, asset);
+        if (derived.privateKey === null) {
+            throw new Error("derived private key is null");
+        }
+        return ECPair.fromPrivateKey(new Uint8Array(derived.privateKey));
     };
 
     return (

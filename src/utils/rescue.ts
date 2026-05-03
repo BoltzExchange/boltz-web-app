@@ -204,7 +204,7 @@ const refundTaproot = async <T extends TransactionInterface>(
     const refundTx = constructRefundTransaction(
         details,
         decodedAddress.script,
-        cooperative ? 0 : timeoutBlockHeight,
+        cooperative ? 0 : (timeoutBlockHeight ?? 0),
         feePerVbyte,
         true,
         getNetwork(swap.assetSend) as LiquidNetwork,
@@ -352,6 +352,9 @@ const assetRescueRefund = async <T extends SubmarineSwap | ChainSwap>(
     const tweaked = tweakMusig(swap.assetSend, keyAgg, swapTree.tree);
 
     const output = detectSwap(tweaked.aggPubkey, transaction);
+    if (output === undefined) {
+        throw new Error("could not detect swap output for rescue");
+    }
 
     const setup = await assetRescueSetup(
         swap.assetSend,
@@ -415,7 +418,10 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     const feePerVbyte = await getFeeEstimationsFailover(swap.assetSend);
 
     const validTimeouts = transactionsToRefund
-        .filter((tx) => typeof tx.timeoutBlockHeight === "number")
+        .filter(
+            (tx): tx is typeof tx & { timeoutBlockHeight: number } =>
+                typeof tx.timeoutBlockHeight === "number",
+        )
         .map((tx) => tx.timeoutBlockHeight);
     const timeoutBlockHeight =
         validTimeouts.length > 0 ? Math.max(...validTimeouts) : undefined;
@@ -460,7 +466,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             transaction: constructRefundTransaction(
                 details,
                 output.script,
-                timeoutBlockHeight,
+                timeoutBlockHeight ?? 0,
                 feePerVbyte,
                 true,
                 swap.assetSend === LBTC
@@ -474,7 +480,9 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     return broadcastRefund(swap, refundTransaction);
 };
 
-export const isRefundableSwapType = (swap: SomeSwap) =>
+export const isRefundableSwapType = (swap: SomeSwap | null | undefined) =>
+    swap !== null &&
+    swap !== undefined &&
     [SwapType.Chain, SwapType.Submarine].includes(swap.type);
 
 export const getRescuableUTXOs = async (currentSwap: SomeSwap) => {
@@ -497,6 +505,7 @@ export const getRescuableUTXOs = async (currentSwap: SomeSwap) => {
     // Fallback to lockup tx if 3rd party utxo data is not available and swap status is not final
     if (
         lockupTx &&
+        currentSwap.status !== undefined &&
         !Object.values(swapStatusFinal).includes(currentSwap.status)
     ) {
         return [lockupTx];
@@ -557,13 +566,15 @@ export const createRescueList = async (
                     ? await getRescuableUTXOs(swap)
                     : [];
 
+                const status = swap.status ?? "";
+                const blockHeight =
+                    currentBlockHeight[swap.assetSend as RefundableAssetType];
+
                 if (utxos.length === 0) {
-                    if (
-                        Object.values(swapStatusSuccess).includes(swap.status)
-                    ) {
+                    if (Object.values(swapStatusSuccess).includes(status)) {
                         return { ...swap, action: RescueAction.Successful };
                     }
-                    if (Object.values(swapStatusFailed).includes(swap.status)) {
+                    if (Object.values(swapStatusFailed).includes(status)) {
                         return { ...swap, action: RescueAction.Failed };
                     }
                 }
@@ -571,7 +582,8 @@ export const createRescueList = async (
                 // Prioritize refunding for expired swaps with UTXOs
                 if (
                     isRefundableSwapType(swap) &&
-                    hasSwapTimedOut(swap, currentBlockHeight[swap.assetSend]) &&
+                    blockHeight !== undefined &&
+                    hasSwapTimedOut(swap, blockHeight) &&
                     utxos.length > 0
                 ) {
                     return {
@@ -584,7 +596,7 @@ export const createRescueList = async (
                 if (
                     isSwapClaimable({
                         swap,
-                        status: swap.status,
+                        status,
                         type: swap.type,
                         zeroConf,
                     })
@@ -594,15 +606,14 @@ export const createRescueList = async (
 
                 if (
                     isRefundableSwapType(swap) &&
-                    !Object.values(swapStatusPending).includes(swap.status) &&
+                    !Object.values(swapStatusPending).includes(status) &&
                     utxos.length > 0
                 ) {
                     return {
                         ...swap,
                         action: RescueAction.Refund,
-                        waitForSwapTimeout: Object.values(
-                            swapStatusSuccess,
-                        ).includes(swap.status),
+                        waitForSwapTimeout:
+                            Object.values(swapStatusSuccess).includes(status),
                     };
                 }
 

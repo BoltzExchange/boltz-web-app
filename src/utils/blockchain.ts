@@ -82,7 +82,7 @@ const fetchBlockExplorer = async <T>(
     endpoint: string,
     options: RequestInit = {},
 ): Promise<T> => {
-    for (const url of config.assets[asset].blockExplorerApis) {
+    for (const url of config.assets?.[asset]?.blockExplorerApis ?? []) {
         const { opts, requestTimeout } = constructRequestOptions(options);
 
         try {
@@ -133,7 +133,7 @@ const fetchBlockExplorerParallel = async <T>(
     endpoint: string,
     options: RequestInit = {},
 ): Promise<T> => {
-    const urls = config.assets[asset].blockExplorerApis;
+    const urls = config.assets?.[asset]?.blockExplorerApis ?? [];
 
     try {
         const parallelPromises = urls.map(async (url) => {

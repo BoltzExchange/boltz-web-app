@@ -38,7 +38,7 @@ test.describe("EVM", () => {
             await page.getByText(/metamask/i).click();
         }
 
-        const shortAddress = walletClient.account.address.slice(0, 8);
+        const shortAddress = walletClient.account!.address.slice(0, 8);
         await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
             timeout: 10_000,
         });
@@ -95,7 +95,7 @@ test.describe("EVM", () => {
                     await page.getByText(/metamask/i).click();
                 }
 
-                const shortAddress = walletClient.account.address.slice(0, 8);
+                const shortAddress = walletClient.account!.address.slice(0, 8);
                 await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
                     timeout: 10_000,
                 });
@@ -206,7 +206,7 @@ test.describe("EVM", () => {
                     await page.getByText(/metamask/i).click();
                 }
 
-                const shortAddress = walletClient.account.address.slice(0, 8);
+                const shortAddress = walletClient.account!.address.slice(0, 8);
                 await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
                     timeout: 10_000,
                 });
@@ -271,7 +271,7 @@ test.describe("EVM", () => {
             await page.getByText(/metamask/i).click();
         }
 
-        const shortAddress = walletClient.account.address.slice(0, 8);
+        const shortAddress = walletClient.account!.address.slice(0, 8);
         await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
             timeout: 10_000,
         });
@@ -332,7 +332,7 @@ test.describe("EVM", () => {
             await page.getByText(/metamask/i).click();
         }
 
-        const shortAddress = walletClient.account.address.slice(0, 8);
+        const shortAddress = walletClient.account!.address.slice(0, 8);
         await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
             timeout: 10_000,
         });
@@ -385,7 +385,7 @@ test.describe("EVM", () => {
             await page.getByText(/metamask/i).click();
         }
 
-        const shortAddress = walletClient.account.address.slice(0, 8);
+        const shortAddress = walletClient.account!.address.slice(0, 8);
         await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
             timeout: 10_000,
         });
@@ -431,7 +431,9 @@ test.describe("EVM", () => {
         await page.reload();
 
         const refundTxLink = page.getByText("open refund transaction");
-        const txId = (await refundTxLink.getAttribute("href")).split("/").pop();
+        const txId = (await refundTxLink.getAttribute("href"))!
+            .split("/")
+            .pop();
         expect(txId).toBeDefined();
     });
 });

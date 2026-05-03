@@ -26,7 +26,7 @@ describe("fuzzyScore", () => {
     test("should penalize gaps", () => {
         const prefix = fuzzyScore("arb", "Arbitrum");
         const gapped = fuzzyScore("arm", "Arbitrum");
-        expect(prefix).toBeLessThan(gapped);
+        expect(prefix).toBeLessThan(gapped!);
     });
 
     test("should return score of 1 for single char match at start", () => {

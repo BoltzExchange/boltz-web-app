@@ -33,12 +33,12 @@ vi.mock("../../src/config", async () => {
         config: {
             ...actual.config,
             assets: {
-                ...actual.config.assets,
+                ...actual.config.assets!,
                 "USDT0-POL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Polygon PoS",
                         symbol: "POL",
                         gasToken: "POL",
@@ -50,15 +50,15 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000000137",
                     },
                 },
                 "USDT0-CFX": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: false,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Conflux eSpace",
                         symbol: "CFX",
                         gasToken: "CFX",
@@ -70,12 +70,12 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000001030",
                     },
                 },
                 "USDT0-SOL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     blockExplorerUrl: {
                         id: "solscan",
@@ -94,13 +94,13 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     bridge: {
-                        ...actual.config.assets.USDT0.bridge,
+                        ...actual.config.assets!.USDT0.bridge,
                         mesh: "legacy",
                         quotePayer:
                             "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
                     },
                 },

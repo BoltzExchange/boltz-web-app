@@ -89,7 +89,7 @@ export class OftBridgeDriver extends BridgeDriver {
         return route.sourceAsset;
     };
 
-    public getNativeDropFailure = (
+    public override getNativeDropFailure = (
         error: BridgeErrorLike,
     ): BridgeNativeDropFailure | undefined => {
         if (!isExecutorNativeAmountExceedsCapError(error)) {
@@ -255,7 +255,7 @@ export class OftBridgeDriver extends BridgeDriver {
         return getSolanaOftGuidFromLogs(args.logMessages);
     };
 
-    public getTransportRequiredNativeBalance = async (
+    public override getTransportRequiredNativeBalance = async (
         route: BridgeRoute,
         msgFee: BridgeMsgFee,
     ): Promise<bigint> => {

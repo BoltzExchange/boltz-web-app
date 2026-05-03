@@ -54,7 +54,7 @@ describe("CctpBridgeDriver", () => {
     const solanaRecipientSetupHookData =
         "0x636374702d666f7277617264000000000000000000000000000000000000002101cf3ac201d92eadcae0cd69b431f4c0e6d96c06bdb2fa28271b00409b5f1622ca";
     const requireUsdcCctpBridge = () => {
-        const bridge = mainnetConfig.assets.USDC.bridge;
+        const bridge = mainnetConfig.assets!.USDC.bridge;
         if (bridge?.kind !== BridgeKind.Cctp) {
             throw new Error("USDC is not configured as CCTP");
         }
@@ -64,9 +64,9 @@ describe("CctpBridgeDriver", () => {
     beforeAll(() => {
         runtimeConfig.assets = {
             ...runtimeConfig.assets,
-            USDC: structuredClone(mainnetConfig.assets.USDC),
-            "USDC-BASE": structuredClone(mainnetConfig.assets["USDC-BASE"]),
-            "USDC-SOL": structuredClone(mainnetConfig.assets["USDC-SOL"]),
+            USDC: structuredClone(mainnetConfig.assets!.USDC),
+            "USDC-BASE": structuredClone(mainnetConfig.assets!["USDC-BASE"]),
+            "USDC-SOL": structuredClone(mainnetConfig.assets!["USDC-SOL"]),
         };
     });
 
@@ -478,7 +478,7 @@ describe("CctpBridgeDriver", () => {
         expect(encoded).toBe("0xexecuted");
         expect(encodeFunctionData).toHaveBeenCalledWith("executeCctp", [
             [],
-            mainnetConfig.assets.USDC.token!.address,
+            mainnetConfig.assets!.USDC.token!.address,
             bridgeContract.address,
             projectCctpData(sendParam as CctpSendParam),
             minAmount,
@@ -586,7 +586,7 @@ describe("CctpBridgeDriver", () => {
             executionContract: {
                 address: requireUsdcCctpBridge().cctp.tokenMessenger,
             },
-            burnToken: mainnetConfig.assets.USDC.token!.address,
+            burnToken: mainnetConfig.assets!.USDC.token!.address,
         });
     });
 

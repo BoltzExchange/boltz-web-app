@@ -85,7 +85,11 @@ export const clipboard = (text: string) => {
 };
 
 export const getApiUrl = (): string => {
-    return chooseUrl(config.apiUrl);
+    const url = chooseUrl(config.apiUrl);
+    if (url === undefined) {
+        throw new Error("missing API url in config");
+    }
+    return url;
 };
 
 export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);
@@ -96,13 +100,16 @@ export const getPair = <
         | ReversePairTypeTaproot
         | ChainPairTypeTaproot,
 >(
-    pairs: Pairs,
+    pairs: Pairs | undefined,
     swapType: SwapType,
     assetSend: string,
     assetReceive: string,
 ): T | undefined => {
     if (pairs === undefined) return undefined;
 
+    if (swapType === SwapType.Dex) {
+        return undefined;
+    }
     const pairSwapType = pairs[swapType];
     if (pairSwapType === undefined) return undefined;
     const pairAssetSend = pairSwapType[coalesceLn(assetSend)];
@@ -198,6 +205,9 @@ export const parsePrivateKey = (
     if (keyIndex !== undefined) {
         return deriveKey(keyIndex, asset);
     }
+    if (privateKeyHex === undefined) {
+        throw new Error("missing private key for parsePrivateKey");
+    }
 
     try {
         return ECPair.fromPrivateKey(hex.decode(privateKeyHex));
@@ -209,12 +219,14 @@ export const parsePrivateKey = (
     }
 };
 
-export const getDestinationAddress = (swap: SomeSwap) => {
+export const getDestinationAddress = (
+    swap: SomeSwap | null | undefined,
+): string => {
     if (swap === null || swap === undefined) {
         return "";
     }
 
-    if (isEvmSwap(swap)) {
+    if (isEvmSwap(swap) && swap.signer !== undefined) {
         return swap.signer;
     }
 
@@ -228,5 +240,5 @@ export const getDestinationAddress = (swap: SomeSwap) => {
         return chainSwap.originalDestination || chainSwap.claimAddress;
     }
 
-    return swap.claimAddress;
+    return (swap as SubmarineSwap).claimAddress!;
 };

@@ -11,7 +11,11 @@ import {
     getPair,
     parsePrivateKey,
 } from "../../src/utils/helper";
-import type { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SubmarineSwap,
+} from "../../src/utils/swapCreator";
 
 vi.mock("../../src/utils/ecpair", () => {
     return {
@@ -171,6 +175,36 @@ describe("helper", () => {
             expect(getDestinationAddress(swap)).toBe(
                 "liquid1qabcdefghijklmnopqrstuvwxyz",
             );
+        });
+
+        test("returns the connected signer for an EVM reverse swap", () => {
+            const swap = {
+                type: SwapType.Reverse,
+                assetReceive: "RBTC",
+                signer: "0x000000000000000000000000000000000000beef",
+                claimAddress: "0x000000000000000000000000000000000000dEad",
+            } as unknown as ReverseSwap;
+
+            expect(getDestinationAddress(swap)).toBe(
+                "0x000000000000000000000000000000000000beef",
+            );
+        });
+
+        test("falls back to claimAddress for an EVM reverse swap without signer", () => {
+            const swap = {
+                type: SwapType.Reverse,
+                assetReceive: "RBTC",
+                claimAddress: "0x000000000000000000000000000000000000dEad",
+            } as unknown as ReverseSwap;
+
+            expect(getDestinationAddress(swap)).toBe(
+                "0x000000000000000000000000000000000000dEad",
+            );
+        });
+
+        test("returns empty string for null/undefined swap", () => {
+            expect(getDestinationAddress(null)).toBe("");
+            expect(getDestinationAddress(undefined)).toBe("");
         });
     });
 });

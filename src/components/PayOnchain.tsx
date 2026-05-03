@@ -58,6 +58,9 @@ const PayOnchain = (props: {
             props.assetSend,
             props.assetReceive,
         );
+        if (pair === undefined) {
+            return "";
+        }
         return t("send_between", {
             denomination: denom,
             min: formatAmount(

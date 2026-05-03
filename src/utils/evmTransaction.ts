@@ -36,9 +36,9 @@ type SendPopulatedTransactionOptions = {
 
 export const getSignerForGasAbstraction = (
     gasAbstraction: GasAbstractionType,
-    signer: Signer,
+    signer: Signer | undefined,
     gasAbstractionSigner: Wallet,
-): Signer | Wallet => {
+): Signer | Wallet | undefined => {
     switch (gasAbstraction) {
         case GasAbstractionType.None:
         case GasAbstractionType.RifRelay:
@@ -96,6 +96,9 @@ export const sendPopulatedTransaction = async (
                       ],
             );
 
+            if (signer.provider === null) {
+                throw new Error("missing provider on signer");
+            }
             const { chainId } = await signer.provider.getNetwork();
             return await sendAlchemyTransaction(
                 signer as Wallet,
@@ -104,7 +107,10 @@ export const sendPopulatedTransaction = async (
                     ? transaction
                     : [
                           {
-                              data: transaction.data,
+                              data:
+                                  typeof transaction.data === "string"
+                                      ? transaction.data
+                                      : undefined,
                               to: transaction.to as string,
                               value: transaction.value?.toString() ?? undefined,
                           },
@@ -232,6 +238,9 @@ export const claimAsset = async (
                 signer(),
                 getGasAbstractionSigner,
             );
+            if (claimSigner === undefined) {
+                throw new Error("missing claim signer");
+            }
 
             const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;
             const tx = isErc20

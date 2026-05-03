@@ -23,6 +23,9 @@ export const GasNeededToClaim = BigInt(35355) * 2n;
 export const MaxRelayNonceGap = 10;
 
 const sign = async (signer: Signer, request: EnvelopingRequest) => {
+    if (signer.provider === null) {
+        throw new Error("missing provider for RIF sign");
+    }
     const { chainId } = await signer.provider.getNetwork();
 
     const data = getEnvelopingRequestDataV4Field({
@@ -54,6 +57,9 @@ export const relayClaimTransaction = async (
             timeoutBlockHeight,
         ],
     );
+    if (signer.provider === null) {
+        throw new Error("missing provider on RIF signer");
+    }
     const [
         chainInfo,
         smartWalletAddress,
@@ -74,6 +80,11 @@ export const relayClaimTransaction = async (
 
     const smartWalletFactory = getSmartWalletFactory(signer);
 
+    const callVerifier = config.assets?.[RBTC]?.contracts?.deployVerifier;
+    if (!callVerifier) {
+        throw new Error("missing RBTC deployVerifier in config");
+    }
+
     const envelopingRequest: EnvelopingRequest = {
         request: {
             value: "0",
@@ -88,9 +99,9 @@ export const relayClaimTransaction = async (
         },
         relayData: {
             feesReceiver: chainInfo.feesReceiver,
-            callVerifier: config.assets[RBTC].contracts.deployVerifier,
+            callVerifier,
             gasPrice: calculateGasPrice(
-                feeData.gasPrice,
+                feeData.gasPrice ?? 0n,
                 chainInfo.minGasPrice,
             ).toString(),
         },

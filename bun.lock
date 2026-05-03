@@ -62,6 +62,7 @@
         "@testing-library/user-event": "^14.6.1",
         "@trivago/prettier-plugin-sort-imports": "^6.0.2",
         "@types/node": "^25.6.0",
+        "@types/qrcode": "^1.5.6",
         "@webbtc/webln-types": "^3.0.0",
         "axios": "^1.15.2",
         "codama": "^1.6.0",
@@ -998,6 +999,8 @@
     "@types/offscreencanvas": ["@types/offscreencanvas@2019.7.3", "", {}, "sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A=="],
 
     "@types/prop-types": ["@types/prop-types@15.7.15", "", {}, "sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw=="],
+
+    "@types/qrcode": ["@types/qrcode@1.5.6", "", { "dependencies": { "@types/node": "*" } }, "sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw=="],
 
     "@types/randombytes": ["@types/randombytes@2.0.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-+NRgihTfuURllWCiIAhm1wsJqzsocnqXM77V/CalsdJIYSRGEHMnritxh+6EsBklshC+clo1KgnN14qgSGeQdw=="],
 

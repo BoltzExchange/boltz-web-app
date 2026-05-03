@@ -103,6 +103,9 @@ const validateAddress = (
         const blindingPrivateKey = hex.decode(blindingKey);
         const blindingPublicKey = secp256k1.getPublicKey(blindingPrivateKey);
 
+        if (decodedAddress.blindingKey === undefined) {
+            throw new Error("address is missing blinding key");
+        }
         if (!equalBytes(decodedAddress.blindingKey, blindingPublicKey)) {
             throw new Error("blinding public key mismatch");
         }
@@ -183,6 +186,12 @@ const validateReverse = async (
     // SwapTree
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
+    if (
+        swap.claimPrivateKeyIndex === undefined ||
+        swap.refundPublicKey === undefined
+    ) {
+        throw new Error("missing swap key data for reverse validation");
+    }
     const ourKeys = deriveKey(
         swap.claimPrivateKeyIndex,
         swap.assetReceive as AssetType,
@@ -234,6 +243,9 @@ const validateSubmarine = async (
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
+    if (swap.refundPrivateKeyIndex === undefined) {
+        throw new Error("missing refund key index for submarine validation");
+    }
     const ourKeys = deriveKey(
         swap.refundPrivateKeyIndex,
         swap.assetSend as AssetType,
@@ -300,12 +312,16 @@ const validateChainSwap = async (
             return;
         }
 
-        const ourKeys = deriveKey(
+        const keyIndex =
             side === Side.Send
                 ? swap.refundPrivateKeyIndex
-                : swap.claimPrivateKeyIndex,
-            asset as AssetType,
-        );
+                : swap.claimPrivateKeyIndex;
+        if (keyIndex === undefined) {
+            throw new Error(
+                `missing ${side === Side.Send ? "refund" : "claim"} key index for chain validation`,
+            );
+        }
+        const ourKeys = deriveKey(keyIndex, asset as AssetType);
         const theirPublicKey = hex.decode(details.serverPublicKey);
         const tree = SwapTreeSerializer.deserializeSwapTree(details.swapTree);
         const compareTree = reverseSwapTree(
@@ -330,6 +346,9 @@ const validateChainSwap = async (
         );
 
         if (side === Side.Send) {
+            if (details.bip21 === undefined) {
+                throw new Error("missing bip21 for send-side chain validation");
+            }
             validateBip21(details.bip21, details.lockupAddress, details.amount);
         }
     };

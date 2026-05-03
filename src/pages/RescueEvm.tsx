@@ -4,7 +4,9 @@ import log from "loglevel";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
@@ -93,7 +95,9 @@ const RefundState = (props: {
 
             <RefundButton
                 asset={props.asset}
-                setRefundTxId={props.setRefundTxId}
+                setRefundTxId={
+                    props.setRefundTxId as Setter<string | undefined>
+                }
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}
                 gasAbstraction={gasAbstraction()?.type}
@@ -104,7 +108,8 @@ const RefundState = (props: {
             <BlockExplorer
                 typeLabel={"lockup_tx"}
                 asset={props.asset}
-                txId={props.lockupTxHash}
+                kind={BlockExplorerTargetKind.Tx}
+                id={props.lockupTxHash}
             />
         </>
     );
@@ -134,10 +139,14 @@ const ClaimState = (props: {
 
     const getGasAbstraction = async (): Promise<GasAbstractionType> => {
         if (props.asset === RBTC) {
-            const balance = await signer().provider.getBalance(
-                await signer().getAddress(),
+            const sig = signer();
+            if (sig === undefined || sig.provider === null) {
+                throw new Error("missing signer or provider for gas check");
+            }
+            const balance = await sig.provider.getBalance(
+                await sig.getAddress(),
             );
-            const gasPrice = (await signer().provider.getFeeData()).gasPrice;
+            const gasPrice = (await sig.provider.getFeeData()).gasPrice;
             if (gasPrice === null || balance <= gasPrice * GasNeededToClaim) {
                 return GasAbstractionType.RifRelay;
             }
@@ -161,7 +170,11 @@ const ClaimState = (props: {
 
         try {
             const gasAbstraction = await getGasAbstraction();
-            const connectedAddress = await signer().getAddress();
+            const sig = signer();
+            if (sig === undefined) {
+                throw new Error("missing signer for claim");
+            }
+            const connectedAddress = await sig.getAddress();
 
             const { transactionHash } = await claimAsset(
                 gasAbstraction,
@@ -172,8 +185,8 @@ const ClaimState = (props: {
                 refundAddress,
                 Number(timelock),
                 connectedAddress,
-                signer,
-                getGasAbstractionSigner(asset, rescueFile()),
+                () => sig,
+                getGasAbstractionSigner(asset, rescueFile() ?? undefined),
                 getEtherSwap(asset),
                 getErc20Swap(asset),
             );
@@ -234,7 +247,7 @@ const RescueEvm = () => {
         undefined,
     );
 
-    const [rescueData] = createResource<RescueData>(async () => {
+    const [rescueData] = createResource<RescueData | undefined>(async () => {
         if (signer() === undefined) {
             return undefined;
         }
@@ -262,8 +275,10 @@ const RescueEvm = () => {
 
     const isRefundAction = () => params.action === RskRescueMode.Refund;
 
-    const timelockExpired = () =>
-        rescueData() && rescueData().timelock <= rescueData().currentHeight;
+    const timelockExpired = () => {
+        const data = rescueData();
+        return data !== undefined && data.timelock <= data.currentHeight;
+    };
 
     const isCommitmentLockup = () =>
         isEmptyPreimageHash(rescueData()?.preimageHash);
@@ -304,15 +319,20 @@ const RescueEvm = () => {
                                             <BlockExplorer
                                                 typeLabel={"refund_tx"}
                                                 asset={params.asset}
-                                                txId={refundTxId()}
+                                                kind={
+                                                    BlockExplorerTargetKind.Tx
+                                                }
+                                                id={refundTxId()!}
                                             />
                                         </>
                                     }>
                                     <RefundState
                                         asset={params.asset}
                                         lockupTxHash={params.txHash}
-                                        refundData={rescueData()}
-                                        setRefundTxId={setRefundTxId}
+                                        refundData={rescueData()!}
+                                        setRefundTxId={
+                                            setRefundTxId as Setter<string>
+                                        }
                                     />
                                 </Show>
                             </Match>
@@ -326,15 +346,20 @@ const RescueEvm = () => {
                                             <BlockExplorer
                                                 typeLabel={"claim_tx"}
                                                 asset={params.asset}
-                                                txId={claimTxId()}
+                                                kind={
+                                                    BlockExplorerTargetKind.Tx
+                                                }
+                                                id={claimTxId()!}
                                             />
                                         </>
                                     }>
                                     <ClaimState
                                         asset={params.asset}
                                         lockupTxHash={params.txHash}
-                                        claimData={rescueData()}
-                                        setClaimTxId={setClaimTxId}
+                                        claimData={rescueData()!}
+                                        setClaimTxId={
+                                            setClaimTxId as Setter<string>
+                                        }
                                     />
                                 </Show>
                             </Match>
@@ -344,12 +369,12 @@ const RescueEvm = () => {
                                     timeoutEta={() =>
                                         getTimeoutEta(
                                             params.asset as blockChainsAssets,
-                                            Number(rescueData().timelock),
-                                            Number(rescueData().currentHeight),
+                                            Number(rescueData()!.timelock),
+                                            Number(rescueData()!.currentHeight),
                                         )
                                     }
                                     timeoutBlockHeight={() =>
-                                        Number(rescueData().timelock)
+                                        Number(rescueData()!.timelock)
                                     }
                                     asset={params.asset}
                                 />

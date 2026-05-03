@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
-import { type Setter, createSignal } from "solid-js";
+import { type Accessor, type Setter, createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
 import { BTC, LN } from "../../src/consts/Assets";
@@ -10,11 +10,11 @@ import { TestComponent, contextWrapper, payContext } from "../helper";
 
 describe("RefundButton", () => {
     test("should render RefundButton", () => {
-        const [swap] = createSignal(null);
+        const [swap] = createSignal<SubmarineSwap | ChainSwap | null>(null);
         render(
             () => (
                 <RefundButton
-                    swap={swap}
+                    swap={swap as Accessor<SubmarineSwap | ChainSwap>}
                     setRefundTxId={(() => "") as Setter<string>}
                 />
             ),

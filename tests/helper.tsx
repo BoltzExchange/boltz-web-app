@@ -1,4 +1,5 @@
 import { Route, Router } from "@solidjs/router";
+import type { JSX } from "solid-js";
 
 import type { CreateContextType } from "../src/context/Create";
 import { CreateProvider, useCreateContext } from "../src/context/Create";
@@ -32,7 +33,7 @@ export const TestComponent = () => {
     return "";
 };
 
-export const contextWrapper = (props: { children: Element }) => {
+export const contextWrapper = (props: { children: JSX.Element }) => {
     const App = () => (
         <GlobalProvider>
             <Web3SignerProvider noFetch={true}>

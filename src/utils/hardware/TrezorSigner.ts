@@ -114,7 +114,13 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
+                if (request.params === undefined) {
+                    throw new Error("missing params for eth_sendTransaction");
+                }
                 const txParams = request.params[0] as HardwareTransactionLike;
+                if (txParams.from === null || txParams.from === undefined) {
+                    throw new Error("missing from address for transaction");
+                }
 
                 const [connect, nonce, network, feeData] = await Promise.all([
                     this.loader.get(),
@@ -195,6 +201,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
+                if (request.params === undefined) {
+                    throw new Error("missing params for eth_signTypedData_v4");
+                }
                 const message = JSON.parse(request.params[1] as string);
                 const types = {
                     ...message.types,
@@ -223,7 +232,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
         return (await this.provider.send(
             request.method,
-            request.params,
+            request.params ?? [],
         )) as never;
     };
 

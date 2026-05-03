@@ -334,7 +334,7 @@ export const generateInvoiceWithRoutingHint = async (
     const addressSignature = schnorr.sign(addressHash, privateKey);
 
     const swapRes = await (
-        await axios.post(`${config.apiUrl.normal}/v2/swap/reverse`, {
+        await axios.post(`${config.apiUrl!.normal}/v2/swap/reverse`, {
             address: claimAddress,
             from: BTC,
             to: LBTC,
@@ -347,7 +347,7 @@ export const generateInvoiceWithRoutingHint = async (
 
     const magicRoutingHint = findMagicRoutingHint(swapRes.invoice);
 
-    if (magicRoutingHint === null) {
+    if (magicRoutingHint === null || magicRoutingHint === undefined) {
         throw new Error("no magic routing hint");
     }
 
@@ -362,7 +362,7 @@ export const fetchBip21Invoice = async (invoice: string) => {
     const requestContext = await request.newContext();
 
     const res = await requestContext.get(
-        `${config.apiUrl.normal}/v2/swap/reverse/${invoice}/bip21`,
+        `${config.apiUrl!.normal}/v2/swap/reverse/${invoice}/bip21`,
     );
 
     const data = (await res.json()) as { bip21: string; signature: string };
@@ -370,9 +370,9 @@ export const fetchBip21Invoice = async (invoice: string) => {
     return data;
 };
 
-export const getCurrentSwapId = (page: Page) => {
+export const getCurrentSwapId = (page: Page): string => {
     const url = new URL(page.url());
-    return url.pathname.split("/").pop();
+    return url.pathname.split("/").pop() ?? "";
 };
 
 export const waitForUTXOs = async (
@@ -385,7 +385,7 @@ export const waitForUTXOs = async (
             async () => {
                 const utxos = (
                     await axios.get<UTXO[]>(
-                        `${config.assets[asset].blockExplorerApis[0].normal}/address/${address}/utxo`,
+                        `${config.assets![asset].blockExplorerApis![0].normal}/address/${address}/utxo`,
                     )
                 ).data;
 
@@ -402,7 +402,7 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
             async () => {
                 const currentHeight = (
                     await axios.get<string>(
-                        `${config.assets[asset].blockExplorerApis[0].normal}/blocks/tip/height`,
+                        `${config.assets![asset].blockExplorerApis![0].normal}/blocks/tip/height`,
                     )
                 ).data;
                 return Number(currentHeight) >= height;

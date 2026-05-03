@@ -32,7 +32,14 @@ export const unconfidentialExtra = 5;
 
 const gasAbstractionExtraGasCost = 157_000n;
 
-export const getFeeHighlightClass = (fee: number, regularFee: number) => {
+export const getFeeHighlightClass = (
+    fee: number,
+    regularFee?: number,
+): string | undefined => {
+    if (regularFee === undefined) {
+        return undefined;
+    }
+
     if (fee < 0) {
         return "negative-fee";
     }
@@ -66,7 +73,7 @@ export const RoutingFee = () => {
             <span class="fees-extra-line">
                 {t("routing_fee_limit")}:{" "}
                 <span data-testid="routing-fee-limit">
-                    {pair().maxRoutingFee * ppmFactor} ppm
+                    {pair().maxRoutingFee! * ppmFactor} ppm
                 </span>
             </span>
         </Show>
@@ -269,16 +276,19 @@ const Fees = () => {
                         {t("fee")} (
                         <span
                             class={
-                                config.isPro &&
-                                getFeeHighlightClass(
-                                    boltzFee(),
-                                    getPair(
-                                        regularPairs(),
-                                        swapType(),
-                                        assetSend(),
-                                        assetReceive(),
-                                    )?.fees.percentage,
-                                )
+                                config.isPro
+                                    ? getFeeHighlightClass(
+                                          boltzFee(),
+                                          swapType() === undefined
+                                              ? undefined
+                                              : getPair(
+                                                    regularPairs(),
+                                                    swapType()!,
+                                                    assetSend(),
+                                                    assetReceive(),
+                                                )?.fees.percentage,
+                                      )
+                                    : undefined
                             }>
                             {boltzFee().toString().replaceAll(".", separator())}
                             %

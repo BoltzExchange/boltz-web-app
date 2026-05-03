@@ -63,23 +63,20 @@ const getClaimTaprootContext = (
 
     switch (swap.type) {
         case SwapType.Reverse: {
-            const reverseSwap = swap as ReverseSwap;
-            boltzPublicKey = hex.decode(reverseSwap.refundPublicKey);
-            tree = SwapTreeSerializer.deserializeSwapTree(reverseSwap.swapTree);
+            if (swap.refundPublicKey === undefined) {
+                throw new Error("missing refund public key for reverse swap");
+            }
+            boltzPublicKey = hex.decode(swap.refundPublicKey);
+            tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
             break;
         }
 
         case SwapType.Chain: {
-            const chainSwap = swap as ChainSwap;
-            boltzPublicKey = hex.decode(chainSwap.claimDetails.serverPublicKey);
+            boltzPublicKey = hex.decode(swap.claimDetails.serverPublicKey);
             tree = SwapTreeSerializer.deserializeSwapTree(
-                chainSwap.claimDetails.swapTree,
+                swap.claimDetails.swapTree,
             );
             break;
-        }
-
-        default: {
-            throw new Error(`unhandled swap type: ${swap.type as string}`);
         }
     }
 
@@ -337,10 +334,17 @@ const claimChainSwap = async (
         const withNonce = withMsg.generateNonce();
 
         // Post our partial signature to ask for theirs
+        const theirSig = await createTheirPartialChainSwapSignature(
+            deriveKey,
+            swap,
+        );
+        if (theirSig === undefined) {
+            throw new Error("could not get their partial chain swap signature");
+        }
         const theirPartial = await postChainSwapDetails(
             swap.id,
             swap.preimage,
-            await createTheirPartialChainSwapSignature(deriveKey, swap),
+            theirSig,
             {
                 index: 0,
                 transaction: txToHex(claimTx),
@@ -391,7 +395,7 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
         swapStatusTransaction.hex,
     );
 
-    let claimTransaction: TransactionInterface;
+    let claimTransaction: TransactionInterface | undefined;
     if (swap.type === SwapType.Reverse) {
         claimTransaction = await claimReverseSwap(
             deriveKey,
@@ -406,6 +410,9 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
             lockupTx,
             cooperative,
         );
+    }
+    if (claimTransaction === undefined) {
+        return undefined;
     }
 
     log.debug("Broadcasting claim transaction");

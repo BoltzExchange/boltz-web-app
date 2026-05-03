@@ -38,7 +38,7 @@ const getWalletRejectionMessage = (language?: string | null): string => {
         Object.hasOwn(dict, language)
             ? language
             : config.defaultLanguage;
-    const localeDict: typeof dict.en = dict[locale];
+    const localeDict: typeof dict.en = dict[locale as keyof typeof dict];
 
     return localeDict[walletRequestRejectedKey];
 };

@@ -54,7 +54,7 @@ import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
  */
 const isRoutedAsset = (asset: string) =>
     getRouteViaAsset(asset) !== undefined ||
-    config.assets[asset]?.bridge !== undefined;
+    config.assets?.[asset]?.bridge !== undefined;
 
 /** Convert an internal amount to EVM base units for the DEX API. */
 const toDexAmount = (amount: number, asset: string): bigint =>
@@ -148,14 +148,14 @@ export default class Pair {
         private readonly to: string,
         private readonly regularPairs?: Pairs,
     ) {
-        if (config.assets[from]?.canSend === false) {
+        if (config.assets?.[from]?.canSend === false) {
             log.info(`Send asset ${from} is not allowed`);
             return;
         }
 
         if (
-            config.assets[from]?.disabled === true ||
-            config.assets[to]?.disabled === true
+            config.assets?.[from]?.disabled === true ||
+            config.assets?.[to]?.disabled === true
         ) {
             log.info(`Pair ${from} -> ${to} contains disabled asset`);
             return;
@@ -174,8 +174,8 @@ export default class Pair {
 
         const routeSource = getCanonicalAsset(from);
         const routeTarget = getCanonicalAsset(to);
-        const canonicalSourceAsset = config.assets[routeSource];
-        const canonicalTargetAsset = config.assets[routeTarget];
+        const canonicalSourceAsset = config.assets?.[routeSource];
+        const canonicalTargetAsset = config.assets?.[routeTarget];
         this.preBridgeDriver = bridgeRegistry.getDriverForAsset(from);
         this.preBridge = this.preBridgeDriver?.getPreRoute(from);
         this.postBridgeDriver = bridgeRegistry.getDriverForAsset(to);
@@ -215,16 +215,33 @@ export default class Pair {
             canonicalTargetAsset.type === AssetKind.ERC20
         ) {
             const hopAssetSymbol = getRouteViaAsset(to);
-            const hopAsset = config.assets[hopAssetSymbol];
+            const hopAsset =
+                hopAssetSymbol !== undefined
+                    ? config.assets?.[hopAssetSymbol]
+                    : undefined;
             const hopPair =
                 hopAssetSymbol !== undefined
                     ? Pair.findPair(pairs, routeSource, hopAssetSymbol)
                     : undefined;
 
-            if (hopPair !== undefined && hopAsset !== undefined) {
+            if (
+                hopPair !== undefined &&
+                hopAsset !== undefined &&
+                hopAssetSymbol !== undefined
+            ) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
+                if (
+                    hopAsset.network?.symbol === undefined ||
+                    hopAsset.token?.address === undefined ||
+                    canonicalTargetAsset.token?.address === undefined
+                ) {
+                    log.info(
+                        `Pair ${from} -> ${to} missing DEX route metadata`,
+                    );
+                    return;
+                }
                 const proposedRoute: Hop[] = [
                     {
                         type: hopPair.type,
@@ -237,9 +254,9 @@ export default class Pair {
                         from: hopAssetSymbol,
                         to: routeTarget,
                         dexDetails: {
-                            chain: hopAsset.network?.symbol,
-                            tokenIn: hopAsset.token?.address,
-                            tokenOut: canonicalTargetAsset.token?.address,
+                            chain: hopAsset.network.symbol,
+                            tokenIn: hopAsset.token.address,
+                            tokenOut: canonicalTargetAsset.token.address,
                         },
                     },
                 ];
@@ -256,25 +273,42 @@ export default class Pair {
             canonicalSourceAsset.type === AssetKind.ERC20
         ) {
             const hopAssetSymbol = getRouteViaAsset(from);
-            const hopAsset = config.assets[hopAssetSymbol];
+            const hopAsset =
+                hopAssetSymbol !== undefined
+                    ? config.assets?.[hopAssetSymbol]
+                    : undefined;
             const hopPair =
                 hopAssetSymbol !== undefined
                     ? Pair.findPair(pairs, hopAssetSymbol, routeTarget)
                     : undefined;
 
-            if (hopPair !== undefined && hopAsset !== undefined) {
+            if (
+                hopPair !== undefined &&
+                hopAsset !== undefined &&
+                hopAssetSymbol !== undefined
+            ) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
+                if (
+                    canonicalSourceAsset.network?.symbol === undefined ||
+                    canonicalSourceAsset.token?.address === undefined ||
+                    hopAsset.token?.address === undefined
+                ) {
+                    log.info(
+                        `Pair ${from} -> ${to} missing DEX route metadata`,
+                    );
+                    return;
+                }
                 const proposedRoute: Hop[] = [
                     {
                         type: SwapType.Dex,
                         from: routeSource,
                         to: hopAssetSymbol,
                         dexDetails: {
-                            chain: canonicalSourceAsset.network?.symbol,
-                            tokenIn: canonicalSourceAsset.token?.address,
-                            tokenOut: hopAsset.token?.address,
+                            chain: canonicalSourceAsset.network.symbol,
+                            tokenIn: canonicalSourceAsset.token.address,
+                            tokenOut: hopAsset.token.address,
                         },
                     },
                     {
@@ -300,7 +334,7 @@ export default class Pair {
     ): string | undefined => {
         for (const hop of route) {
             for (const asset of [hop.from, hop.to]) {
-                if (config.assets[asset]?.disabled === true) {
+                if (config.assets?.[asset]?.disabled === true) {
                     return asset;
                 }
             }
@@ -467,7 +501,7 @@ export default class Pair {
     public get feePercentage() {
         return this.route
             .filter((hop) => hop.pair !== undefined)
-            .reduce((acc, hop) => acc + hop.pair.fees.percentage, 0);
+            .reduce((acc, hop) => acc + hop.pair!.fees.percentage, 0);
     }
 
     public get maxRoutingFee() {
@@ -1247,6 +1281,9 @@ export default class Pair {
 
         let boltzSendLimit: number;
 
+        if (boltzHop.pair === undefined) {
+            return 0;
+        }
         if (boltzHop.type !== SwapType.Submarine) {
             boltzSendLimit = boltzHop.pair.limits.minimal;
         } else {
@@ -1266,7 +1303,7 @@ export default class Pair {
 
     public getMaximum = async (): Promise<number> => {
         const boltzHop = this.boltzHop;
-        if (boltzHop === undefined) {
+        if (boltzHop === undefined || boltzHop.pair === undefined) {
             return 0;
         }
 
@@ -1299,6 +1336,9 @@ export default class Pair {
                     return acc;
                 }
 
+                if (pair.pair === undefined) {
+                    return acc;
+                }
                 return acc + pair.pair.fees.percentage;
             }, 0);
         return fee;

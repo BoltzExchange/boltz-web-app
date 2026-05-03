@@ -202,7 +202,11 @@ const handleUrlParams = (
     }
 
     // Lightning invoice amounts take precedence unless this is a LN addr or bolt12 offer
-    if (destinationAsset !== LN || !isInvoice(destination)) {
+    if (
+        destinationAsset !== LN ||
+        destination === undefined ||
+        !isInvoice(destination)
+    ) {
         const sendAmount = parseAmount(getUrlParam(UrlParam.SendAmount));
         if (sendAmount) {
             setAmountChanged(Side.Send);
@@ -290,8 +294,8 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    setInvoiceError: Setter<DictKey>;
-    invoiceError: Accessor<DictKey>;
+    setInvoiceError: Setter<DictKey | undefined>;
+    invoiceError: Accessor<DictKey | undefined>;
     bolt12Loading: Accessor<boolean>;
     setBolt12Loading: Setter<boolean>;
     quoteLoading: Accessor<boolean>;
@@ -331,7 +335,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     // asset selection
     const [assetSelection, setAssetSelection] =
         createSignal<AssetSelection | null>(null);
-    const [assetSelected, setAssetSelected] = createSignal(null);
+    const [assetSelected, setAssetSelected] = createSignal<string>("");
     const [networkSelectCanonical, setNetworkSelectCanonical] = createSignal<
         string | undefined
     >(undefined);

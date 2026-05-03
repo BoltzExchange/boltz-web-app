@@ -82,11 +82,15 @@ export const fuzzySort = <T>(
     query: string,
     getText: (item: T) => string,
 ): T[] => {
-    if (!query) return items;
+    if (!query) {
+        return items;
+    }
 
     return items
-        .map((item) => ({ item, score: fuzzyScore(query, getText(item)) }))
-        .filter((r) => r.score !== null)
+        .flatMap((item) => {
+            const score = fuzzyScore(query, getText(item));
+            return score === null ? [] : [{ item, score }];
+        })
         .sort((a, b) => a.score - b.score)
         .map((r) => r.item);
 };

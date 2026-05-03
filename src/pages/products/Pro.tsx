@@ -37,13 +37,22 @@ enum OptionCardType {
     Static = "static",
 }
 
-type OptionCard = {
-    type: OptionCardType;
+type OptionCardBase = {
     icon: JSX.Element;
     title: string;
-    href?: string;
     description: JSX.Element | string;
 };
+
+type OptionCard =
+    | (OptionCardBase & {
+          type: OptionCardType.ExternalLink;
+          href: string;
+      })
+    | (OptionCardBase & {
+          type: OptionCardType.InternalLink;
+          href: string;
+      })
+    | (OptionCardBase & { type: OptionCardType.Static });
 
 const Pro = () => {
     const { t } = useGlobalContext();
@@ -156,7 +165,7 @@ const Pro = () => {
                                         </span>
                                     ),
                                 },
-                            ] as OptionCard[]
+                            ] satisfies OptionCard[]
                         }>
                         {(item) => (
                             <Switch>
@@ -164,29 +173,37 @@ const Pro = () => {
                                     when={
                                         item.type ===
                                         OptionCardType.ExternalLink
+                                            ? item
+                                            : false
                                     }>
-                                    <ExternalLink
-                                        href={item.href}
-                                        class="card options-card sequentialFadeUp">
-                                        <h4>
-                                            {item.icon} {item.title}
-                                        </h4>
-                                        <p>{item.description}</p>
-                                    </ExternalLink>
+                                    {(item) => (
+                                        <ExternalLink
+                                            href={item().href}
+                                            class="card options-card sequentialFadeUp">
+                                            <h4>
+                                                {item().icon} {item().title}
+                                            </h4>
+                                            <p>{item().description}</p>
+                                        </ExternalLink>
+                                    )}
                                 </Match>
                                 <Match
                                     when={
                                         item.type ===
                                         OptionCardType.InternalLink
+                                            ? item
+                                            : false
                                     }>
-                                    <a
-                                        href={item.href}
-                                        class="card options-card sequentialFadeUp">
-                                        <h4>
-                                            {item.icon} {item.title}
-                                        </h4>
-                                        <p>{item.description}</p>
-                                    </a>
+                                    {(item) => (
+                                        <a
+                                            href={item().href}
+                                            class="card options-card sequentialFadeUp">
+                                            <h4>
+                                                {item().icon} {item().title}
+                                            </h4>
+                                            <p>{item().description}</p>
+                                        </a>
+                                    )}
                                 </Match>
                                 <Match
                                     when={item.type === OptionCardType.Static}>

@@ -12,7 +12,7 @@ describe("explorerLink", () => {
         test("links to asset addresses by default", () => {
             const address = "bcrt1qh47qjmkkdxmg8cjxhe7gnnuluwddcw692cfjsv";
             expect(blockExplorerLink("BTC", false, address)).toBe(
-                `${config.assets["BTC"].blockExplorerUrl.normal}/address/${address}`,
+                `${config.assets!["BTC"].blockExplorerUrl!.normal}/address/${address}`,
             );
         });
 
@@ -20,7 +20,7 @@ describe("explorerLink", () => {
             const txId =
                 "813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d";
             expect(blockExplorerLink("BTC", true, txId)).toBe(
-                `${config.assets["BTC"].blockExplorerUrl.normal}/tx/${txId}`,
+                `${config.assets!["BTC"].blockExplorerUrl!.normal}/tx/${txId}`,
             );
         });
 
@@ -68,6 +68,33 @@ describe("explorerLink", () => {
                     ExplorerKind.Cctp,
                 ),
             ).toBe(`${config.cctpExplorerUrl}/address/${address}`);
+        });
+
+        test("returns undefined when no explorer base URL is configured", () => {
+            expect(
+                blockExplorerLink("UNKNOWN-ASSET", true, "deadbeef"),
+            ).toBeUndefined();
+        });
+
+        test("returns undefined for CCTP when cctpExplorerUrl is missing", () => {
+            const original = config.cctpExplorerUrl;
+            try {
+                (
+                    config as { cctpExplorerUrl: string | undefined }
+                ).cctpExplorerUrl = undefined;
+                expect(
+                    blockExplorerLink(
+                        "USDC-BASE",
+                        true,
+                        "0xdead",
+                        ExplorerKind.Cctp,
+                    ),
+                ).toBeUndefined();
+            } finally {
+                (
+                    config as { cctpExplorerUrl: string | undefined }
+                ).cctpExplorerUrl = original;
+            }
         });
     });
 });

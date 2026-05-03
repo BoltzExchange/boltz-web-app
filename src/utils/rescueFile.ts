@@ -41,9 +41,16 @@ export const deriveKey = (
     asset: AssetType,
     hdKey?: HDKey,
 ) => {
-    const derivationPath = isEvmAsset(asset)
-        ? getEvmPath(config.assets[asset].network.chainId, index)
-        : getPath(index);
+    let derivationPath: string;
+    if (isEvmAsset(asset)) {
+        const chainId = config.assets?.[asset]?.network?.chainId;
+        if (chainId === undefined) {
+            throw new Error(`missing chainId for EVM asset ${asset}`);
+        }
+        derivationPath = getEvmPath(chainId, index);
+    } else {
+        derivationPath = getPath(index);
+    }
 
     if (!hdKey) {
         return mnemonicToHDKey(rescueFile.mnemonic).derive(derivationPath);
@@ -83,6 +90,9 @@ export const derivePreimageFromRescueKey = (
     hdKey?: HDKey,
 ): Buffer => {
     const privateKey = deriveKey(rescueKey, keyIndex, asset, hdKey).privateKey;
+    if (privateKey === null) {
+        throw new Error("missing private key for preimage derivation");
+    }
 
     return Buffer.from(derivePreimage(privateKey));
 };

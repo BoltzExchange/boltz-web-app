@@ -128,8 +128,8 @@ describe("TransactionLockupFailed", () => {
             payContext.setRefundableUTXOs([
                 {
                     hex: "0x",
-                    timeoutEta: null,
-                    timeoutBlockHeight: null,
+                    timeoutEta: undefined,
+                    timeoutBlockHeight: undefined,
                 },
             ]);
             payContext.setSwap({

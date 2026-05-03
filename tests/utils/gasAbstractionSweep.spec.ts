@@ -119,7 +119,7 @@ describe("gas abstraction sweep", () => {
             GasAbstractionType.Signer,
             signer,
             expect.objectContaining({
-                to: config.assets.USDT0.token.address,
+                to: config.assets!.USDT0.token!.address,
             }),
         );
         expect(transaction.data).toBe(expectedData);

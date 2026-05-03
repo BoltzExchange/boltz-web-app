@@ -89,6 +89,9 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
 
     const btcAddr = Address(getBtcNetwork());
     const decoded = btcAddr.decode(addr);
+    if (decoded === undefined) {
+        throw new Error(`could not decode address: ${addr}`);
+    }
     const script = OutScript.encode(decoded);
 
     return { script };
@@ -118,7 +121,7 @@ export const isConfidentialAddress = (addr: string): boolean => {
 const probeUserInputOption = (asset: string, input: string): boolean => {
     switch (asset) {
         case LN: {
-            const invoice = extractInvoice(input);
+            const invoice = extractInvoice(input) ?? "";
             return (
                 isLnurl(invoice) || isInvoice(invoice) || isBolt12Offer(invoice)
             );
@@ -162,12 +165,15 @@ const getNetwork = (
     asset: string,
     network?: string,
 ): BTC_NETWORK | LiquidNetwork => {
-    network = network ?? config.network;
+    const resolvedNetwork = network ?? config.network;
     if (asset === LBTC) {
-        const liquidNet = network === "mainnet" ? "liquid" : network;
-        return LiquidNetworks[liquidNet] as LiquidNetwork;
+        const liquidNet =
+            resolvedNetwork === "mainnet" ? "liquid" : resolvedNetwork;
+        return LiquidNetworks[
+            liquidNet as keyof typeof LiquidNetworks
+        ] as LiquidNetwork;
     } else {
-        return getBtcNetwork(network);
+        return getBtcNetwork(resolvedNetwork);
     }
 };
 
@@ -268,8 +274,14 @@ const getOutputAmount = async (
 
     const liquidOutput = output as LiquidTransactionOutputWithKey;
 
-    if (liquidOutput.rangeProof?.length > 0) {
+    if (
+        liquidOutput.rangeProof !== undefined &&
+        liquidOutput.rangeProof.length > 0
+    ) {
         const { confidential } = await secp.get();
+        if (liquidOutput.blindingPrivateKey === undefined) {
+            throw new Error("missing blinding private key for output");
+        }
         const unblinded = confidential.unblindOutputWithKey(
             liquidOutput,
             liquidOutput.blindingPrivateKey,

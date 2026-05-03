@@ -116,7 +116,7 @@ export type GlobalContextType = {
     clearLogs: () => Promise<void>;
 
     setSwapStorage: (swap: SomeSwap) => Promise<void>;
-    getSwap: <T = SomeSwap>(id: string) => Promise<T>;
+    getSwap: <T = SomeSwap>(id: string) => Promise<T | null>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<void>;
@@ -148,8 +148,8 @@ export type GlobalContextType = {
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
-    serialize: (value: never) => value,
-    deserialize: (value: never) => value,
+    serialize: (value: unknown) => value as string,
+    deserialize: (value: string) => value as never,
 };
 
 const GlobalContext = createContext<GlobalContextType>();
@@ -184,7 +184,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal(null),
+        createSignal<string | null>(null),
         {
             name: "i18n",
             ...stringSerializer,
@@ -221,7 +221,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const [rescueFile, setRescueFile] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal<RescueFile>(null),
+        createSignal<RescueFile | null>(null),
         {
             name: "rescueFile",
         },
@@ -251,21 +251,30 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     });
 
     const deriveKeyWrapper = (index: number, asset: AssetType) => {
-        return ECPair.fromPrivateKey(
-            new Uint8Array(deriveKey(rescueFile(), index, asset).privateKey),
-        );
+        const rf = rescueFile();
+        if (rf === null) {
+            throw new Error("rescue file is not initialised");
+        }
+        const derived = deriveKey(rf, index, asset);
+        if (derived.privateKey === null) {
+            throw new Error("derived private key is null");
+        }
+        return ECPair.fromPrivateKey(new Uint8Array(derived.privateKey));
     };
 
     const deriveKeyGasAbstractionWrapper = (
         chainId: number,
         rf?: RescueFile,
     ) => {
-        return ECPair.fromPrivateKey(
-            new Uint8Array(
-                deriveKeyGasAbstraction(rf ? rf : rescueFile(), chainId)
-                    .privateKey,
-            ),
-        );
+        const file = rf ?? rescueFile();
+        if (file === null) {
+            throw new Error("rescue file is not initialised");
+        }
+        const derived = deriveKeyGasAbstraction(file, chainId);
+        if (derived.privateKey === null) {
+            throw new Error("derived private key is null");
+        }
+        return ECPair.fromPrivateKey(new Uint8Array(derived.privateKey));
     };
 
     const newKey = async (asset: AssetType) => {
@@ -284,7 +293,11 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const getXpubWrapper = () => {
-        return getXpub(rescueFile());
+        const rf = rescueFile();
+        if (rf === null) {
+            throw new Error("rescue file is not initialised");
+        }
+        return getXpub(rf);
     };
 
     const notify = (type: NotificationType, message: unknown) => {
@@ -455,7 +468,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         rdnsForage.getItem<string>(address.toLowerCase());
 
     setI18n(detectLanguage(i18nConfigured(), i18nUrl(), setI18nUrl));
-    void detectWebLNProvider().then((state: boolean) => setWebln(state));
+    void detectWebLNProvider().then((state) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
     const fetchBtcPrice = async () => {
@@ -543,7 +556,10 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         setI18n(detectLanguage(i18nConfigured() || i18nUrl()));
     });
     const dictLocale = createMemo(
-        () => flatten(dict[i18n() || config.defaultLanguage]) as never,
+        () =>
+            flatten(
+                dict[(i18n() || config.defaultLanguage) as keyof typeof dict],
+            ) as never,
     );
 
     const resolveDisplaySymbols = (
@@ -565,10 +581,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     // eslint-disable-next-line solid/reactivity
-    const t = translator(dictLocale, resolveDisplaySymbols) as (
-        key: DictKey,
-        values?: BaseTemplateArgs,
-    ) => string;
+    const t = translator(dictLocale, resolveDisplaySymbols) as unknown as tFn;
 
     return (
         <GlobalContext.Provider

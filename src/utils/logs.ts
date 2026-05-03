@@ -96,13 +96,14 @@ export const persistLogLine = <T extends unknown[]>(
         throw new Error("Window is not in a secure context");
     }
 
+    const writer = logWriter;
     navigator.locks
         .request("logLock", async () => {
             try {
-                await logWriter.setItem(
+                await writer.setItem(
                     currentDate,
                     (
-                        (await logWriter.getItem<string[]>(currentDate)) || []
+                        (await writer.getItem<string[]>(currentDate)) || []
                     ).concat(formatLogLine(message)),
                 );
             } catch (e) {

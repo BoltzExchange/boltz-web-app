@@ -66,12 +66,12 @@ vi.mock("../../src/config", async () => {
         config: {
             ...actual.config,
             assets: {
-                ...actual.config.assets,
+                ...actual.config.assets!,
                 "USDT0-POL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Polygon PoS",
                         symbol: "POL",
                         gasToken: "POL",
@@ -90,10 +90,10 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 "USDT0-CFX": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: false,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Conflux eSpace",
                         symbol: "CFX",
                         gasToken: "CFX",
@@ -105,16 +105,16 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000001030",
                     },
                 },
                 "USDT0-DIS": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     disabled: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Disabled Chain",
                         symbol: "DIS",
                         gasToken: "DIS",
@@ -126,23 +126,23 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000009999",
                     },
                 },
                 "TBTC-DIS": {
-                    ...actual.config.assets.TBTC,
+                    ...actual.config.assets!.TBTC,
                     disabled: true,
                     token: {
-                        ...actual.config.assets.TBTC.token,
+                        ...actual.config.assets!.TBTC.token,
                         address: "0x0000000000000000000000000000000000008888",
                     },
                 },
                 "ROUTED-DIS": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Routed Disabled",
                         symbol: "RDIS",
                         gasToken: "RDIS",
@@ -154,7 +154,7 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000008889",
                         routeVia: "TBTC-DIS",
                     },
@@ -164,10 +164,10 @@ vi.mock("../../src/config", async () => {
                 // no inherited `routeVia`. The hop asset must be picked up
                 // from the canonical config.
                 "USDT0-BARE": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Bare Chain",
                         symbol: "BARE",
                         gasToken: "BARE",
@@ -184,7 +184,7 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 USDC: {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     token: {
                         address: "0x0000000000000000000000000000000000000006",
@@ -204,10 +204,10 @@ vi.mock("../../src/config", async () => {
                     },
                 },
                 "USDC-POL": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Polygon PoS",
                         symbol: "POL",
                         gasToken: "POL",

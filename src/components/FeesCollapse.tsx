@@ -220,6 +220,9 @@ const FeesCollapse = () => {
             if (messagingFeeTokenUsdRate instanceof Error) {
                 return { status: FeeUsdViewStatus.Error };
             }
+            if (messagingFee === undefined) {
+                return { status: FeeUsdViewStatus.Error };
+            }
 
             amount = amount.plus(
                 BigNumber(
@@ -328,16 +331,20 @@ const FeesCollapse = () => {
                         {t("fee")} (
                         <span
                             class={
-                                config.isPro &&
-                                getFeeHighlightClass(
-                                    boltzFee(),
-                                    getPair(
-                                        regularPairs(),
-                                        pair().swapToCreate?.type,
-                                        pair().fromAsset,
-                                        pair().toAsset,
-                                    )?.fees.percentage,
-                                )
+                                config.isPro
+                                    ? getFeeHighlightClass(
+                                          boltzFee(),
+                                          pair().swapToCreate?.type ===
+                                              undefined
+                                              ? undefined
+                                              : getPair(
+                                                    regularPairs(),
+                                                    pair().swapToCreate!.type,
+                                                    pair().fromAsset,
+                                                    pair().toAsset,
+                                                )?.fees.percentage,
+                                      )
+                                    : undefined
                             }>
                             {boltzFee().toString().replaceAll(".", separator())}
                             %

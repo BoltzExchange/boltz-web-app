@@ -122,7 +122,7 @@ test.describe("Rescue file", () => {
                 async () => {
                     const utxos = (
                         await axios.get<UTXO[]>(
-                            `${config.assets["L-BTC"].blockExplorerApis[0].normal}/address/${address}/utxo`,
+                            `${config.assets!["L-BTC"].blockExplorerApis![0].normal}/address/${address}/utxo`,
                         )
                     ).data;
 
@@ -144,10 +144,12 @@ test.describe("Rescue file", () => {
         await page.getByTestId("refundButton").click();
 
         const refundTxLink = page.getByText("open refund transaction");
-        const txId = (await refundTxLink.getAttribute("href")).split("/").pop();
+        const txId = (await refundTxLink.getAttribute("href"))!
+            .split("/")
+            .pop();
         expect(txId).toBeDefined();
 
-        const txInfo = JSON.parse(await getElementsWalletTx(txId));
+        const txInfo = JSON.parse(await getElementsWalletTx(txId!));
         expect(txInfo.amount.bitcoin).toBeGreaterThan(amount - 1_000);
     });
 });

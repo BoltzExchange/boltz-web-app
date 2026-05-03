@@ -17,7 +17,7 @@ const Tooltip = (props: {
 
     const { t } = useGlobalContext();
 
-    let timeout: ReturnType<typeof setTimeout> = null;
+    let timeout: ReturnType<typeof setTimeout> | null = null;
 
     const tooltipClick = (evt: MouseEvent) => {
         const target = evt.currentTarget as HTMLSpanElement;

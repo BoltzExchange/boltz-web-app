@@ -11,7 +11,9 @@ import {
     onMount,
 } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import {
     isToUnconfidentialLiquid,
     unconfidentialExtra,
@@ -56,48 +58,59 @@ const mapClaimableSwap = ({
         return undefined;
     }
 
+    const claim = swap.claimDetails;
+    if (claim === undefined || claim.amount === undefined) {
+        return undefined;
+    }
+
     const unconfidentialExtraFee = isToUnconfidentialLiquid({
         assetReceive: () => swap.to,
         addressValid: () => true,
-        onchainAddress: () => swap.claimDetails.lockupAddress,
+        onchainAddress: () => claim.lockupAddress,
     })
         ? unconfidentialExtra
         : 0;
 
     if (swap.type === SwapType.Chain) {
+        const refund = swap.refundDetails;
+        if (refund === undefined) {
+            return undefined;
+        }
         return {
             ...swap,
+            type: SwapType.Chain,
             assetSend: swap.from,
             assetReceive: swap.to,
             receiveAmount:
-                swap.claimDetails.amount -
+                claim.amount -
                 ((pair as ChainPairTypeTaproot).fees.minerFees.user.claim +
                     unconfidentialExtraFee),
             version: OutputType.Taproot,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-            refundPrivateKey: swap.refundDetails.serverPublicKey,
+            claimPrivateKeyIndex: claim.keyIndex,
+            refundPrivateKeyIndex: refund.keyIndex,
+            refundPrivateKey: refund.serverPublicKey,
             claimDetails: {
-                ...swap.claimDetails,
-                swapTree: swap.claimDetails.tree,
+                ...claim,
+                swapTree: claim.tree,
             } as ChainSwapDetails,
             lockupDetails: {
-                ...swap.refundDetails,
-                swapTree: swap.refundDetails.tree,
+                ...refund,
+                swapTree: refund.tree,
             } as ChainSwapDetails,
         };
     } else if (swap.type === SwapType.Reverse) {
         return {
             ...swap,
+            type: SwapType.Reverse,
             assetSend: swap.from,
             assetReceive: swap.to,
             version: OutputType.Taproot,
-            blindingKey: swap.claimDetails.blindingKey,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            refundPublicKey: swap.claimDetails.serverPublicKey,
-            swapTree: swap.claimDetails.tree,
+            blindingKey: claim.blindingKey,
+            claimPrivateKeyIndex: claim.keyIndex,
+            refundPublicKey: claim.serverPublicKey,
+            swapTree: claim.tree,
             receiveAmount:
-                swap.claimDetails.amount -
+                claim.amount -
                 ((pair as ReversePairTypeTaproot).fees.minerFees.claim +
                     unconfidentialExtraFee),
         };
@@ -120,7 +133,8 @@ const ClaimRescue = () => {
 
     const [claimableSwap] = createResource(pairs, async () => {
         try {
-            if (rescueFile() === undefined || pairs() === undefined) {
+            const rescue = rescueFile();
+            if (rescue === undefined || pairs() === undefined) {
                 throw Error("rescue file or pairs not found");
             }
 
@@ -129,13 +143,18 @@ const ClaimRescue = () => {
             // Fetch swap if it's not in the location state
             const restorableSwap =
                 rescuableSwaps()?.find(swapById) ||
-                (await getRestorableSwaps(getXpub(rescueFile())))?.find(
-                    swapById,
-                );
+                (await getRestorableSwaps(getXpub(rescue)))?.find(swapById);
 
             if (restorableSwap === undefined) {
                 throw Error(
                     `failed to find a restorable swap with ID ${params.id}`,
+                );
+            }
+
+            const claimDetails = restorableSwap.claimDetails;
+            if (claimDetails === undefined) {
+                throw Error(
+                    `failed to find claim details for swap ${params.id}`,
                 );
             }
 
@@ -164,14 +183,14 @@ const ClaimRescue = () => {
                         ...restorableSwap,
                         preimage: hex.encode(
                             derivePreimageFromRescueKey(
-                                rescueFile(),
-                                restorableSwap.claimDetails.keyIndex,
+                                rescue,
+                                claimDetails.keyIndex,
                                 restorableSwap.to as AssetType,
                             ),
                         ),
                         transaction: {
-                            id: swapStatus.transaction?.id,
-                            hex: swapStatus.transaction?.hex,
+                            id: swapStatus.transaction.id,
+                            hex: swapStatus.transaction.hex,
                         },
                     },
                     pair: reversePair,
@@ -192,8 +211,8 @@ const ClaimRescue = () => {
 
                 const derivedKey = hex.encode(
                     derivePreimageFromRescueKey(
-                        rescueFile(),
-                        restorableSwap.claimDetails.keyIndex,
+                        rescue,
+                        claimDetails.keyIndex,
                         restorableSwap.to as AssetType,
                     ),
                 );
@@ -204,8 +223,8 @@ const ClaimRescue = () => {
                         claimPrivateKey: derivedKey,
                         preimage: derivedKey,
                         transaction: {
-                            id: swapStatus.transaction?.id,
-                            hex: swapStatus.transaction?.hex,
+                            id: swapStatus.transaction.id,
+                            hex: swapStatus.transaction.hex,
                         },
                     },
                     pair: chainPair,
@@ -225,8 +244,12 @@ const ClaimRescue = () => {
         const inputValue = input.value.trim();
         const address = extractAddress(inputValue);
 
+        const swap = claimableSwap();
+        if (swap === undefined || swap.assetReceive === undefined) {
+            return;
+        }
         try {
-            const assetName = claimableSwap().assetReceive;
+            const assetName = swap.assetReceive;
             const actualAsset = probeUserInput(assetName, address);
 
             if (actualAsset !== assetName) {
@@ -248,7 +271,7 @@ const ClaimRescue = () => {
                 log.debug(`Invalid address input: ${formatError(e)}`);
 
                 const msg = t("invalid_address", {
-                    asset: claimableSwap().assetReceive,
+                    asset: swap.assetReceive,
                 });
                 input.classList.add("invalid");
                 setBtnErrorMsg(msg);
@@ -259,23 +282,30 @@ const ClaimRescue = () => {
     const handleClaim = async () => {
         try {
             setClaimRunning(true);
+            const swap = claimableSwap();
+            if (swap === undefined) {
+                throw new Error("missing claimable swap");
+            }
 
             const res = await claim(
                 deriveKey,
                 {
-                    ...(claimableSwap() as ReverseSwap | ChainSwap),
+                    ...(swap as ReverseSwap | ChainSwap),
                     claimAddress: onchainAddress(),
                 },
-                claimableSwap().transaction as { hex: string },
+                swap.transaction as { hex: string },
                 true,
             );
+            if (res === undefined) {
+                throw new Error("claim failed");
+            }
             notify(
                 "success",
                 t("swap_completed", {
                     id: privacyMode() ? hiddenInformation : res.id,
                 }),
             );
-            setClaimTxId(res.claimTx);
+            setClaimTxId(res.claimTx!);
         } catch (e) {
             log.error(`Swap ${params.id} claim failed:`, e);
             notify(
@@ -342,7 +372,7 @@ const ClaimRescue = () => {
                                     name="onchainAddress"
                                     autocomplete="off"
                                     placeholder={t("onchain_address", {
-                                        asset: claimableSwap().assetReceive,
+                                        asset: claimableSwap()!.assetReceive,
                                     })}
                                     value={onchainAddress()}
                                     disabled={claimRunning()}
@@ -369,8 +399,9 @@ const ClaimRescue = () => {
                                 <hr />
                                 <BlockExplorer
                                     typeLabel={"claim_tx"}
-                                    asset={claimableSwap().assetReceive}
-                                    txId={claimTxId()}
+                                    asset={claimableSwap()!.assetReceive!}
+                                    kind={BlockExplorerTargetKind.Tx}
+                                    id={claimTxId()}
                                 />
                             </Match>
                         </Switch>

@@ -8,8 +8,8 @@ import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
 
 const QrScan = () => {
-    let qrRef: HTMLVideoElement;
-    let qrScanner: QrScanner;
+    let qrRef!: HTMLVideoElement;
+    let qrScanner: QrScanner | undefined;
 
     const { pair, setInvoice, setOnchainAddress } = useCreateContext();
     const { t, notify } = useGlobalContext();
@@ -58,7 +58,7 @@ const QrScan = () => {
     };
 
     const stopScan = () => {
-        if (scanning()) {
+        if (scanning() && qrScanner !== undefined) {
             log.debug("stopping qr scanner");
             qrScanner.destroy();
             setScanning(false);

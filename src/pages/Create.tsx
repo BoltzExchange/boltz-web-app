@@ -452,7 +452,10 @@ const Create = () => {
         value.replace(",", ".").replace(" ", "");
 
     const validatePaste = (evt: ClipboardEvent) => {
-        const clipboardData = evt.clipboardData || globalThis.clipboardData;
+        const clipboardData =
+            evt.clipboardData ||
+            (globalThis as unknown as { clipboardData: DataTransfer })
+                .clipboardData;
         const pastedData = clipboardData
             .getData("Text")
             .replace(/\s+/g, "")
@@ -485,6 +488,9 @@ const Create = () => {
     const validateAmount = () => {
         const setCustomValidity = (val: string, isZero: boolean) => {
             [sendAmountRef, receiveAmountRef].forEach((ref) => {
+                if (ref === undefined) {
+                    return;
+                }
                 ref.setCustomValidity(val);
                 if (!isZero && val !== "") {
                     ref.classList.add("invalid");
@@ -710,14 +716,14 @@ const Create = () => {
                     sendLabel={t("send")}
                     separator={separator()}
                 />
-                <Show when={config.isPro}>
+                <Show when={config.isPro && pairs() && regularPairs()}>
                     <Accordion
                         title={t("swap_opportunities_accordion")}
                         isOpen={isAccordionOpen()}
                         onClick={() => setIsAccordionOpen(!isAccordionOpen())}>
                         <FeeComparisonTable
-                            proPairs={pairs()}
-                            regularPairs={regularPairs()}
+                            proPairs={pairs()!}
+                            regularPairs={regularPairs()!}
                             onSelect={(opportunity) => {
                                 if (
                                     pair().fromAsset !==

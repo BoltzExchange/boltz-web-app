@@ -1,5 +1,6 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import type { JSX } from "solid-js";
 import { createMemo } from "solid-js";
 import { keccak256, toBytes } from "viem";
 
@@ -150,7 +151,7 @@ vi.mock("../../src/utils/boltzClient", async () => {
         getContracts: vi.fn().mockResolvedValue({
             rbtc: {
                 network: {
-                    chainId: config.assets.RBTC.network.chainId,
+                    chainId: config.assets!.RBTC.network!.chainId,
                 },
                 supportedContracts: {},
                 swapContracts: {},
@@ -215,7 +216,7 @@ class MockEthereumProvider {
     };
 }
 
-const wrapper = (props: { children: Element }) => {
+const wrapper = (props: { children: JSX.Element }) => {
     const App = () => (
         <GlobalProvider>
             <Web3SignerProvider>
@@ -259,7 +260,7 @@ const ConnectAndRender = (props: {
 };
 
 describe("ContractTransaction", () => {
-    const rbtcChainId = `0x${config.assets.RBTC.network.chainId.toString(16)}`;
+    const rbtcChainId = `0x${config.assets!.RBTC.network!.chainId!.toString(16)}`;
 
     afterEach(() => {
         Reflect.deleteProperty(window, "ethereum");

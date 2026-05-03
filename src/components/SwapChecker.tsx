@@ -62,7 +62,7 @@ class BoltzWebSocket {
         }
 
         ids.forEach((id) => this.relevantIds.add(id));
-        if (this.ws.readyState !== WebSocket.OPEN) {
+        if (this.ws === undefined || this.ws.readyState !== WebSocket.OPEN) {
             return;
         }
 
@@ -182,10 +182,11 @@ export const SwapChecker = () => {
             log.warn(`prepareSwap: swap ${swapId} not found`);
             return;
         }
-        if (swap() && swap().id === currentSwap.id) {
+        const activeSwap = swap();
+        if (activeSwap !== null && activeSwap.id === currentSwap.id) {
             if (!shouldIgnoreBackendStatus()) {
                 setSwapStatus(data.status);
-                setSwap({ ...swap(), status: data.status });
+                setSwap({ ...activeSwap, status: data.status });
             }
             if (data.transaction) {
                 setSwapStatusTransaction(data.transaction);
@@ -203,6 +204,7 @@ export const SwapChecker = () => {
     onMount(async () => {
         const swapsToCheck = (await getSwaps()).filter(
             (s) =>
+                s.status === undefined ||
                 !swapStatusFinal.includes(s.status) ||
                 ((s.status === swapStatusSuccess.InvoiceSettled ||
                     (s.type === SwapType.Chain &&

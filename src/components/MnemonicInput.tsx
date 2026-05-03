@@ -73,7 +73,7 @@ const MnemonicInput = () => {
 
     const handlePaste = (e: ClipboardEvent) => {
         e.preventDefault();
-        const pastedText = e.clipboardData.getData("text/plain").trim();
+        const pastedText = e.clipboardData?.getData("text/plain").trim() ?? "";
         const pastedWords = pastedText
             .split(/[\s\n]+/)
             .map((w) => w.toLowerCase());

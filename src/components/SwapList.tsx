@@ -36,8 +36,14 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
     };
 
     return swaps.sort((a, b) => {
-        const aPriority = actionPriority[a.action];
-        const bPriority = actionPriority[b.action];
+        const aPriority =
+            a.action !== undefined
+                ? actionPriority[a.action]
+                : Number.MAX_SAFE_INTEGER;
+        const bPriority =
+            b.action !== undefined
+                ? actionPriority[b.action]
+                : Number.MAX_SAFE_INTEGER;
 
         if (aPriority !== bPriority) {
             return aPriority - bPriority;
@@ -106,7 +112,7 @@ const SwapList = (props: {
             )
         ) {
             await deleteSwap(swapId);
-            await props.onDelete();
+            await props.onDelete?.();
         }
     };
 
@@ -121,12 +127,16 @@ const SwapList = (props: {
                         <div
                             data-testid={`swaplist-item-${swap.id}`}
                             class={`swaplist-item ${
+                                swap.action !== undefined &&
                                 RescueNoAction.includes(swap.action)
                                     ? "disabled"
                                     : ""
                             }`}
                             onClick={() => {
-                                if (RescueNoAction.includes(swap.action)) {
+                                if (
+                                    swap.action !== undefined &&
+                                    RescueNoAction.includes(swap.action)
+                                ) {
                                     return;
                                 }
 
