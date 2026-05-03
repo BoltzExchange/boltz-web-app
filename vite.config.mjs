@@ -56,6 +56,7 @@ export default defineConfig({
         cors: { origin: "*" },
     },
     build: {
+        sourcemap: true,
         cssCodeSplit: true,
         commonjsOptions: {
             transformMixedEsModules: true,
