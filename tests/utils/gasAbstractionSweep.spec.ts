@@ -2,16 +2,49 @@ import type { TransactionRequest, Wallet } from "ethers";
 import { describe, expect, test, vi } from "vitest";
 
 import { config } from "../../src/config";
-import { USDC, USDT0 } from "../../src/consts/Assets";
+import { type AssetType, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { erc20TransferInterface } from "../../src/utils/evmTransaction";
 import type { sendPopulatedTransaction } from "../../src/utils/evmTransaction";
 import {
+    getGasAbstractionSweepDisplayAmount,
     getSweepableGasAbstractionBalances,
     sweepGasAbstractionToken,
 } from "../../src/utils/gasAbstractionSweep";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
 describe("gas abstraction sweep", () => {
+    test.each([
+        {
+            asset: TBTC,
+            amount: 1_000_000_000_000_000_000n,
+            expected: 100_000_000n,
+        },
+        {
+            asset: USDT0,
+            amount: 1_000_000n,
+            expected: 1_000_000n,
+        },
+        {
+            asset: USDC,
+            amount: 1_000_000n,
+            expected: 1_000_000n,
+        },
+    ] satisfies {
+        asset: AssetType;
+        amount: bigint;
+        expected: bigint;
+    }[])(
+        "normalizes $asset sweep balances for display",
+        ({ asset, amount, expected }) => {
+            expect(
+                getGasAbstractionSweepDisplayAmount({
+                    asset,
+                    amount,
+                }),
+            ).toBe(expected);
+        },
+    );
+
     test("returns only non-zero token balances", async () => {
         const signerByAsset = new Map<string, Wallet>();
         const getGasAbstractionSigner = vi.fn((asset: string) => {

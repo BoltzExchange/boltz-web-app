@@ -9,11 +9,13 @@ import {
     getTokenAddress,
 } from "../consts/Assets";
 import { createTokenContract } from "../context/Web3";
+import { getDecimals } from "./denomination";
 import {
     erc20TransferInterface,
     sendPopulatedTransaction,
 } from "./evmTransaction";
 import type { RescueFile } from "./rescueFile";
+import { assetAmountToSats } from "./rootstock";
 import { GasAbstractionType } from "./swapCreator";
 
 export const gasAbstractionSweepAssets = [TBTC, USDT0, USDC] as const;
@@ -24,6 +26,12 @@ export type GasAbstractionSweep = {
     destination: string;
     signer: Wallet;
 };
+
+export const getGasAbstractionSweepDisplayAmount = ({
+    asset,
+    amount,
+}: Pick<GasAbstractionSweep, "asset" | "amount">): bigint =>
+    getDecimals(asset).isErc20 ? amount : assetAmountToSats(amount, asset);
 
 type TokenContract = {
     balanceOf: (address: string) => Promise<bigint>;

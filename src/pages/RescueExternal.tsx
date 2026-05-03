@@ -63,6 +63,7 @@ import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import {
     type GasAbstractionSweep,
+    getGasAbstractionSweepDisplayAmount,
     getSweepableGasAbstractionBalances,
 } from "../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../utils/helper";
@@ -365,7 +366,9 @@ const GasAbstractionSweepItem = (props: { sweep: GasAbstractionSweep }) => {
 
     const amount = createMemo(() =>
         formatAmount(
-            new BigNumber(props.sweep.amount.toString()),
+            new BigNumber(
+                getGasAbstractionSweepDisplayAmount(props.sweep).toString(),
+            ),
             denomination(),
             separator(),
             props.sweep.asset,
