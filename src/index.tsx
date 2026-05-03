@@ -24,6 +24,7 @@ import { Web3SignerProvider } from "./context/Web3";
 import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
+import GasAbstractionSweepRescue from "./pages/GasAbstractionSweepRescue";
 import Hero from "./pages/Hero";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
@@ -126,6 +127,10 @@ const cleanup = render(
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/swap/:id/claim" component={ClaimRescue} />
+            <Route
+                path="/swap/rescue/evm/gas-abstraction/:asset/:address/:action"
+                component={GasAbstractionSweepRescue}
+            />
             <Route
                 path="/swap/rescue/evm/:asset/:txHash/:action"
                 component={RescueEvm}

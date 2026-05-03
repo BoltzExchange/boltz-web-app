@@ -1,4 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
+import BigNumber from "bignumber.js";
 import { computeAddress } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
@@ -34,7 +35,16 @@ import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { type AssetType, BTC, LBTC, RBTC, TBTC } from "../consts/Assets";
+import {
+    type AssetType,
+    BTC,
+    LBTC,
+    RBTC,
+    TBTC,
+    USDC,
+    USDT0,
+    getAssetDisplaySymbol,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
@@ -48,9 +58,15 @@ import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData, SwapContract } from "../utils/contractLogs";
 import { scanLockupEvents } from "../utils/contractLogs";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
-import { isMobile } from "../utils/helper";
+import {
+    type GasAbstractionSweep,
+    getGasAbstractionSweepDisplayAmount,
+    getSweepableGasAbstractionBalances,
+} from "../utils/gasAbstractionSweep";
+import { cropString, isMobile } from "../utils/helper";
 import {
     RescueAction,
     createRescueList,
@@ -344,6 +360,72 @@ type EvmScanTarget = {
     contract: SwapContract;
 };
 
+const GasAbstractionSweepItem = (props: { sweep: GasAbstractionSweep }) => {
+    const navigate = useNavigate();
+    const { t, denomination, separator } = useGlobalContext();
+
+    const amount = createMemo(() =>
+        formatAmount(
+            new BigNumber(
+                getGasAbstractionSweepDisplayAmount(props.sweep).toString(),
+            ),
+            denomination(),
+            separator(),
+            props.sweep.asset,
+        ),
+    );
+
+    return (
+        <div
+            class="swaplist-item"
+            onClick={() =>
+                navigate(
+                    `/swap/rescue/evm/gas-abstraction/${props.sweep.asset}/${props.sweep.signer.address}/${RskRescueMode.Refund}`,
+                )
+            }>
+            <a class="btn-small hidden-mobile" href="#">
+                {t("view")}
+            </a>
+            <span class="swaplist-asset swaplist-asset-single">
+                <span data-asset={getAssetDisplaySymbol(props.sweep.asset)} />
+            </span>
+            <span class="swaplist-asset-id">
+                {t("id")}:&nbsp;
+                <span class="monospace">
+                    {cropString(props.sweep.signer.address, 15, 5)}
+                </span>
+            </span>
+            <span class="swaplist-asset-date">
+                {t("balance")}:&nbsp;
+                <span class="monospace">
+                    {amount()}{" "}
+                    {formatDenomination(denomination(), props.sweep.asset)}
+                </span>
+            </span>
+        </div>
+    );
+};
+
+const GasAbstractionSweepList = (props: {
+    balances: Accessor<GasAbstractionSweep[]>;
+}) => (
+    <Show when={props.balances().length > 0}>
+        <div class="swaplist">
+            <hr />
+            <For each={props.balances()}>
+                {(sweep, index) => (
+                    <>
+                        <GasAbstractionSweepItem sweep={sweep} />
+                        <Show when={index() < props.balances().length - 1}>
+                            <hr />
+                        </Show>
+                    </>
+                )}
+            </For>
+        </div>
+    </Show>
+);
+
 const getEvmScanTargets = (
     getEtherSwap: (asset: string) => SwapContract,
     getErc20Swap: (asset: string) => SwapContract,
@@ -390,7 +472,8 @@ export const RescueEvm = (props: { mode?: string }) => {
     const navigate = useNavigate();
     const params = useParams();
     const [searchParams] = useSearchParams();
-    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap, getGasAbstractionSigner } =
+        useWeb3Signer();
     const {
         setEvmRescuableSwaps,
         setRescueFile: setContextRescueFile,
@@ -409,6 +492,9 @@ export const RescueEvm = (props: { mode?: string }) => {
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
         LogRefundData[] | undefined
     >(undefined);
+    const [sweepableBalances, setSweepableBalances] = createSignal<
+        GasAbstractionSweep[]
+    >([]);
     const [refundScanProgress, setRefundScanProgress] = createSignal<
         string | undefined
     >(undefined);
@@ -430,6 +516,7 @@ export const RescueEvm = (props: { mode?: string }) => {
         setIsScanning(false);
         setRefundScanProgress(undefined);
         setUnmatchedSwaps(0);
+        setSweepableBalances([]);
     };
 
     type ScanProgress = {
@@ -566,6 +653,7 @@ export const RescueEvm = (props: { mode?: string }) => {
         setIsScanning(true);
         setLogRefundableSwaps([]);
         setEvmRescuableSwaps([]);
+        setSweepableBalances([]);
         setUnmatchedSwaps(0);
         setRefundScanProgress(
             t("logs_scan_progress", {
@@ -578,6 +666,18 @@ export const RescueEvm = (props: { mode?: string }) => {
 
         const signerAddress = await currentSigner.getAddress();
         const rescueFile = uploadedRescueFile();
+        const sweepBalances =
+            action === RskRescueMode.Refund && rescueFile !== undefined
+                ? getSweepableGasAbstractionBalances({
+                      destination: signerAddress,
+                      rescueFile,
+                      getGasAbstractionSigner,
+                  }).then((balances) => {
+                      if (!signal.aborted) {
+                          setSweepableBalances(balances);
+                      }
+                  })
+                : Promise.resolve();
 
         const targets = getEvmScanTargets(
             getEtherSwap as (a: string) => SwapContract,
@@ -586,22 +686,25 @@ export const RescueEvm = (props: { mode?: string }) => {
             rescueFile !== undefined,
         );
         const scanProgress = createScanProgress();
-        await Promise.all(
-            targets.map((target) =>
-                runSingleScan(
-                    target,
-                    signerAddress,
-                    action,
-                    scanProgress,
-                    signal,
-                    rescueFile?.mnemonic,
+        try {
+            await Promise.all([
+                ...targets.map((target) =>
+                    runSingleScan(
+                        target,
+                        signerAddress,
+                        action,
+                        scanProgress,
+                        signal,
+                        rescueFile?.mnemonic,
+                    ),
                 ),
-            ),
-        );
-
-        if (!signal.aborted) {
-            setIsScanning(false);
-            setRefundScanProgress(undefined);
+                sweepBalances,
+            ]);
+        } finally {
+            if (!signal.aborted) {
+                setIsScanning(false);
+                setRefundScanProgress(undefined);
+            }
         }
     };
 
@@ -647,6 +750,7 @@ export const RescueEvm = (props: { mode?: string }) => {
             }
             setLogRefundableSwaps(undefined);
             setUploadedRescueFile(undefined);
+            setSweepableBalances([]);
             setUnmatchedSwaps(0);
         }
     });
@@ -694,6 +798,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                     !isScanning() &&
                     logRefundableSwaps() !== undefined &&
                     logRefundableSwaps().length === 0 &&
+                    sweepableBalances().length === 0 &&
                     unmatchedSwaps() === 0
                 }>
                 <h3>{t("connected_wallet_no_swaps")}</h3>
@@ -799,6 +904,8 @@ export const RescueEvm = (props: { mode?: string }) => {
                     />
                 </Show>
 
+                <GasAbstractionSweepList balances={sweepableBalances} />
+
                 <Show when={scanFinished()}>
                     <button
                         class="btn btn-light"
@@ -873,7 +980,10 @@ const RescueExternal = () => {
         name: "Bitcoin / Liquid",
         values: [BTC, LBTC],
     };
-    const tabEvm = { name: "EVM", values: ["EVM", RBTC, TBTC, "RSK"] };
+    const tabEvm = {
+        name: "EVM",
+        values: ["EVM", RBTC, TBTC, USDT0, USDC, "RSK"],
+    };
     const validTypes = evmAvailable
         ? [...tabBtc.values, ...tabEvm.values]
         : [...tabBtc.values];
