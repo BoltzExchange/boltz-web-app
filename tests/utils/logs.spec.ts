@@ -7,6 +7,7 @@ import {
     injectLogWriter,
     logDeletionTime,
     parseDate,
+    persistLogLine,
 } from "../../src/utils/logs";
 
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -113,21 +114,19 @@ describe("logs", () => {
                 setItem: vi.fn(),
             } as unknown as LocalForage;
 
-            injectLogWriter(forage);
-            log.setLevel("trace");
-
             const logMessage = "test message";
             const fixedDate = new Date("2025-10-14T08:14:36.616Z");
             vi.setSystemTime(fixedDate);
-            log.debug(logMessage);
+            injectLogWriter(forage);
+            log.setLevel("trace");
+            persistLogLine("debug", [logMessage]);
 
-            await new Promise((resolve) => {
-                setTimeout(resolve, 100);
+            await vi.waitFor(() => {
+                expect(forage.setItem).toHaveBeenCalledTimes(1);
             });
 
             expect(forage.getItem).toHaveBeenCalledTimes(1);
             expect(forage.getItem).toHaveBeenCalledWith(getDate());
-            expect(forage.setItem).toHaveBeenCalledTimes(1);
             const timestamp = fixedDate.toISOString();
             expect(forage.setItem).toHaveBeenCalledWith(getDate(), [
                 `${timestamp} ${logMessage}`,
@@ -143,21 +142,19 @@ describe("logs", () => {
             setItem: vi.fn(),
         } as unknown as LocalForage;
 
-        injectLogWriter(forage);
-        log.setLevel("trace");
-
         const logMessage = "test message";
         const fixedDate = new Date("2025-10-14T08:14:36.616Z");
         vi.setSystemTime(fixedDate);
-        log.debug(logMessage);
+        injectLogWriter(forage);
+        log.setLevel("trace");
+        persistLogLine("debug", [logMessage]);
 
-        await new Promise((resolve) => {
-            setTimeout(resolve, 100);
+        await vi.waitFor(() => {
+            expect(forage.setItem).toHaveBeenCalledTimes(1);
         });
 
         expect(forage.getItem).toHaveBeenCalledTimes(1);
         expect(forage.getItem).toHaveBeenCalledWith(getDate());
-        expect(forage.setItem).toHaveBeenCalledTimes(1);
         const timestamp = fixedDate.toISOString();
         expect(forage.setItem).toHaveBeenCalledWith(getDate(), [
             ...existingLogs,
@@ -171,18 +168,15 @@ describe("logs", () => {
             setItem: vi.fn(),
         } as unknown as LocalForage;
 
+        const logMessage = "test with locks";
         injectLogWriter(forage);
         log.setLevel("trace");
+        persistLogLine("debug", [logMessage]);
 
-        const logMessage = "test with locks";
-        log.debug(logMessage);
-
-        await new Promise((resolve) => {
-            setTimeout(resolve, 100);
+        await vi.waitFor(() => {
+            expect(navigator.locks.request).toHaveBeenCalled();
         });
 
-        // Verify that navigator.locks.request was called with the correct lock name
-        expect(navigator.locks.request).toHaveBeenCalled();
         expect(navigator.locks.request).toHaveBeenCalledWith(
             "logLock",
             expect.any(Function),

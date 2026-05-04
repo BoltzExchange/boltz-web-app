@@ -37,6 +37,8 @@
         "check:assets": "bun run check-assets.mjs"
     },
     "devDependencies": {
+        "@babel/parser": "^7.29.3",
+        "@babel/traverse": "^7.29.0",
         "@codama/nodes-from-anchor": "^1.4.1",
         "@codama/renderers-js": "^2.2.0",
         "@eslint/js": "^10.0.1",
@@ -54,8 +56,10 @@
         "git-cliff": "^2.13.1",
         "globals": "^17.5.0",
         "jsdom": "^29.1.1",
+        "magic-string": "^0.30.21",
         "prettier": "^3.8.3",
         "sass-embedded": "^1.99.0",
+        "source-map-js": "^1.2.1",
         "svgo": "^4.0.1",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.59.1",

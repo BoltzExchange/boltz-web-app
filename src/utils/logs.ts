@@ -28,6 +28,10 @@ const replaceBigInt = (_key: string, value: unknown) => {
     return typeof value === "bigint" ? value.toString() : value;
 };
 
+type PersistedLogMethod = "trace" | "debug" | "info" | "warn" | "error" | "log";
+
+let logWriter: LocalForage | undefined;
+
 export const deleteOldLogs = async (logsForage: LocalForage) => {
     const currentDate = new Date();
     await logsForage.iterate<string[], unknown>((_, date) => {
@@ -66,36 +70,50 @@ export const formatLogLine = (message: unknown[]) => {
 };
 
 export const injectLogWriter = (logsForage: LocalForage) => {
-    const originalLogFactory = log.methodFactory;
+    logWriter = logsForage;
+};
 
-    log.methodFactory = (methodName, logLevel, loggerName) => {
-        const rawLogMethod = originalLogFactory(
-            methodName,
-            logLevel,
-            loggerName,
-        );
+const getMethodLevel = (methodName: PersistedLogMethod) => {
+    return methodName === "log"
+        ? log.levels.DEBUG
+        : log.levels[methodName.toUpperCase() as keyof typeof log.levels];
+};
 
-        return (...message: unknown[]) => {
-            rawLogMethod(...message);
+export const persistLogLine = <T extends unknown[]>(
+    methodName: PersistedLogMethod,
+    message: T,
+) => {
+    if (
+        logWriter === undefined ||
+        log.getLevel() > getMethodLevel(methodName)
+    ) {
+        return message;
+    }
 
-            const currentDate = getDate();
+    const currentDate = getDate();
 
-            if (navigator.locks === undefined) {
-                throw new Error("Window is not in a secure context");
+    if (navigator.locks === undefined) {
+        throw new Error("Window is not in a secure context");
+    }
+
+    navigator.locks
+        .request("logLock", async () => {
+            try {
+                await logWriter.setItem(
+                    currentDate,
+                    (
+                        (await logWriter.getItem<string[]>(currentDate)) || []
+                    ).concat(formatLogLine(message)),
+                );
+            } catch (e) {
+                // eslint-disable-next-line no-console
+                console.error("Failed to persist log line", e);
             }
+        })
+        .catch((e) => {
+            // eslint-disable-next-line no-console
+            console.error("Failed to acquire log lock", e);
+        });
 
-            void navigator.locks
-                .request("logLock", async () => {
-                    await logsForage.setItem(
-                        currentDate,
-                        (
-                            (await logsForage.getItem<string[]>(currentDate)) ||
-                            []
-                        ).concat(formatLogLine(message)),
-                    );
-                })
-                .then();
-        };
-    };
-    log.rebuild();
+    return message;
 };
