@@ -36,6 +36,8 @@ const {
     clearOftDeployments,
 } = await import("../../src/utils/oft/oft");
 const { getOftContract } = await import("../../src/utils/oft/registry");
+const { OftBridgeDriver } =
+    await import("../../src/utils/bridge/OftBridgeDriver");
 const { getSolanaOftGuidFromLogs: getSolanaOftSentEventFromTransaction } =
     await import("../../src/utils/oft/solana");
 const { getSolanaRentExemptMinimumBalance, shouldCreateSolanaTokenAccount } =
@@ -274,6 +276,20 @@ describe("oft", () => {
             "USDT0-SOL",
             165,
         );
+    });
+
+    test("should expose the Solana OFT native balance requirement through the bridge driver", async () => {
+        vi.mocked(getSolanaRentExemptMinimumBalance).mockResolvedValue(
+            2_039_280n,
+        );
+
+        const driver = new OftBridgeDriver();
+        await expect(
+            driver.getTransportRequiredNativeBalance(getOftRoute("USDT0-SOL"), [
+                1_000_000n,
+                0n,
+            ]),
+        ).resolves.toBe(2_039_280n);
     });
 
     test("should resolve legacy mesh assets by configured endpoint id", async () => {

@@ -210,7 +210,13 @@ export abstract class BridgeDriver {
         logMessages: string[];
     }) => string | undefined;
 
-    public abstract getBufferedNativeFee: (nativeFee: bigint) => bigint;
+    public getTransportRequiredNativeBalance = (
+        route: BridgeRoute,
+        msgFee: BridgeMsgFee,
+    ): Promise<bigint> => {
+        void route;
+        return Promise.resolve(msgFee[0]);
+    };
 
     public abstract getSourceTokenBalance: (
         route: BridgeRoute,
