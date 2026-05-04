@@ -46,6 +46,8 @@ vi.mock("loglevel", () => ({
         debug: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
+        getLevel: vi.fn(() => 5),
+        levels: { TRACE: 0, DEBUG: 1, INFO: 2, WARN: 3, ERROR: 4, SILENT: 5 },
     },
 }));
 
