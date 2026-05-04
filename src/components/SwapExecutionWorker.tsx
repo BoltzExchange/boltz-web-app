@@ -622,7 +622,7 @@ export const SwapExecutionWorker = () => {
             };
 
             const transaction = await getTransaction();
-            if (transaction !== undefined) {
+            if (transaction !== null) {
                 return transaction;
             }
 
@@ -631,7 +631,7 @@ export const SwapExecutionWorker = () => {
             ) {
                 // To protect against a race condition where the tx was just included before the blockhash expired
                 const transaction = await getTransaction();
-                if (transaction !== undefined) {
+                if (transaction !== null) {
                     return transaction;
                 }
 
