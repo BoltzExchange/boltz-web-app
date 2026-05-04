@@ -613,13 +613,17 @@ const SendToBridge = (props: {
             return;
         }
         if (currentSwap.bridge !== undefined) {
-            const bridge = { ...currentSwap.bridge };
-            delete bridge.details;
-            currentSwap.bridge = {
-                ...bridge,
+            const bridge = {
+                ...currentSwap.bridge,
                 txHash: tx.hash,
-                ...(tx.details === undefined ? {} : { details: tx.details }),
             };
+            if (tx.details === undefined) {
+                delete bridge.details;
+            } else {
+                bridge.details = tx.details;
+            }
+
+            currentSwap.bridge = bridge;
         }
 
         setSwap(currentSwap);

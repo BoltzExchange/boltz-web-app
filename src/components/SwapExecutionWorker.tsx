@@ -603,25 +603,38 @@ export const SwapExecutionWorker = () => {
                 return undefined;
             }
 
-            const transaction = await connection.getTransaction(txHash, {
-                commitment: "confirmed",
-                maxSupportedTransactionVersion: 0,
-            });
-            if (transaction !== null) {
-                log.info(
-                    "Swap execution found Solana bridge send confirmation",
-                    getSwapExecutionLogContext(swapId, {
-                        sourceAsset,
-                        txHash,
-                        slot: transaction.slot,
-                    }),
-                );
+            const getTransaction = async () => {
+                const transaction = await connection.getTransaction(txHash, {
+                    commitment: "confirmed",
+                    maxSupportedTransactionVersion: 0,
+                });
+                if (transaction !== null) {
+                    log.info(
+                        "Swap execution found Solana bridge send confirmation",
+                        getSwapExecutionLogContext(swapId, {
+                            sourceAsset,
+                            txHash,
+                            slot: transaction.slot,
+                        }),
+                    );
+                }
+                return transaction;
+            };
+
+            const transaction = await getTransaction();
+            if (transaction !== undefined) {
                 return transaction;
             }
 
             if (
                 await shouldAbandonSolanaBridgeSend(connection, txHash, details)
             ) {
+                // To protect against a race condition where the tx was just included before the blockhash expired
+                const transaction = await getTransaction();
+                if (transaction !== undefined) {
+                    return transaction;
+                }
+
                 await abandonFailedBridgeSend(swapId, sourceAsset, txHash);
                 return undefined;
             }

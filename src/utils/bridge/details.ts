@@ -2,6 +2,6 @@ export type SolanaDetails = {
     blockhash: string;
 };
 
-export type BridgeDetails = Record<string, unknown> & {
+export type BridgeDetails = {
     solana?: SolanaDetails;
 };
