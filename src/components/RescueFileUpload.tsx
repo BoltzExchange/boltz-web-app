@@ -96,7 +96,10 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
 
     const uploadChange = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
+        const inputFile = input.files?.[0];
+        if (inputFile === undefined) {
+            return;
+        }
 
         handleReset();
 

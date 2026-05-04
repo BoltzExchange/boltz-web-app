@@ -33,7 +33,7 @@ import { hiddenInformation } from "./settings/PrivacyMode";
 const walletConnectRdns = "wallet-connect";
 
 const getSupportedProviders = (
-    asset: string,
+    asset: string | undefined,
     allProviders: Record<string, EIP6963ProviderDetail>,
 ) => {
     const transport = getNetworkTransport(asset);
@@ -50,7 +50,7 @@ const getSupportedProviders = (
 
 const Modal = (props: {
     asset?: string;
-    derivationPath: string;
+    derivationPath?: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
 }) => {
@@ -64,8 +64,9 @@ const Modal = (props: {
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
-    const [hardwareProvider, setHardwareProvider] =
-        createSignal<EIP6963ProviderInfo>(undefined);
+    const [hardwareProvider, setHardwareProvider] = createSignal<
+        EIP6963ProviderInfo | undefined
+    >(undefined);
     const availableProviders = createMemo(() =>
         getSupportedProviders(props.asset, providers()),
     );
@@ -155,7 +156,7 @@ const Modal = (props: {
             <HardwareDerivationPaths
                 asset={props.asset}
                 show={showDerivationPaths}
-                provider={hardwareProvider}
+                provider={hardwareProvider as Accessor<EIP6963ProviderInfo>}
                 setShow={setShowDerivationPaths}
             />
         </div>
@@ -164,7 +165,7 @@ const Modal = (props: {
 
 const ConnectModal = (props: {
     asset?: string;
-    derivationPath: string;
+    derivationPath?: string;
     disabled?: Accessor<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
@@ -242,8 +243,9 @@ const ShowAddress = (props: {
             class="btn btn-light">
             {text() ||
                 (props.addressOverride
-                    ? props.addressOverride() || formatAddress(props.address())
-                    : formatAddress(props.address()))}
+                    ? props.addressOverride() ||
+                      formatAddress(props.address() ?? "")
+                    : formatAddress(props.address() ?? ""))}
         </button>
     );
 };
@@ -400,6 +402,9 @@ const ConnectWallet = (props: {
         on(
             [() => props.asset, connectedWallet, address],
             ([asset, activeWallet, addr]) => {
+                if (asset === undefined) {
+                    return;
+                }
                 const syncId = ++latestSyncId;
                 void syncWalletState(asset, activeWallet, addr, syncId);
             },
@@ -413,7 +418,7 @@ const ConnectWallet = (props: {
     });
 
     const supportedProviders = () =>
-        getSupportedProviders(props.asset, providers());
+        getSupportedProviders(props.asset ?? "", providers());
 
     return (
         <Show
@@ -436,7 +441,7 @@ const ConnectWallet = (props: {
                 }>
                 <Show
                     when={networkValid() || !props.asset}
-                    fallback={<SwitchNetwork asset={props.asset} />}>
+                    fallback={<SwitchNetwork asset={props.asset!} />}>
                     <ShowAddress
                         address={address}
                         addressOverride={props.addressOverride}

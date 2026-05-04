@@ -2,6 +2,7 @@ import type { Umi } from "@metaplex-foundation/umi";
 import type { WalletAdapter as UmiWalletAdapter } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
+import type { AddressLookupTableAccount } from "@solana/web3.js";
 import type {
     AccountMeta,
     Connection,
@@ -466,7 +467,7 @@ const createTransaction = async (
     const latestBlockhash =
         await context.connection.getLatestBlockhash("confirmed");
 
-    let lookupTables = [];
+    let lookupTables: AddressLookupTableAccount[] = [];
     if (context.addressLookupTableAddress !== undefined) {
         const lookupTableAccount = await getSolanaAccountInfo(
             context.asset,

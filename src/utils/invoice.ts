@@ -184,7 +184,7 @@ export const decodeInvoice = (
             type: InvoiceType.Bolt11,
             preimageHash: decoded.tags.find(
                 (tag) => tag.tagName === "payment_hash",
-            ).data as string,
+            )?.data as string,
         };
     } catch (e) {
         try {
@@ -266,9 +266,13 @@ export const resolveBip353 = async (bip353: string): Promise<string> => {
     }
 
     const paymentRequest = res.verified_rrs[0].contents;
-    const offer = new URLSearchParams(paymentRequest.split("?")[1])
-        .get("lno")
-        .replaceAll('"', "");
+    const offerParam = new URLSearchParams(paymentRequest.split("?")[1]).get(
+        "lno",
+    );
+    if (offerParam === null) {
+        throw new Error("missing lno parameter in bip353 payment request");
+    }
+    const offer = offerParam.replaceAll('"', "");
 
     log.debug("Resolved offer for BIP-353:", offer);
     return offer;
@@ -389,7 +393,8 @@ export const isInvoice = (data: string) => {
         return false;
     }
 
-    const prefix = bolt11Prefixes[config.network];
+    const prefix =
+        bolt11Prefixes[config.network as keyof typeof bolt11Prefixes];
     const startsWithPrefix = data.toLowerCase().startsWith(prefix);
     if (prefix === bolt11Prefixes.mainnet && startsWithPrefix) {
         return !data.toLowerCase().startsWith(bolt11Prefixes.regtest);

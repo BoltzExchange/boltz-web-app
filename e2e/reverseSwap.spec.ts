@@ -59,10 +59,10 @@ test.describe("reverseSwap", () => {
 
         const txIdLink = page.getByText("open claim transaction");
 
-        const txId = (await txIdLink.getAttribute("href")).split("/").pop();
+        const txId = (await txIdLink.getAttribute("href"))!.split("/").pop();
         expect(txId).toBeDefined();
 
-        const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
+        const txInfo = JSON.parse(await getBitcoinWalletTx(txId!));
         expectApproxBtcAmount(txInfo.amount.toString(), receiveAmount);
     });
 

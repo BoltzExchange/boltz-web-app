@@ -343,8 +343,8 @@ const Chart = (props: {
         currentY: number,
         nextX: number,
         nextY: number,
-        zeroIntersection: Point,
-        point1Intersection: Point,
+        zeroIntersection: Point | null,
+        point1Intersection: Point | null,
     ) => {
         const segments = [];
 
@@ -379,7 +379,7 @@ const Chart = (props: {
         });
 
         // Sort segments by x position
-        segments.sort((a, b) => a.x - b.x);
+        segments.sort((a, b) => Number(a.x) - Number(b.x));
 
         // Draw each segment with proper color logic
         for (let j = 0; j < segments.length - 1; j++) {
@@ -411,9 +411,9 @@ const Chart = (props: {
 
             drawSimpleSegment(
                 ctx,
-                current.x,
+                Number(current.x),
                 current.y,
-                next.x,
+                Number(next.x),
                 next.y,
                 startValue,
                 endValue,
@@ -777,7 +777,9 @@ const Chart = (props: {
                     "z-index": 1000,
                     display: "none",
                 }}>
-                <Show when={hoveredData()}>{props.tooltip(hoveredData())}</Show>
+                <Show when={hoveredData() !== null && props.tooltip}>
+                    {props.tooltip!(hoveredData()!)}
+                </Show>
             </div>
         </div>
     );

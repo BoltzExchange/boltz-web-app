@@ -11,7 +11,9 @@ import {
     createSignal,
 } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -170,7 +172,8 @@ const GasAbstractionSweepRescue = () => {
                                         <BlockExplorer
                                             typeLabel={"refund_tx"}
                                             asset={params.asset}
-                                            txId={refundTxId()}
+                                            kind={BlockExplorerTargetKind.Tx}
+                                            id={refundTxId()!}
                                         />
                                     </Match>
                                 </Switch>

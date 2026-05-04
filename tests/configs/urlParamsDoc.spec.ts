@@ -25,7 +25,7 @@ const parseDocumentedAssetsFromUrlParamsDoc = (markdown: string): string[] => {
 
 describe("docs/urlParams.md", () => {
     test("documents every sendAsset/receiveAsset value for mainnet", () => {
-        const expected = [LN, ...Object.keys(config.assets)];
+        const expected = [LN, ...Object.keys(config.assets ?? {})];
 
         const documented = parseDocumentedAssetsFromUrlParamsDoc(docMarkdown);
 

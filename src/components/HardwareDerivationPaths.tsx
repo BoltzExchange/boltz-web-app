@@ -8,7 +8,7 @@ import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
 import type { EIP6963ProviderInfo } from "../consts/Types";
-import { useGlobalContext } from "../context/Global";
+import { type notifyFn, useGlobalContext } from "../context/Global";
 import { type ConnectProviderOptions, useWeb3Signer } from "../context/Web3";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -23,7 +23,7 @@ import { weiToSatoshi } from "../utils/rootstock";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const connect = async (
-    notify: (type: string, message: string) => void,
+    notify: notifyFn,
     connectProvider: (
         rdns: string,
         options?: ConnectProviderOptions,
@@ -48,7 +48,7 @@ export const connect = async (
 };
 
 const connectHardware = async (
-    notify: (type: string, message: string) => void,
+    notify: notifyFn,
     connectProvider: (
         rdns: string,
         options?: ConnectProviderOptions,
@@ -70,7 +70,7 @@ const connectHardware = async (
 const DerivationPath = (props: {
     name: string;
     path: string;
-    setBasePath: Setter<string>;
+    setBasePath: Setter<string | undefined>;
 }) => {
     return (
         <div
@@ -89,8 +89,8 @@ const DerivationPath = (props: {
 
 const HwAddressSelection = (props: {
     setLoading: Setter<boolean>;
-    basePath: Accessor<string>;
-    setBasePath: Setter<string>;
+    basePath: Accessor<string | undefined>;
+    setBasePath: Setter<string | undefined>;
     provider: Accessor<EIP6963ProviderInfo>;
     asset: string;
 }) => {
@@ -113,8 +113,12 @@ const HwAddressSelection = (props: {
                 .provider as unknown as HardwareSigner;
             prov.setNetworkAsset(asset);
 
+            const basePath = props.basePath();
+            if (basePath === undefined) {
+                return [];
+            }
             const addresses = await prov.deriveAddresses(
-                props.basePath(),
+                basePath,
                 offset(),
                 limit,
             );
@@ -163,7 +167,7 @@ const HwAddressSelection = (props: {
                                 <span>
                                     {formatAmount(
                                         new BigNumber(
-                                            weiToSatoshi(balance).toString(),
+                                            weiToSatoshi(balance!).toString(),
                                         ),
                                         Denomination.Btc,
                                         separator(),
@@ -241,6 +245,9 @@ const CustomPath = (props: {
                     disabled={path() === undefined || path() === ""}
                     onClick={async () => {
                         setHardwareDerivationPath(path());
+                        if (props.asset === undefined) {
+                            return;
+                        }
                         const connected = await connectHardware(
                             notify,
                             connectProvider,
@@ -313,7 +320,7 @@ const HardwareDerivationPaths = (props: {
                         when={basePath() === undefined}
                         fallback={
                             <HwAddressSelection
-                                asset={props.asset}
+                                asset={props.asset ?? ""}
                                 basePath={basePath}
                                 setLoading={setLoading}
                                 setBasePath={setBasePath}

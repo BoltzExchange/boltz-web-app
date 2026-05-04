@@ -17,13 +17,14 @@ Uint8Array.prototype.writeBigUInt64BE = function (
     const big = ~~(int64 / MAX_UINT32); // ~~ is equivalent to Math.floor()
     const low = (int64 % MAX_UINT32) - big;
 
+    const buf = this as unknown as Buffer;
     if (!offset) {
-        this.writeUInt32BE(big, 0);
-        this.writeUInt32BE(low, 4);
+        buf.writeUInt32BE(big, 0);
+        buf.writeUInt32BE(low, 4);
         return this as never;
     } else {
-        this.writeUInt32BE(big, offset);
-        this.writeUInt32BE(low, offset + 4);
+        buf.writeUInt32BE(big, offset);
+        buf.writeUInt32BE(low, offset + 4);
         return this as never;
     }
 };

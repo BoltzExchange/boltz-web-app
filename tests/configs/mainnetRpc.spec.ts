@@ -20,7 +20,7 @@ const isBridgeVariantInConfig = (
     return bridge !== undefined && bridge.canonicalAsset !== asset;
 };
 
-const bridgeVariantRpcEndpoints = Object.entries(config.assets).flatMap(
+const bridgeVariantRpcEndpoints = Object.entries(config.assets ?? {}).flatMap(
     ([asset, assetConfig]) => {
         const network = assetConfig.network;
 
@@ -33,11 +33,14 @@ const bridgeVariantRpcEndpoints = Object.entries(config.assets).flatMap(
             return [];
         }
 
+        if (network.chainId === undefined) {
+            return [];
+        }
         return network.rpcUrls
             .filter((rpcUrl) => !hasLocalhostHost(rpcUrl))
             .map((rpcUrl) => ({
                 asset,
-                chainId: network.chainId,
+                chainId: network.chainId!,
                 chainName: network.chainName,
                 rpcUrl,
             }));
@@ -140,7 +143,7 @@ type NonEvmRpcTestCase = {
 };
 
 const nonEvmRpcTestCases: NonEvmRpcTestCase[] = Object.entries(
-    config.assets,
+    config.assets ?? {},
 ).flatMap(([asset, assetConfig]) => {
     const network = assetConfig.network;
     const transport = network?.transport;

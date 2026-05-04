@@ -8,7 +8,7 @@ export type PreimageMap = Map<string, PreimageEntry>;
 export class PreimageHashesWorker {
     private worker: Worker;
     isDone = false;
-    private batchResolver: () => void;
+    private batchResolver: (() => void) | undefined;
 
     readonly map: PreimageMap = new Map();
 

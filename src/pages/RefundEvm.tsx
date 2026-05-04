@@ -3,7 +3,9 @@ import BigNumber from "bignumber.js";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
@@ -27,7 +29,7 @@ const RefundState = (props: {
     asset: string;
     lockupTxHash: string;
     refundData: RefundData;
-    setRefundTxId: Setter<string>;
+    setRefundTxId: Setter<string | undefined>;
 }) => {
     const { t, denomination, separator } = useGlobalContext();
 
@@ -79,7 +81,8 @@ const RefundState = (props: {
             <BlockExplorer
                 typeLabel={"lockup_tx"}
                 asset={props.asset}
-                txId={props.lockupTxHash}
+                kind={BlockExplorerTargetKind.Tx}
+                id={props.lockupTxHash}
             />
         </>
     );
@@ -96,7 +99,7 @@ const RefundEvm = () => {
             ? getErc20Swap(asset)
             : getEtherSwap(asset);
 
-    const [refundData] = createResource<RefundData>(async () => {
+    const [refundData] = createResource<RefundData | undefined>(async () => {
         if (signer() === undefined) {
             return undefined;
         }
@@ -145,14 +148,15 @@ const RefundEvm = () => {
                                     <BlockExplorer
                                         typeLabel={"refund_tx"}
                                         asset={params.asset}
-                                        txId={refundTxId()}
+                                        kind={BlockExplorerTargetKind.Tx}
+                                        id={refundTxId()!}
                                     />
                                 </>
                             }>
                             <RefundState
                                 asset={params.asset}
                                 lockupTxHash={params.txHash}
-                                refundData={refundData()}
+                                refundData={refundData()!}
                                 setRefundTxId={setRefundTxId}
                             />
                         </Show>

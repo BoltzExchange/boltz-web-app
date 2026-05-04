@@ -46,14 +46,18 @@ class WalletConnectProvider implements EIP1193Provider {
         values?: Record<string, unknown>,
     ) => string;
 
-    private static accountRequestResolver: {
-        resolve: (addresses: string[]) => void;
-        reject: (reason?: unknown) => void;
-    };
-    private static connectPromiseResolver: {
-        resolve: (account: WalletConnectAccount) => void;
-        reject: (reason?: unknown) => void;
-    };
+    private static accountRequestResolver:
+        | {
+              resolve: (addresses: string[]) => void;
+              reject: (reason?: unknown) => void;
+          }
+        | undefined;
+    private static connectPromiseResolver:
+        | {
+              resolve: (account: WalletConnectAccount) => void;
+              reject: (reason?: unknown) => void;
+          }
+        | undefined;
     private static requestedTransport = NetworkTransport.Evm;
 
     private static providers: Partial<
@@ -315,7 +319,7 @@ class WalletConnectProvider implements EIP1193Provider {
 
         return (await (provider as BrowserProvider).send(
             request.method,
-            request.params,
+            request.params ?? [],
         )) as never;
     };
 

@@ -210,7 +210,9 @@ const getAssetChain = (asset: string): string => {
     return chain;
 };
 
-const getSingleClaimHop = (hops: EncodedHop[]): EncodedHop => {
+const getSingleClaimHop = (
+    hops: EncodedHop[],
+): EncodedHop & { dexDetails: NonNullable<EncodedHop["dexDetails"]> } => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
     }
@@ -220,7 +222,9 @@ const getSingleClaimHop = (hops: EncodedHop[]): EncodedHop => {
         throw new Error("claim hop is missing DEX details");
     }
 
-    return hop;
+    return hop as EncodedHop & {
+        dexDetails: NonNullable<EncodedHop["dexDetails"]>;
+    };
 };
 
 const encodeRouterExecutionCalls = async (
@@ -550,7 +554,7 @@ const claimErc20ViaRouterBridge = async (
         amountOut,
         signer,
     );
-    if (approvalCall !== undefined) {
+    if (approvalCall !== undefined && approvalCall.data !== undefined) {
         routerCalls.push({
             target: approvalCall.to,
             value: "0",
@@ -752,10 +756,10 @@ const AutoClaimHops = (props: {
     preimage: string;
     assetSend: string;
     assetReceive: string;
-    signerAddress: string;
-    refundAddress: string;
+    signerAddress?: string;
+    refundAddress?: string;
     timeoutBlockHeight: number;
-    getGasToken: boolean;
+    getGasToken?: boolean;
     dex: DexDetail;
     bridge?: BridgeDetail;
     autoClaimEnabled: boolean;
@@ -817,6 +821,21 @@ const AutoClaimHops = (props: {
                 signer(),
                 getGasAbstractionSigner(props.assetReceive),
             );
+            if (claimSigner === undefined) {
+                log.warn(
+                    `Skipping auto claim hops without signer for ${props.swapId}`,
+                );
+                return;
+            }
+            if (
+                props.refundAddress === undefined ||
+                props.signerAddress === undefined
+            ) {
+                log.warn(
+                    `Skipping auto claim hops without addresses for ${props.swapId}`,
+                );
+                return;
+            }
 
             const maxRetries = 3;
             const baseDelayMs = 2_000;
@@ -829,14 +848,14 @@ const AutoClaimHops = (props: {
                         props.assetReceive,
                         props.preimage,
                         props.amount,
-                        props.refundAddress,
+                        props.refundAddress!,
                         props.timeoutBlockHeight,
-                        props.signerAddress,
+                        props.signerAddress!,
                         () => claimSigner,
                         getErc20Swap(props.assetReceive),
                         slippage(),
                         quote.quote,
-                        props.getGasToken,
+                        props.getGasToken === true,
                         props.bridge,
                     ),
                 maxRetries,
@@ -878,7 +897,7 @@ const AutoClaimHops = (props: {
                     );
                     const useDexGasToken =
                         props.bridge === undefined &&
-                        props.getGasToken &&
+                        props.getGasToken === true &&
                         gasTopUpSupported(props.assetReceive);
                     const quote = await fetchDexQuote(
                         hop.dexDetails,
@@ -888,13 +907,16 @@ const AutoClaimHops = (props: {
                             ? await getGasTopUpNativeAmount(props.assetReceive)
                             : undefined,
                     );
+                    if (props.signerAddress === undefined) {
+                        return;
+                    }
                     const quoteAmount = await getAcceptedQuoteAmount(
                         props.amount,
                         props.assetReceive,
                         hop,
                         quote,
                         props.signerAddress,
-                        props.getGasToken,
+                        props.getGasToken === true,
                         props.bridge,
                     );
                     const freshQuoteData = {
@@ -967,14 +989,14 @@ const AutoClaimHops = (props: {
                 <div class="quote">
                     <Amount
                         label={"sent"}
-                        amount={swap().sendAmount}
+                        amount={swap()!.sendAmount}
                         asset={props.assetSend}
                     />
                     <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                     <Amount
                         label={"will_receive"}
-                        amount={freshQuote().amount}
-                        asset={getFinalAssetReceive(swap(), true)}
+                        amount={freshQuote()!.amount}
+                        asset={getFinalAssetReceive(swap()!, true)}
                     />
                 </div>
 
@@ -983,8 +1005,12 @@ const AutoClaimHops = (props: {
                         class="btn btn-success"
                         disabled={loading()}
                         onClick={async () => {
+                            const q = freshQuote();
+                            if (q === undefined) {
+                                return;
+                            }
                             setQuoteAccepted(true);
-                            await executeClaim(freshQuote());
+                            await executeClaim(q);
                         }}>
                         {loading() ? (
                             <LoadingSpinner class="inner-spinner" />
@@ -1006,13 +1032,13 @@ const ClaimEvm = (props: {
     preimage: string;
     assetSend: string;
     assetReceive: string;
-    signerAddress: string;
+    signerAddress?: string;
     claimAddress: string;
-    refundAddress: string;
-    derivationPath: string;
+    refundAddress?: string;
+    derivationPath?: string;
     timeoutBlockHeight: number;
     finalReceive: string;
-    getGasToken: boolean;
+    getGasToken?: boolean;
     dex?: DexDetail;
     bridge?: BridgeDetail;
     autoClaimEnabled: boolean;
@@ -1027,8 +1053,14 @@ const ClaimEvm = (props: {
 
     const claimWithoutHops = async () => {
         // Ignore swaps with dex hops here
-        if (props.dex !== undefined || props.dex?.hops?.length > 0) {
+        if (props.dex !== undefined && props.dex.hops.length > 0) {
             return;
+        }
+        if (props.signerAddress === undefined) {
+            throw new Error("missing signer address for claim");
+        }
+        if (props.refundAddress === undefined) {
+            throw new Error("missing refund address for claim");
         }
 
         const currentSwap = await getSwap(props.swapId);
@@ -1045,6 +1077,9 @@ const ClaimEvm = (props: {
                 signer(),
                 getGasAbstractionSigner(props.assetReceive),
             );
+            if (claimSigner === undefined) {
+                throw new Error("missing signer for gas-token claim");
+            }
             const execution = await getGasTokenRouterClaimExecution(
                 props.assetReceive,
                 props.amount,
@@ -1067,6 +1102,10 @@ const ClaimEvm = (props: {
                 receiveAmount: execution.minAmountOut,
             };
         } else {
+            const sig = signer();
+            if (sig === undefined) {
+                throw new Error("missing signer for claim");
+            }
             result = await claimAsset(
                 props.gasAbstraction,
                 props.assetReceive,
@@ -1076,7 +1115,7 @@ const ClaimEvm = (props: {
                 props.refundAddress,
                 props.timeoutBlockHeight,
                 props.signerAddress,
-                signer,
+                () => sig,
                 getGasAbstractionSigner(props.assetReceive),
                 getEtherSwap(props.assetReceive),
                 getErc20Swap(props.assetReceive),
@@ -1085,6 +1124,9 @@ const ClaimEvm = (props: {
 
         const { transactionHash, receiveAmount } = result;
 
+        if (currentSwap === null) {
+            return;
+        }
         currentSwap.claimTx = transactionHash;
         currentSwap.receiveAmount = Number(
             normalizePersistedReceiveAmount(
@@ -1128,7 +1170,7 @@ const ClaimEvm = (props: {
                     assetSend={props.assetSend}
                     assetReceive={props.assetReceive}
                     getGasToken={props.getGasToken}
-                    dex={props.dex}
+                    dex={props.dex!}
                     bridge={getPostBridgeDetail(props.bridge)}
                     autoClaimEnabled={props.autoClaimEnabled}
                 />
@@ -1140,7 +1182,7 @@ const ClaimEvm = (props: {
                     asset={props.assetReceive}
                     onClick={claimWithoutHops}
                     address={{
-                        address: props.signerAddress,
+                        address: props.signerAddress!,
                         derivationPath: props.derivationPath,
                     }}
                     buttonText={t("continue")}
@@ -1172,7 +1214,7 @@ const TransactionConfirmed = () => {
 
     return (
         <Show
-            when={isEvmAsset(swap().assetReceive)}
+            when={swap() !== null && isEvmAsset(swap()!.assetReceive)}
             fallback={
                 <div>
                     <h2>{t("tx_confirmed")}</h2>
@@ -1181,7 +1223,7 @@ const TransactionConfirmed = () => {
                 </div>
             }>
             <Show
-                when={swap().type !== SwapType.Chain}
+                when={swap()!.type !== SwapType.Chain}
                 fallback={
                     <ClaimEvm
                         swapId={chain.id}
@@ -1190,7 +1232,7 @@ const TransactionConfirmed = () => {
                         signerAddress={
                             chain.originalDestination || chain.signer
                         }
-                        amount={chain.claimDetails.amount}
+                        amount={chain.claimDetails.amount!}
                         derivationPath={chain.derivationPath}
                         claimAddress={chain.claimAddress}
                         refundAddress={chain.claimDetails.refundAddress}

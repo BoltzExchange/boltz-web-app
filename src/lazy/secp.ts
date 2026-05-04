@@ -10,6 +10,6 @@ export default new Loader("Secp256k1ZKP", async () => {
     init(secp);
     return {
         secpZkp: secp,
-        confidential: new confidential.Confidential(secp),
+        confidential: new confidential.Confidential(secp as never),
     };
 });

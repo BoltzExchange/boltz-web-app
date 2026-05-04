@@ -32,8 +32,8 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
-        expect(window.webln.enable).toHaveBeenCalledTimes(1);
-        expect(window.webln.enable).toHaveBeenCalledWith();
+        expect(window.webln!.enable).toHaveBeenCalledTimes(1);
+        expect(window.webln!.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(1);
         expect(log.error).toHaveBeenCalledTimes(0);
@@ -47,8 +47,8 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
-        expect(window.webln.enable).toHaveBeenCalledTimes(1);
-        expect(window.webln.enable).toHaveBeenCalledWith();
+        expect(window.webln!.enable).toHaveBeenCalledTimes(1);
+        expect(window.webln!.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(0);
         expect(log.error).toHaveBeenCalledTimes(1);

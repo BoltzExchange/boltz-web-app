@@ -59,9 +59,9 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         );
 
         const modules = await this.loader.get();
-        await this.checkApp(modules);
+        const transport = await this.checkApp(modules);
 
-        const eth = new modules.eth(this.transport);
+        const eth = new modules.eth(transport);
 
         const addresses: DerivedAddress[] = [];
         for (let i = 0; i < limit; i++) {
@@ -90,9 +90,9 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 log.debug("Getting Ledger accounts");
 
                 const modules = await this.loader.get();
-                await this.checkApp(modules);
+                const transport = await this.checkApp(modules);
 
-                const eth = new modules.eth(this.transport);
+                const eth = new modules.eth(transport);
                 const { address } = await eth.getAddress(this.derivationPath);
 
                 return [address.toLowerCase()];
@@ -101,7 +101,13 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             case "eth_sendTransaction": {
                 log.debug("Signing transaction with Ledger");
 
+                if (request.params === undefined) {
+                    throw new Error("missing params for eth_sendTransaction");
+                }
                 const txParams = request.params[0] as HardwareTransactionLike;
+                if (txParams.from === null || txParams.from === undefined) {
+                    throw new Error("missing from address for transaction");
+                }
 
                 const [nonce, network, feeData] = await Promise.all([
                     this.provider.getTransactionCount(txParams.from),
@@ -141,7 +147,8 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 const tx = Transaction.from(transactionLike);
 
                 const modules = await this.loader.get();
-                const eth = new modules.eth(this.transport);
+                const transport = await this.checkApp(modules);
+                const eth = new modules.eth(transport);
                 const signature = await eth.clearSignTransaction(
                     this.derivationPath,
                     tx.unsignedSerialized.substring(2),
@@ -160,7 +167,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 log.debug("Signing EIP-712 message with Ledger");
 
                 const modules = await this.loader.get();
-                const eth = new modules.eth(this.transport);
+                const transport = await this.checkApp(modules);
+                const eth = new modules.eth(transport);
+                if (request.params === undefined) {
+                    throw new Error("missing params for eth_signTypedData_v4");
+                }
                 const message = JSON.parse(request.params[1] as string);
 
                 try {
@@ -192,7 +203,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
 
         return (await this.provider.send(
             request.method,
-            request.params,
+            request.params ?? [],
         )) as never;
     };
 
@@ -202,10 +213,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
 
     private checkApp = async (
         modules: Awaited<ReturnType<typeof ledgerLoader.get>>,
-    ) => {
+    ): Promise<Transport> => {
         if (this.transport === undefined) {
             this.transport = await modules.webhid.create();
         }
+        const transport = this.transport;
 
         const openApp = (await this.getApp()).name;
         log.debug(`Ledger has app open: ${openApp}`);
@@ -213,10 +225,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             log.warn(
                 `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
             );
-            await this.transport.close();
+            await transport.close();
             this.transport = undefined;
             throw this.t("ledger_open_app_prompt");
         }
+        return transport;
     };
 
     private getApp = async (): Promise<{
@@ -224,6 +237,9 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         version: string;
         flags: number | Buffer;
     }> => {
+        if (this.transport === undefined) {
+            throw new Error("Ledger transport is not initialised");
+        }
         const r = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
         let i = 0;
         const format = r[i++];

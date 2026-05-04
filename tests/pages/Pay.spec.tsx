@@ -302,7 +302,7 @@ describe("Pay", () => {
             // Check for all possible values of prevSwapStatus
             const prevSwapStatuses = ["", null, undefined];
             for (const prevSwapStatus of prevSwapStatuses) {
-                payContext.setSwapStatus(prevSwapStatus);
+                payContext.setSwapStatus(prevSwapStatus as string);
                 payContext.setSwapStatus(swapStatusPending.SwapCreated);
             }
 

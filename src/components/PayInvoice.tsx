@@ -17,6 +17,9 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
 
     const payWeblnInvoice = async (pr: string) => {
         await enableWebln(async () => {
+            if (window.webln === undefined) {
+                throw new Error("webln is not available");
+            }
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
         });

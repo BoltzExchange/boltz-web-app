@@ -4,7 +4,7 @@ import { useGlobalContext } from "../context/Global";
 import "../style/notification.scss";
 
 const Notification = () => {
-    let notificationRef: HTMLDivElement;
+    let notificationRef!: HTMLDivElement;
     const {
         notification,
         setNotification,

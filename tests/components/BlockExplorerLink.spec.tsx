@@ -34,7 +34,7 @@ describe("BlockExplorerLink", () => {
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
-                    `${config.assets[asset].blockExplorerUrl.normal}/address/${address}`,
+                    `${config.assets![asset].blockExplorerUrl!.normal}/address/${address}`,
                 );
             },
         );
@@ -63,7 +63,7 @@ describe("BlockExplorerLink", () => {
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
-                    `${config.assets[asset].blockExplorerUrl.normal}/tx/${params.claimTx}`,
+                    `${config.assets![asset].blockExplorerUrl!.normal}/tx/${params.claimTx}`,
                 );
             },
         );
@@ -126,7 +126,7 @@ describe("BlockExplorerLink", () => {
 
             expect(button.href).toEqual(
                 // eslint-disable-next-line solid/reactivity
-                `${config.assets[LBTC].blockExplorerUrl.normal}/address/${swap().lockupDetails.lockupAddress}`,
+                `${config.assets![LBTC].blockExplorerUrl!.normal}/address/${swap().lockupDetails.lockupAddress}`,
             );
         });
 
@@ -151,7 +151,7 @@ describe("BlockExplorerLink", () => {
 
             expect(button.href).toEqual(
                 // eslint-disable-next-line solid/reactivity
-                `${config.assets[LBTC].blockExplorerUrl.normal}/address/${swap().lockupDetails.lockupAddress}`,
+                `${config.assets![LBTC].blockExplorerUrl!.normal}/address/${swap().lockupDetails.lockupAddress}`,
             );
 
             // eslint-disable-next-line solid/reactivity
@@ -159,7 +159,7 @@ describe("BlockExplorerLink", () => {
 
             expect(button.href).toEqual(
                 // eslint-disable-next-line solid/reactivity
-                `${config.assets[BTC].blockExplorerUrl.normal}/tx/${swap().claimTx}`,
+                `${config.assets![BTC].blockExplorerUrl!.normal}/tx/${swap().claimTx}`,
             );
         });
 
@@ -217,7 +217,7 @@ describe("BlockExplorerLink", () => {
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
-                    `${config.assets[assetSend].blockExplorerUrl.normal}/tx/${lockupTx}`,
+                    `${config.assets![assetSend].blockExplorerUrl!.normal}/tx/${lockupTx}`,
                 );
             },
         );
@@ -250,7 +250,7 @@ describe("BlockExplorerLink", () => {
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
-                `${config.assets[RBTC].blockExplorerUrl.normal}/tx/${lockupTx}`,
+                `${config.assets![RBTC].blockExplorerUrl!.normal}/tx/${lockupTx}`,
             );
         });
 
@@ -277,7 +277,7 @@ describe("BlockExplorerLink", () => {
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
-                `${config.assets[BTC].blockExplorerUrl.normal}/tx/${claimTx}`,
+                `${config.assets![BTC].blockExplorerUrl!.normal}/tx/${claimTx}`,
             );
         });
 

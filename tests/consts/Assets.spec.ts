@@ -152,7 +152,7 @@ describe("Assets", () => {
     });
 
     describe("getRouterAddress", () => {
-        const tbtcRouter = mainnetConfig.assets.TBTC.contracts!.router;
+        const tbtcRouter = mainnetConfig.assets!.TBTC.contracts!.router;
 
         test("resolves the canonical asset's routeVia hop router", () => {
             expect(getRouterAddress(USDT0)).toBe(tbtcRouter);

@@ -26,7 +26,9 @@ export const getDecimals = (asset: string) => {
 
     return {
         isErc20: isRoutedErc20,
-        decimals: isRoutedErc20 ? assetConfig?.token?.decimals : satDecimals,
+        decimals: isRoutedErc20
+            ? (assetConfig?.token?.decimals ?? satDecimals)
+            : satDecimals,
     };
 };
 

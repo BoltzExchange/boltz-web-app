@@ -64,7 +64,9 @@ test.describe("Submarine swap", () => {
         await generateBitcoinBlock();
 
         const validationLink = new URL(
-            await page.getByText("Show Proof of Payment").getAttribute("href"),
+            (await page
+                .getByText("Show Proof of Payment")
+                .getAttribute("href"))!,
         );
 
         expect(validationLink.searchParams.get("invoice")).toEqual(invoice);

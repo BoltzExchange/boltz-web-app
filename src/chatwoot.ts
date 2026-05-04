@@ -34,7 +34,7 @@ const Chatwoot = () => {
         script.src = url + "/packs/js/sdk.js";
         script.defer = true;
         script.async = true;
-        parent.parentNode.insertBefore(script, parent);
+        parent.parentNode!.insertBefore(script, parent);
         script.onload = function () {
             window.chatwootSettings = {
                 darkMode: "auto",

@@ -23,7 +23,7 @@ const SwapCreated = () => {
 
     return (
         <Show
-            when={swap().type === SwapType.Chain}
+            when={swap()!.type === SwapType.Chain}
             fallback={
                 <PayInvoice
                     sendAmount={reverse.sendAmount}
@@ -39,14 +39,14 @@ const SwapCreated = () => {
                         assetReceive={chain.assetReceive}
                         expectedAmount={chain.lockupDetails.amount}
                         address={chain.lockupDetails.lockupAddress}
-                        bip21={chain.lockupDetails.bip21}
+                        bip21={chain.lockupDetails.bip21!}
                     />
                 }>
                 <LockupEvm
                     swapId={chain.id}
                     gasAbstraction={getLockupGasAbstraction(chain)}
                     amount={chain.lockupDetails.amount}
-                    claimAddress={chain.lockupDetails.claimAddress}
+                    claimAddress={chain.lockupDetails.claimAddress!}
                     timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
                     preimageHash={hex.encode(
                         sha256(hex.decode(chain.preimage)),

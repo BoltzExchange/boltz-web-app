@@ -50,15 +50,15 @@ describe("Fees component", () => {
             ...Object.fromEntries(
                 bridgeVariants
                     .filter(
-                        (asset) => mainnetConfig.assets[asset] !== undefined,
+                        (asset) => mainnetConfig.assets![asset] !== undefined,
                     )
                     .map((asset) => [
                         asset,
-                        structuredClone(mainnetConfig.assets[asset]),
+                        structuredClone(mainnetConfig.assets![asset]),
                     ]),
             ),
             // Synthetic variant used only in tests (not in mainnet config).
-            "USDT0-ARB": structuredClone(mainnetConfig.assets["USDT0-ETH"]),
+            "USDT0-ARB": structuredClone(mainnetConfig.assets!["USDT0-ETH"]),
         };
     });
 

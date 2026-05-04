@@ -30,7 +30,7 @@ const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 beforeAll(() => {
     runtimeConfig.assets = {
         ...runtimeConfig.assets,
-        "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
+        "USDT0-SOL": structuredClone(mainnetConfig.assets!["USDT0-SOL"]),
     };
 });
 

@@ -32,10 +32,10 @@ type Usdt0ChainTestCase = {
 };
 
 const getAssetTransport = (asset: string): NetworkTransport | undefined => {
-    return config.assets[asset]?.network?.transport;
+    return config.assets?.[asset]?.network?.transport;
 };
 
-const usdt0ChainTestCases = Object.entries(config.assets).flatMap(
+const usdt0ChainTestCases = Object.entries(config.assets ?? {}).flatMap(
     ([asset, assetConfig]) => {
         const network = assetConfig.network;
         const transport = getAssetTransport(asset);
@@ -145,12 +145,12 @@ test("USDT0-TEMPO should resolve the Tempo wrapper for direct sends", async () =
         target.executionContract.address,
     );
     expect(target.feeTokenAddress).toBe(
-        config.assets["USDT0-TEMPO"]?.token?.address,
+        config.assets?.["USDT0-TEMPO"]?.token?.address,
     );
 });
 
 test("USDT0-TEMPO should expose 6-decimal native fee metadata", () => {
-    expect(config.assets["USDT0-TEMPO"]?.network?.nativeCurrency).toEqual({
+    expect(config.assets?.["USDT0-TEMPO"]?.network?.nativeCurrency).toEqual({
         name: "USD",
         symbol: "USD",
         decimals: 6,

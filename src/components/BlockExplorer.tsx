@@ -1,46 +1,45 @@
+import { Show } from "solid-js";
+
 import { useGlobalContext } from "../context/Global";
 import type { ExplorerKind } from "../utils/explorerLink";
 import { blockExplorerLink } from "../utils/explorerLink";
 import ExternalLink from "./ExternalLink";
 
-type PropsBase = {
+export const enum BlockExplorerTargetKind {
+    Tx = "tx",
+    Address = "address",
+}
+
+const BlockExplorer = (props: {
     asset: string;
+    kind: BlockExplorerTargetKind;
+    id: string;
     explorer?: ExplorerKind;
     typeLabel?: "lockup_address" | "lockup_tx" | "claim_tx" | "refund_tx";
-};
-
-type PropsTxId = PropsBase & {
-    txId: string;
-};
-
-type PropsAddress = PropsBase & {
-    address: string;
-};
-
-const BlockExplorer = (props: PropsTxId | PropsAddress) => {
+}) => {
     const { t } = useGlobalContext();
 
     const href = () =>
-        "txId" in props && props.txId !== undefined
-            ? blockExplorerLink(props.asset, true, props.txId, props.explorer)
-            : blockExplorerLink(
-                  props.asset,
-                  false,
-                  (props as PropsAddress).address,
-              );
+        props.kind === BlockExplorerTargetKind.Tx
+            ? blockExplorerLink(props.asset, true, props.id, props.explorer)
+            : blockExplorerLink(props.asset, false, props.id);
 
     const typeLabel = () =>
         props.typeLabel ||
-        ("txId" in props && props.txId !== undefined
+        (props.kind === BlockExplorerTargetKind.Tx
             ? "claim_tx"
             : "lockup_address");
 
     return (
-        <ExternalLink class="btn btn-explorer" href={href()}>
-            {t("blockexplorer", {
-                typeLabel: t(`blockexplorer_${typeLabel()}`),
-            })}
-        </ExternalLink>
+        <Show when={href()}>
+            {(resolved) => (
+                <ExternalLink class="btn btn-explorer" href={resolved()}>
+                    {t("blockexplorer", {
+                        typeLabel: t(`blockexplorer_${typeLabel()}`),
+                    })}
+                </ExternalLink>
+            )}
+        </Show>
     );
 };
 

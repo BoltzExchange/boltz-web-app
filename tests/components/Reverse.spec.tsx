@@ -27,7 +27,7 @@ describe("Reverse", () => {
 
         setPairAssets(BTC, LN);
 
-        fireEvent.click(flip);
+        fireEvent.click(flip!);
 
         expect(signals.pair().fromAsset).toEqual(LN);
         expect(signals.pair().toAsset).toEqual(BTC);
@@ -51,7 +51,7 @@ describe("Reverse", () => {
         signals.setOnchainAddress("2N17VNGbi4yUHtkD7vhrc8cpi9JGVmC8scn");
         setPairAssets(LBTC, BTC);
 
-        fireEvent.click(flip);
+        fireEvent.click(flip!);
 
         expect(signals.onchainAddress()).toEqual("");
     });

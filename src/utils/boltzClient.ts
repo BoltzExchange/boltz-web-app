@@ -251,9 +251,13 @@ const sortDexQuotes = (
 
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
-        fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
-        fetcher<ReversePairsTaproot>("/v2/swap/reverse", null, options),
-        fetcher<ChainPairsTaproot>("/v2/swap/chain", null, options),
+        fetcher<SubmarinePairsTaproot>(
+            "/v2/swap/submarine",
+            undefined,
+            options,
+        ),
+        fetcher<ReversePairsTaproot>("/v2/swap/reverse", undefined, options),
+        fetcher<ChainPairsTaproot>("/v2/swap/chain", undefined, options),
     ]);
 
     return {
@@ -520,7 +524,7 @@ export const getLockupTransaction = async (
             const res = await getChainSwapTransactions(id);
             return {
                 id: res.userLock.transaction.id,
-                hex: res.userLock.transaction.hex,
+                hex: res.userLock.transaction.hex ?? "",
                 timeoutEta: res.userLock.timeout.eta,
                 timeoutBlockHeight: res.userLock.timeout.blockHeight,
             };
@@ -587,7 +591,7 @@ export const getRestorableSwaps = (
     fetcher<RestorableSwap[]>(
         `/v2/swap/restore`,
         { xpub, pagination },
-        null,
+        undefined,
         30_000,
     );
 

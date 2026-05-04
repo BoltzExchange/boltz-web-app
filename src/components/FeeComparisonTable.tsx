@@ -24,9 +24,14 @@ export const FeeComparisonTable = (props: {
 }) => {
     const { t, bitcoinOnly } = useGlobalContext();
 
+    type AssetPairs = Record<
+        string,
+        Record<string, { fees: { percentage: number } }>
+    >;
+
     const getSwapFees = (
-        proPairs: Pairs,
-        regularPairs: Pairs,
+        proPairs: AssetPairs,
+        regularPairs: AssetPairs,
         swapType: SwapType,
     ): SwapFees[] => {
         const result: SwapFees[] = [];
@@ -53,10 +58,10 @@ export const FeeComparisonTable = (props: {
         const regular = props.regularPairs;
 
         const swapTypes = [
-            { type: SwapType.Chain, key: "chain" },
-            { type: SwapType.Reverse, key: "reverse" },
-            { type: SwapType.Submarine, key: "submarine" },
-        ];
+            { type: SwapType.Chain, key: SwapType.Chain },
+            { type: SwapType.Reverse, key: SwapType.Reverse },
+            { type: SwapType.Submarine, key: SwapType.Submarine },
+        ] as const;
 
         return swapTypes
             .flatMap(({ type, key }) =>

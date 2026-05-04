@@ -502,12 +502,13 @@ const ForwarderAbi = [
     },
 ];
 
-export const getSmartWalletFactory = (signer: Signer) =>
-    new Contract(
-        config.assets[RBTC].contracts.smartWalletFactory,
-        BoltzSmartWalletFactoryAbi,
-        signer,
-    );
+export const getSmartWalletFactory = (signer: Signer) => {
+    const factory = config.assets?.[RBTC]?.contracts?.smartWalletFactory;
+    if (factory === undefined) {
+        throw new Error("missing smart wallet factory address for RBTC");
+    }
+    return new Contract(factory, BoltzSmartWalletFactoryAbi, signer);
+};
 
 export const getForwarder = (signer: Signer, forwarder: string) =>
     new Contract(forwarder, ForwarderAbi, signer);

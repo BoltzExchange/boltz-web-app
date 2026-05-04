@@ -60,7 +60,10 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                                 <span
                                     class="lang"
                                     onClick={() => setI18nConfigured(lang)}>
-                                    {locales[lang].language}
+                                    {
+                                        locales[lang as keyof typeof locales]
+                                            .language
+                                    }
                                 </span>
                             )}
                         </For>

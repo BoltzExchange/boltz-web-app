@@ -15,7 +15,9 @@ import {
     onCleanup,
 } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput from "../components/MnemonicInput";
@@ -30,7 +32,11 @@ import RescueFileUpload, {
     RescueFileType,
     processUploadedFile,
 } from "../components/RescueFileUpload";
-import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
+import SwapList, {
+    type Swap,
+    getSwapListHeight,
+    sortSwaps,
+} from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -128,7 +134,8 @@ const BtcLikeLegacy = (props: {
                         (props.refundJson() as never as Record<string, string>)
                             .asset || props.refundJson().assetSend
                     }
-                    txId={refundTxId()}
+                    kind={BlockExplorerTargetKind.Tx}
+                    id={refundTxId()}
                 />
             </Show>
             <SettingsMenu />
@@ -145,7 +152,9 @@ export const RefundBtcLike = () => {
     const [refundInvalid, setRefundInvalid] = createSignal<
         RescueFileError | undefined
     >(undefined);
-    const [refundJson, setRefundJson] = createSignal(null);
+    const [refundJson, setRefundJson] = createSignal<
+        RescueFile | SubmarineSwap | ChainSwap | null
+    >(null);
     const [refundType, setRefundType] = createSignal<RescueFileType>();
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<Partial<SomeSwap>[]>(
@@ -162,7 +171,11 @@ export const RefundBtcLike = () => {
 
         while (true) {
             try {
-                const res = await getRestorableSwaps(getXpub(refundJson()), {
+                const file = refundJson() as RescueFile | null;
+                if (file === null) {
+                    break;
+                }
+                const res = await getRestorableSwaps(getXpub(file), {
                     startIndex,
                     limit: paginationLimit,
                 });
@@ -208,19 +221,16 @@ export const RefundBtcLike = () => {
         },
     );
 
-    const [refundList] = createResource(
-        currentSwaps,
-        async (swaps: SomeSwap[]) => {
-            setLoading(true);
-            return await createRescueList(swaps, true).finally(() =>
-                setLoading(false),
-            );
-        },
-    );
+    const [refundList] = createResource(currentSwaps, async (swaps) => {
+        setLoading(true);
+        return await createRescueList(swaps as SomeSwap[], true).finally(() =>
+            setLoading(false),
+        );
+    });
 
     const handleFileValidated = (result: RescueFileResult) => {
         setRefundType(result.type);
-        setRefundJson(result.data);
+        setRefundJson(result.data as RescueFile);
         setRefundInvalid(undefined);
     };
 
@@ -243,7 +253,9 @@ export const RefundBtcLike = () => {
             </Show>
             <Show when={refundType() === RescueFileType.Legacy}>
                 <BtcLikeLegacy
-                    refundJson={refundJson}
+                    refundJson={
+                        refundJson as Accessor<SubmarineSwap | ChainSwap>
+                    }
                     refundInvalid={refundInvalid}
                 />
             </Show>
@@ -262,7 +274,7 @@ export const RefundBtcLike = () => {
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
                             <Show
-                                when={rescuableSwaps()?.length > 0}
+                                when={(rescuableSwaps()?.length ?? 0) > 0}
                                 fallback={<h4>{t("no_swaps_found")}</h4>}>
                                 <div
                                     style={getSwapListHeight(
@@ -282,7 +294,11 @@ export const RefundBtcLike = () => {
                                             </div>
                                         }>
                                         <SwapList
-                                            swapsSignal={refundList}
+                                            swapsSignal={
+                                                refundList as unknown as Accessor<
+                                                    Swap[]
+                                                >
+                                            }
                                             action={(swap) =>
                                                 rescueListAction({ swap, t })
                                             }
@@ -312,12 +328,22 @@ export const RefundBtcLike = () => {
                                     </Show>
                                 </div>
                                 <Pagination
-                                    items={rescuableSwaps}
-                                    setDisplayedItems={(swaps) =>
-                                        setCurrentSwaps(swaps)
+                                    items={
+                                        rescuableSwaps as unknown as Accessor<
+                                            Partial<SomeSwap>[]
+                                        >
                                     }
-                                    sort={sortSwaps}
-                                    totalItems={rescuableSwaps().length}
+                                    setDisplayedItems={(swaps) =>
+                                        setCurrentSwaps(
+                                            swaps as Partial<SomeSwap>[],
+                                        )
+                                    }
+                                    sort={
+                                        sortSwaps as unknown as (
+                                            items: Partial<SomeSwap>[],
+                                        ) => Partial<SomeSwap>[]
+                                    }
+                                    totalItems={rescuableSwaps()?.length ?? 0}
                                     itemsPerPage={
                                         isMobile()
                                             ? mobileItemsPerPage
@@ -594,11 +620,13 @@ export const RescueEvm = (props: { mode?: string }) => {
                 const gasKey = mnemonicToHDKey(mnemonic).derive(
                     getPathGasAbstraction(chainId),
                 );
-                extraAddresses.push(
-                    computeAddress(
-                        `0x${Buffer.from(gasKey.publicKey).toString("hex")}`,
-                    ),
-                );
+                if (gasKey.publicKey !== null) {
+                    extraAddresses.push(
+                        computeAddress(
+                            `0x${Buffer.from(gasKey.publicKey).toString("hex")}`,
+                        ),
+                    );
+                }
             }
         }
 
@@ -723,8 +751,10 @@ export const RescueEvm = (props: { mode?: string }) => {
 
     const handleFileUpload = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
-        if (!inputFile) return;
+        const inputFile = input.files?.[0];
+        if (!inputFile) {
+            return;
+        }
 
         try {
             const result = await processUploadedFile(inputFile);
@@ -797,7 +827,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                 when={
                     !isScanning() &&
                     logRefundableSwaps() !== undefined &&
-                    logRefundableSwaps().length === 0 &&
+                    logRefundableSwaps()!.length === 0 &&
                     sweepableBalances().length === 0 &&
                     unmatchedSwaps() === 0
                 }>
@@ -897,10 +927,10 @@ export const RescueEvm = (props: { mode?: string }) => {
 
                 <ScanningStatus />
 
-                <Show when={logRefundableSwaps()?.length > 0}>
+                <Show when={(logRefundableSwaps()?.length ?? 0) > 0}>
                     <SwapListLogs
-                        swaps={logRefundableSwaps}
-                        action={rescueMode()}
+                        swaps={logRefundableSwaps as Accessor<LogRefundData[]>}
+                        action={rescueMode()!}
                     />
                 </Show>
 

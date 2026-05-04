@@ -44,7 +44,7 @@ const SelectAsset = () => {
     } = useCreateContext();
 
     const [focusedIndex, setFocusedIndex] = createSignal(0);
-    let listRef: HTMLDivElement;
+    let listRef!: HTMLDivElement;
 
     const assets = createMemo(() =>
         orderedAssets.filter(

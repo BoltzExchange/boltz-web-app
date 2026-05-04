@@ -22,8 +22,8 @@ const FeeComparison = () => {
             <p>{t("swap_opportunities_subline")}</p>
             <Accordion title={t("swap_opportunities_accordion")} isOpen={true}>
                 <FeeComparisonTable
-                    proPairs={pairs()}
-                    regularPairs={regularPairs()}
+                    proPairs={pairs()!}
+                    regularPairs={regularPairs()!}
                     onSelect={(opportunity) => {
                         navigate(
                             `/swap?sendAsset=${opportunity.assetSend}&receiveAsset=${opportunity.assetReceive}`,

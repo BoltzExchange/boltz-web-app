@@ -127,10 +127,8 @@ export type ExplorerUrl = Url & {
 };
 
 export type Config = {
-    apiUrl?: Url;
-    network?: "mainnet" | "testnet" | "regtest";
-    isBoltzClient?: boolean;
-    boltzClientApiUrl?: string;
+    apiUrl: Url;
+    network: "mainnet" | "testnet" | "regtest";
     isBeta?: boolean;
     isPro?: boolean;
     assets?: Record<string, Asset>;
@@ -185,6 +183,6 @@ const isTor = () =>
 const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
-const baseConfig: Config = defaults;
+const baseConfig: Omit<Config, "network" | "apiUrl"> = defaults;
 
 export { baseConfig, chooseUrl, isTor };

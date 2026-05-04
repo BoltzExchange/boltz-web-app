@@ -64,6 +64,9 @@ const getHopExecutionQuote = async (
     quote: QuoteData;
     amountIn: bigint;
 }> => {
+    if (hop.dexDetails === undefined) {
+        throw new Error("missing DEX details for lockup hop");
+    }
     const targetLockupAmount = calculateAmountWithSlippage(
         lockupAmount,
         slippage / 2,
@@ -124,6 +127,9 @@ const lockupErc20WithPermit2 = async (
     }[] = [];
     const callsHash = hashRouterCalls(calls);
 
+    if (transactionSigner.provider === null) {
+        throw new Error("missing provider on transaction signer");
+    }
     const [permit2Address, chainId, refundAddress] = await Promise.all([
         router.PERMIT2(),
         transactionSigner.provider
@@ -219,7 +225,7 @@ const lockupWithHops = async (
     connectedSigner: Signer,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
-    getSwap: (id: string) => Promise<SomeSwap>,
+    getSwap: (id: string) => Promise<SomeSwap | null>,
     setSwap: Setter<SomeSwap | null>,
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
 ): Promise<string> => {
@@ -228,6 +234,9 @@ const lockupWithHops = async (
         connectedSigner,
         getGasAbstractionSigner(asset),
     );
+    if (transactionSigner === undefined) {
+        throw new Error("missing transaction signer for lockup");
+    }
 
     const lockup = async () => {
         if (hops.length !== 1) {
@@ -235,6 +244,9 @@ const lockupWithHops = async (
         }
 
         const hop = hops[0];
+        if (hop.dexDetails === undefined) {
+            throw new Error("missing DEX details for lockup hop");
+        }
 
         const { targetLockupAmount, quote, amountIn } =
             await getHopExecutionQuote(hop, lockupAmount, slippage);
@@ -251,6 +263,9 @@ const lockupWithHops = async (
             quote.data,
         );
 
+        if (transactionSigner.provider === null) {
+            throw new Error("missing provider on transaction signer");
+        }
         const [permit2Address, chainId, ownerAddress] = await Promise.all([
             router.PERMIT2(),
             transactionSigner.provider.getNetwork().then((n) => n.chainId),
@@ -359,6 +374,9 @@ const lockupWithHops = async (
             tx,
         );
         const currentSwap = await getSwap(swapId);
+        if (currentSwap === null) {
+            throw new Error(`missing swap ${swapId} for lockup persistence`);
+        }
         currentSwap.commitmentLockupTxHash = transactionHash;
         currentSwap.commitmentSignatureSubmitted = false;
         currentSwap.signer = ownerAddress;
@@ -374,7 +392,7 @@ const lockupWithHops = async (
     };
 
     let commitmentTxHash: string | undefined = (await getSwap(swapId))
-        .commitmentLockupTxHash;
+        ?.commitmentLockupTxHash;
     if (commitmentTxHash === undefined) {
         commitmentTxHash = await lockup();
     } else {
@@ -445,6 +463,11 @@ const LockupTransaction = (props: {
                         connectedSigner,
                         getGasAbstractionSigner(props.asset),
                     );
+                    if (transactionSigner === undefined) {
+                        throw new Error(
+                            "transaction signer is required for lockup",
+                        );
+                    }
 
                     if (props.hops !== undefined && props.hops.length > 0) {
                         transactionHash = await lockupWithHops(
@@ -515,6 +538,11 @@ const LockupTransaction = (props: {
                     }
 
                     const currentSwap = await getSwap(props.swapId);
+                    if (currentSwap === null) {
+                        throw new Error(
+                            `missing swap ${props.swapId} for lockup persistence`,
+                        );
+                    }
                     currentSwap.lockupTx = transactionHash;
                     currentSwap.signer = await connectedSigner.getAddress();
 
@@ -563,18 +591,27 @@ const LockupEvm = (props: {
 
     // The actual asset the user needs to hold (hop input token or boltz asset)
     const userAsset = () =>
-        hasHopsBefore() ? props.hops[0].from : props.asset;
+        hasHopsBefore() ? props.hops![0].from : props.asset;
 
     const expectedChainId = () =>
         config.assets?.[props.asset]?.network?.chainId;
 
-    const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
+    const [signerBalance, setSignerBalance] = createSignal<bigint | undefined>(
+        undefined,
+    );
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [requiredValue, setRequiredValue] = createSignal<bigint>(0n);
-    const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
-    const [bridgeValue, setBridgeValue] = createSignal<bigint>(undefined);
+    const [approvalTarget, setApprovalTarget] = createSignal<
+        string | undefined
+    >(undefined);
+    const [bridgeValue, setBridgeValue] = createSignal<bigint | undefined>(
+        undefined,
+    );
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
+        if (currentSigner.provider === null) {
+            return undefined;
+        }
         return await currentSigner.provider
             .getNetwork()
             .then((n) => Number(n.chainId));
@@ -583,7 +620,7 @@ const LockupEvm = (props: {
     createEffect(() => {
         void (async () => {
             if (props.bridge !== undefined) {
-                if (!hasHopsBefore()) {
+                if (!hasHopsBefore() || props.hops === undefined) {
                     throw new Error(
                         `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,
                     );
@@ -600,7 +637,8 @@ const LockupEvm = (props: {
                 return;
             }
 
-            if (signer() === undefined) {
+            const activeSigner = signer();
+            if (activeSigner === undefined) {
                 return;
             }
 
@@ -608,16 +646,16 @@ const LockupEvm = (props: {
                 return;
             }
 
-            if (hasHopsBefore()) {
+            if (hasHopsBefore() && props.hops !== undefined) {
                 const hop = props.hops[0];
                 const hopInputContract = createTokenContract(
                     hop.from,
-                    signer(),
+                    activeSigner,
                 );
-                const router = createRouterContract(hop.from, signer());
+                const router = createRouterContract(hop.from, activeSigner);
                 const [permit2Address, signerAddress] = await Promise.all([
                     router.PERMIT2(),
-                    signer().getAddress(),
+                    activeSigner.getAddress(),
                 ]);
 
                 const [balance, allowance, requiredValue] = await Promise.all([
@@ -646,15 +684,21 @@ const LockupEvm = (props: {
 
             switch (getKindForAsset(props.asset)) {
                 case AssetKind.EVMNative: {
+                    if (activeSigner.provider === null) {
+                        throw new Error("missing provider on signer");
+                    }
                     const [balance, gasPrice] = await Promise.all([
-                        signer().provider.getBalance(
-                            await signer().getAddress(),
+                        activeSigner.provider.getBalance(
+                            await activeSigner.getAddress(),
                         ),
-                        signer()
-                            .provider.getFeeData()
+                        activeSigner.provider
+                            .getFeeData()
                             .then((data) => data.gasPrice),
                     ]);
 
+                    if (gasPrice === null) {
+                        throw new Error("missing gas price");
+                    }
                     const spendable = balance - gasPrice * lockupGasUsage;
                     log.info("EVM signer spendable balance", spendable);
                     setSignerBalance(spendable);
@@ -665,8 +709,14 @@ const LockupEvm = (props: {
                     break;
                 }
                 case AssetKind.ERC20: {
-                    const contract = createTokenContract(props.asset, signer());
-                    const router = createRouterContract(props.asset, signer());
+                    const contract = createTokenContract(
+                        props.asset,
+                        activeSigner,
+                    );
+                    const router = createRouterContract(
+                        props.asset,
+                        activeSigner,
+                    );
 
                     const approvalTarget =
                         props.gasAbstraction !== GasAbstractionType.None
@@ -674,9 +724,9 @@ const LockupEvm = (props: {
                             : await getErc20Swap(props.asset).getAddress();
 
                     const [balance, allowance] = await Promise.all([
-                        contract.balanceOf(await signer().getAddress()),
+                        contract.balanceOf(await activeSigner.getAddress()),
                         contract.allowance(
-                            await signer().getAddress(),
+                            await activeSigner.getAddress(),
                             approvalTarget,
                         ),
                     ]);
@@ -709,9 +759,9 @@ const LockupEvm = (props: {
                         when={bridgeValue() !== undefined}
                         fallback={<LoadingSpinner />}>
                         <SendToBridge
-                            bridge={props.bridge}
+                            bridge={props.bridge!}
                             swapId={props.swapId}
-                            amount={bridgeValue()}
+                            amount={bridgeValue()!}
                         />
                     </Show>
                 }>
@@ -728,7 +778,7 @@ const LockupEvm = (props: {
                         </Show>
                     }>
                     <Show
-                        when={signerBalance() >= requiredValue()}
+                        when={signerBalance()! >= requiredValue()}
                         fallback={<InsufficientBalance asset={userAsset()} />}>
                         <LockupTransaction
                             asset={props.asset}
@@ -741,7 +791,9 @@ const LockupEvm = (props: {
                             needsApproval={needsApproval}
                             setNeedsApproval={setNeedsApproval}
                             approvalAsset={
-                                hasHopsBefore() ? props.hops[0].from : undefined
+                                hasHopsBefore()
+                                    ? props.hops![0].from
+                                    : undefined
                             }
                             approvalValue={
                                 hasHopsBefore() ? () => MaxUint256 : undefined

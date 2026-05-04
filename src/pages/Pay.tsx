@@ -16,7 +16,9 @@ import {
 import { getSwapUTXOs } from "src/utils/blockchain";
 
 import BackupFlow from "../components/BackupFlow";
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
@@ -26,7 +28,11 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { type blockChainsAssets, refundableAssets } from "../consts/Assets";
+import {
+    type RefundableAssetType,
+    type blockChainsAssets,
+    refundableAssets,
+} from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -60,7 +66,11 @@ import {
     hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
-import { type ChainSwap, type SubmarineSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type SomeSwap,
+    type SubmarineSwap,
+} from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
@@ -106,9 +116,13 @@ const Pay = () => {
     };
 
     const getRefundableUTXOs = async () => {
+        const currentSwap = swap();
+        if (currentSwap === null) {
+            return [];
+        }
         const [lockupTxResult, utxosResult] = await Promise.allSettled([
-            getLockupTransaction(swap().id, swap().type),
-            getSwapUTXOs(swap() as ChainSwap | SubmarineSwap),
+            getLockupTransaction(currentSwap.id, currentSwap.type),
+            getSwapUTXOs(currentSwap as ChainSwap | SubmarineSwap),
         ]);
 
         const lockupTx =
@@ -153,6 +167,9 @@ const Pay = () => {
                 timedOutRefundable() || waitForSwapTimeout(),
         }),
         async ({ id, shouldIgnoreBackendStatus }) => {
+            if (id === undefined) {
+                return;
+            }
             const currentSwap = await getSwap(id);
 
             if (!currentSwap) {
@@ -198,8 +215,8 @@ const Pay = () => {
             const res = await getSwapStatus(currentSwap.id);
             log.info(`Swap ${currentSwap.id} status fetched: ${res.status}`);
             setSwapStatus(res.status);
-            setSwapStatusTransaction(res.transaction);
-            setFailureReason(res.failureReason);
+            setSwapStatusTransaction(res.transaction ?? {});
+            setFailureReason(res.failureReason ?? "");
         },
     );
 
@@ -210,6 +227,7 @@ const Pay = () => {
         if (currentSwap === null || backupVerificationRequired()) {
             return;
         }
+        const swapValue = currentSwap;
 
         // no need to check UTXOs for non-refundable assets
         if (!refundableAssets.includes(currentSwap.assetSend)) {
@@ -275,7 +293,7 @@ const Pay = () => {
                 setRefundableUTXOs([]);
                 log.debug(
                     "Failed to get refundable UTXOs for swap:",
-                    swap().id,
+                    swapValue.id,
                 );
                 return;
             }
@@ -296,7 +314,7 @@ const Pay = () => {
                     try {
                         const currentBlockHeight = (
                             await getCurrentBlockHeight([currentSwap])
-                        )?.[currentSwap.assetSend];
+                        )?.[currentSwap.assetSend as RefundableAssetType];
 
                         if (
                             typeof currentBlockHeight === "number" &&
@@ -318,13 +336,15 @@ const Pay = () => {
                         }
 
                         if (
-                            waitForSwapTimeout() ||
-                            Object.values(swapStatusSuccess).includes(
-                                swap().status,
-                            )
+                            currentBlockHeight !== undefined &&
+                            (waitForSwapTimeout() ||
+                                (swapValue.status !== undefined &&
+                                    Object.values(swapStatusSuccess).includes(
+                                        swapValue.status,
+                                    )))
                         ) {
                             const timeoutEta = getTimeoutEta(
-                                swap().assetSend as blockChainsAssets,
+                                swapValue.assetSend as blockChainsAssets,
                                 timeoutBlockHeight,
                                 currentBlockHeight,
                             );
@@ -354,7 +374,7 @@ const Pay = () => {
     onCleanup(() => {
         log.debug("cleanup Pay");
         setSwap(null);
-        setSwapStatus(null);
+        setSwapStatus("");
         setRefundableUTXOs([]);
         setShouldIgnoreBackendStatus(false);
     });
@@ -365,8 +385,8 @@ const Pay = () => {
 
     const backendRefunded = createMemo(
         () =>
-            swap() &&
-            swap().type === SwapType.Chain &&
+            swap() !== null &&
+            swap()!.type === SwapType.Chain &&
             swapStatus() === swapStatusFailed.TransactionRefunded,
     ); // this status means backend refunded its own tx. We rename it to avoid confusing users.
 
@@ -407,10 +427,10 @@ const Pay = () => {
                             {t("pay_invoice", {
                                 id: privacyMode()
                                     ? hiddenInformation
-                                    : params.id,
+                                    : params.id!,
                             })}
                             <Show when={swap()}>
-                                <SwapIcons swap={swap()} />
+                                <SwapIcons swap={swap()!} />
                             </Show>
                         </h2>
                         <SettingsCog />
@@ -424,7 +444,7 @@ const Pay = () => {
                                 </span>
                             </p>
                             <hr />
-                            <SwapRefunded refundTxId={swap().refundTx} />
+                            <SwapRefunded refundTxId={swap()!.refundTx!} />
                         </Show>
 
                         <Show when={swap()?.refundTx === undefined}>
@@ -495,19 +515,26 @@ const Pay = () => {
                                             timeoutBlockHeight={
                                                 timeoutBlockHeight
                                             }
-                                            asset={swap().assetSend}
+                                            asset={swap()!.assetSend}
                                         />
                                         <BlockExplorer
-                                            asset={swap().assetSend}
-                                            txId={swap().lockupTx}
-                                            address={
-                                                swap().type ===
-                                                SwapType.Submarine
-                                                    ? (swap() as SubmarineSwap)
-                                                          .address
-                                                    : (swap() as ChainSwap)
-                                                          .lockupDetails
-                                                          .lockupAddress
+                                            asset={swap()!.assetSend}
+                                            kind={
+                                                swap()!.lockupTx !== undefined
+                                                    ? BlockExplorerTargetKind.Tx
+                                                    : BlockExplorerTargetKind.Address
+                                            }
+                                            id={
+                                                swap()!.lockupTx !== undefined
+                                                    ? swap()!.lockupTx!
+                                                    : swap()!.type ===
+                                                        SwapType.Submarine
+                                                      ? (
+                                                            swap() as SubmarineSwap
+                                                        ).address
+                                                      : (swap() as ChainSwap)
+                                                            .lockupDetails
+                                                            .lockupAddress
                                             }
                                         />
                                         <button
@@ -622,7 +649,7 @@ const Pay = () => {
                                     </Match>
                                 </Switch>
                                 <BlockExplorerLink
-                                    swap={swap}
+                                    swap={swap as Accessor<SomeSwap>}
                                     swapStatus={swapStatus}
                                 />
                             </Show>

@@ -36,18 +36,18 @@ type CctpRouteTestCase = {
 };
 
 const cctpRouteTestCases: CctpRouteTestCase[] = Object.entries(
-    config.assets,
+    config.assets ?? {},
 ).flatMap(([asset, assetConfig]) => {
     const bridge = assetConfig.bridge;
     if (
         bridge?.kind !== BridgeKind.Cctp ||
         bridge.canonicalAsset === asset ||
-        config.assets[bridge.canonicalAsset]?.bridge?.kind !== BridgeKind.Cctp
+        config.assets?.[bridge.canonicalAsset]?.bridge?.kind !== BridgeKind.Cctp
     ) {
         return [];
     }
 
-    const canonicalAssetConfig = config.assets[bridge.canonicalAsset];
+    const canonicalAssetConfig = config.assets?.[bridge.canonicalAsset];
     const canonicalBridge = canonicalAssetConfig?.bridge;
     if (canonicalBridge?.kind !== BridgeKind.Cctp) {
         return [];

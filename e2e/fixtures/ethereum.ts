@@ -84,7 +84,7 @@ export const test = base.extend<EthereumFixtures>({
                 },
             );
 
-            const walletAddress = walletClient.account.address;
+            const walletAddress = walletClient.account!.address;
             const chainIdHex = "0x" + rskRegtest.id.toString(16);
 
             await page.addInitScript(

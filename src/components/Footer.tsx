@@ -69,7 +69,7 @@ const Footer = () => {
                 </ExternalLink>
                 <Show when={config.torUrl}>
                     |{" "}
-                    <ExternalLink href={config.torUrl}>
+                    <ExternalLink href={config.torUrl!}>
                         {t("onion")}
                     </ExternalLink>
                 </Show>

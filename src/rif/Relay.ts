@@ -33,6 +33,14 @@ type RelayResponse = {
     signedTx: string;
 };
 
+const getRifRelayBaseUrl = (): string => {
+    const base = config.assets?.[RBTC]?.rifRelay;
+    if (!base) {
+        throw new Error("missing RIF relay URL for RBTC");
+    }
+    return base;
+};
+
 const sendPostRequest = (url: string, body: unknown) =>
     fetch(url, {
         method: "POST",
@@ -53,15 +61,13 @@ const handleResponse = async <T>(res: Response): Promise<T> => {
 };
 
 export const getChainInfo = (): Promise<ChainInfo> =>
-    fetch(`${config.assets[RBTC].rifRelay}/chain-info`).then(
-        handleResponse<ChainInfo>,
-    );
+    fetch(`${getRifRelayBaseUrl()}/chain-info`).then(handleResponse<ChainInfo>);
 
 export const estimate = (
     relay: EnvelopingRequest,
     metadata: Metadata,
 ): Promise<EstimationResponse> =>
-    sendPostRequest(`${config.assets[RBTC].rifRelay}/estimate`, {
+    sendPostRequest(`${getRifRelayBaseUrl()}/estimate`, {
         metadata,
         relayRequest: relay,
     }).then(handleResponse<EstimationResponse>);
@@ -70,7 +76,7 @@ export const relay = (
     relay: EnvelopingRequest,
     metadata: Metadata,
 ): Promise<RelayResponse> =>
-    sendPostRequest(`${config.assets[RBTC].rifRelay}/relay`, {
+    sendPostRequest(`${getRifRelayBaseUrl()}/relay`, {
         metadata,
         relayRequest: relay,
     }).then(handleResponse<RelayResponse>);

@@ -30,7 +30,7 @@ const connectWallet = async (
     await page.getByText(/metamask/i).click();
 
     if (options?.waitForAddress !== false) {
-        const shortAddress = walletClient.account.address.slice(0, 8);
+        const shortAddress = walletClient.account!.address.slice(0, 8);
         await expect(page.locator(`text=${shortAddress}`)).toBeVisible();
     }
 };

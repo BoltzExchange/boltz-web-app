@@ -39,7 +39,7 @@ describe("SwapList", () => {
             () => (
                 <SwapList
                     swapsSignal={swapsSignal}
-                    action={(swap) => swap.status}
+                    action={(swap) => swap.status ?? ""}
                 />
             ),
             {
@@ -47,8 +47,8 @@ describe("SwapList", () => {
             },
         );
 
-        const childNodes = [];
-        firstChild.childNodes.forEach((node) => {
+        const childNodes: ChildNode[] = [];
+        firstChild!.childNodes.forEach((node) => {
             if (node.nodeName === "HR") return;
             childNodes.push(node);
         });
@@ -56,7 +56,7 @@ describe("SwapList", () => {
         expect(childNodes.length).toEqual(swapsSignal().length);
 
         for (const [i, swap] of childNodes.entries()) {
-            expect(swap.textContent.includes(swapsSorted[i].id)).toEqual(true);
+            expect(swap.textContent?.includes(swapsSorted[i].id)).toEqual(true);
         }
     });
 });

@@ -113,9 +113,10 @@ vi.mock("../../src/components/ContractTransaction", () => ({
 }));
 
 vi.mock("../../src/components/BlockExplorer", () => ({
-    default: (props: { txId: string }) => (
-        <a data-testid="block-explorer" href={`#${props.txId}`}>
-            {props.txId}
+    BlockExplorerTargetKind: { Tx: "tx", Address: "address" },
+    default: (props: { id: string }) => (
+        <a data-testid="block-explorer" href={`#${props.id}`}>
+            {props.id}
         </a>
     ),
 }));

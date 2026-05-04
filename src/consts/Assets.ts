@@ -104,9 +104,11 @@ export const getBridgeVariants = (canonical: string): string[] =>
     );
 
 export const getNetworkTransport = (
-    asset: string,
+    asset?: string,
 ): NetworkTransport | undefined => {
-    return config.assets?.[asset]?.network?.transport;
+    return asset === undefined
+        ? undefined
+        : config.assets?.[asset]?.network?.transport;
 };
 
 const getAssetConfig = (asset: string) => config.assets?.[asset];

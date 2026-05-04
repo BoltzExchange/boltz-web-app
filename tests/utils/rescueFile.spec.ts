@@ -89,7 +89,7 @@ describe("rescueFile", () => {
                 expect(derivedKey).toBeDefined();
                 expect(derivedKey.privateKey).toBeDefined();
                 expect(
-                    Buffer.from(derivedKey.privateKey).toString("hex"),
+                    Buffer.from(derivedKey.privateKey!).toString("hex"),
                 ).toEqual(expected);
             },
         );
@@ -103,8 +103,8 @@ describe("rescueFile", () => {
                 expect(btcKey.privateKey).toBeDefined();
                 expect(rbtcKey.privateKey).toBeDefined();
                 expect(
-                    Buffer.from(btcKey.privateKey).toString("hex"),
-                ).not.toEqual(Buffer.from(rbtcKey.privateKey).toString("hex"));
+                    Buffer.from(btcKey.privateKey!).toString("hex"),
+                ).not.toEqual(Buffer.from(rbtcKey.privateKey!).toString("hex"));
             },
         );
 
@@ -113,8 +113,8 @@ describe("rescueFile", () => {
             const key2 = deriveKey(rescueFile, 1, RBTC);
             expect(key1.privateKey).toBeDefined();
             expect(key2.privateKey).toBeDefined();
-            expect(Buffer.from(key1.privateKey).toString("hex")).not.toEqual(
-                Buffer.from(key2.privateKey).toString("hex"),
+            expect(Buffer.from(key1.privateKey!).toString("hex")).not.toEqual(
+                Buffer.from(key2.privateKey!).toString("hex"),
             );
         });
 
@@ -123,8 +123,8 @@ describe("rescueFile", () => {
             expect(key.privateKey).toBeDefined();
 
             const btcKey = deriveKey(rescueFile, 0, BTC);
-            expect(Buffer.from(key.privateKey).toString("hex")).not.toEqual(
-                Buffer.from(btcKey.privateKey).toString("hex"),
+            expect(Buffer.from(key.privateKey!).toString("hex")).not.toEqual(
+                Buffer.from(btcKey.privateKey!).toString("hex"),
             );
         });
 
@@ -134,8 +134,8 @@ describe("rescueFile", () => {
             const withHdKey = deriveKey(rescueFile, 0, BTC, hdKey);
 
             expect(
-                Buffer.from(withoutHdKey.privateKey).toString("hex"),
-            ).toEqual(Buffer.from(withHdKey.privateKey).toString("hex"));
+                Buffer.from(withoutHdKey.privateKey!).toString("hex"),
+            ).toEqual(Buffer.from(withHdKey.privateKey!).toString("hex"));
         });
 
         test("should use provided hdKey for EVM asset", () => {
@@ -144,8 +144,8 @@ describe("rescueFile", () => {
             const withHdKey = deriveKey(rescueFile, 0, RBTC, hdKey);
 
             expect(
-                Buffer.from(withoutHdKey.privateKey).toString("hex"),
-            ).toEqual(Buffer.from(withHdKey.privateKey).toString("hex"));
+                Buffer.from(withoutHdKey.privateKey!).toString("hex"),
+            ).toEqual(Buffer.from(withHdKey.privateKey!).toString("hex"));
         });
     });
 
@@ -160,8 +160,8 @@ describe("rescueFile", () => {
             const key1 = deriveKeyGasAbstraction(rescueFile, 33);
             const key2 = deriveKeyGasAbstraction(rescueFile, 42161);
 
-            expect(Buffer.from(key1.privateKey).toString("hex")).not.toEqual(
-                Buffer.from(key2.privateKey).toString("hex"),
+            expect(Buffer.from(key1.privateKey!).toString("hex")).not.toEqual(
+                Buffer.from(key2.privateKey!).toString("hex"),
             );
         });
 
@@ -169,8 +169,8 @@ describe("rescueFile", () => {
             const key1 = deriveKeyGasAbstraction(rescueFile, 33);
             const key2 = deriveKeyGasAbstraction(rescueFile, 33);
 
-            expect(Buffer.from(key1.privateKey).toString("hex")).toEqual(
-                Buffer.from(key2.privateKey).toString("hex"),
+            expect(Buffer.from(key1.privateKey!).toString("hex")).toEqual(
+                Buffer.from(key2.privateKey!).toString("hex"),
             );
         });
 
@@ -178,8 +178,8 @@ describe("rescueFile", () => {
             const gasKey = deriveKeyGasAbstraction(rescueFile, 33);
             const regularKey = deriveKey(rescueFile, 0, RBTC);
 
-            expect(Buffer.from(gasKey.privateKey).toString("hex")).not.toEqual(
-                Buffer.from(regularKey.privateKey).toString("hex"),
+            expect(Buffer.from(gasKey.privateKey!).toString("hex")).not.toEqual(
+                Buffer.from(regularKey.privateKey!).toString("hex"),
             );
         });
     });

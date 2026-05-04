@@ -48,7 +48,7 @@ const NetworkSelect = () => {
 
     const [search, setSearch] = createSignal("");
     const [focusedIndex, setFocusedIndex] = createSignal(0);
-    let listRef: HTMLDivElement;
+    let listRef!: HTMLDivElement;
 
     const selectedAsset = () =>
         assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;

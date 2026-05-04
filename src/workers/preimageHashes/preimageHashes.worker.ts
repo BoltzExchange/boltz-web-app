@@ -26,7 +26,11 @@ self.onmessage = ({
     let entries: PreimageHashEntry[] = [];
 
     for (let i = 0; i < maxIterations; i++) {
-        const preimage = derivePreimage(parentKey.deriveChild(i).privateKey);
+        const privateKey = parentKey.deriveChild(i).privateKey;
+        if (privateKey === null) {
+            continue;
+        }
+        const preimage = derivePreimage(privateKey);
         const preimageHex = hex.encode(preimage);
         const preimageHash = hex.encode(sha256(preimage));
 

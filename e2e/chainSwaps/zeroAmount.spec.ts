@@ -50,10 +50,10 @@ test.describe("Chain Swap 0-amount", () => {
 
         const txIdLink = page.getByText("open claim transaction");
 
-        const txId = (await txIdLink.getAttribute("href")).split("/").pop();
+        const txId = (await txIdLink.getAttribute("href"))!.split("/").pop();
         expect(txId).toBeDefined();
 
-        const txInfo = JSON.parse(await getElementsWalletTx(txId));
+        const txInfo = JSON.parse(await getElementsWalletTx(txId!));
         expectApproxBtcAmount(
             txInfo.amount.bitcoin.toString(),
             "0.00997297",
@@ -101,7 +101,7 @@ test.describe("Chain Swap 0-amount", () => {
             "button[data-testid='create-swap-button']",
         );
         const createButton = await buttonCreateSwap.elementHandle();
-        await expect(createButton.getAttribute("disabled")).resolves.toEqual(
+        await expect(createButton!.getAttribute("disabled")).resolves.toEqual(
             "",
         );
     });

@@ -11,11 +11,17 @@ import {
     onCleanup,
 } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorer, {
+    BlockExplorerTargetKind,
+} from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import { type AssetType, type blockChainsAssets } from "../consts/Assets";
+import {
+    type AssetType,
+    type RefundableAssetType,
+    type blockChainsAssets,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -39,47 +45,63 @@ export const mapSwap = (
     }
 
     switch (swap.type) {
-        case SwapType.Submarine:
+        case SwapType.Submarine: {
+            const refund = swap.refundDetails;
+            if (refund === undefined) {
+                return undefined;
+            }
             return {
                 ...swap,
-                swapTree: swap.refundDetails.tree,
+                type: SwapType.Submarine,
+                swapTree: refund.tree,
                 assetSend: swap.from,
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
-                blindingKey: swap.refundDetails.blindingKey,
-                address: swap.refundDetails.lockupAddress,
-                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-                claimPublicKey: swap.refundDetails.serverPublicKey,
-                timeoutBlockHeight: swap.refundDetails.timeoutBlockHeight,
+                blindingKey: refund.blindingKey,
+                address: refund.lockupAddress,
+                refundPrivateKeyIndex: refund.keyIndex,
+                claimPublicKey: refund.serverPublicKey,
+                timeoutBlockHeight: refund.timeoutBlockHeight,
             };
-        case SwapType.Chain:
+        }
+        case SwapType.Chain: {
+            const refund = swap.refundDetails;
+            if (refund === undefined) {
+                return undefined;
+            }
+            const { claimDetails, refundDetails, ...rest } = swap;
             return {
-                ...swap,
+                ...rest,
+                type: SwapType.Chain,
                 assetSend: swap.from,
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
-                address: swap.claimDetails?.lockupAddress, // RSK doesn't have claimDetails yet
-                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-                claimPublicKey: swap.claimDetails?.serverPublicKey,
-                claimPrivateKeyIndex: swap.claimDetails?.keyIndex,
-                timeoutBlockHeight: swap.refundDetails.timeoutBlockHeight,
+                refundPrivateKeyIndex: refund.keyIndex,
+
+                claimPrivateKeyIndex: claimDetails?.keyIndex,
                 lockupDetails: {
-                    ...swap.refundDetails,
-                    swapTree: swap.refundDetails.tree,
+                    ...refundDetails,
+                    swapTree: refund.tree,
                 } as ChainSwapDetails,
             };
-        case SwapType.Reverse:
+        }
+        case SwapType.Reverse: {
+            const claim = swap.claimDetails;
+            if (claim === undefined) {
+                return undefined;
+            }
             return {
                 ...swap,
+                type: SwapType.Reverse,
                 assetSend: swap.from,
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
-                address: swap.claimDetails.lockupAddress,
-                timeoutBlockHeight: swap.claimDetails.timeoutBlockHeight,
-                claimPublicKey: swap.claimDetails.serverPublicKey,
-                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-                sendAmount: swap.claimDetails.amount,
+                lockupAddress: claim.lockupAddress,
+                timeoutBlockHeight: claim.timeoutBlockHeight,
+                claimPrivateKeyIndex: claim.keyIndex,
+                sendAmount: claim.amount,
             };
+        }
         default:
             return undefined;
     }
@@ -118,18 +140,21 @@ const RefundRescue = () => {
 
     createResource(async () => {
         try {
-            if (rescuableSwap()) {
+            const mapped = rescuableSwap();
+            const restorable = rescuableSwaps().find((s) => s.id === params.id);
+            if (mapped !== undefined && restorable !== undefined) {
+                const mappedSwap = mapped as SomeSwap;
                 setLoading(true);
                 try {
-                    setSwap(rescuableSwap() as SomeSwap);
-                    log.debug("selecting swap", rescuableSwap());
-                    const res = await getSwapStatus(rescuableSwap().id);
+                    setSwap(mappedSwap);
+                    log.debug("selecting swap", mappedSwap);
+                    const res = await getSwapStatus(mappedSwap.id);
                     setSwapStatus(res.status);
-                    setSwapStatusTransaction(res.transaction);
-                    setFailureReason(res.failureReason);
+                    setSwapStatusTransaction(res.transaction ?? {});
+                    setFailureReason(res.failureReason ?? "");
                 } catch (e) {
                     log.error(
-                        `failed to get swap status for swap ${swap().id}:`,
+                        `failed to get swap status for swap ${mappedSwap.id}:`,
                         e,
                     );
                 }
@@ -137,13 +162,11 @@ const RefundRescue = () => {
                 // For uncooperative swaps, we don't rely on backend for status updates
                 setShouldIgnoreBackendStatus(waitForSwapTimeout());
 
-                const utxos = await getRescuableUTXOs(
-                    rescuableSwap() as SomeSwap,
-                );
+                const utxos = await getRescuableUTXOs(mappedSwap);
 
                 if (utxos.length === 0) {
                     throw new Error(
-                        `failed to get refundable UTXOs for swap ${swap().id}`,
+                        `failed to get refundable UTXOs for swap ${mappedSwap.id}`,
                     );
                 }
 
@@ -151,18 +174,30 @@ const RefundRescue = () => {
 
                 if (waitForSwapTimeout()) {
                     try {
-                        const currentBlockHeight: number = (
-                            await getCurrentBlockHeight([
-                                rescuableSwap() as SomeSwap,
-                            ])
-                        )?.[rescuableSwap().assetSend];
+                        const blockHeights = await getCurrentBlockHeight([
+                            mappedSwap,
+                        ]);
+                        const currentBlockHeight =
+                            blockHeights?.[
+                                mappedSwap.assetSend as RefundableAssetType
+                            ];
+                        if (currentBlockHeight === undefined) {
+                            throw new Error(
+                                "missing current block height for refund timeout",
+                            );
+                        }
 
-                        const timeoutBlockHeight = (
-                            rescuableSwap() as RestorableSwap
-                        ).refundDetails.timeoutBlockHeight;
+                        const refundDetails = restorable.refundDetails;
+                        if (refundDetails === undefined) {
+                            throw new Error(
+                                "missing refund details for refund timeout",
+                            );
+                        }
+                        const timeoutBlockHeight =
+                            refundDetails.timeoutBlockHeight;
 
                         const timeoutEta = getTimeoutEta(
-                            rescuableSwap().assetSend as blockChainsAssets,
+                            mappedSwap.assetSend as blockChainsAssets,
                             timeoutBlockHeight,
                             currentBlockHeight,
                         );
@@ -171,7 +206,7 @@ const RefundRescue = () => {
                         setTimeoutBlockHeight(timeoutBlockHeight);
                     } catch (e) {
                         log.error(
-                            `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
+                            `failed to get uncooperative timeout ETA for swap ${mappedSwap.id}:`,
                             e,
                         );
                         // if we can't obtain block height data because 3rd party explorer is down, we allow the user to attempt an uncoop refund anyway
@@ -207,16 +242,22 @@ const RefundRescue = () => {
                             <RefundEta
                                 timeoutEta={timeoutEta}
                                 timeoutBlockHeight={timeoutBlockHeight}
-                                asset={swap().assetSend}
+                                asset={swap()!.assetSend}
                             />
                             <BlockExplorer
-                                asset={swap().assetSend}
-                                txId={swap().lockupTx}
-                                address={
-                                    swap().type === SwapType.Submarine
-                                        ? (swap() as SubmarineSwap).address
-                                        : (swap() as ChainSwap).lockupDetails
-                                              .lockupAddress
+                                asset={swap()!.assetSend}
+                                kind={
+                                    swap()!.lockupTx !== undefined
+                                        ? BlockExplorerTargetKind.Tx
+                                        : BlockExplorerTargetKind.Address
+                                }
+                                id={
+                                    swap()!.lockupTx !== undefined
+                                        ? swap()!.lockupTx!
+                                        : swap()!.type === SwapType.Submarine
+                                          ? (swap() as SubmarineSwap).address
+                                          : (swap() as ChainSwap).lockupDetails
+                                                .lockupAddress
                                 }
                             />
                             <button
@@ -238,18 +279,27 @@ const RefundRescue = () => {
                                         >
                                     }
                                     setRefundTxId={setRefundTxId}
-                                    deriveKeyFn={(index: number) =>
-                                        ECPair.fromPrivateKey(
-                                            new Uint8Array(
-                                                deriveKey(
-                                                    rescueFile(),
-                                                    index,
-                                                    swap()
-                                                        .assetSend as AssetType,
-                                                ).privateKey,
-                                            ),
-                                        )
-                                    }
+                                    deriveKeyFn={(index: number) => {
+                                        const rescue = rescueFile();
+                                        if (rescue === undefined) {
+                                            throw new Error(
+                                                "missing rescue file",
+                                            );
+                                        }
+                                        const derived = deriveKey(
+                                            rescue,
+                                            index,
+                                            swap()!.assetSend as AssetType,
+                                        );
+                                        if (derived.privateKey === null) {
+                                            throw new Error(
+                                                "missing private key for derived rescue key",
+                                            );
+                                        }
+                                        return ECPair.fromPrivateKey(
+                                            new Uint8Array(derived.privateKey),
+                                        );
+                                    }}
                                 />
                             </Show>
                             <Show when={refundTxId() !== ""}>
@@ -258,8 +308,9 @@ const RefundRescue = () => {
                                 <hr />
                                 <BlockExplorer
                                     typeLabel={"refund_tx"}
-                                    asset={rescuableSwap().assetSend}
-                                    txId={refundTxId()}
+                                    asset={rescuableSwap()!.assetSend!}
+                                    kind={BlockExplorerTargetKind.Tx}
+                                    id={refundTxId()}
                                 />
                             </Show>
                         </Match>

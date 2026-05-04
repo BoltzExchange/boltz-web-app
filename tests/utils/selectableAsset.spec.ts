@@ -15,17 +15,17 @@ vi.mock("../../src/config", async () => {
         config: {
             ...actual.config,
             assets: {
-                ...actual.config.assets,
+                ...actual.config.assets!,
                 "ASSET-DISABLED": {
-                    ...actual.config.assets.BTC,
+                    ...actual.config.assets!.BTC,
                     disabled: true,
                 },
                 "ASSET-NO-SEND": {
-                    ...actual.config.assets.BTC,
+                    ...actual.config.assets!.BTC,
                     canSend: false,
                 },
                 "ASSET-DEFAULT": {
-                    ...actual.config.assets.BTC,
+                    ...actual.config.assets!.BTC,
                 },
             },
         },

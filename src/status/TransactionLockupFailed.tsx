@@ -94,7 +94,7 @@ const TransactionLockupFailed = (props: {
     const [newQuote, newQuoteActions] = createResource<
         { sentAmount: number; quote: number; receiveAmount: number } | undefined
     >(async () => {
-        if (swap() === null || swap().type !== SwapType.Chain) {
+        if (swap() === null || swap()!.type !== SwapType.Chain) {
             return undefined;
         }
 
@@ -139,7 +139,7 @@ const TransactionLockupFailed = (props: {
                             sentAmountSource = "userLock.transaction.hex";
                             const lockTransaction = getTransaction(
                                 chainSwap.assetSend,
-                            ).fromHex(transactions.userLock.transaction.hex);
+                            ).fromHex(transactions.userLock.transaction.hex!);
                             const { script: lockupScript } = decodeAddress(
                                 chainSwap.assetSend,
                                 chainSwap.lockupDetails.lockupAddress,
@@ -196,7 +196,7 @@ const TransactionLockupFailed = (props: {
             };
         } catch (e) {
             log.warn(
-                `Getting new quote for swap ${swap().id} failed: ${formatError(e)}`,
+                `Getting new quote for swap ${swap()?.id} failed: ${formatError(e)}`,
             );
 
             // We use that specific error to determine the refund type
@@ -336,25 +336,25 @@ const TransactionLockupFailed = (props: {
                                 </Show>
                             </Show>
                             <Show when={swap()?.refundTx !== undefined}>
-                                <SwapRefunded refundTxId={swap().refundTx} />
+                                <SwapRefunded refundTxId={swap()!.refundTx!} />
                             </Show>
                         </>
                     }>
                     <div class="quote">
                         <Amount
                             label={"sent"}
-                            amount={newQuote().sentAmount}
+                            amount={newQuote()!.sentAmount}
                             asset={
                                 (swap() as ChainSwap).dex?.position ===
                                 SwapPosition.Pre
                                     ? getFinalAssetSend(swap() as ChainSwap)
-                                    : swap().assetSend
+                                    : swap()!.assetSend
                             }
                         />
                         <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                         <Amount
                             label={"will_receive"}
-                            amount={newQuote().receiveAmount}
+                            amount={newQuote()!.receiveAmount}
                             asset={getFinalAssetReceive(swap() as ChainSwap)}
                         />
                     </div>
@@ -365,6 +365,10 @@ const TransactionLockupFailed = (props: {
                             onClick={async () => {
                                 const currentSwap = swap() as ChainSwap;
                                 const quoteData = newQuote();
+                                if (quoteData === undefined) {
+                                    return;
+                                }
+
                                 log.info(
                                     `Accepting new quote for swap ${currentSwap.id}`,
                                     quoteData,

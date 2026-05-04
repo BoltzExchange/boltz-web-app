@@ -25,12 +25,12 @@ vi.mock("../../src/config", async () => {
         config: {
             ...actual.config,
             assets: {
-                ...actual.config.assets,
+                ...actual.config.assets!,
                 "USDT0-ETH": {
-                    ...actual.config.assets.USDT0,
+                    ...actual.config.assets!.USDT0,
                     canSend: true,
                     network: {
-                        ...actual.config.assets.USDT0.network,
+                        ...actual.config.assets!.USDT0.network,
                         chainName: "Ethereum",
                         symbol: "ETH",
                         gasToken: "ETH",
@@ -42,7 +42,7 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                     token: {
-                        ...actual.config.assets.USDT0.token,
+                        ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000000001",
                     },
                 },

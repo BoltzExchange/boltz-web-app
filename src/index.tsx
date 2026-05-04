@@ -152,7 +152,7 @@ const cleanup = render(
             <Route path="*404" component={NotFound} />
         </Router>
     ),
-    document.getElementById("root"),
+    document.getElementById("root")!,
 );
 
 if (import.meta.hot) {

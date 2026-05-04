@@ -91,17 +91,17 @@ const TransactionClaimed = () => {
                     {t("successfully_swapped", {
                         amount: formatAmount(
                             BigNumber(
-                                (swap().dex?.position === SwapPosition.Post
-                                    ? swap().dex?.quoteAmount
-                                    : swap().receiveAmount) ?? 0,
+                                (swap()!.dex?.position === SwapPosition.Post
+                                    ? swap()!.dex?.quoteAmount
+                                    : swap()!.receiveAmount) ?? 0,
                             ),
                             denomination(),
                             separator(),
-                            getFinalAssetReceive(swap()),
+                            getFinalAssetReceive(swap()!),
                         ),
                         denomination: formatDenomination(
                             denomination(),
-                            getFinalAssetReceive(swap()),
+                            getFinalAssetReceive(swap()!),
                         ),
                     })}
                 </p>
@@ -114,7 +114,7 @@ const TransactionClaimed = () => {
                         class="btn btn-explorer"
                         href={paymentValidationUrl(
                             (swap() as SubmarineSwap).invoice,
-                            preimage(),
+                            preimage()!,
                         )}>
                         {t("validate_payment")}
                     </ExternalLink>

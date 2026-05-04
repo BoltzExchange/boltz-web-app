@@ -10,6 +10,9 @@ const WeblnButton = () => {
 
     const createWeblnInvoice = async () => {
         await enableWebln(async () => {
+            if (window.webln === undefined) {
+                throw new Error("webln is not available");
+            }
             const amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
             log.debug("created webln invoice", invoice);

@@ -106,7 +106,7 @@ const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     assetSend: Accessor<string>,
-    signer: Accessor<Signer>,
+    signer: Accessor<Signer | undefined>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
     getGasToken: boolean | undefined,
@@ -118,10 +118,11 @@ export const getClaimAddress = async (
     const lockupGasAbstraction = getLockupGasAbstraction(assetSend());
 
     if (assetReceive() === RBTC && signer() !== undefined) {
+        const activeSigner = signer()!;
         const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
+            activeSigner.provider.getBalance(await activeSigner.getAddress()),
+            activeSigner.provider
+                .getFeeData()
                 .then((data) => data.gasPrice ?? 0n),
         ]);
         log.debug("RSK balance", balance);
@@ -137,7 +138,8 @@ export const getClaimAddress = async (
                     lockup: lockupGasAbstraction,
                     claim: GasAbstractionType.RifRelay,
                 },
-                claimAddress: (await getSmartWalletAddress(signer())).address,
+                claimAddress: (await getSmartWalletAddress(activeSigner))
+                    .address,
             };
         }
 
@@ -431,12 +433,15 @@ const CreateButton = () => {
                                     e,
                                 );
                                 if (
-                                    Object.values(InvoiceValidation).includes(
-                                        e.message,
-                                    )
+                                    e instanceof Error &&
+                                    (
+                                        Object.values(
+                                            InvoiceValidation,
+                                        ) as string[]
+                                    ).includes(e.message)
                                 ) {
                                     const satsAmount = miliSatToSat(
-                                        BigNumber(e.cause),
+                                        BigNumber(e.cause as BigNumber.Value),
                                     );
                                     const value = {
                                         amount: formatAmount(
@@ -468,7 +473,17 @@ const CreateButton = () => {
 
                                     throw t(errorMsg, value);
                                 }
-                                const error = e.json ? await e.json() : e;
+                                const hasJson =
+                                    e !== null &&
+                                    typeof e === "object" &&
+                                    "json" in e &&
+                                    typeof (e as { json: unknown }).json ===
+                                        "function";
+                                const error = hasJson
+                                    ? await (
+                                          e as { json: () => Promise<unknown> }
+                                      ).json()
+                                    : e;
                                 throw formatError(error);
                             }
                         })(),
@@ -498,13 +513,17 @@ const CreateButton = () => {
                 notify("error", formatError(e));
             }
         } else {
-            log.info("Fetching invoice from bolt12 offer", bolt12Offer());
+            const offer = bolt12Offer();
+            if (offer === undefined) {
+                return;
+            }
+            log.info("Fetching invoice from bolt12 offer", offer);
             try {
                 const res = await fetchBolt12Invoice(
-                    bolt12Offer(),
+                    offer,
                     Number(receiveAmount()),
                 );
-                setOriginalDestination(bolt12Offer());
+                setOriginalDestination(offer);
                 setInvoice(res.invoice);
                 setBolt12Offer(undefined);
                 setInvoiceValid(true);
@@ -521,8 +540,8 @@ const CreateButton = () => {
         gasAbstraction: GasAbstraction,
     ): Promise<boolean> => {
         try {
-            let data: SomeSwap;
-            let hops: EncodedHop[];
+            let data!: SomeSwap;
+            let hops!: EncodedHop[];
             let hopsPosition: SwapPosition | undefined;
 
             switch (swapType()) {
@@ -532,6 +551,9 @@ const CreateButton = () => {
                             sendAmount(),
                             pair().minerFees,
                         );
+                        if (creationData === undefined) {
+                            throw new Error("missing swap creation data");
+                        }
                         hops = creationData.hops;
                         hopsPosition = creationData.hopsPosition;
                         data = await createSubmarine(
@@ -565,7 +587,12 @@ const CreateButton = () => {
                         ? getAssetByBip21Prefix(bip21Decoded.protocol)
                         : undefined;
 
-                    if (!bip21 || assetSend() === bip21Asset) {
+                    if (
+                        !bip21 ||
+                        bip21Decoded === undefined ||
+                        bip21Asset === undefined ||
+                        assetSend() === bip21Asset
+                    ) {
                         log.debug("Creating submarine swap");
                         await createSubmarineSwap();
                         break;
@@ -646,6 +673,10 @@ const CreateButton = () => {
                         setSendAmount(mrhSendAmount);
 
                         log.debug("Creating MRH swap");
+                        const mrhRescue = rescueFile();
+                        if (mrhRescue === null) {
+                            throw new Error("missing rescue file");
+                        }
                         const chainSwap = await createChain(
                             assetSend(),
                             bip21Asset,
@@ -654,7 +685,7 @@ const CreateButton = () => {
                             onchainAddress(),
                             chainPair.hash,
                             gasAbstraction,
-                            rescueFile(),
+                            mrhRescue,
                             newKey,
                             originalDestination(),
                         );
@@ -685,6 +716,13 @@ const CreateButton = () => {
                         sendAmount(),
                         pair().minerFees,
                     );
+                    if (creationData === undefined) {
+                        throw new Error("missing swap creation data");
+                    }
+                    const rescue = rescueFile();
+                    if (rescue === null) {
+                        throw new Error("missing rescue file");
+                    }
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
                     data = await createReverse(
@@ -695,7 +733,7 @@ const CreateButton = () => {
                         claimAddress,
                         creationData.pairHash,
                         gasAbstraction,
-                        rescueFile(),
+                        rescue,
                         newKey,
                         getOriginalDestination(),
                     );
@@ -707,6 +745,13 @@ const CreateButton = () => {
                         sendAmount(),
                         pair().minerFees,
                     );
+                    if (creationData === undefined) {
+                        throw new Error("missing swap creation data");
+                    }
+                    const rescue = rescueFile();
+                    if (rescue === null) {
+                        throw new Error("missing rescue file");
+                    }
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
                     data = await createChain(
@@ -717,7 +762,7 @@ const CreateButton = () => {
                         claimAddress,
                         creationData.pairHash,
                         gasAbstraction,
-                        rescueFile(),
+                        rescue,
                         newKey,
                         getOriginalDestination(),
                     );
@@ -774,9 +819,9 @@ const CreateButton = () => {
                 derivationPath:
                     swapType() !== SwapType.Submarine &&
                     signer() !== undefined &&
-                    customDerivationPathRdns.includes(signer().rdns)
+                    customDerivationPathRdns.includes(signer()!.rdns)
                         ? (
-                              providers()[signer().rdns]
+                              providers()[signer()!.rdns]
                                   .provider as unknown as HardwareSigner
                           ).getDerivationPath()
                         : undefined,
@@ -809,7 +854,7 @@ const CreateButton = () => {
             );
 
             if (!recovered) {
-                notify("error", err);
+                notify("error", formatError(err));
             }
 
             return false;
@@ -856,7 +901,7 @@ const CreateButton = () => {
                 ...getSwapCreationLogContext(),
                 error: formatError(e),
             });
-            notify("error", e);
+            notify("error", formatError(e));
         } finally {
             setLoading(false);
         }
