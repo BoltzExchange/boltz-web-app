@@ -31,6 +31,7 @@ import {
     getOftTransactionSender,
     getOftTransport,
     getQuotedOftContract,
+    getRequiredSolanaOftNativeBalance,
     getSolanaOftTokenBalance,
     getTronOftTokenBalance,
     isExecutorNativeAmountExceedsCapError,
@@ -254,8 +255,23 @@ export class OftBridgeDriver extends BridgeDriver {
         return getSolanaOftGuidFromLogs(args.logMessages);
     };
 
-    public getBufferedNativeFee = (nativeFee: bigint): bigint => {
-        return getBufferedOftNativeFee(nativeFee);
+    public getTransportRequiredNativeBalance = async (
+        route: BridgeRoute,
+        msgFee: BridgeMsgFee,
+    ): Promise<bigint> => {
+        const transport = this.getTransport(route.sourceAsset);
+
+        switch (transport) {
+            case NetworkTransport.Solana:
+                return await getRequiredSolanaOftNativeBalance(
+                    route.sourceAsset,
+                    msgFee[0],
+                );
+            case NetworkTransport.Tron:
+                return msgFee[0];
+            case NetworkTransport.Evm:
+                return getBufferedOftNativeFee(msgFee[0]);
+        }
     };
 
     public getSourceTokenBalance = async (

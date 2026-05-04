@@ -260,9 +260,11 @@ const SendToBridge = (props: {
             bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
             bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
         ]);
-        const requiredNativeBalance = bridgeDriver().getBufferedNativeFee(
-            msgFee[0],
-        );
+        const requiredNativeBalance =
+            await bridgeDriver().getTransportRequiredNativeBalance(
+                bridgeRoute,
+                msgFee,
+            );
         const hasEnoughTokenBalance = balance >= tokenAmount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
@@ -291,7 +293,11 @@ const SendToBridge = (props: {
             bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
             bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
         ]);
-        const requiredNativeBalance = msgFee[0];
+        const requiredNativeBalance =
+            await bridgeDriver().getTransportRequiredNativeBalance(
+                bridgeRoute,
+                msgFee,
+            );
         const hasEnoughTokenBalance = balance >= props.amount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;

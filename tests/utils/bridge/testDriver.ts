@@ -46,7 +46,6 @@ export class TestBridgeDriver extends BridgeDriver {
         void args;
         return undefined;
     };
-    public getBufferedNativeFee = (nativeFee: bigint) => nativeFee;
     public getSourceTokenBalance = notImplemented("getSourceTokenBalance");
     public getSourceNativeBalance = notImplemented("getSourceNativeBalance");
     public getTransactionSender = notImplemented("getTransactionSender");

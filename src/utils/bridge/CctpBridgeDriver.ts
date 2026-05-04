@@ -395,10 +395,6 @@ export class CctpBridgeDriver extends BridgeDriver {
         );
     };
 
-    public getBufferedNativeFee = (nativeFee: bigint): bigint => {
-        return nativeFee;
-    };
-
     public getSourceTokenBalance = async (
         route: BridgeRoute,
         ownerAddress: string,
