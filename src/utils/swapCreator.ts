@@ -19,6 +19,7 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
+import type { BridgeDetails } from "./bridge/details";
 import type { BridgeRoute } from "./bridge/types";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
@@ -38,6 +39,7 @@ export type BridgeDetail = BridgeRoute & {
     kind: BridgeKind;
     position: SwapPosition;
     txHash?: string;
+    details?: BridgeDetails;
 };
 
 export const enum GasAbstractionType {

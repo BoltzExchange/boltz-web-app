@@ -3,6 +3,7 @@ import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Contract, ContractRunner } from "ethers";
 
 import type { NetworkTransport } from "../../configs/base";
+import type { BridgeDetails } from "../bridge/details";
 
 export type OftRoute = {
     sourceAsset: string;
@@ -38,6 +39,7 @@ export type OftReceipt = [bigint, bigint];
 
 export type OftTransaction = {
     hash: string;
+    details?: BridgeDetails;
     wait: (confirmations?: number) => Promise<unknown>;
 };
 

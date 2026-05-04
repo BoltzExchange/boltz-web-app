@@ -8,6 +8,7 @@ import {
     solanaTokenMessengerMinterV2,
 } from "../../configs/cctp";
 import lazySolanaCctp from "../../lazy/solanaCctp";
+import type { BridgeDetails } from "../bridge/details";
 import {
     getConnectedSolanaWalletAddress,
     getSolanaAssociatedTokenAddress,
@@ -36,6 +37,7 @@ export type SolanaCctpTransportClient = {
         refundAddress: string,
     ) => Promise<{
         hash: string;
+        details?: BridgeDetails;
         wait: () => Promise<unknown>;
     }>;
 };
@@ -218,6 +220,7 @@ const send = async (
     sendParam: CctpSendParam,
 ): Promise<{
     hash: string;
+    details?: BridgeDetails;
     wait: () => Promise<unknown>;
 }> => {
     const { modules, walletProvider } = context;
@@ -276,6 +279,11 @@ const send = async (
         );
         return {
             hash: signature,
+            details: {
+                solana: {
+                    blockhash: latestBlockhash.blockhash,
+                },
+            },
             wait: async () =>
                 await context.connection.confirmTransaction(
                     {

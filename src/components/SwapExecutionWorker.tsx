@@ -1,5 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
+import type { Connection } from "@solana/web3.js";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
@@ -24,7 +25,7 @@ import {
     encodeDexQuote,
     getCommitmentLockupDetails,
 } from "../utils/boltzClient";
-import { bridgeRegistry } from "../utils/bridge";
+import { type BridgeDetails, bridgeRegistry } from "../utils/bridge";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { getCctpAttestation } from "../utils/cctp/attestation";
 import { decodeCctpGuid, parseCctpBurnMessage } from "../utils/cctp/events";
@@ -36,6 +37,7 @@ import {
 } from "../utils/cctp/evm";
 import { getSolanaConnection } from "../utils/chains/solana";
 import {
+    type TronTransactionInfo,
     getTronTransactionInfo,
     isFailedTronTransaction,
 } from "../utils/chains/tron";
@@ -466,7 +468,6 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         sourceAsset: string,
         txHash: string,
-        blockNumber?: number,
     ) => {
         const latestSwap = await getSwap<SomeSwap>(swapId);
         if (
@@ -477,17 +478,16 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
-        latestSwap.bridge = {
-            ...latestSwap.bridge,
-            txHash: undefined,
-        };
+        const bridge = { ...latestSwap.bridge };
+        delete bridge.txHash;
+        delete bridge.details;
+        latestSwap.bridge = bridge;
         await persistSwap(latestSwap);
         log.warn(
             "Swap execution abandoning failed bridge send transaction",
             getSwapExecutionLogContext(swapId, {
                 sourceAsset,
                 txHash,
-                blockNumber,
             }),
         );
     };
@@ -538,10 +538,47 @@ export const SwapExecutionWorker = () => {
         }
     };
 
+    const shouldAbandonSolanaBridgeSend = async (
+        connection: Connection,
+        txHash: string,
+        details?: BridgeDetails,
+    ): Promise<boolean> => {
+        const signatureStatuses = await connection.getSignatureStatuses(
+            [txHash],
+            {
+                searchTransactionHistory: true,
+            },
+        );
+        const signatureStatus = signatureStatuses.value[0];
+
+        if (signatureStatus?.err != null) {
+            return true;
+        }
+
+        if (signatureStatus !== null) {
+            return false;
+        }
+
+        const solana = details?.solana;
+        if (solana === undefined) {
+            return false;
+        }
+
+        const blockhashStatus = await connection.isBlockhashValid(
+            solana.blockhash,
+            {
+                commitment: "confirmed",
+            },
+        );
+
+        return !blockhashStatus.value;
+    };
+
     const waitForSolanaBridgeSendConfirmation = async (
         swapId: string,
         sourceAsset: string,
         txHash: string,
+        details?: BridgeDetails,
     ) => {
         const connection = await getSolanaConnection(sourceAsset);
 
@@ -582,6 +619,13 @@ export const SwapExecutionWorker = () => {
                 return transaction;
             }
 
+            if (
+                await shouldAbandonSolanaBridgeSend(connection, txHash, details)
+            ) {
+                await abandonFailedBridgeSend(swapId, sourceAsset, txHash);
+                return undefined;
+            }
+
             await sleep(retryIntervalMs);
         }
     };
@@ -590,7 +634,7 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         sourceAsset: string,
         txHash: string,
-    ) => {
+    ): Promise<TronTransactionInfo | undefined> => {
         log.debug(
             "Swap execution waiting for Tron bridge send confirmation",
             getSwapExecutionLogContext(swapId, {
@@ -758,7 +802,6 @@ export const SwapExecutionWorker = () => {
                         currentSwap.id,
                         currentSwap.bridge.sourceAsset,
                         currentSwap.bridge.txHash,
-                        sendReceipt.blockNumber,
                     );
                     return;
                 }
@@ -784,6 +827,7 @@ export const SwapExecutionWorker = () => {
                         currentSwap.id,
                         currentSwap.bridge.sourceAsset,
                         currentSwap.bridge.txHash,
+                        currentSwap.bridge.details,
                     );
                 if (sendTransaction === undefined) {
                     return;
@@ -822,7 +866,6 @@ export const SwapExecutionWorker = () => {
                         currentSwap.id,
                         currentSwap.bridge.sourceAsset,
                         currentSwap.bridge.txHash,
-                        transactionInfo.blockNumber,
                     );
                     return;
                 }
