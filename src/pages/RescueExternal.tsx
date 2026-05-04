@@ -26,6 +26,7 @@ import Pagination, {
     mobileItemsPerPage,
 } from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
+import RescueFileInput from "../components/RescueFileInput";
 import RescueFileUpload, {
     RescueFileError,
     type RescueFileResult,
@@ -65,7 +66,6 @@ import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData, SwapContract } from "../utils/contractLogs";
 import { scanLockupEvents } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
-import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import {
     type GasAbstractionSweep,
@@ -527,6 +527,8 @@ export const RescueEvm = (props: { mode?: string }) => {
     const [isScanning, setIsScanning] = createSignal(false);
     const [uploadedRescueFile, setUploadedRescueFile] =
         createSignal<RescueFile>();
+    const [uploadedRescueFileName, setUploadedRescueFileName] =
+        createSignal<string>();
     const [rescueFileError, setRescueFileError] = createSignal<string | null>(
         null,
     );
@@ -749,12 +751,21 @@ export const RescueEvm = (props: { mode?: string }) => {
         }
     });
 
+    const clearUploadedRescueFile = () => {
+        setUploadedRescueFile(undefined);
+        setUploadedRescueFileName(undefined);
+        setRescueFileError(null);
+        resetRescueKey();
+    };
+
     const handleFileUpload = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
         const inputFile = input.files?.[0];
         if (!inputFile) {
             return;
         }
+
+        clearUploadedRescueFile();
 
         try {
             const result = await processUploadedFile(inputFile);
@@ -764,8 +775,8 @@ export const RescueEvm = (props: { mode?: string }) => {
             }
 
             const rescueFile = result.data as RescueFile;
-            setRescueFileError(null);
             setUploadedRescueFile(rescueFile);
+            setUploadedRescueFileName(inputFile.name);
             setContextRescueFile(rescueFile);
         } catch (err) {
             log.error("invalid file upload", formatError(err));
@@ -781,6 +792,7 @@ export const RescueEvm = (props: { mode?: string }) => {
             setLogRefundableSwaps(undefined);
             setUploadedRescueFile(undefined);
             setSweepableBalances([]);
+            setUploadedRescueFileName(undefined);
             setUnmatchedSwaps(0);
         }
     });
@@ -846,13 +858,13 @@ export const RescueEvm = (props: { mode?: string }) => {
     const RescueKeyInput = () => (
         <>
             <Show when={!showMnemonicMode()}>
-                <input
+                <RescueFileInput
                     required
-                    type="file"
                     id="refundUpload"
                     data-testid="refundUpload"
-                    accept={rescueFileTypes}
+                    displayFileName={uploadedRescueFileName() ?? ""}
                     onChange={handleFileUpload}
+                    onClear={clearUploadedRescueFile}
                 />
                 <Show when={!uploadedRescueFile()}>
                     <p style={{ margin: "5px 0" }}>{t("or")}</p>

@@ -5,12 +5,12 @@ import { Match, Show, Switch } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
-import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import { validateRefundFile } from "../utils/refundFile";
 import type { RescueFile } from "../utils/rescueFile";
 import { validateRescueFile } from "../utils/rescueFile";
 import MnemonicInput from "./MnemonicInput";
+import RescueFileInput from "./RescueFileInput";
 
 export enum RescueFileType {
     Rescue,
@@ -147,13 +147,12 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
             </Show>
             <Switch>
                 <Match when={searchParams.mode !== rescueKeyMode}>
-                    <input
+                    <RescueFileInput
                         required
-                        type="file"
                         id="refundUpload"
                         data-testid="refundUpload"
-                        accept={rescueFileTypes}
                         onChange={(e) => uploadChange(e)}
+                        onClear={handleReset}
                     />
                     <p style={{ margin: "5px 0" }}>{t("or")}</p>
                     <Show when={showMnemonicOption()}>

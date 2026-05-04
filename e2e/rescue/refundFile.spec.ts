@@ -13,7 +13,7 @@ test.describe("Refund files", () => {
         await page
             .getByRole("button", { name: "Rescue external swap" })
             .click();
-        await page.getByTestId("refundUpload").click();
+        await page.getByText(dict.en.upload_rescue_key).click();
 
         await page
             .getByTestId("refundUpload")
