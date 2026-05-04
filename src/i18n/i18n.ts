@@ -206,8 +206,8 @@ const dict = {
         gas_topup_tooltip:
             "Automatically convert a small portion of your swap into native gas if your connected wallet has no gas.",
         gas_topup_label: "Destination gas ({{ gasToken }}) included",
-        bridge_messaging_fee: "Bridge messaging fee",
-        bridge_transfer_fee: "Bridge transfer fee",
+        bridge_messaging_fee: "Bridge Messaging Fee",
+        bridge_transfer_fee: "Bridge Transfer Fee",
         retry: "Retry",
         error_no_quote:
             "A quote could not be obtained. Please check your connection and try again.",
@@ -253,7 +253,7 @@ const dict = {
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         no_wallet_connected: "No wallet connected",
         no_lockup_transaction: "No lockup transaction found",
-        routing_fee_limit: "Routing fee limit",
+        routing_fee_limit: "Routing Fee Limit",
         download_boltz_rescue_key: "Boltz Rescue Key",
         download_boltz_rescue_key_subline:
             "Back up all your swaps with a single Rescue Key 🙌",
@@ -1042,8 +1042,8 @@ const dict = {
         blockexplorer_claim_tx: "Transacción de Reclamación",
         blockexplorer_refund_tx: "Transacción de Reembolso",
         help: "Ayuda",
-        network_fee: "Comisión de red",
-        swap_fees: "Comisiones del intercambio",
+        network_fee: "Comisión de Red",
+        swap_fees: "Comisiones del Intercambio",
         fee: "Comisión de Boltz",
         denomination: "Denominación",
         send: "Enviar",
@@ -1225,8 +1225,8 @@ const dict = {
         gas_topup_tooltip:
             "Convierte automáticamente una pequeña parte de tu swap en gas nativo si tu monedero conectado no tiene gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        bridge_messaging_fee: "Tarifa de mensajería del puente",
-        bridge_transfer_fee: "Tarifa de transferencia del puente",
+        bridge_messaging_fee: "Tarifa de Mensajería del Puente",
+        bridge_transfer_fee: "Tarifa de Transferencia del Puente",
         retry: "Reintentar",
         error_no_quote:
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
@@ -1272,7 +1272,7 @@ const dict = {
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
-        routing_fee_limit: "Límite comisión enrutamiento",
+        routing_fee_limit: "Límite Comisión Enrutamiento",
         download_boltz_rescue_key: "Clave de rescate Boltz",
         download_boltz_rescue_key_subline:
             "Haz una copia de seguridad de todos tus intercambios con una única clave de rescate 🙌",
@@ -1553,8 +1553,8 @@ const dict = {
         blockexplorer_claim_tx: "transação de reivindicação",
         blockexplorer_refund_tx: "transação de reembolso",
         help: "Suporte",
-        network_fee: "Taxa da rede",
-        swap_fees: "Taxas da troca",
+        network_fee: "Taxa da Rede",
+        swap_fees: "Taxas da Troca",
         fee: "Taxa da Boltz",
         denomination: "Denominação",
         send: "Enviar",
@@ -1733,8 +1733,8 @@ const dict = {
         gas_topup_tooltip:
             "Converte automaticamente uma pequena parte da sua troca em gas nativo se a sua carteira conectada não tiver gas.",
         gas_topup_label: "Gas de destino ({{ gasToken }}) incluido",
-        bridge_messaging_fee: "Taxa de mensagem da ponte",
-        bridge_transfer_fee: "Taxa de transferência da ponte",
+        bridge_messaging_fee: "Taxa de Mensagem da Ponte",
+        bridge_transfer_fee: "Taxa de Transferência da Ponte",
         retry: "Tentar novamente",
         error_no_quote:
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
@@ -1781,7 +1781,7 @@ const dict = {
             "Reembolso estará disponível em {{ blocks }} blocos",
         no_wallet_connected: "Nenhuma carteira conectada",
         no_lockup_transaction: "Nenhuma transação de lockup encontrada",
-        routing_fee_limit: "Limite da taxa de roteamento",
+        routing_fee_limit: "Limite da Taxa de Roteamento",
         download_boltz_rescue_key: "Chave de resgate da Boltz",
         download_boltz_rescue_key_subline:
             "Faça backup de todas as suas trocas com uma única chave de resgate 🙌",

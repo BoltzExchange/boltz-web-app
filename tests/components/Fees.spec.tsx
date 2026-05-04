@@ -476,7 +476,7 @@ describe("Fees component", () => {
         });
         expect(
             screen.getByText((content) =>
-                content.includes("Bridge transfer fee"),
+                content.includes(i18n.en.bridge_transfer_fee),
             ),
         ).toBeInTheDocument();
         expect(screen.queryByTestId("bridge-messaging-fee")).toBeNull();
@@ -580,7 +580,7 @@ describe("Fees component", () => {
 
         expect(
             screen.getByText((content) =>
-                content.includes("Bridge messaging fee"),
+                content.includes(i18n.en.bridge_messaging_fee),
             ),
         ).toBeInTheDocument();
         expect(screen.getByTestId("bridge-messaging-fee").textContent).toEqual(
@@ -795,7 +795,7 @@ describe("Fees component", () => {
         expect(document.querySelector(".fees-extra-line")).not.toBeNull();
         expect(
             screen.getByText((content) =>
-                content.includes("Bridge messaging fee"),
+                content.includes(i18n.en.bridge_messaging_fee),
             ),
         ).toBeInTheDocument();
         expect(
