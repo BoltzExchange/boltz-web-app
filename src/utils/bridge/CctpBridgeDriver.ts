@@ -1,7 +1,14 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
-import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
-import { Contract, Signature } from "ethers";
-import type { TransactionRequest, Wallet } from "ethers";
+import {
+    type Hash,
+    type Hex,
+    type PublicClient,
+    type TransactionRequest,
+    encodeFunctionData,
+    getAddress,
+    getContract,
+    parseSignature,
+} from "viem";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import {
@@ -17,6 +24,7 @@ import {
     getTokenAddress,
 } from "../../consts/Assets";
 import type { Signer } from "../../context/Web3";
+import { erc20Abi, routerAbi } from "../../generated/evm-abis";
 import { getCctpForwardTxHash } from "../cctp/attestation";
 import {
     type CctpDirectSendTarget,
@@ -50,9 +58,11 @@ import {
 } from "../cctp/solana";
 import type { CctpData, CctpSendParam } from "../cctp/types";
 import * as solanaChain from "../chains/solana";
+import { prefix0x } from "../evmTransaction";
 import { ExplorerKind } from "../explorerLink";
 import { createAssetProvider } from "../provider";
-import type { Provider } from "../provider";
+import { toRouterCalls } from "../router";
+import { vFromSignature } from "../signature";
 import {
     BridgeDriver,
     type EncodeRouterExecuteArgs,
@@ -254,7 +264,7 @@ export class CctpBridgeDriver extends BridgeDriver {
         route: BridgeRoute,
         owner: string,
         amount: bigint,
-        signer: Signer | Wallet,
+        signer: Signer,
     ): Promise<AlchemyCall | undefined> => {
         void route;
         void owner;
@@ -294,12 +304,12 @@ export class CctpBridgeDriver extends BridgeDriver {
         const sourceConfig = this.requireCctpConfig(route.sourceAsset);
         return Promise.resolve({
             name: "CCTP",
-            address: sourceConfig.tokenMessenger,
+            address: getAddress(sourceConfig.tokenMessenger),
             explorer: "",
         });
     };
 
-    public getProvider = (sourceAsset: string): Provider => {
+    public getProvider = (sourceAsset: string): PublicClient => {
         return createAssetProvider(sourceAsset);
     };
 
@@ -324,8 +334,8 @@ export class CctpBridgeDriver extends BridgeDriver {
         // aren't known yet); the true mint amount comes from the received
         // event.
         return {
-            guid: encodeCctpGuid(info.sourceDomain, receipt.hash),
-            dstEid: BigInt(info.destinationDomain),
+            guid: encodeCctpGuid(info.sourceDomain, receipt.transactionHash),
+            dstEid: info.destinationDomain,
             fromAddress: info.sender,
             amountSentLD: info.amountSent,
             amountReceivedLD: info.amountSent,
@@ -335,7 +345,7 @@ export class CctpBridgeDriver extends BridgeDriver {
 
     public getReceivedEventByGuid = async (
         contract: BridgeTransportClient,
-        provider: Pick<Provider, "getLogs" | "getTransactionReceipt">,
+        provider: PublicClient,
         contractAddress: string,
         guid: string,
     ): Promise<BridgeReceivedEvent | undefined> => {
@@ -355,8 +365,9 @@ export class CctpBridgeDriver extends BridgeDriver {
             return undefined;
         }
 
-        const forwardReceipt =
-            await provider.getTransactionReceipt(forwardTxHash);
+        const forwardReceipt = await provider.getTransactionReceipt({
+            hash: forwardTxHash as Hash,
+        });
         if (forwardReceipt === null) {
             // Forward tx was returned by Circle but isn't visible on the RPC
             // yet — surface as "not ready" and let the caller poll again.
@@ -366,7 +377,10 @@ export class CctpBridgeDriver extends BridgeDriver {
         // A forward tx is typically 1:1 with a source message. Take the first
         // `MintAndWithdraw`; if Circle starts batching, callers can filter by
         // recipient.
-        const [mint] = parseCctpMintAndWithdraws(forwardReceipt);
+        const [mint] = parseCctpMintAndWithdraws({
+            ...forwardReceipt,
+            blockNumber: Number(forwardReceipt.blockNumber),
+        });
         if (mint === undefined) {
             throw new Error(
                 `no MintAndWithdraw log in CCTP forward tx ${forwardTxHash}`,
@@ -375,7 +389,7 @@ export class CctpBridgeDriver extends BridgeDriver {
 
         return {
             guid,
-            srcEid: BigInt(decoded.sourceDomain),
+            srcEid: decoded.sourceDomain,
             toAddress: mint.mintRecipient,
             amountReceivedLD: mint.amount,
             blockNumber: mint.blockNumber,
@@ -409,13 +423,13 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
-        const tokenContract = new Contract(
-            getTokenAddress(route.sourceAsset),
-            ERC20Abi,
-            this.getProvider(route.sourceAsset),
-        );
+        const tokenContract = getContract({
+            address: getAddress(getTokenAddress(route.sourceAsset)),
+            abi: erc20Abi,
+            client: this.getProvider(route.sourceAsset),
+        });
 
-        return (await tokenContract.balanceOf(ownerAddress)) as bigint;
+        return await tokenContract.read.balanceOf([getAddress(ownerAddress)]);
     };
 
     public getSourceNativeBalance = async (
@@ -429,9 +443,9 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
-        return await this.getProvider(route.sourceAsset).getBalance(
-            ownerAddress,
-        );
+        return await this.getProvider(route.sourceAsset).getBalance({
+            address: getAddress(ownerAddress),
+        });
     };
 
     public getTransactionSender = async (
@@ -445,8 +459,10 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
-        const tx = await this.getProvider(sourceAsset).getTransaction(txHash);
-        return tx?.from;
+        const tx = await this.getProvider(sourceAsset).getTransaction({
+            hash: txHash as Hash,
+        });
+        return tx?.from ?? undefined;
     };
 
     public getDirectSendTarget = (
@@ -455,7 +471,9 @@ export class CctpBridgeDriver extends BridgeDriver {
         return Promise.resolve(
             getCctpDirectSendTarget(
                 route,
-                this.requireCctpConfig(route.sourceAsset).tokenMessenger,
+                getAddress(
+                    this.requireCctpConfig(route.sourceAsset).tokenMessenger,
+                ),
             ),
         );
     };
@@ -503,7 +521,7 @@ export class CctpBridgeDriver extends BridgeDriver {
         void args.refundAddress;
         return await sendCctpDirect({
             target: args.target as CctpDirectSendTarget,
-            runner: args.runner,
+            runner: args.runner as Signer,
             sendParam: args.sendParam as CctpSendParam,
         });
     };
@@ -527,31 +545,40 @@ export class CctpBridgeDriver extends BridgeDriver {
         );
     };
 
-    public encodeRouterExecuteData = (
-        args: EncodeRouterExecuteArgs,
-    ): string => {
-        return args.router.interface.encodeFunctionData("executeCctp", [
-            args.routerCalls,
-            getTokenAddress(args.route.sourceAsset),
-            args.bridgeContract.address,
-            this.toCctpData(args.sendParam),
-            args.minAmountLd,
-        ]);
+    public encodeRouterExecuteData = (args: EncodeRouterExecuteArgs): Hex => {
+        const cctpData = this.toCctpData(args.sendParam);
+        return encodeFunctionData({
+            abi: routerAbi,
+            functionName: "executeCctp",
+            args: [
+                toRouterCalls(args.routerCalls),
+                getAddress(getTokenAddress(args.route.sourceAsset)),
+                getAddress(args.bridgeContract.address),
+                {
+                    ...cctpData,
+                    mintRecipient: cctpData.mintRecipient as Hex,
+                    destinationCaller: cctpData.destinationCaller as Hex,
+                    hookData: cctpData.hookData as Hex,
+                },
+                args.minAmountLd,
+            ],
+        });
     };
 
     public populateRouterClaimBridgeTransaction = async (
         args: PopulateRouterClaimBridgeArgs,
     ): Promise<TransactionRequest> => {
         const cctpData = this.toCctpData(args.sendParam);
-        const authSignature = Signature.from(
-            await args.signer.signTypedData(
-                {
+        const authSignature = parseSignature(
+            await args.signer.signTypedData({
+                account: args.signer.account,
+                domain: {
                     name: "Router",
                     version: "2",
-                    verifyingContract: await args.router.getAddress(),
+                    verifyingContract: args.router.address,
                     chainId: args.chainId,
                 },
-                {
+                types: {
                     ClaimCctp: [
                         { name: "preimage", type: "bytes32" },
                         { name: "token", type: "address" },
@@ -559,39 +586,54 @@ export class CctpBridgeDriver extends BridgeDriver {
                         { name: "cctpData", type: "bytes32" },
                         { name: "minAmount", type: "uint256" },
                     ],
-                },
-                {
-                    preimage: `0x${args.preimage}`,
-                    token: args.outputTokenAddress,
-                    tokenMessenger: args.bridgeContract.address,
-                    cctpData: hashCctpData(cctpData),
+                } as const,
+                primaryType: "ClaimCctp",
+                message: {
+                    preimage: prefix0x(args.preimage),
+                    token: getAddress(args.outputTokenAddress),
+                    tokenMessenger: getAddress(args.bridgeContract.address),
+                    cctpData: hashCctpData(cctpData) as Hex,
                     minAmount: args.minAmountLd,
                 },
-            ),
+            }),
         );
 
-        return await args.router.claimERC20ExecuteCctp.populateTransaction(
-            {
-                preimage: `0x${args.preimage}`,
-                amount: args.claimAmount,
-                tokenAddress: args.claimTokenAddress,
-                refundAddress: args.refundAddress,
-                timelock: args.timeoutBlockHeight,
-                v: args.claimSignature.v,
-                r: args.claimSignature.r,
-                s: args.claimSignature.s,
-            },
-            args.routerCalls,
-            args.outputTokenAddress,
-            args.bridgeContract.address,
-            cctpData,
-            {
-                minAmount: args.minAmountLd,
-                v: authSignature.v,
-                r: authSignature.r,
-                s: authSignature.s,
-            },
-        );
+        return {
+            to: args.router.address,
+            data: encodeFunctionData({
+                abi: routerAbi,
+                functionName: "claimERC20ExecuteCctp",
+                args: [
+                    {
+                        preimage: prefix0x(args.preimage),
+                        amount: args.claimAmount,
+                        tokenAddress: getAddress(args.claimTokenAddress),
+                        refundAddress: getAddress(args.refundAddress),
+                        timelock: BigInt(args.timeoutBlockHeight),
+                        v: vFromSignature(args.claimSignature),
+                        r: args.claimSignature.r,
+                        s: args.claimSignature.s,
+                    },
+                    toRouterCalls(args.routerCalls),
+                    getAddress(args.outputTokenAddress),
+                    getAddress(args.bridgeContract.address),
+                    {
+                        destinationDomain: cctpData.destinationDomain,
+                        mintRecipient: cctpData.mintRecipient as Hex,
+                        destinationCaller: cctpData.destinationCaller as Hex,
+                        maxFee: cctpData.maxFee,
+                        minFinalityThreshold: cctpData.minFinalityThreshold,
+                        hookData: cctpData.hookData as Hex,
+                    },
+                    {
+                        minAmount: args.minAmountLd,
+                        v: vFromSignature(authSignature),
+                        r: authSignature.r,
+                        s: authSignature.s,
+                    },
+                ],
+            }),
+        } satisfies TransactionRequest;
     };
 
     private buildTransportClient = (
@@ -664,7 +706,7 @@ export class CctpBridgeDriver extends BridgeDriver {
     private encodeMintRecipient = async (
         destinationAsset: string,
         recipient: string,
-    ): Promise<string> => {
+    ): Promise<Hex> => {
         const destinationTransport = this.getTransport(destinationAsset);
         switch (destinationTransport) {
             case NetworkTransport.Evm:
@@ -676,7 +718,7 @@ export class CctpBridgeDriver extends BridgeDriver {
                     recipient,
                     true,
                 );
-                return solanaChain.encodeSolanaRecipient(ata);
+                return solanaChain.encodeSolanaRecipient(ata) as Hex;
             }
 
             case NetworkTransport.Tron:
@@ -696,19 +738,19 @@ export class CctpBridgeDriver extends BridgeDriver {
         receiveMode: CctpReceiveMode,
         recipient: string,
         options: BridgeQuoteOptions,
-    ): string => {
+    ): Hex => {
         if (receiveMode === CctpReceiveMode.Manual) {
-            return cctpEmptyHookData;
+            return cctpEmptyHookData as Hex;
         }
 
         if (
             this.getTransport(destinationAsset) === NetworkTransport.Solana &&
             options.cctpIncludeRecipientSetup === true
         ) {
-            return createCctpSolanaForwardHookData(recipient);
+            return createCctpSolanaForwardHookData(recipient) as Hex;
         }
 
-        return cctpForwardHookData;
+        return cctpForwardHookData as Hex;
     };
 
     private getFee = async (

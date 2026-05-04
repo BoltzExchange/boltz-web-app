@@ -214,10 +214,10 @@ describe("CreateButton", () => {
         });
 
         const signer = {
-            getAddress: vi.fn().mockResolvedValue("0xsigner"),
+            address: "0xsigner",
             provider: {
                 getBalance: vi.fn().mockResolvedValue(0n),
-                getFeeData: vi.fn().mockResolvedValue({ gasPrice: 1n }),
+                estimateFeesPerGas: vi.fn().mockResolvedValue({ gasPrice: 1n }),
             },
         } as never;
 
@@ -247,10 +247,10 @@ describe("CreateButton", () => {
         });
 
         const signer = {
-            getAddress: vi.fn().mockResolvedValue("0xsigner"),
+            address: "0xsigner",
             provider: {
                 getBalance: vi.fn().mockResolvedValue(0n),
-                getFeeData: vi.fn().mockResolvedValue({ gasPrice: 1n }),
+                estimateFeesPerGas: vi.fn().mockResolvedValue({ gasPrice: 1n }),
             },
         } as never;
 

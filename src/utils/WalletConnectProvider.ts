@@ -1,13 +1,14 @@
 import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
-import type { BrowserProvider } from "ethers";
 import log from "loglevel";
 import type { Setter } from "solid-js";
+import type { PublicClient } from "viem";
 
 import { config } from "../config";
 import { NetworkTransport } from "../configs/base";
 import type { EIP1193Provider } from "../consts/Types";
 import type { DictKey } from "../i18n/i18n";
+import { prefix0x } from "./evmTransaction";
 import { createProvider } from "./provider";
 
 export type RawEvmProvider = {
@@ -35,7 +36,7 @@ export type WalletConnectAccount = {
 };
 
 export type WalletConnectRuntimeProvider =
-    | BrowserProvider
+    | RawEvmProvider
     | SolanaWalletProvider
     | TronConnector;
 
@@ -85,9 +86,7 @@ class WalletConnectProvider implements EIP1193Provider {
     ]);
 
     private static evmReadOnlyRpcChainId: string | undefined;
-    private static evmReadOnlyRpc:
-        | { send: (method: string, params: unknown[]) => Promise<unknown> }
-        | undefined;
+    private static evmReadOnlyRpc: PublicClient | undefined;
 
     constructor() {}
 
@@ -107,7 +106,7 @@ class WalletConnectProvider implements EIP1193Provider {
             WalletConnectProvider.evmChainId = undefined;
             return;
         }
-        WalletConnectProvider.evmChainId = `0x${chainId.toString(16)}`;
+        WalletConnectProvider.evmChainId = prefix0x(chainId.toString(16));
         WalletConnectProvider.syncDefaultChain();
     };
 
@@ -305,10 +304,10 @@ class WalletConnectProvider implements EIP1193Provider {
         if (WalletConnectProvider.evmReadOnlyMethods.has(request.method)) {
             const rpc = WalletConnectProvider.getEvmReadOnlyRpc();
             if (rpc !== undefined) {
-                return (await rpc.send(
-                    request.method,
-                    (request.params ?? []) as unknown[],
-                )) as never;
+                return (await rpc.request({
+                    method: request.method,
+                    params: request.params ?? [],
+                } as never)) as never;
             }
         }
 
@@ -317,10 +316,7 @@ class WalletConnectProvider implements EIP1193Provider {
             throw new Error("wallet connect provider not initialized");
         }
 
-        return (await (provider as BrowserProvider).send(
-            request.method,
-            request.params ?? [],
-        )) as never;
+        return (await (provider as RawEvmProvider).request(request)) as never;
     };
 
     public on = () => {};

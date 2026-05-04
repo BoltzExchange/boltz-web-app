@@ -1,8 +1,37 @@
-import { render } from "@solidjs/testing-library";
+import { render, waitFor } from "@solidjs/testing-library";
+import type { JSX } from "solid-js";
+import type { PublicClient } from "viem";
 
 import { NetworkTransport } from "../../src/configs/base";
-import { useWeb3Signer } from "../../src/context/Web3";
+import { GlobalProvider } from "../../src/context/Global";
+import { Web3SignerProvider, useWeb3Signer } from "../../src/context/Web3";
+import type * as BoltzClientModule from "../../src/utils/boltzClient";
+import type * as ProviderModule from "../../src/utils/provider";
 import { contextWrapper } from "../helper";
+
+const { sentinelAssetProvider, mockGetContracts, mockCreateAssetProvider } =
+    vi.hoisted(() => ({
+        sentinelAssetProvider: {
+            __sentinel: "asset-rpc",
+        } as unknown as PublicClient,
+        mockGetContracts: vi.fn<typeof BoltzClientModule.getContracts>(),
+        mockCreateAssetProvider:
+            vi.fn<typeof ProviderModule.createAssetProvider>(),
+    }));
+
+vi.mock("../../src/utils/boltzClient", async () => {
+    const actual = await vi.importActual<typeof BoltzClientModule>(
+        "../../src/utils/boltzClient",
+    );
+    return { ...actual, getContracts: mockGetContracts };
+});
+
+vi.mock("../../src/utils/provider", async () => {
+    const actual = await vi.importActual<typeof ProviderModule>(
+        "../../src/utils/provider",
+    );
+    return { ...actual, createAssetProvider: mockCreateAssetProvider };
+});
 
 describe("Web3SignerProvider#browserWalletTransports", () => {
     let context: ReturnType<typeof useWeb3Signer>;
@@ -99,5 +128,118 @@ describe("Web3SignerProvider#browserWalletTransports", () => {
 
         const transports = context.browserWalletTransports();
         expect(Array.from(transports)).toEqual([NetworkTransport.Tron]);
+    });
+});
+
+describe("Web3SignerProvider#swapClient (cross-chain reads)", () => {
+    let context: ReturnType<typeof useWeb3Signer>;
+
+    const Probe = () => {
+        context = useWeb3Signer();
+        return null;
+    };
+
+    const fetchingWrapper = (props: { children: JSX.Element }) => (
+        <GlobalProvider>
+            <Web3SignerProvider noFetch={false}>
+                {props.children}
+            </Web3SignerProvider>
+        </GlobalProvider>
+    );
+
+    beforeEach(() => {
+        mockCreateAssetProvider.mockReturnValue(sentinelAssetProvider);
+        mockGetContracts.mockResolvedValue({
+            anvil: {
+                network: { chainId: 33, name: "Anvil" },
+                swapContracts: {
+                    EtherSwap: "0x0000000000000000000000000000000000000001",
+                    ERC20Swap: "0x6398B76DF91C5eBe9f488e3656658E79284dDc0F",
+                },
+                supportedContracts: {
+                    "5": {
+                        EtherSwap: "0x0000000000000000000000000000000000000001",
+                        ERC20Swap: "0x6398B76DF91C5eBe9f488e3656658E79284dDc0F",
+                        features: [],
+                    },
+                },
+                tokens: {},
+            },
+        } as never);
+    });
+
+    afterEach(() => {
+        Reflect.deleteProperty(window, "ethereum");
+        vi.clearAllMocks();
+    });
+
+    const stubInjectedEvmProvider = () => {
+        Object.defineProperty(window, "ethereum", {
+            configurable: true,
+            value: {
+                request: vi.fn(({ method }: { method: string }) =>
+                    Promise.resolve(
+                        method === "eth_requestAccounts"
+                            ? ["0x1111111111111111111111111111111111111111"]
+                            : [],
+                    ),
+                ),
+                on: vi.fn(),
+                removeAllListeners: vi.fn(),
+            },
+        });
+    };
+
+    test("getErc20Swap reads via createAssetProvider even when a signer is connected", async () => {
+        // Regression guard: pre-fix, swapClient fell back to
+        // `connectedSigner.provider` whenever a signer was connected, which
+        // breaks cross-chain claims (wallet on chain A, Erc20Swap on chain B).
+        // The fix is "always call createAssetProvider(asset)" — assert it.
+        stubInjectedEvmProvider();
+        render(() => <Probe />, { wrapper: fetchingWrapper });
+        await context.connectProvider("browser");
+        await waitFor(() => {
+            expect(context.signer()).toBeDefined();
+            expect(
+                context.getContractsForAsset("RBTC")?.swapContracts.ERC20Swap,
+            ).toBeDefined();
+        });
+
+        mockCreateAssetProvider.mockClear();
+        context.getErc20Swap("RBTC");
+
+        expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
+        expect(mockCreateAssetProvider).toHaveBeenCalledTimes(1);
+    });
+
+    test("getEtherSwap reads via createAssetProvider even when a signer is connected", async () => {
+        stubInjectedEvmProvider();
+        render(() => <Probe />, { wrapper: fetchingWrapper });
+        await context.connectProvider("browser");
+        await waitFor(() => {
+            expect(context.signer()).toBeDefined();
+            expect(
+                context.getContractsForAsset("RBTC")?.swapContracts.EtherSwap,
+            ).toBeDefined();
+        });
+
+        mockCreateAssetProvider.mockClear();
+        context.getEtherSwap("RBTC");
+
+        expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
+    });
+
+    test("getErc20Swap also uses createAssetProvider when no signer is connected", async () => {
+        render(() => <Probe />, { wrapper: fetchingWrapper });
+        await waitFor(() => {
+            expect(
+                context.getContractsForAsset("RBTC")?.swapContracts.ERC20Swap,
+            ).toBeDefined();
+        });
+
+        mockCreateAssetProvider.mockClear();
+        context.getErc20Swap("RBTC");
+
+        expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
     });
 });

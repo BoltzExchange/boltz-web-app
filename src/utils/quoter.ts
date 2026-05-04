@@ -1,5 +1,5 @@
-import { ZeroAddress } from "ethers";
 import log from "loglevel";
+import { zeroAddress } from "viem";
 
 import { config } from "../config";
 import { NetworkTransport } from "../configs/base";
@@ -165,7 +165,7 @@ export const fetchGasTokenQuote = async (
         {
             chain: hop.chain,
             tokenIn: hop.tokenIn,
-            tokenOut: ZeroAddress,
+            tokenOut: zeroAddress,
         },
         gasTokenAmount,
     );

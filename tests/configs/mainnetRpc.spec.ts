@@ -1,13 +1,58 @@
 // @vitest-environment node
+import { Connection } from "@solana/web3.js";
+import { createPublicClient, http } from "viem";
 import { expect, test } from "vitest";
 
-import { JsonRpcProvider } from "../../node_modules/ethers/lib.commonjs/providers/provider-jsonrpc.js";
 import type { Asset } from "../../src/configs/base";
 import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 
+const rpcRequestTimeout = 10_000;
+
 const hasLocalhostHost = (rpcUrl: string): boolean => {
     return new URL(rpcUrl).hostname === "localhost";
+};
+
+const fetchWithTimeout = async (
+    url: Parameters<typeof fetch>[0],
+    init?: Parameters<typeof fetch>[1],
+) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(
+        () => controller.abort("RPC request timed out"),
+        rpcRequestTimeout,
+    );
+
+    try {
+        return await fetch(url, {
+            ...init,
+            signal: controller.signal,
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+const assertEvmEndpoint = async (rpcUrl: string, expectedChainId: number) => {
+    const provider = createPublicClient({
+        transport: http(rpcUrl, {
+            retryCount: 0,
+            timeout: rpcRequestTimeout,
+        }),
+    });
+    const [chainId, blockNumber] = await Promise.all([
+        provider.getChainId(),
+        provider.getBlockNumber(),
+    ]);
+
+    if (chainId !== expectedChainId) {
+        throw new Error(
+            `reported chain id ${chainId.toString()} instead of ${expectedChainId}`,
+        );
+    }
+    if (blockNumber < 0n) {
+        throw new Error(`returned an invalid block number ${blockNumber}`);
+    }
 };
 
 // Operates on the iterated mainnet config rather than the runtime (regtest)
@@ -86,35 +131,13 @@ test.each(bridgeVariantRpcTestCases)(
         let hasWorkingProvider = false;
 
         for (const rpcUrl of rpcUrls) {
-            const provider = new JsonRpcProvider(rpcUrl);
-
             try {
-                const [network, blockNumber] = await Promise.all([
-                    provider.getNetwork(),
-                    provider.getBlockNumber(),
-                ]);
-
-                if (Number(network.chainId) !== chainId) {
-                    providerFailures.push(
-                        `${rpcUrl} reported chain id ${network.chainId.toString()} instead of ${chainId}`,
-                    );
-                    continue;
-                }
-
-                if (blockNumber < 0) {
-                    providerFailures.push(
-                        `${rpcUrl} returned an invalid block number ${blockNumber}`,
-                    );
-                    continue;
-                }
-
+                await assertEvmEndpoint(rpcUrl, chainId);
                 hasWorkingProvider = true;
             } catch (error) {
                 providerFailures.push(
                     `${rpcUrl} failed: ${error instanceof Error ? error.message : String(error)}`,
                 );
-            } finally {
-                provider.destroy();
             }
         }
 
@@ -170,34 +193,20 @@ const nonEvmRpcTestCases: NonEvmRpcTestCase[] = Object.entries(
 });
 
 const assertSolanaEndpoint = async (rpcUrl: string) => {
-    const response = await fetch(rpcUrl, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: 1,
-            method: "getSlot",
-        }),
+    const connection = new Connection(rpcUrl, {
+        commitment: "confirmed",
+        disableRetryOnRateLimit: true,
+        fetch: (input, init) => fetchWithTimeout(input, init),
     });
-    const body = (await response.json()) as {
-        error?: { message?: string };
-        result?: number;
-    };
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-    }
-    if (body.error !== undefined) {
-        throw new Error(body.error.message ?? "unknown Solana RPC error");
-    }
-    if (typeof body.result !== "number" || body.result < 0) {
-        throw new Error(`invalid slot result: ${JSON.stringify(body)}`);
+    const slot = await connection.getSlot();
+
+    if (!Number.isInteger(slot) || slot < 0) {
+        throw new Error(`invalid slot result: ${slot.toString()}`);
     }
 };
 
 const assertTronEndpoint = async (rpcUrl: string) => {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
         `${rpcUrl.replace(/\/$/, "")}/wallet/getnowblock`,
         {
             method: "POST",
@@ -207,7 +216,7 @@ const assertTronEndpoint = async (rpcUrl: string) => {
             body: "{}",
         },
     );
-    const body = (await response.json()) as {
+    const block = (await response.json()) as {
         blockID?: string;
         block_header?: {
             raw_data?: {
@@ -219,14 +228,30 @@ const assertTronEndpoint = async (rpcUrl: string) => {
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
     }
-    if (body.Error !== undefined) {
-        throw new Error(body.Error);
+    if (block.Error !== undefined) {
+        throw new Error(block.Error);
     }
+
     if (
-        typeof body.blockID !== "string" ||
-        typeof body.block_header?.raw_data?.number !== "number"
+        typeof block.blockID !== "string" ||
+        typeof block.block_header?.raw_data?.number !== "number"
     ) {
-        throw new Error(`invalid Tron RPC response: ${JSON.stringify(body)}`);
+        throw new Error(`invalid Tron RPC response: ${JSON.stringify(block)}`);
+    }
+};
+
+const assertNonEvmEndpoint = async (
+    rpcUrl: string,
+    transport: NetworkTransport.Solana | NetworkTransport.Tron,
+) => {
+    switch (transport) {
+        case NetworkTransport.Solana:
+            await assertSolanaEndpoint(rpcUrl);
+            break;
+
+        case NetworkTransport.Tron:
+            await assertTronEndpoint(rpcUrl);
+            break;
     }
 };
 
@@ -238,16 +263,7 @@ test.each(nonEvmRpcTestCases)(
 
         for (const rpcUrl of rpcUrls) {
             try {
-                switch (transport) {
-                    case NetworkTransport.Solana:
-                        await assertSolanaEndpoint(rpcUrl);
-                        break;
-
-                    case NetworkTransport.Tron:
-                        await assertTronEndpoint(rpcUrl);
-                        break;
-                }
-
+                await assertNonEvmEndpoint(rpcUrl, transport);
                 hasWorkingProvider = true;
             } catch (error) {
                 failures.push(

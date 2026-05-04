@@ -17,7 +17,6 @@ import {
     useContext,
 } from "solid-js";
 import type { Accessor, JSX, Setter } from "solid-js";
-import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
 import {
@@ -37,6 +36,7 @@ import { getPairs } from "../utils/boltzClient";
 import type { ECKeys } from "../utils/ecpair";
 import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
+import { getBtcPriceFailover } from "../utils/fiat";
 import { getRegularReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";

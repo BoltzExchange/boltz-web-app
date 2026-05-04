@@ -1,10 +1,16 @@
 import { hex } from "@scure/base";
+import { publicKeyToAddress } from "viem/accounts";
 
 import {
     derivePreimage,
+    evmAccountFromPrivateKey,
     evmPath,
     mnemonicToHDKey,
 } from "../../src/utils/rescueDerivation";
+import {
+    deriveKeyGasAbstraction,
+    getPathGasAbstraction,
+} from "../../src/utils/rescueFile";
 
 describe("rescueDerivation", () => {
     const mnemonic =
@@ -42,6 +48,93 @@ describe("rescueDerivation", () => {
 
             expect(key1.publicExtendedKey).toBe(key2.publicExtendedKey);
             expect(key1.privateExtendedKey).toBe(key2.privateExtendedKey);
+        });
+    });
+
+    describe("evmAccountFromPrivateKey", () => {
+        const ethersFixtures = [
+            {
+                label: "BIP-39 abandon * 11/about + chainId 137 (Polygon)",
+                mnemonic:
+                    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+                chainId: 137,
+                expected: "0x779da8bca26ca2352eC148C64649db1d1A98DEDf",
+            },
+            {
+                label: "BIP-39 'legal winner…' 12-word + chainId 30 (RSK mainnet)",
+                mnemonic:
+                    "legal winner thank year wave sausage worth useful legal winner thank yellow",
+                chainId: 30,
+                expected: "0x3d44290a025BBEaAbd4d4Ef0Fef8dfcBf7662b71",
+            },
+            {
+                label: "BIP-39 'legal winner…' 24-word + chainId 1 (Ethereum mainnet)",
+                mnemonic:
+                    "legal winner thank year wave sausage worth useful legal winner thank year wave sausage worth useful legal winner thank year wave sausage worth title",
+                chainId: 1,
+                expected: "0xF9F7340F1EF65484E0e626ea7A563E95d75E2De7",
+            },
+        ];
+
+        const fixtureMnemonic = ethersFixtures[0].mnemonic;
+        const fixtureChainId = ethersFixtures[0].chainId;
+        const fixtureAddress = ethersFixtures[0].expected;
+
+        test.each(ethersFixtures)(
+            "matches ethers `computeAddress` (origin/main) for $label",
+            ({ mnemonic: m, chainId, expected }) => {
+                const gasKey = mnemonicToHDKey(m).derive(
+                    getPathGasAbstraction(chainId),
+                );
+
+                expect(
+                    evmAccountFromPrivateKey(gasKey.privateKey).address,
+                ).toBe(expected);
+            },
+        );
+
+        test("differs from the (incorrect) compressed-pubkey-based derivation", () => {
+            const gasKey = mnemonicToHDKey(fixtureMnemonic).derive(
+                getPathGasAbstraction(fixtureChainId),
+            );
+
+            const correctAddress = evmAccountFromPrivateKey(
+                gasKey.privateKey,
+            ).address;
+            const buggyAddress = publicKeyToAddress(
+                `0x${hex.encode(gasKey.publicKey!)}`,
+            );
+
+            expect(correctAddress).not.toBe(buggyAddress);
+            expect(buggyAddress).toBe(
+                "0x8664786c89ee296283103724bec9Fc5837A7B66b",
+            );
+        });
+
+        test("Web3.tsx and RescueExternal.tsx derive the same address for the same mnemonic + chainId", () => {
+            const rescueFile = { mnemonic: fixtureMnemonic };
+
+            const web3Address = evmAccountFromPrivateKey(
+                deriveKeyGasAbstraction(rescueFile, fixtureChainId).privateKey,
+            ).address;
+
+            const rescueScanAddress = evmAccountFromPrivateKey(
+                mnemonicToHDKey(fixtureMnemonic).derive(
+                    getPathGasAbstraction(fixtureChainId),
+                ).privateKey,
+            ).address;
+
+            expect(web3Address).toBe(rescueScanAddress);
+            expect(web3Address).toBe(fixtureAddress);
+        });
+
+        test("throws when the private key is missing", () => {
+            expect(() => evmAccountFromPrivateKey(null)).toThrow(
+                "missing private key for EVM account derivation",
+            );
+            expect(() => evmAccountFromPrivateKey(undefined)).toThrow(
+                "missing private key for EVM account derivation",
+            );
         });
     });
 

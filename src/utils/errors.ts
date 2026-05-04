@@ -5,9 +5,9 @@ const walletRequestRejectedKey: keyof typeof dict.en =
     "wallet_request_rejected";
 
 const walletRejectionPhrases = [
+    "user rejected the request",
     "user rejected action",
     "user denied transaction signature",
-    "ethers-user-denied",
     "rejectallapprovals",
 ] as const;
 

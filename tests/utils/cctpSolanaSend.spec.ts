@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { cctpEmptyHookData, cctpZeroBytes32 } from "../../src/utils/cctp/evm";
+import type { CctpSendParam } from "../../src/utils/cctp/types";
 import type * as SolanaChainModule from "../../src/utils/chains/solana";
 
 const mockState = vi.hoisted(() => ({
@@ -43,14 +44,14 @@ const createWalletProvider = () => ({
     signAndSendTransaction: vi.fn().mockResolvedValue("solana-signature"),
 });
 
-const sendParam = {
+const sendParam: CctpSendParam = {
     amount: 1_000_000n,
     destinationDomain: 3,
-    mintRecipient: recipient,
-    destinationCaller: cctpZeroBytes32,
+    mintRecipient: recipient as `0x${string}`,
+    destinationCaller: cctpZeroBytes32 as `0x${string}`,
     maxFee: 131n,
     minFinalityThreshold: 1000,
-    hookData: cctpEmptyHookData,
+    hookData: cctpEmptyHookData as `0x${string}`,
 };
 
 describe("Solana CCTP send", () => {
@@ -106,16 +107,6 @@ describe("Solana CCTP send", () => {
                 signature.some((byte) => byte !== 0),
             ),
         ).toBe(true);
-
-        await tx.wait();
-        expect(connection.confirmTransaction).toHaveBeenCalledWith(
-            {
-                signature: "solana-signature",
-                blockhash: "11111111111111111111111111111111",
-                lastValidBlockHeight: 123,
-            },
-            "confirmed",
-        );
     });
 
     test("throws simulation failure with Solana logs", async () => {

@@ -8,27 +8,27 @@ import {
     useContext,
 } from "solid-js";
 import type { Accessor, JSX, Setter } from "solid-js";
-import { hiddenInformation } from "src/components/settings/PrivacyMode";
-import { BTC, LBTC } from "src/consts/Assets";
-import { SwapType } from "src/consts/Enums";
-import { swapStatusPending, swapStatusSuccess } from "src/consts/SwapStatus";
-import { getTransactionOutSpend } from "src/utils/blockchain";
-import {
-    claim,
-    createSubmarineSignature,
-    createTheirPartialChainSwapSignature,
-    findSwapOutputVout,
-} from "src/utils/claim";
-import { getTransaction } from "src/utils/compat";
-import { getPair } from "src/utils/helper";
 
+import { hiddenInformation } from "../components/settings/PrivacyMode";
+import { BTC, LBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
+import { getTransactionOutSpend } from "../utils/blockchain";
 import {
     type LockupTransaction,
     getChainSwapTransactions,
     getReverseTransaction,
     postChainSwapDetails,
 } from "../utils/boltzClient";
+import {
+    claim,
+    createSubmarineSignature,
+    createTheirPartialChainSwapSignature,
+    findSwapOutputVout,
+} from "../utils/claim";
+import { getTransaction } from "../utils/compat";
 import { formatError } from "../utils/errors";
+import { getPair } from "../utils/helper";
 import { isSwapClaimable } from "../utils/rescue";
 import {
     type ChainSwap,

@@ -11,8 +11,7 @@ import {
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
-import type { BaseContract } from "ethers";
-import { ethers } from "ethers";
+import { type Address, keccak256 } from "viem";
 
 import {
     AssetKind,
@@ -47,7 +46,7 @@ const invalidSendAmountMsg = (expected: number, got: number) =>
 const invalidReceiveAmountMsg = (expected: number, got: number) =>
     `invalid receive amount. Expected ${expected} to be bigger than ${got}`;
 
-type ContractGetter = (asset: string) => BaseContract;
+type ContractGetter = (asset: string) => { address: Address };
 
 const validateContract = async (
     getEtherSwap: ContractGetter,
@@ -63,15 +62,19 @@ const validateContract = async (
         return;
     }
 
-    const contract = (
-        isEtherSwap ? getEtherSwap(asset) : getErc20Swap(asset)
-    ).connect(createAssetProvider(asset));
-    const code = await contract.getDeployedCode();
-    if (code === null) {
+    const contract = (isEtherSwap ? getEtherSwap(asset) : getErc20Swap(asset))
+        .address;
+    if (contract === undefined) {
+        throw new Error(`missing contract address for asset: ${asset}`);
+    }
+    const code = await createAssetProvider(asset).getCode({
+        address: contract,
+    });
+    if (code === undefined || code === "0x") {
         throw new Error(`no deployed contract code found for asset: ${asset}`);
     }
 
-    const hash = ethers.keccak256(code);
+    const hash = keccak256(code);
 
     if (!codeHashes.includes(hash)) {
         throw new Error(`invalid contract code hash: ${hash}`);

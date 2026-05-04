@@ -1,24 +1,28 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import { hex } from "@scure/base";
-import {
-    type ContractRunner,
-    MaxUint256,
-    ZeroAddress,
-    concat,
-    getBytes,
-    solidityPacked,
-    zeroPadValue,
-} from "ethers";
-import type { Wallet } from "ethers";
 import log from "loglevel";
-import { getBridgeMesh } from "src/consts/Assets";
-import { createTokenContract } from "src/context/Web3";
-import type { Signer } from "src/context/Web3";
+import {
+    type Hash,
+    type Hex,
+    type PublicClient,
+    concat,
+    encodeFunctionData,
+    encodePacked,
+    getAddress,
+    maxUint256,
+    padHex,
+    size,
+    zeroAddress,
+} from "viem";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
+import { getBridgeMesh } from "../../consts/Assets";
+import type { Signer } from "../../context/Web3";
+import { createTokenContract } from "../../context/contracts";
+import { erc20Abi } from "../../generated/evm-abis";
 import { clearCache, getCachedValue } from "../cache";
 import {
     encodeSolanaAtaCreationOption,
@@ -34,11 +38,8 @@ import {
     getTronTransactionInfo,
     getTronTransactionSender,
 } from "../chains/tron";
-import {
-    type Provider,
-    createAssetProvider,
-    requireRpcUrls,
-} from "../provider";
+import { prefix0x } from "../evmTransaction";
+import { createAssetProvider, requireRpcUrls } from "../provider";
 import type { EvmOftTransportClient } from "./evm";
 import {
     createEvmOftContract,
@@ -136,8 +137,8 @@ export const decodeExecutorNativeAmountExceedsCapError = (
     }
 
     return {
-        amount: BigInt(`0x${data.slice(10, 74)}`),
-        cap: BigInt(`0x${data.slice(74, 138)}`),
+        amount: BigInt(prefix0x(data.slice(10, 74))),
+        cap: BigInt(prefix0x(data.slice(74, 138))),
     };
 };
 
@@ -154,7 +155,7 @@ export const getOftTransport = (asset: string): NetworkTransport => {
     return transport;
 };
 
-export const getOftProvider = (sourceAsset: string): Provider => {
+export const getOftProvider = (sourceAsset: string): PublicClient => {
     if (getOftTransport(sourceAsset) !== NetworkTransport.Evm) {
         throw new Error(
             `OFT JSON-RPC provider is only available for EVM assets, got ${getOftTransport(sourceAsset)}`,
@@ -203,13 +204,15 @@ const isTronWalletProvider = (
 ): runner is TronConnector =>
     runner !== undefined && "chain" in runner && runner.chain === "tron";
 
-const isEvmOftRunner = (runner: OftTransportRunner): runner is ContractRunner =>
-    runner !== undefined && "estimateGas" in runner;
+const isEvmOftRunner = (
+    runner: OftTransportRunner,
+): runner is PublicClient | Signer =>
+    runner !== undefined && ("getChainId" in runner || "provider" in runner);
 
 const getEvmOftRunner = (
     route: OftRoute,
     runner: OftTransportRunner,
-): ContractRunner => {
+): PublicClient | Signer => {
     if (runner === undefined) {
         return getOftProvider(route.sourceAsset);
     }
@@ -341,7 +344,7 @@ export const getOftReceivedGuid = (
 
 export const getOftReceivedEventByGuid = async (
     contract: OftTransportClient,
-    provider: Pick<Provider, "getLogs">,
+    provider: Pick<PublicClient, "getLogs">,
     contractAddress: string,
     guid: string,
 ): Promise<OftReceivedEvent | undefined> =>
@@ -352,7 +355,7 @@ export const getOftReceivedEventByGuid = async (
         guid,
     );
 
-const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
+const newOptions = (): string => encodePacked(["uint16"], [type3Option]);
 
 const encodeRecipient = (
     transport: NetworkTransport,
@@ -360,15 +363,17 @@ const encodeRecipient = (
 ): string => {
     switch (transport) {
         case NetworkTransport.Evm:
-            return zeroPadValue(recipient, 32);
+            return padHex(recipient as Hex, { size: 32 });
 
         case NetworkTransport.Solana:
             return encodeSolanaRecipient(recipient);
 
         case NetworkTransport.Tron:
-            return zeroPadValue(
-                `0x${hex.encode(decodeTronBase58Address(recipient))}`,
-                32,
+            return padHex(
+                prefix0x(hex.encode(decodeTronBase58Address(recipient))),
+                {
+                    size: 32,
+                },
             );
     }
 };
@@ -378,7 +383,7 @@ const encodeOftRecipient = (
     recipient: string | undefined,
 ): string => {
     if (recipient === undefined) {
-        return encodeRecipient(NetworkTransport.Evm, ZeroAddress);
+        return encodeRecipient(NetworkTransport.Evm, zeroAddress);
     }
 
     return encodeRecipient(getOftTransport(asset), recipient);
@@ -389,14 +394,14 @@ const addExecutorOption = (
     optionType: number,
     option: string,
 ): string => {
-    const optionSize = getBytes(option).length + 1;
+    const optionSize = size(option as Hex) + 1;
 
     return concat([
-        options,
-        solidityPacked(["uint8"], [executorWorkerId]),
-        solidityPacked(["uint16"], [optionSize]),
-        solidityPacked(["uint8"], [optionType]),
-        option,
+        options as Hex,
+        encodePacked(["uint8"], [executorWorkerId]),
+        encodePacked(["uint16"], [optionSize]),
+        encodePacked(["uint8"], [optionType]),
+        option as Hex,
     ]);
 };
 
@@ -435,9 +440,9 @@ const buildOftExtraOptions = (
         nativeDrop.receiver,
     );
 
-    const option = solidityPacked(
+    const option = encodePacked(
         ["uint128", "bytes32"],
-        [nativeDrop.amount, nativeDropReceiver],
+        [nativeDrop.amount, nativeDropReceiver as Hex],
     );
 
     return appendExecutorOption(options, optionTypeNativeDrop, option);
@@ -552,22 +557,26 @@ export const buildOftApprovalCall = async (
     route: OftRoute,
     owner: string,
     amount: bigint,
-    signer: Signer | Wallet,
+    signer: Signer,
 ): Promise<AlchemyCall | undefined> => {
     const oftContract = await createOftContract(route);
     const approvalRequired = await oftContract.approvalRequired?.();
     if (approvalRequired) {
         const { address } = await getOftContract(route);
         const tokenContract = createTokenContract(route.sourceAsset, signer);
-        const allowance = await tokenContract.allowance(owner, address);
+        const allowance = await tokenContract.read.allowance([
+            getAddress(owner),
+            getAddress(address),
+        ]);
         if (allowance < amount * 10n) {
             return {
-                to: await tokenContract.getAddress(),
+                to: tokenContract.address,
                 value: undefined,
-                data: tokenContract.interface.encodeFunctionData("approve", [
-                    address,
-                    MaxUint256,
-                ]),
+                data: encodeFunctionData({
+                    abi: erc20Abi,
+                    functionName: "approve",
+                    args: [getAddress(address), maxUint256],
+                }),
             };
         }
     }
@@ -687,9 +696,12 @@ export const getOftTransactionSender = async (
     const transport = getOftTransport(sourceAsset);
 
     switch (transport) {
-        case NetworkTransport.Evm:
-            return (await getOftProvider(sourceAsset).getTransaction(txHash))
-                ?.from;
+        case NetworkTransport.Evm: {
+            const tx = await getOftProvider(sourceAsset).getTransaction({
+                hash: txHash as Hash,
+            });
+            return tx.from as string | undefined;
+        }
 
         case NetworkTransport.Solana:
             return await getSolanaTransactionSender(sourceAsset, txHash);
@@ -713,12 +725,18 @@ export const getOftTransactionConfirmationTimestamp = async (
     switch (getOftTransport(sourceAsset)) {
         case NetworkTransport.Evm: {
             const provider = getOftProvider(sourceAsset);
-            const tx = await provider.getTransaction(txHash);
+            const tx = await provider.getTransaction({
+                hash: txHash as Hash,
+            });
             if (tx?.blockNumber === undefined || tx.blockNumber === null) {
                 return undefined;
             }
-            const block = await provider.getBlock(tx.blockNumber);
-            return block?.timestamp;
+            const block = await provider.getBlock({
+                blockNumber: BigInt(tx.blockNumber),
+            });
+            return block?.timestamp === undefined
+                ? undefined
+                : Number(block.timestamp);
         }
 
         case NetworkTransport.Solana: {

@@ -1,5 +1,6 @@
 import { hex } from "@scure/base";
 import log from "loglevel";
+import type { Address, Hex } from "viem";
 
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
@@ -225,9 +226,9 @@ export type QuoteData = {
 };
 
 export type QuoteCalldata = {
-    to: string;
+    to: Address;
     value: string;
-    data: string;
+    data: Hex;
 };
 
 const sortDexQuotes = (
@@ -428,7 +429,7 @@ export const postSubmarineClaimDetails = (
 
 export const getEipRefundSignature = (id: string, type: SwapType) => {
     checkCooperative();
-    return fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`);
+    return fetcher<{ signature: Hex }>(`/v2/swap/${type}/${id}/refund`);
 };
 
 export const getFeeEstimations = () =>
@@ -455,7 +456,7 @@ export const getCommitmentLockupDetails = (currency: string) =>
 export const postCommitmentSignature = (
     currency: string,
     swapId: string,
-    signature: string,
+    signature: Hex,
     transactionHash: string,
     logIndex?: number,
     maxOverpaymentPercentage?: number,
@@ -471,10 +472,10 @@ export const postCommitmentSignature = (
 export const postCommitmentRefundSignature = (
     currency: string,
     transactionHash: string,
-    refundAddressSignature: string,
+    refundAddressSignature: Hex,
     logIndex?: number,
 ) =>
-    fetcher<{ signature: string }>(`/v2/commitment/${currency}/refund`, {
+    fetcher<{ signature: Hex }>(`/v2/commitment/${currency}/refund`, {
         transactionHash,
         refundAddressSignature,
         logIndex,

@@ -1,6 +1,5 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createMemo, createSignal, on } from "solid-js";
@@ -48,6 +47,7 @@ import {
 import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
+import { estimateFeesPerGas } from "../utils/provider";
 import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
@@ -109,7 +109,7 @@ export const getClaimAddress = async (
     assetSend: Accessor<string>,
     signer: Accessor<Signer | undefined>,
     onchainAddress: Accessor<string>,
-    getGasAbstractionSigner: (asset: string) => Wallet,
+    getGasAbstractionSigner: (asset: string) => Signer,
     getGasToken: boolean | undefined,
 ): Promise<{
     gasAbstraction: GasAbstraction;
@@ -121,10 +121,12 @@ export const getClaimAddress = async (
     if (assetReceive() === RBTC && signer() !== undefined) {
         const activeSigner = signer()!;
         const [balance, gasPrice] = await Promise.all([
-            activeSigner.provider.getBalance(await activeSigner.getAddress()),
-            activeSigner.provider
-                .getFeeData()
-                .then((data) => data.gasPrice ?? 0n),
+            activeSigner.provider.getBalance({
+                address: activeSigner.address,
+            }),
+            estimateFeesPerGas(activeSigner.provider).then(
+                (data) => data.gasPrice ?? 0n,
+            ),
         ]);
         log.debug("RSK balance", balance);
 

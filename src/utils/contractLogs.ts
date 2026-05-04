@@ -1,21 +1,43 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { BytesLike, DeferredTopicFilter, Provider } from "ethers";
-import { JsonRpcProvider, toBeHex } from "ethers";
 import log from "loglevel";
-import { arbitrumChainId } from "src/configs/base";
+import {
+    type AbiEvent,
+    type Address,
+    type Hash,
+    type Hex,
+    type Log,
+    type PublicClient,
+    getAbiItem,
+    getAddress,
+    isAddressEqual,
+    parseEventLogs,
+    toHex,
+} from "viem";
 
 import { config } from "../config";
+import { arbitrumChainId } from "../configs/base";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+} from "../context/contracts";
+import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
     PreimageHashesWorker,
     type PreimageMap,
 } from "../workers/preimageHashes/PreimageHashesWorker";
-import { createAssetProvider } from "./provider";
-import { prefix0x } from "./rootstock";
+import { prefix0x } from "./evmTransaction";
+import { createAssetProvider, createProvider } from "./provider";
 
-export type SwapContract = EtherSwap | ERC20Swap;
+export type SwapContract = EtherSwapContract | Erc20SwapContract;
+type SwapReadContract = {
+    address: Address;
+    read: {
+        version: (args?: readonly []) => Promise<unknown>;
+        hashValues: (args: readonly unknown[]) => Promise<Hex>;
+        swaps: (args: readonly [Hex]) => Promise<boolean>;
+    };
+};
 
 /**
  * Returns the block number used for timelock comparison.
@@ -23,21 +45,21 @@ export type SwapContract = EtherSwap | ERC20Swap;
  * while `provider.getBlockNumber()` returns L2 — so we fetch L1 instead.
  */
 export const getTimelockBlockNumber = async (
-    provider: Provider,
+    provider: PublicClient,
     asset: AssetType,
 ): Promise<number> => {
     const network = config.assets?.[asset as string]?.network;
 
     if (network?.chainId === arbitrumChainId) {
         const rpcProvider = createAssetProvider(asset as string);
-        const block = (await rpcProvider.send("eth_getBlockByNumber", [
-            "latest",
-            false,
-        ])) as { l1BlockNumber: string };
+        const block = (await rpcProvider.request({
+            method: "eth_getBlockByNumber",
+            params: ["latest", false],
+        } as never)) as { l1BlockNumber: string };
         return Number(block.l1BlockNumber);
     }
 
-    return provider.getBlockNumber();
+    return Number(await provider.getBlockNumber());
 };
 
 /**
@@ -55,21 +77,35 @@ export const getRollupL1BlockNumber = async (
     }
 
     const rpcProvider = createAssetProvider(asset as string);
-    const block = (await rpcProvider.send("eth_getBlockByNumber", [
-        toBeHex(rollupBlockNumber),
-        false,
-    ])) as { l1BlockNumber: string };
+    const block = (await rpcProvider.request({
+        method: "eth_getBlockByNumber",
+        params: [toHex(rollupBlockNumber), false],
+    } as never)) as { l1BlockNumber: string };
     return Number(block.l1BlockNumber);
 };
 
 const defaultScanInterval = 2_000;
 const parallelBatchSize = 5;
 
-type LockupEvent = {
-    data: BytesLike;
-    blockNumber: number;
-    transactionHash: string;
-    topics: readonly string[];
+type LockupAbi = typeof erc20SwapAbi | typeof etherSwapAbi;
+
+type LockupArgs = {
+    refundAddress?: Address;
+    claimAddress?: Address;
+};
+
+type LockupEventArgs = {
+    preimageHash: Hex;
+    amount: bigint;
+    tokenAddress?: Address;
+    claimAddress: Address;
+    refundAddress: Address;
+    timelock: bigint;
+};
+
+type LockupLog = Log<bigint, number, false, AbiEvent, true> & {
+    eventName: "Lockup";
+    args: LockupEventArgs;
 };
 
 type BlockRange = { fromBlock: number; toBlock: number };
@@ -77,14 +113,14 @@ type BlockRange = { fromBlock: number; toBlock: number };
 export type LogRefundData = {
     asset: AssetType;
     blockNumber: number;
-    transactionHash: string;
+    transactionHash: Hex;
 
-    preimageHash: string;
-    preimage?: string;
+    preimageHash: Hex;
+    preimage?: Hex;
     amount: bigint;
-    tokenAddress?: string;
-    claimAddress: string;
-    refundAddress: string;
+    tokenAddress?: Address;
+    claimAddress: Address;
+    refundAddress: Address;
     timelock: bigint;
 };
 
@@ -113,12 +149,14 @@ type ScanContext = {
     asset: AssetType;
     isErc20: boolean;
     providerUrl: string;
-    contractAddress: string;
+    contractAddress: Address;
     latestBlock: number;
     minBlock: number;
     scanInterval: number;
     contract: SwapContract;
-    filter: DeferredTopicFilter;
+    provider: PublicClient;
+    abi: LockupAbi;
+    args?: LockupArgs;
     totalBlocks: number;
 };
 
@@ -135,7 +173,7 @@ const reconcilePendingClaims = (
     for (let i = pendingClaims.length - 1; i >= 0; i--) {
         const entry = preimageMap.get(pendingClaims[i].preimageHash);
         if (entry) {
-            pendingClaims[i].preimage = entry.preimage;
+            pendingClaims[i].preimage = entry.preimage as Hex;
             matched.push(pendingClaims[i]);
             pendingClaims.splice(i, 1);
         }
@@ -152,69 +190,39 @@ const getAllFilterAddresses = (filter: ScanFilter): string[] => {
     return addrs;
 };
 
-const buildLockupFilter = (
-    contract: SwapContract,
-    isErc20: boolean,
+/**
+ * Builds args to pass to viem's `getLogs` for native indexed-topic filtering.
+ * When extra addresses are present (e.g. gas abstraction signer), or when
+ * filtering by claimAddress on a v5 contract (claimAddress not indexed),
+ * returns undefined so `matchesFilter` does the post-filtering.
+ */
+const buildLockupFilterArgs = (
     version: number,
     scanConfig: ScanConfig,
-) => {
+): LockupArgs | undefined => {
     if (scanConfig.filter?.address === undefined) {
-        return contract.filters.Lockup();
+        return undefined;
     }
 
-    // When extra addresses are present (e.g. gas abstraction signer), skip
-    // the indexed topic filter and let matchesFilter handle post-filtering.
     const hasExtra =
         scanConfig.filter.extraAddresses &&
         scanConfig.filter.extraAddresses.length > 0;
-
-    if (isErc20) {
-        const erc20 = contract as ERC20Swap;
-        if (scanConfig.action === RskRescueMode.Refund && !hasExtra) {
-            return erc20.filters.Lockup(
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                scanConfig.filter.address,
-            );
-        }
-        if (
-            scanConfig.action === RskRescueMode.Claim &&
-            version >= 6 &&
-            !hasExtra
-        ) {
-            return erc20.filters.Lockup(
-                undefined,
-                undefined,
-                undefined,
-                scanConfig.filter.address,
-            );
-        }
-        return erc20.filters.Lockup();
+    if (hasExtra) {
+        return undefined;
     }
 
-    const etherSwap = contract as EtherSwap;
-    if (scanConfig.action === RskRescueMode.Refund && !hasExtra) {
-        return etherSwap.filters.Lockup(
-            undefined,
-            undefined,
-            undefined,
-            scanConfig.filter.address,
-        );
+    const indexedAddress = getAddress(scanConfig.filter.address);
+
+    if (scanConfig.action === RskRescueMode.Refund) {
+        return { refundAddress: indexedAddress };
     }
-    if (
-        scanConfig.action === RskRescueMode.Claim &&
-        version >= 6 &&
-        !hasExtra
-    ) {
-        return etherSwap.filters.Lockup(
-            undefined,
-            undefined,
-            scanConfig.filter.address,
-        );
+
+    // claimAddress is only indexed on v6+ for both EtherSwap and ERC20Swap.
+    if (scanConfig.action === RskRescueMode.Claim && version >= 6) {
+        return { claimAddress: indexedAddress };
     }
-    return etherSwap.filters.Lockup();
+
+    return undefined;
 };
 
 const createScanContext = async (
@@ -227,26 +235,30 @@ const createScanContext = async (
     }
 
     const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
-    const provider = new JsonRpcProvider(providerUrl);
-    const connected = contract.connect(provider) as SwapContract;
-    const contractAddress = await connected.getAddress();
+    const provider = createProvider([providerUrl]);
+    const connected = contract as SwapContract;
+    const contractAddress = connected.address;
     const minBlock = config.assets?.[asset]?.contracts?.deployHeight ?? 0;
+    const swapReadContract = connected as unknown as SwapReadContract;
 
     const [latestBlock, version] = await Promise.all([
-        provider.getBlockNumber(),
-        connected.version().then(Number),
+        provider.getBlockNumber().then(Number),
+        swapReadContract.read.version().then(Number),
     ]);
 
-    const filter = buildLockupFilter(connected, isErc20, version, scanConfig);
+    const abi: LockupAbi = isErc20 ? erc20SwapAbi : etherSwapAbi;
+    const args = buildLockupFilterArgs(version, scanConfig);
 
     const interval = scanConfig.scanInterval ?? defaultScanInterval;
 
     return {
         asset,
         isErc20,
-        filter,
+        abi,
+        args,
         providerUrl,
         contractAddress,
+        provider,
         latestBlock,
         minBlock,
         scanInterval: interval,
@@ -289,81 +301,74 @@ function* generateBlockRangeBatches(
 }
 
 /**
- * Fetches events for multiple block ranges in parallel.
- * Returns events sorted by block number descending (most recent first).
+ * Fetches Lockup events for multiple block ranges in parallel using viem's
+ * native indexed-topic filtering. Returns decoded events sorted by block
+ * number descending (most recent first).
  */
 const fetchEventsForRanges = async (
     ranges: BlockRange[],
-    contract: SwapContract,
-    filter: DeferredTopicFilter,
-): Promise<LockupEvent[]> => {
+    provider: PublicClient,
+    address: Address,
+    abi: LockupAbi,
+    args: LockupArgs | undefined,
+): Promise<LockupLog[]> => {
+    const event = getAbiItem({ abi, name: "Lockup" }) as AbiEvent;
+
     const results = await Promise.all(
         ranges.map(({ fromBlock, toBlock }) =>
-            contract.queryFilter(filter, fromBlock, toBlock),
+            provider.getLogs({
+                address,
+                event,
+                args,
+                fromBlock: BigInt(fromBlock),
+                toBlock: BigInt(toBlock),
+            }),
         ),
     );
 
-    return results.flat().sort((a, b) => b.blockNumber - a.blockNumber);
+    return (results.flat() as LockupLog[]).sort(
+        (a, b) => Number(b.blockNumber) - Number(a.blockNumber),
+    );
 };
 
-const parseLockupEvent = (
+const lockupLogToRefundData = (
     asset: AssetType,
-    contract: SwapContract,
-    event: LockupEvent,
-): LogRefundData => {
-    const parsedLog = contract.interface.parseLog({
-        data: event.data as string,
-        topics: event.topics as string[],
-    });
-
-    if (parsedLog?.name !== "Lockup") {
-        throw new Error("Failed to parse Lockup event");
-    }
-
-    const {
-        preimageHash,
-        amount,
-        tokenAddress,
-        claimAddress,
-        refundAddress,
-        timelock,
-    } = parsedLog.args;
-
-    return {
-        asset,
-        blockNumber: event.blockNumber,
-        transactionHash: event.transactionHash,
-        preimageHash: (preimageHash as string).substring(2),
-        amount,
-        tokenAddress,
-        claimAddress,
-        refundAddress,
-        timelock,
-    };
-};
+    event: LockupLog,
+): LogRefundData => ({
+    asset,
+    blockNumber: Number(event.blockNumber),
+    transactionHash: event.transactionHash,
+    preimageHash: event.args.preimageHash.replace(/^0x/, "") as Hex,
+    amount: event.args.amount,
+    tokenAddress: event.args.tokenAddress,
+    claimAddress: event.args.claimAddress,
+    refundAddress: event.args.refundAddress,
+    timelock: event.args.timelock,
+});
 
 const computeSwapHash = async (
     contract: SwapContract,
     isErc20: boolean,
     data: LogRefundData,
 ): Promise<string> => {
+    const swapReadContract = contract as unknown as SwapReadContract;
     if (isErc20) {
-        return await (contract as ERC20Swap).hashValues(
+        return await swapReadContract.read.hashValues([
             prefix0x(data.preimageHash),
             data.amount,
-            data.tokenAddress!,
-            data.claimAddress,
-            data.refundAddress,
+            getAddress(data.tokenAddress!),
+            getAddress(data.claimAddress),
+            getAddress(data.refundAddress),
             data.timelock,
-        );
+        ]);
     }
-    return await (contract as EtherSwap).hashValues(
+    return await swapReadContract.read.hashValues([
         prefix0x(data.preimageHash),
         data.amount,
-        data.claimAddress,
-        data.refundAddress,
+        getAddress(data.claimAddress),
+        getAddress(data.refundAddress),
         data.timelock,
-    );
+    ]);
 };
 
 const matchesFilter = (
@@ -391,40 +396,37 @@ const matchesFilter = (
 };
 
 export const getLogsFromReceipt = async (
-    provider: Provider,
+    provider: PublicClient,
     asset: AssetType,
     contract: SwapContract,
     txHash: string,
 ): Promise<LogRefundData> => {
-    const [receipt, contractAddress] = await Promise.all([
-        provider.getTransactionReceipt(txHash),
-        contract.getAddress(),
-    ]);
+    const contractAddress = contract.address;
+    const receipt = await provider.getTransactionReceipt({
+        hash: txHash as Hash,
+    });
 
     if (receipt === null) {
         throw new Error(`Transaction receipt not found for ${txHash}`);
     }
 
-    for (const event of receipt.logs) {
-        if (event.address.toLowerCase() !== contractAddress.toLowerCase()) {
-            continue;
-        }
+    const abi: LockupAbi =
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? erc20SwapAbi
+            : etherSwapAbi;
+    const [lockupLog] = parseEventLogs({
+        abi,
+        eventName: "Lockup",
+        logs: receipt.logs,
+    }).filter((eventLog) => isAddressEqual(eventLog.address, contractAddress));
 
-        if (
-            event.topics[0] !== contract.interface.getEvent("Lockup").topicHash
-        ) {
-            continue;
-        }
-
-        const data = parseLockupEvent(asset, contract, event);
-        data.blockNumber = await getRollupL1BlockNumber(
-            asset,
-            data.blockNumber,
-        );
-        return data;
+    if (lockupLog === undefined) {
+        throw new Error(`Lockup event not found in transaction ${txHash}`);
     }
 
-    throw new Error(`Lockup event not found in transaction ${txHash}`);
+    const data = lockupLogToRefundData(asset, lockupLog as LockupLog);
+    data.blockNumber = await getRollupL1BlockNumber(asset, data.blockNumber);
+    return data;
 };
 
 /**
@@ -472,8 +474,10 @@ export async function* scanLockupEvents(
         );
         const events = await fetchEventsForRanges(
             ranges,
-            ctx.contract,
-            ctx.filter,
+            ctx.provider,
+            ctx.contractAddress,
+            ctx.abi,
+            ctx.args,
         );
 
         blocksScanned += ranges.length * ctx.scanInterval;
@@ -485,7 +489,7 @@ export async function* scanLockupEvents(
         };
 
         for (const event of events) {
-            const data = parseLockupEvent(ctx.asset, ctx.contract, event);
+            const data = lockupLogToRefundData(ctx.asset, event);
             const match = matchesFilter(data, scanConfig.filter);
 
             if (match === null || match !== scanConfig.action) {
@@ -501,7 +505,9 @@ export async function* scanLockupEvents(
                 ctx.isErc20,
                 data,
             );
-            const stillLocked = await ctx.contract.swaps(swapHash);
+            const stillLocked = await (
+                ctx.contract as unknown as SwapReadContract
+            ).read.swaps([swapHash as Hex]);
 
             if (!stillLocked) {
                 log.info(

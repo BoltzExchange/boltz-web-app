@@ -1,7 +1,6 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
 import { For, Show, createSignal } from "solid-js";
-import { isInvoice } from "src/utils/invoice";
 
 import { copyIconTimeout } from "../consts/CopyContent";
 import {
@@ -10,6 +9,7 @@ import {
     formatAddress,
     isMobile,
 } from "../utils/helper";
+import { isInvoice } from "../utils/invoice";
 
 const CopyBox = (props: { value: string; groupSize?: number }) => {
     const [copyBoxActive, setCopyBoxActive] = createSignal(false);

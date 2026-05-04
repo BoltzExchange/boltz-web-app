@@ -1,7 +1,9 @@
 // @vitest-environment node
+import type * as Viem from "viem";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { OftDirectSendTarget } from "../../src/utils/oft/directSend";
+import type { OftContract } from "../../src/utils/oft/registry";
 import type { OftRoute } from "../../src/utils/oft/types";
 
 type MockOftContract = {
@@ -35,7 +37,7 @@ const {
     mockGetOftContract,
     mockGetOftChain,
     mockFindOftChainContract,
-    mockEthersContract,
+    mockGetContract,
 } = vi.hoisted(() => {
     const mockSendOFT =
         vi.fn<(...args: unknown[]) => Promise<MockTransaction>>();
@@ -50,16 +52,17 @@ const {
         mockGetOftChain: vi.fn<(...args: unknown[]) => Promise<MockOftChain>>(),
         mockFindOftChainContract:
             vi.fn<(...args: unknown[]) => MockOftContract | undefined>(),
-        mockEthersContract: vi.fn(function MockContract() {
-            return {
+        mockGetContract: vi.fn<(...args: unknown[]) => unknown>(() => ({
+            write: {
                 sendOFT: (...args: unknown[]) => mockSendOFT(...args),
-            };
-        }),
+            },
+        })),
     };
 });
 
-vi.mock("ethers", () => ({
-    Contract: mockEthersContract,
+vi.mock("viem", async (importActual) => ({
+    ...(await importActual<typeof Viem>()),
+    getContract: (...args: unknown[]) => mockGetContract(...args),
 }));
 
 vi.mock("../../src/config", () => ({
@@ -86,6 +89,7 @@ vi.mock("../../src/consts/Assets", () => ({
 vi.mock("../../src/utils/oft/evm", () => ({
     createEvmOftContract: (...args: unknown[]) =>
         mockCreateEvmOftContract(...args),
+    toViemSendParam: (sendParam: unknown[]) => sendParam,
 }));
 
 vi.mock("../../src/utils/oft/oft", () => ({
@@ -111,12 +115,12 @@ const {
     sendOftDirect,
 } = await import("../../src/utils/oft/directSend");
 
-const oftContract = {
+const oftContract: OftContract = {
     name: "OFT",
     address: "0x1000000000000000000000000000000000000001",
     explorer: "",
 };
-const tempoWrapperContract = {
+const tempoWrapperContract: OftContract = {
     name: "TempoOFTWrapper",
     address: "0x2000000000000000000000000000000000000002",
     explorer: "",
@@ -167,7 +171,7 @@ describe("directSend", () => {
             approvalRequired: vi.fn().mockResolvedValue(false),
             send: vi.fn().mockResolvedValue(createMockTransaction("0xsend")),
         });
-        mockSendOFT.mockResolvedValue(createMockTransaction("0xwrapper"));
+        mockSendOFT.mockResolvedValue("0xwrapper" as never);
     });
 
     test("returns the primary OFT target for non-Tempo assets", async () => {
@@ -308,16 +312,19 @@ describe("directSend", () => {
             hash: "0xwrapper",
         });
 
-        expect(mockEthersContract).toHaveBeenCalledWith(
-            tempoWrapperContract.address,
-            expect.any(Array),
-            mockRunner,
+        expect(mockGetContract).toHaveBeenCalledWith(
+            expect.objectContaining({
+                address: tempoWrapperContract.address,
+            }),
         );
         expect(mockSendOFT).toHaveBeenCalledWith(
-            oftContract.address,
-            "0x4000000000000000000000000000000000000004",
-            sendParam,
-            msgFee[0],
+            [
+                oftContract.address,
+                "0x4000000000000000000000000000000000000004",
+                sendParam,
+                msgFee[0],
+            ],
+            { account: undefined, chain: null },
         );
     });
 });

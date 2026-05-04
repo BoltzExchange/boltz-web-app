@@ -8,7 +8,7 @@ import {
     solanaTokenMessengerMinterV2,
 } from "../../configs/cctp";
 import lazySolanaCctp from "../../lazy/solanaCctp";
-import type { BridgeDetails } from "../bridge/details";
+import type { BridgeTransaction } from "../bridge/types";
 import {
     getConnectedSolanaWalletAddress,
     getSolanaAssociatedTokenAddress,
@@ -35,11 +35,7 @@ export type SolanaCctpTransportClient = {
         sendParam: CctpSendParam,
         msgFee: [bigint, bigint],
         refundAddress: string,
-    ) => Promise<{
-        hash: string;
-        details?: BridgeDetails;
-        wait: () => Promise<unknown>;
-    }>;
+    ) => Promise<BridgeTransaction>;
 };
 
 type Context = {
@@ -218,11 +214,7 @@ const createDepositForBurnInstruction = async (
 const send = async (
     context: Context,
     sendParam: CctpSendParam,
-): Promise<{
-    hash: string;
-    details?: BridgeDetails;
-    wait: () => Promise<unknown>;
-}> => {
+): Promise<BridgeTransaction> => {
     const { modules, walletProvider } = context;
     if (walletProvider === undefined) {
         throw new Error("Missing connected Solana wallet for CCTP send");
@@ -248,7 +240,7 @@ const send = async (
         }),
         instruction,
     ];
-    const { latestBlockhash, transaction } = await createTransaction(
+    const { transaction, latestBlockhash } = await createTransaction(
         context,
         instructions,
         signerAddress,
@@ -284,16 +276,6 @@ const send = async (
                     blockhash: latestBlockhash.blockhash,
                 },
             },
-            wait: async () =>
-                await context.connection.confirmTransaction(
-                    {
-                        signature,
-                        blockhash: latestBlockhash.blockhash,
-                        lastValidBlockHeight:
-                            latestBlockhash.lastValidBlockHeight,
-                    },
-                    "confirmed",
-                ),
         };
     } catch (error) {
         if (error instanceof modules.web3.SendTransactionError) {

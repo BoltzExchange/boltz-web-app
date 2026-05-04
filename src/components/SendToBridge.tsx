@@ -6,6 +6,7 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
+import type { Address } from "viem";
 
 import { config } from "../config";
 import { BridgeKind, CctpReceiveMode, NetworkTransport } from "../configs/base";
@@ -13,11 +14,8 @@ import { USDC } from "../consts/Assets";
 import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import {
-    type Signer,
-    createTokenContract,
-    useWeb3Signer,
-} from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
+import { createTokenContract } from "../context/contracts";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { type BridgeTransaction, bridgeRegistry } from "../utils/bridge";
@@ -65,19 +63,14 @@ const SendToBridge = (props: {
     >(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [approvalTarget, setApprovalTarget] = createSignal<
-        string | undefined
+        Address | undefined
     >(undefined);
     const txSent = createMemo(() => {
         return swap()?.bridge?.txHash;
     });
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
-        if (currentSigner.provider === null) {
-            return undefined;
-        }
-        return await currentSigner.provider
-            .getNetwork()
-            .then((n) => Number(n.chainId));
+        return Number(await currentSigner.provider.getChainId());
     });
 
     const sourceWalletReady = () => {
@@ -162,7 +155,7 @@ const SendToBridge = (props: {
         }: {
             trackRequiredTokenBalance?: boolean;
             needsApproval?: boolean;
-            approvalTarget?: string;
+            approvalTarget?: Address;
         } = {},
     ) => {
         const hasEnoughTokenBalance = balance >= requiredTokenAmount;
@@ -192,7 +185,6 @@ const SendToBridge = (props: {
     };
 
     const refreshBridgeSendState = async (connectedSigner: Signer) => {
-        const signerAddress = await connectedSigner.getAddress();
         const recipient = getBridgeRecipient();
         const tokenContract = createTokenContract(
             props.bridge.sourceAsset,
@@ -203,12 +195,18 @@ const SendToBridge = (props: {
         const directSendTarget =
             await bridgeDriver().getDirectSendTarget(bridgeRoute);
         const [balance, needsUserApproval, nativeBalance] = await Promise.all([
-            bridgeDriver().getSourceTokenBalance(bridgeRoute, signerAddress),
+            bridgeDriver().getSourceTokenBalance(
+                bridgeRoute,
+                connectedSigner.address,
+            ),
             bridgeDriver().requiresDirectUserApproval(
                 directSendTarget,
                 connectedSigner,
             ),
-            bridgeDriver().getSourceNativeBalance(bridgeRoute, signerAddress),
+            bridgeDriver().getSourceNativeBalance(
+                bridgeRoute,
+                connectedSigner.address,
+            ),
         ]);
 
         const requiredTokenAmount = bridgeDriver().getDirectRequiredTokenAmount(
@@ -224,10 +222,10 @@ const SendToBridge = (props: {
 
         let needsUpdatedApproval = false;
         if (needsUserApproval) {
-            const allowance = await tokenContract.allowance(
-                signerAddress,
+            const allowance = await tokenContract.read.allowance([
+                connectedSigner.address,
                 directSendTarget.executionContract.address,
-            );
+            ]);
 
             needsUpdatedApproval = allowance < requiredTokenAmount;
         }
@@ -255,10 +253,10 @@ const SendToBridge = (props: {
             recipient,
             sendParam,
             msgFee,
-            signerAddress,
             hasEnoughTokenBalance,
             hasEnoughNativeBalanceForMsgFee,
             needsUpdatedApproval,
+            signerAddress: connectedSigner.address,
         };
     };
 
@@ -315,7 +313,7 @@ const SendToBridge = (props: {
         const approvalRequired =
             (await oftBridgeInstance.approvalRequired?.()) ?? false;
         let needsUpdatedApproval = false;
-        let spenderAddress: string | undefined;
+        let spenderAddress: Address | undefined;
 
         if (approvalRequired) {
             spenderAddress = (await bridgeDriver().getContract(bridgeRoute))

@@ -1,7 +1,6 @@
-import { getAddress, isAddress } from "ethers";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
-import { btcToSat } from "src/utils/denomination";
+import { getAddress, isAddress } from "viem";
 
 import { NetworkTransport } from "../configs/base";
 import {
@@ -17,6 +16,7 @@ import Pair from "../utils/Pair";
 import { isValidSolanaAddress } from "../utils/chains/solana";
 import { isValidTronAddress } from "../utils/chains/tron";
 import { probeUserInput } from "../utils/compat";
+import { btcToSat } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
     decodeInvoice,

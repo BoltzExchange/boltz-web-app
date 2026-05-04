@@ -1,4 +1,3 @@
-import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor, JSX } from "solid-js";
 import { Show, createEffect, createSignal } from "solid-js";
@@ -15,7 +14,7 @@ import LoadingSpinner from "./LoadingSpinner";
 const ContractTransaction = (props: {
     asset: string;
     disabled?: boolean;
-    signerOverride?: Accessor<Signer | Wallet | undefined>;
+    signerOverride?: Accessor<Signer | undefined>;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
     showHr?: boolean;
@@ -46,8 +45,12 @@ const ContractTransaction = (props: {
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
-        const network = await signer()?.provider?.getNetwork();
-        setSignerNetwork(Number(network?.chainId));
+        const provider = signer()?.provider;
+        setSignerNetwork(
+            provider === undefined
+                ? undefined
+                : Number(await provider.getChainId()),
+        );
     });
 
     const allowAnyAddress = () =>

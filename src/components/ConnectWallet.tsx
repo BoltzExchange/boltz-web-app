@@ -349,8 +349,9 @@ const ConnectWallet = (props: {
             transport === NetworkTransport.Evm &&
             chainId !== undefined
                 ? Number(
-                      (await activeWallet?.signer?.provider.getNetwork())
-                          ?.chainId || -1,
+                      activeWallet?.signer === undefined
+                          ? -1
+                          : await activeWallet.signer.provider.getChainId(),
                   )
                 : undefined;
 

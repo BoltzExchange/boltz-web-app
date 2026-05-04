@@ -9,7 +9,6 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
-import { isRefundableSwapType } from "src/utils/rescue";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton, { incorrectAssetError } from "../components/RefundButton";
@@ -39,6 +38,7 @@ import {
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
+import { isRefundableSwapType } from "../utils/rescue";
 import {
     type ChainSwap,
     type SubmarineSwap,

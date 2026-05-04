@@ -1,7 +1,6 @@
 import type * as SolidRouter from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
-import type { Wallet } from "ethers";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
@@ -10,6 +9,8 @@ import { TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { RskRescueMode } from "../../src/consts/Enums";
 import type * as RescueContextModule from "../../src/context/Rescue";
 import type * as Web3Module from "../../src/context/Web3";
+import type { Signer } from "../../src/context/Web3";
+import type * as ContractsModule from "../../src/context/contracts";
 import type * as GasAbstractionSweepModule from "../../src/utils/gasAbstractionSweep";
 import type { RescueFile } from "../../src/utils/rescueFile";
 import { contextWrapper } from "../helper";
@@ -34,14 +35,14 @@ vi.mock("@solidjs/router", async () => {
     };
 });
 
-const [signer, setSigner] = createSignal<Wallet | undefined>(undefined);
+const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
 const [rescueFile, setRescueFile] = createSignal<RescueFile | undefined>(
     undefined,
 );
 
 const getGasAbstractionSigner =
-    vi.fn<(asset: string, rescueFile?: RescueFile) => Wallet>();
-const balanceOf = vi.fn<(address: string) => Promise<bigint>>();
+    vi.fn<(asset: string, rescueFile?: RescueFile) => Signer>();
+const balanceOf = vi.fn<(args: readonly [`0x${string}`]) => Promise<bigint>>();
 const sweepGasAbstractionToken = vi.fn<() => Promise<string>>();
 
 vi.mock("../../src/context/Web3", async () => {
@@ -54,7 +55,16 @@ vi.mock("../../src/context/Web3", async () => {
             signer,
             getGasAbstractionSigner,
         }),
-        createTokenContract: () => ({ balanceOf }),
+    };
+});
+
+vi.mock("../../src/context/contracts", async () => {
+    const actual = await vi.importActual<typeof ContractsModule>(
+        "../../src/context/contracts",
+    );
+    return {
+        ...actual,
+        createTokenContract: () => ({ read: { balanceOf } }),
     };
 });
 
@@ -83,7 +93,7 @@ const lastContractTxProps: { current: ContractTxProps | undefined } = {
 };
 type ContractTxProps = {
     asset: string;
-    signerOverride?: Accessor<Wallet>;
+    signerOverride?: Accessor<Signer>;
     onClick: () => Promise<unknown>;
     buttonText: string;
     promptText?: string;
@@ -134,11 +144,10 @@ const i18n = (await import("../../src/i18n/i18n")).default;
 const validAddress = "0x0000000000000000000000000000000000000001";
 const otherAddress = "0x0000000000000000000000000000000000000002";
 
-const makeWallet = (address: string) =>
+const makeSigner = (address: string) =>
     ({
         address,
-        getAddress: () => Promise.resolve(address),
-    }) as unknown as Wallet;
+    }) as unknown as Signer;
 
 const renderPage = () =>
     render(() => <GasAbstractionSweepRescue />, { wrapper: contextWrapper });
@@ -169,7 +178,7 @@ describe("GasAbstractionSweepRescue", () => {
 
     test("prompts to scan with the rescue file when none is loaded", async () => {
         resetState();
-        setSigner(makeWallet(validAddress));
+        setSigner(makeSigner(validAddress));
 
         renderPage();
 
@@ -181,7 +190,7 @@ describe("GasAbstractionSweepRescue", () => {
     test("re-runs the resource when the signer arrives after mount", async () => {
         resetState();
         setRescueFile({ mnemonic: "test" } as RescueFile);
-        getGasAbstractionSigner.mockReturnValue(makeWallet(validAddress));
+        getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
         balanceOf.mockResolvedValue(0n);
 
         renderPage();
@@ -190,7 +199,7 @@ describe("GasAbstractionSweepRescue", () => {
         expect(await screen.findByText(i18n.en.no_wallet)).toBeInTheDocument();
         expect(getGasAbstractionSigner).not.toHaveBeenCalled();
 
-        setSigner(makeWallet(validAddress));
+        setSigner(makeSigner(validAddress));
 
         // resource fetches once the source signal becomes truthy
         await waitFor(() =>
@@ -207,7 +216,7 @@ describe("GasAbstractionSweepRescue", () => {
     test("errors when the URL asset is not sweepable", async () => {
         resetState();
         paramsMock.current.asset = "BTC";
-        setSigner(makeWallet(validAddress));
+        setSigner(makeSigner(validAddress));
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
@@ -221,7 +230,7 @@ describe("GasAbstractionSweepRescue", () => {
     test("errors when the URL action is not refund", async () => {
         resetState();
         paramsMock.current.action = "claim" as RskRescueMode;
-        setSigner(makeWallet(validAddress));
+        setSigner(makeSigner(validAddress));
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
@@ -234,8 +243,8 @@ describe("GasAbstractionSweepRescue", () => {
 
     test("errors when the rescue-derived address does not match the URL", async () => {
         resetState();
-        getGasAbstractionSigner.mockReturnValue(makeWallet(otherAddress));
-        setSigner(makeWallet(validAddress));
+        getGasAbstractionSigner.mockReturnValue(makeSigner(otherAddress));
+        setSigner(makeSigner(validAddress));
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
@@ -248,9 +257,9 @@ describe("GasAbstractionSweepRescue", () => {
 
     test("renders the no-balance message when the rescue address is empty", async () => {
         resetState();
-        getGasAbstractionSigner.mockReturnValue(makeWallet(validAddress));
+        getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
         balanceOf.mockResolvedValue(0n);
-        setSigner(makeWallet(validAddress));
+        setSigner(makeSigner(validAddress));
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
@@ -282,10 +291,10 @@ describe("GasAbstractionSweepRescue", () => {
         async ({ asset, balance, expectedAmountFragment }) => {
             resetState();
             paramsMock.current.asset = asset;
-            const gasSigner = makeWallet(validAddress);
+            const gasSigner = makeSigner(validAddress);
             getGasAbstractionSigner.mockReturnValue(gasSigner);
             balanceOf.mockResolvedValue(balance);
-            setSigner(makeWallet(otherAddress));
+            setSigner(makeSigner(otherAddress));
             setRescueFile({ mnemonic: "test" } as RescueFile);
 
             renderPage();
@@ -306,8 +315,8 @@ describe("GasAbstractionSweepRescue", () => {
     test("clicking refund sweeps to the connected wallet and shows the explorer link", async () => {
         resetState();
         const user = userEvent.setup();
-        const gasSigner = makeWallet(validAddress);
-        const connectedWallet = makeWallet(otherAddress);
+        const gasSigner = makeSigner(validAddress);
+        const connectedWallet = makeSigner(otherAddress);
         getGasAbstractionSigner.mockReturnValue(gasSigner);
         balanceOf.mockResolvedValue(2_500_000n);
         sweepGasAbstractionToken.mockResolvedValue("0xdeadbeef");
@@ -336,9 +345,9 @@ describe("GasAbstractionSweepRescue", () => {
 
     test("does not call sweepGasAbstractionToken when the asset becomes invalid mid-flight", async () => {
         resetState();
-        getGasAbstractionSigner.mockReturnValue(makeWallet(validAddress));
+        getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
         balanceOf.mockResolvedValue(1n);
-        setSigner(makeWallet(otherAddress));
+        setSigner(makeSigner(otherAddress));
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();

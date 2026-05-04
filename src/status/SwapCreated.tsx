@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { Show } from "solid-js";
+import { getAddress } from "viem";
 
 import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
@@ -46,7 +47,7 @@ const SwapCreated = () => {
                     swapId={chain.id}
                     gasAbstraction={getLockupGasAbstraction(chain)}
                     amount={chain.lockupDetails.amount}
-                    claimAddress={chain.lockupDetails.claimAddress!}
+                    claimAddress={getAddress(chain.lockupDetails.claimAddress!)}
                     timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
                     preimageHash={hex.encode(
                         sha256(hex.decode(chain.preimage)),

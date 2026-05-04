@@ -14,6 +14,7 @@ import log from "loglevel";
 import { config } from "../../config";
 import { BridgeKind, NetworkTransport } from "../../configs/base";
 import lazySolanaOft from "../../lazy/solanaOft";
+import type { BridgeTransaction } from "../bridge";
 import { getCachedValue } from "../cache";
 import {
     getConnectedSolanaWalletAddress,
@@ -22,6 +23,7 @@ import {
     getSolanaConnection,
 } from "../chains/solana";
 import { formatError } from "../errors";
+import { prefix0x } from "../evmTransaction";
 import { toLegacyInstruction } from "../solana/instruction";
 import { formatSolanaLogsMessage } from "../solana/logs";
 import { derivePda } from "../solana/pda";
@@ -680,7 +682,7 @@ const sendLegacyMesh = async (
     context: Context,
     sendParam: SendParam,
     msgFee: MsgFee,
-) => {
+): Promise<BridgeTransaction> => {
     const { modules } = context;
     const signerAddress = context.walletAdapter?.publicKey?.toBase58();
     const walletProvider = context.walletProvider;
@@ -711,7 +713,7 @@ const sendLegacyMesh = async (
         }),
         instruction,
     ];
-    const { latestBlockhash, transaction } = await createTransaction(
+    const { transaction, latestBlockhash } = await createTransaction(
         context,
         instructions,
         signerAddress,
@@ -745,16 +747,6 @@ const sendLegacyMesh = async (
                     blockhash: latestBlockhash.blockhash,
                 },
             },
-            wait: async () =>
-                await context.connection.confirmTransaction(
-                    {
-                        signature,
-                        blockhash: latestBlockhash.blockhash,
-                        lastValidBlockHeight:
-                            latestBlockhash.lastValidBlockHeight,
-                    },
-                    "confirmed",
-                ),
         };
     } catch (error) {
         if (error instanceof modules.web3.SendTransactionError) {
@@ -788,7 +780,7 @@ export const getSolanaOftGuidFromLogs = (
             logLine.slice(separatorIndex + 1),
             "base64",
         );
-        return `0x${hex.encode(payload.subarray(0, 32))}`;
+        return prefix0x(hex.encode(payload.subarray(0, 32)));
     }
 
     return undefined;

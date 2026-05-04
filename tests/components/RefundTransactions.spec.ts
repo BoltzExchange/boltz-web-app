@@ -8,12 +8,11 @@ const mockSendPopulatedTransaction =
 const mockGetTimelockBlockNumber = vi.fn<() => Promise<number>>();
 
 vi.mock("../../src/utils/evmTransaction", () => ({
-    assertTransactionSignerProvider: vi.fn(
-        (signer: { provider: unknown }) => signer.provider,
-    ),
     getSignerForGasAbstraction: vi.fn(),
     sendPopulatedTransaction: (...args: unknown[]) =>
         mockSendPopulatedTransaction(...args),
+    prefix0x: (value: string) =>
+        value.startsWith("0x") ? value : `0x${value}`,
 }));
 
 vi.mock("../../src/utils/contractLogs", () => ({
@@ -27,7 +26,7 @@ describe("sendRefundTransaction", () => {
 
     test("should fall back to timeout refund after cooperative refund fails past timelock", async () => {
         const provider = {
-            waitForTransaction: vi.fn().mockResolvedValue({}),
+            waitForTransactionReceipt: vi.fn().mockResolvedValue({}),
         };
         const signer = {
             provider,
@@ -60,12 +59,16 @@ describe("sendRefundTransaction", () => {
             signer,
             { to: "0x4000000000000000000000000000000000000000" },
         );
-        expect(provider.waitForTransaction).toHaveBeenCalledWith("0xrefund", 1);
+        expect(provider.waitForTransactionReceipt).toHaveBeenCalledWith({
+            hash: "0xrefund",
+            confirmations: 1,
+            timeout: undefined,
+        });
     });
 
     test("should rethrow cooperative refund failures before timelock expiry", async () => {
         const provider = {
-            waitForTransaction: vi.fn(),
+            waitForTransactionReceipt: vi.fn(),
         };
         const signer = {
             provider,

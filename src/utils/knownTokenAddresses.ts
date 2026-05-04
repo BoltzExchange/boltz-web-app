@@ -1,11 +1,13 @@
-import { isAddress } from "ethers";
+import { isAddress } from "viem";
 
 import { config } from "../config";
 import { AssetKind } from "../consts/AssetKind";
 
 const normalizeAddress = (address: string) => {
     const trimmed = address.trim();
-    return isAddress(trimmed) ? trimmed.toLowerCase() : trimmed;
+    return isAddress(trimmed, { strict: false })
+        ? trimmed.toLowerCase()
+        : trimmed;
 };
 
 export const isKnownTokenAddress = (

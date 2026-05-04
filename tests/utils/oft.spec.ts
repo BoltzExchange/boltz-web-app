@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { base58, hex } from "@scure/base";
+import { encodeAbiParameters, encodeEventTopics, getAbiItem } from "viem";
 
 import { config as runtimeConfig } from "../../src/config";
 import {
@@ -10,6 +11,7 @@ import {
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { AssetKind } from "../../src/consts/AssetKind";
 import type * as SolanaChainsModule from "../../src/utils/chains/solana";
+import { oftAbi } from "../../src/utils/oft/evm";
 
 vi.mock("../../src/utils/chains/solana", async () => {
     const actual = await vi.importActual<typeof SolanaChainsModule>(
@@ -673,36 +675,46 @@ describe("oft", () => {
                 },
             ]),
         };
+        const guid = `0x${"11".repeat(32)}` as `0x${string}`;
+        const toAddress =
+            "0x5000000000000000000000000000000000000000" as `0x${string}`;
+        const topics = encodeEventTopics({
+            abi: oftAbi,
+            eventName: "OFTReceived",
+            args: {
+                guid,
+                toAddress,
+            },
+        });
         const contract = {
             transport: NetworkTransport.Evm,
             approvalRequired: vi.fn(),
-            interface: {
-                encodeFilterTopics: vi
-                    .fn()
-                    .mockReturnValue(["0xtopic", "0xguid"]),
-                parseLog: vi.fn().mockReturnValue({
-                    name: "OFTReceived",
-                    args: {
-                        guid: "0xguid",
-                        srcEid: 40161n,
-                        toAddress: "0x5000000000000000000000000000000000000000",
-                        amountReceivedLD: 42n,
-                    },
-                }),
-            },
+            abi: oftAbi,
         };
+        provider.getLogs.mockResolvedValue([
+            {
+                address: "0x1000000000000000000000000000000000000000",
+                data: encodeAbiParameters(
+                    [{ type: "uint32" }, { type: "uint256" }],
+                    [40161, 42n],
+                ),
+                topics,
+                blockNumber: 123,
+                logIndex: 5,
+            },
+        ]);
 
         await expect(
             getOftReceivedEventByGuid(
                 contract as never,
                 provider as never,
                 "0x1000000000000000000000000000000000000000",
-                "0xguid",
+                guid,
             ),
         ).resolves.toEqual({
-            guid: "0xguid",
-            srcEid: 40161n,
-            toAddress: "0x5000000000000000000000000000000000000000",
+            guid,
+            srcEid: 40161,
+            toAddress,
             amountReceivedLD: 42n,
             blockNumber: 123,
             logIndex: 5,
@@ -710,9 +722,13 @@ describe("oft", () => {
 
         expect(provider.getLogs).toHaveBeenCalledWith({
             address: "0x1000000000000000000000000000000000000000",
-            fromBlock: 0,
+            event: getAbiItem({
+                abi: oftAbi,
+                name: "OFTReceived",
+            }),
+            args: { guid },
+            fromBlock: 0n,
             toBlock: "latest",
-            topics: ["0xtopic", "0xguid"],
         });
     });
 

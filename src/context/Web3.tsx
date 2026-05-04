@@ -1,23 +1,3 @@
-import { hex } from "@scure/base";
-import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
-import { abi as ERC20SwapAbi } from "boltz-core/out/ERC20Swap.sol/ERC20Swap.json";
-import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { abi as RouterAbi } from "boltz-core/out/Router.sol/Router.json";
-import type { ERC20 } from "boltz-core/typechain/ERC20";
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { Router } from "boltz-core/typechain/Router";
-import {
-    BrowserProvider,
-    Contract,
-    type InterfaceAbi,
-    JsonRpcSigner,
-    type TypedDataDomain,
-    TypedDataEncoder,
-    type TypedDataField,
-    Wallet,
-    getAddress,
-} from "ethers";
 import log from "loglevel";
 import type { Accessor, JSXElement, Setter } from "solid-js";
 import {
@@ -28,7 +8,22 @@ import {
     untrack,
     useContext,
 } from "solid-js";
-import { type RescueFile } from "src/utils/rescueFile";
+import {
+    type Account,
+    type Address,
+    type Hex,
+    type PublicClient,
+    type Transport,
+    type TypedDataDomain,
+    type WalletClient,
+    createPublicClient,
+    createWalletClient,
+    custom,
+    getAddress,
+    getContract,
+    getTypesForEIP712Domain,
+    stringify,
+} from "viem";
 
 import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
@@ -39,25 +34,34 @@ import {
     getNetworkTransport,
     hasEvmAssets,
     isEvmAsset,
-    requireRouterAddress,
-    requireTokenConfig,
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
-import ERC20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
-import EtherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
+import erc20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
+import etherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
+import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { ContractAddresses, Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
+import { prefix0x } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { isIos } from "../utils/helper";
 import {
     createAssetProvider,
+    createProviderTransport,
     getRpcUrls,
     requireRpcUrls,
 } from "../utils/provider";
+import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
+import { type RescueFile } from "../utils/rescueFile";
 import { useGlobalContext } from "./Global";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+    ReadOnlyClient,
+    SignerClient,
+} from "./contracts";
 
 declare global {
     interface WindowEventMap {
@@ -69,7 +73,6 @@ declare global {
     }
 
     interface Window {
-        // @ts-expect-error - conflicts with @reown/appkit-utils non-optional declaration
         ethereum?: EIP1193Provider;
         tron?: unknown;
         tronLink?: unknown;
@@ -81,7 +84,9 @@ type EIP6963AnnounceProviderEvent = {
     detail: EIP6963ProviderDetail;
 };
 
-export type Signer = JsonRpcSigner & {
+export type Signer = WalletClient<Transport, undefined, Account> & {
+    address: Address;
+    provider: PublicClient;
     rdns: string;
 };
 
@@ -123,23 +128,6 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Trezor,
 ];
 
-export const createTokenContract = (asset: string, signer: Signer | Wallet) => {
-    const tokenConfig = requireTokenConfig(asset);
-    return new Contract(
-        tokenConfig.address,
-        ERC20Abi,
-        signer,
-    ) as unknown as ERC20;
-};
-
-export const createRouterContract = (
-    asset: string,
-    signer: Signer | Wallet,
-) => {
-    const routerAddress = requireRouterAddress(asset);
-    return new Contract(routerAddress, RouterAbi, signer) as unknown as Router;
-};
-
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
     browserWalletTransports: Accessor<Set<NetworkTransport>>;
@@ -161,8 +149,8 @@ const Web3SignerContext = createContext<{
     switchNetwork: (asset: string) => Promise<void>;
 
     getContractsForAsset: (asset: string) => Contracts | undefined;
-    getEtherSwap: (asset: string) => EtherSwap;
-    getErc20Swap: (asset: string) => ERC20Swap;
+    getEtherSwap: (asset: string) => EtherSwapContract;
+    getErc20Swap: (asset: string) => Erc20SwapContract;
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
@@ -170,7 +158,7 @@ const Web3SignerContext = createContext<{
     walletConnected: Accessor<boolean>;
     setWalletConnected: Setter<boolean>;
 
-    getGasAbstractionSigner: (asset: string, rescueFile?: RescueFile) => Wallet;
+    getGasAbstractionSigner: (asset: string, rescueFile?: RescueFile) => Signer;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -232,7 +220,7 @@ const Web3SignerProvider = (props: {
     const getGasAbstractionSigner = (
         asset: string,
         rescueFile?: RescueFile,
-    ): Wallet => {
+    ): Signer => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
         const rpcUrls = getRpcUrls(asset);
@@ -241,10 +229,17 @@ const Web3SignerProvider = (props: {
             throw new Error(`missing network config for asset: ${asset}`);
         }
 
-        return new Wallet(
-            hex.encode(deriveKeyGasAbstraction(chainId, rescueFile).privateKey),
-            createAssetProvider(asset),
+        const account = evmAccountFromPrivateKey(
+            deriveKeyGasAbstraction(chainId, rescueFile).privateKey,
         );
+        const transport = createProviderTransport(rpcUrls);
+        const walletClient = createWalletClient({ account, transport });
+
+        return Object.assign(walletClient, {
+            address: account.address,
+            provider: createPublicClient({ transport }),
+            rdns: "gas-abstraction",
+        });
     };
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
@@ -327,11 +322,11 @@ const Web3SignerProvider = (props: {
         }
 
         const assetConfig = config.assets?.[asset];
-        if (!assetConfig?.network?.chainId) {
+        const chainId = assetConfig?.network?.chainId;
+        if (chainId === undefined) {
             return undefined;
         }
 
-        const chainId = assetConfig.network.chainId;
         return Object.values(contracts).find(
             (chainContracts) => chainContracts.network.chainId === chainId,
         );
@@ -344,7 +339,7 @@ const Web3SignerProvider = (props: {
     ) => {
         const rdns = await getRdnsForAddress(address);
         if (rdns === null) {
-            return;
+            throw new Error(`missing wallet provider for address: ${address}`);
         }
         await connectProvider(rdns, { asset, derivationPath });
     };
@@ -372,94 +367,130 @@ const Web3SignerProvider = (props: {
         }
     };
 
-    const getSwapContract = <T,>(
+    const requireSwapAddress = (
         asset: string,
         contractType: keyof ContractAddresses,
-    ) => {
+    ): Address => {
+        const address =
+            getContractsForAsset(asset)?.swapContracts[contractType];
+        if (address === undefined) {
+            throw new Error(`missing ${contractType} contract for ${asset}`);
+        }
+        return getAddress(address);
+    };
+
+    const getSwapContractVersion = (
+        asset: string,
+        contractType: keyof ContractAddresses,
+    ): number => {
         const assetContracts = getContractsForAsset(asset);
         if (assetContracts === undefined) {
-            throw new Error(`missing contracts for asset ${asset}`);
+            return 5;
         }
         const address = assetContracts.swapContracts[contractType];
-        const version = Number(
+        return Number(
             Object.keys(assetContracts.supportedContracts).find(
                 (key) =>
                     assetContracts.supportedContracts[key][contractType] ===
                     address,
             ) ?? 5,
         );
-
-        let abi: InterfaceAbi;
-        if (contractType === "EtherSwap") {
-            abi = version <= 5 ? EtherSwapAbiV5 : EtherSwapAbi;
-        } else {
-            abi = version <= 5 ? ERC20SwapAbiV5 : ERC20SwapAbi;
-        }
-        if (address === undefined) {
-            throw new Error(
-                `missing ${contractType} contract address for asset ${asset}`,
-            );
-        }
-
-        return new Contract(
-            address,
-            abi,
-            signer() || createAssetProvider(asset),
-        ) as unknown as T;
     };
 
-    const getEtherSwap = (asset: string) =>
-        getSwapContract<EtherSwap>(asset, "EtherSwap");
+    const swapClient = (asset: string): SignerClient | ReadOnlyClient => {
+        const connectedSigner = signer();
+        // Reads must hit the asset's chain — `connectedSigner.provider` talks
+        // to whichever chain the wallet happens to be on, which breaks
+        // cross-chain claims (e.g. wallet on Polygon, Erc20Swap on Arbitrum).
+        const publicClient = createAssetProvider(asset);
+        return connectedSigner === undefined
+            ? { public: publicClient }
+            : { public: publicClient, wallet: connectedSigner };
+    };
 
-    const getErc20Swap = (asset: string) =>
-        getSwapContract<ERC20Swap>(asset, "ERC20Swap");
+    const getEtherSwap = (asset: string): EtherSwapContract => {
+        const version = getSwapContractVersion(asset, "EtherSwap");
+        const abi = (
+            version <= 5 ? etherSwapAbiV5 : etherSwapAbi
+        ) as typeof etherSwapAbi;
+        return getContract({
+            address: requireSwapAddress(asset, "EtherSwap"),
+            abi,
+            client: swapClient(asset),
+        });
+    };
+
+    const getErc20Swap = (asset: string): Erc20SwapContract => {
+        const version = getSwapContractVersion(asset, "ERC20Swap");
+        const abi = (
+            version <= 5 ? erc20SwapAbiV5 : erc20SwapAbi
+        ) as typeof erc20SwapAbi;
+        return getContract({
+            address: requireSwapAddress(asset, "ERC20Swap"),
+            abi,
+            client: swapClient(asset),
+        });
+    };
 
     const createConnectedSigner = (
         provider: EIP1193Provider,
         address: string,
         rdns: string,
     ) => {
-        const nextSigner = new JsonRpcSigner(
-            new BrowserProvider(provider),
-            address,
-        ) as unknown as Signer;
-        nextSigner.rdns = rdns;
+        const account = getAddress(address);
+        const transport = custom(provider);
+        const nextSigner: Signer = Object.assign(
+            createWalletClient({ account, transport }),
+            {
+                address: account,
+                provider: createPublicClient({ transport }),
+                rdns,
+            },
+        );
 
         if (
             rdns === walletConnectRdns &&
             isIos() &&
             WalletConnectProvider.isTrustWallet()
         ) {
-            nextSigner.signTypedData = (async (
-                domain: TypedDataDomain,
-                types: Record<string, TypedDataField[]>,
-                value: Record<string, unknown>,
-            ) => {
+            nextSigner.signTypedData = async (parameters) => {
+                const domain: TypedDataDomain =
+                    typeof parameters.domain !== "object" ||
+                    parameters.domain === null
+                        ? {}
+                        : { ...parameters.domain };
+                const chainIdValue = domain.chainId;
                 const chainId =
-                    domain.chainId === null || domain.chainId === undefined
+                    chainIdValue === null || chainIdValue === undefined
                         ? undefined
-                        : Number(domain.chainId);
+                        : Number(chainIdValue);
                 const normalizedChainId =
                     chainId !== undefined && Number.isFinite(chainId)
                         ? chainId
                         : undefined;
-                const payload = TypedDataEncoder.getPayload(
-                    domain,
-                    types,
-                    value,
-                ) as { domain: { chainId?: number | string } };
                 if (normalizedChainId !== undefined) {
-                    payload.domain.chainId = normalizedChainId;
+                    domain.chainId = normalizedChainId;
                 }
+                const payload = {
+                    domain,
+                    types: {
+                        EIP712Domain: getTypesForEIP712Domain({
+                            domain,
+                        }),
+                        ...parameters.types,
+                    },
+                    primaryType: parameters.primaryType,
+                    message: parameters.message,
+                };
 
                 return (await WalletConnectProvider.requestRawEvm(
                     {
                         method: "eth_signTypedData_v4",
-                        params: [getAddress(address), JSON.stringify(payload)],
+                        params: [getAddress(address), stringify(payload)],
                     },
                     normalizedChainId,
-                )) as string;
-            }) as typeof nextSigner.signTypedData;
+                )) as Hex;
+            };
         }
 
         return nextSigner;
@@ -475,9 +506,9 @@ const Web3SignerProvider = (props: {
 
     const logSignerNetwork = async (nextSigner: Signer) => {
         try {
-            const network = await nextSigner.provider.getNetwork();
+            const chainId = await nextSigner.provider.getChainId();
             log.info(
-                `Connected signer ${nextSigner.address} from ${nextSigner.rdns} is on chain ${String(network.chainId)}`,
+                `Connected signer ${nextSigner.address} from ${nextSigner.rdns} is on chain ${String(chainId)}`,
             );
         } catch (error) {
             log.warn(
@@ -576,10 +607,9 @@ const Web3SignerProvider = (props: {
                 rdns: wallet.info.rdns,
                 transport: account.transport,
             });
-
-            const pr = rawProvider();
-            if (pr) {
-                pr.removeAllListeners("chainChanged");
+            const previousRawProvider = rawProvider();
+            if (previousRawProvider !== undefined) {
+                previousRawProvider.removeAllListeners("chainChanged");
             }
 
             setRawProvider(undefined);
@@ -608,10 +638,12 @@ const Web3SignerProvider = (props: {
                 );
             });
         });
-
-        const pr = rawProvider();
-        if (pr !== undefined && pr !== wallet.provider) {
-            pr.removeAllListeners("chainChanged");
+        const previousRawProvider = rawProvider();
+        if (
+            previousRawProvider !== undefined &&
+            previousRawProvider !== wallet.provider
+        ) {
+            previousRawProvider.removeAllListeners("chainChanged");
         }
         setRawProvider(wallet.provider);
 
@@ -619,28 +651,35 @@ const Web3SignerProvider = (props: {
     };
 
     const switchNetwork = async (asset: string) => {
-        if (rawProvider() === undefined) {
+        const currentRawProvider = rawProvider();
+        if (currentRawProvider === undefined) {
             return;
         }
 
         const assetConfig = config.assets?.[asset];
-        if (
-            !assetConfig?.network ||
-            assetConfig.network.chainId === undefined
-        ) {
+        const network = assetConfig?.network;
+        if (network === undefined || network.chainId === undefined) {
             log.warn(`No network config found for asset: ${asset}`);
             return;
         }
 
-        const sanitizedChainId = `0x${assetConfig.network.chainId.toString(16)}`;
+        const nativeCurrency = network.nativeCurrency;
+        if (nativeCurrency === undefined) {
+            log.warn(`No native currency config found for asset: ${asset}`);
+            return;
+        }
+
+        const sanitizedChainId = prefix0x(network.chainId.toString(16));
         const activeSigner = signer();
 
         if (
             activeSigner !== undefined &&
             customDerivationPathRdns.includes(activeSigner.rdns)
         ) {
-            const hardwareProvider = providers()[activeSigner.rdns]
-                .provider as unknown as EIP1193Provider;
+            const hardwareProvider = providers()[activeSigner.rdns]?.provider;
+            if (hardwareProvider === undefined) {
+                throw new Error(`missing provider for ${activeSigner.rdns}`);
+            }
             configureHardwareProvider(activeSigner.rdns, { asset });
             await refreshConnectedSigner(
                 hardwareProvider,
@@ -654,13 +693,9 @@ const Web3SignerProvider = (props: {
             activeSigner?.rdns === walletConnectRdns &&
             WalletConnectProvider.isTrustWallet()
         ) {
-            WalletConnectProvider.setEvmChainId(assetConfig.network.chainId);
-            const rp = rawProvider();
-            if (rp === undefined) {
-                return;
-            }
+            WalletConnectProvider.setEvmChainId(network.chainId);
             await refreshConnectedSigner(
-                rp,
+                currentRawProvider,
                 activeSigner.rdns,
                 sanitizedChainId,
             );
@@ -668,7 +703,7 @@ const Web3SignerProvider = (props: {
         }
 
         try {
-            await rawProvider()!.request({
+            await currentRawProvider.request({
                 method: "wallet_switchEthereumChain",
                 params: [
                     {
@@ -677,26 +712,25 @@ const Web3SignerProvider = (props: {
                 ],
             });
         } catch (switchError) {
-            const code =
-                switchError !== null &&
+            const switchErrorCode =
                 typeof switchError === "object" &&
+                switchError !== null &&
                 "code" in switchError
-                    ? (switchError as { code: unknown }).code
+                    ? switchError.code
                     : undefined;
-            const message =
-                switchError !== null &&
+            const switchErrorMessage =
                 typeof switchError === "object" &&
+                switchError !== null &&
                 "message" in switchError &&
-                typeof (switchError as { message?: unknown }).message ===
-                    "string"
-                    ? (switchError as { message: string }).message
-                    : String(switchError);
+                typeof switchError.message === "string"
+                    ? switchError.message
+                    : "";
             if (
-                code === 4902 ||
+                switchErrorCode === 4902 ||
                 // Rabby does not set the correct error code
-                message.includes("Try adding the chain")
+                switchErrorMessage.includes("Try adding the chain")
             ) {
-                if (assetConfig.network.nativeCurrency === undefined) {
+                if (network.nativeCurrency === undefined) {
                     throw new Error(
                         `missing nativeCurrency config for asset ${asset}`,
                         { cause: switchError },
@@ -704,18 +738,18 @@ const Web3SignerProvider = (props: {
                 }
                 const addChainParams: AddEthereumChainParams = {
                     chainId: sanitizedChainId,
-                    chainName: assetConfig.network.chainName,
+                    chainName: network.chainName,
                     rpcUrls: requireRpcUrls(asset),
-                    nativeCurrency: assetConfig.network.nativeCurrency,
+                    nativeCurrency,
                 };
 
-                if (assetConfig.blockExplorerUrl) {
+                if (assetConfig?.blockExplorerUrl) {
                     addChainParams.blockExplorerUrls = [
                         assetConfig.blockExplorerUrl.normal,
                     ];
                 }
 
-                await rawProvider()!.request({
+                await currentRawProvider.request({
                     method: "wallet_addEthereumChain",
                     params: [addChainParams],
                 });
@@ -747,10 +781,9 @@ const Web3SignerProvider = (props: {
                 getGasAbstractionSigner,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
-
-                    const pr = rawProvider();
-                    if (pr) {
-                        pr.removeAllListeners("chainChanged");
+                    const currentRawProvider = rawProvider();
+                    if (currentRawProvider !== undefined) {
+                        currentRawProvider.removeAllListeners("chainChanged");
                     }
 
                     setWalletConnected(false);
@@ -804,8 +837,6 @@ export const erc20SwapCodeHashes = () => {
 };
 
 export {
-    ERC20SwapAbi,
-    EtherSwapAbi,
     useWeb3Signer,
     Web3SignerProvider,
     etherSwapCodeHashes,

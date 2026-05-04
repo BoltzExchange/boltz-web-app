@@ -127,7 +127,9 @@ const HwAddressSelection = (props: {
                     path,
                     address,
                     balance: asset
-                        ? await prov.getProvider().getBalance(address)
+                        ? await prov.getProvider().getBalance({
+                              address,
+                          })
                         : undefined,
                 })),
             );

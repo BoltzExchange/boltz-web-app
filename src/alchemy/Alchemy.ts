@@ -1,12 +1,9 @@
-import {
-    type TransactionRequest,
-    type Wallet,
-    getBytes,
-    toBeHex,
-} from "ethers";
+import { type Address, type Hash, type Hex, toHex } from "viem";
 
 import { isTor } from "../configs/base";
+import type { Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
+import { prefix0x } from "../utils/evmTransaction";
 import { constructRequestOptions } from "../utils/helper";
 
 const alchemyHeaders = {
@@ -137,7 +134,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
 };
 
 const prepareCalls = async (
-    signerAddress: string,
+    signerAddress: Address,
     chainId: string,
     calls: AlchemyCall[],
 ) => {
@@ -201,8 +198,8 @@ type GetCallsStatusResponse = JsonRpcSuccessResponse<{
 }>;
 
 export type AlchemyCall = {
-    to: string;
-    data?: string;
+    to: Address;
+    data?: Hex;
     value?: string;
 };
 
@@ -211,24 +208,40 @@ export type SendAlchemyTransactionOptions = {
     onPreparedCallId?: (callId: string) => Promise<void> | void;
 };
 
-export const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
-    if (typeof transaction.to !== "string") {
+export const toAlchemyCall = (transaction: {
+    to?: Address | null;
+    data?: Hex;
+    value?: bigint;
+}): AlchemyCall => {
+    if (transaction.to == null) {
         throw new Error("transaction is missing destination address");
     }
 
     return {
         to: transaction.to,
-        data:
-            typeof transaction.data === "string" ? transaction.data : undefined,
+        data: transaction.data,
         value:
-            transaction.value !== undefined && transaction.value !== null
-                ? transaction.value.toString()
+            transaction.value !== undefined
+                ? String(transaction.value)
                 : undefined,
     };
 };
 
+const signAuthorizationDigest = async (
+    signer: Signer,
+    hash: Hex,
+): Promise<Hex> => {
+    if (signer.account.type !== "local" || signer.account.sign === undefined) {
+        throw new Error(
+            "Alchemy authorization signing requires a local signer",
+        );
+    }
+
+    return await signer.account.sign({ hash });
+};
+
 const signPreparedCalls = async (
-    signer: Wallet,
+    signer: Signer,
     prepareCallsResponse: PrepareCallsResponse,
 ): Promise<SignedEntry[] | SignedEntry> => {
     const { result } = prepareCallsResponse;
@@ -262,7 +275,10 @@ const signPreparedCalls = async (
                 "Alchemy prepareCalls response is missing authorization payload",
             );
         }
-        const authSignature = signer.signingKey.sign(authPayload).serialized;
+        const authSignature = await signAuthorizationDigest(
+            signer,
+            authPayload as Hex,
+        );
 
         // Sign the user operation
         const uoPayload = uoEntry.signatureRequest.data?.raw;
@@ -271,7 +287,10 @@ const signPreparedCalls = async (
                 "Alchemy prepareCalls response is missing user operation payload",
             );
         }
-        const uoSignature = await signer.signMessage(getBytes(uoPayload));
+        const uoSignature = await signer.signMessage({
+            account: signer.account,
+            message: { raw: uoPayload as Hex },
+        });
 
         return [
             {
@@ -296,7 +315,10 @@ const signPreparedCalls = async (
             "Alchemy prepareCalls response is missing user operation payload",
         );
     }
-    const signature = await signer.signMessage(getBytes(payload));
+    const signature = await signer.signMessage({
+        account: signer.account,
+        message: { raw: payload as Hex },
+    });
     if (result.chainId === undefined) {
         throw new Error("Alchemy prepareCalls response is missing chainId");
     }
@@ -341,29 +363,25 @@ const getCallsStatus = async (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const prefixHex = (data: string) =>
-    data.startsWith("0x") ? data : `0x${data}`;
-
 export const sendTransaction = async (
-    signer: Wallet,
+    signer: Signer,
     chainId: bigint,
     calls: AlchemyCall[],
     options: SendAlchemyTransactionOptions = {},
-): Promise<string> => {
+): Promise<Hash> => {
     if (options.existingCallId !== undefined) {
         return await waitForTransactionHash(options.existingCallId);
     }
 
     calls = calls.map((call) => ({
         to: call.to,
-        value: call.value ? toBeHex(call.value) : undefined,
-        data: call.data ? prefixHex(call.data) : undefined,
+        value: call.value ? toHex(BigInt(call.value)) : undefined,
+        data: call.data ? prefix0x(call.data) : undefined,
     }));
 
-    const signerAddress = await signer.getAddress();
     const prepared = await prepareCalls(
-        signerAddress,
-        `0x${chainId.toString(16)}`,
+        signer.address,
+        prefix0x(chainId.toString(16)),
         calls,
     );
     const signed = await signPreparedCalls(signer, prepared);
@@ -376,7 +394,7 @@ const waitForTransactionHash = async (
     callId: string,
     intervalMs = 1_000,
     maxAttempts = 60,
-): Promise<string> => {
+): Promise<Hash> => {
     let lastStatusError: unknown;
 
     for (let i = 0; i < maxAttempts; i++) {
@@ -388,7 +406,7 @@ const waitForTransactionHash = async (
                 status.result.receipts !== undefined &&
                 status.result.receipts.length > 0
             ) {
-                return status.result.receipts[0].transactionHash;
+                return status.result.receipts[0].transactionHash as Hash;
             }
         } catch (error) {
             lastStatusError = error;
@@ -406,5 +424,6 @@ const waitForTransactionHash = async (
     throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);
 };
 
-export const waitForPreparedCallTransactionHash = async (callId: string) =>
-    await waitForTransactionHash(callId);
+export const waitForPreparedCallTransactionHash = async (
+    callId: string,
+): Promise<Hash> => await waitForTransactionHash(callId);

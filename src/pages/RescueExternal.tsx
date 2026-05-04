@@ -1,6 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { computeAddress } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import {
@@ -78,6 +77,7 @@ import {
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
+import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import {
     type RescueFile,
     getPathGasAbstraction,
@@ -622,13 +622,9 @@ export const RescueEvm = (props: { mode?: string }) => {
                 const gasKey = mnemonicToHDKey(mnemonic).derive(
                     getPathGasAbstraction(chainId),
                 );
-                if (gasKey.publicKey !== null) {
-                    extraAddresses.push(
-                        computeAddress(
-                            `0x${Buffer.from(gasKey.publicKey).toString("hex")}`,
-                        ),
-                    );
-                }
+                extraAddresses.push(
+                    evmAccountFromPrivateKey(gasKey.privateKey).address,
+                );
             }
         }
 
@@ -694,12 +690,11 @@ export const RescueEvm = (props: { mode?: string }) => {
         refundScanAbort = new AbortController();
         const signal = refundScanAbort.signal;
 
-        const signerAddress = await currentSigner.getAddress();
         const rescueFile = uploadedRescueFile();
         const sweepBalances =
             action === RskRescueMode.Refund && rescueFile !== undefined
                 ? getSweepableGasAbstractionBalances({
-                      destination: signerAddress,
+                      destination: currentSigner.address,
                       rescueFile,
                       getGasAbstractionSigner,
                   }).then((balances) => {
@@ -721,7 +716,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                 ...targets.map((target) =>
                     runSingleScan(
                         target,
-                        signerAddress,
+                        currentSigner.address,
                         action,
                         scanProgress,
                         signal,

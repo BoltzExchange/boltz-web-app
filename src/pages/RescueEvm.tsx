@@ -35,7 +35,7 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
-import { createAssetProvider } from "../utils/provider";
+import { createAssetProvider, estimateFeesPerGas } from "../utils/provider";
 import { getTimeoutEta } from "../utils/rescue";
 import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
@@ -140,13 +140,14 @@ const ClaimState = (props: {
     const getGasAbstraction = async (): Promise<GasAbstractionType> => {
         if (props.asset === RBTC) {
             const sig = signer();
-            if (sig === undefined || sig.provider === null) {
-                throw new Error("missing signer or provider for gas check");
+            if (sig === undefined) {
+                throw new Error("missing signer for gas check");
             }
-            const balance = await sig.provider.getBalance(
-                await sig.getAddress(),
-            );
-            const gasPrice = (await sig.provider.getFeeData()).gasPrice;
+            const [balance, { gasPrice }] = await Promise.all([
+                sig.provider.getBalance({ address: sig.address }),
+                estimateFeesPerGas(sig.provider),
+            ]);
+
             if (gasPrice === null || balance <= gasPrice * GasNeededToClaim) {
                 return GasAbstractionType.RifRelay;
             }
@@ -174,7 +175,6 @@ const ClaimState = (props: {
             if (sig === undefined) {
                 throw new Error("missing signer for claim");
             }
-            const connectedAddress = await sig.getAddress();
 
             const { transactionHash } = await claimAsset(
                 gasAbstraction,
@@ -184,9 +184,9 @@ const ClaimState = (props: {
                 claimAddress,
                 refundAddress,
                 Number(timelock),
-                connectedAddress,
+                sig.address,
                 () => sig,
-                getGasAbstractionSigner(asset, rescueFile() ?? undefined),
+                getGasAbstractionSigner(asset, rescueFile()),
                 getEtherSwap(asset),
                 getErc20Swap(asset),
             );
@@ -253,9 +253,7 @@ const RescueEvm = () => {
         }
 
         const provider = createAssetProvider(params.asset);
-        const contract = getSwapContract(params.asset).connect(
-            provider,
-        ) as ReturnType<typeof getSwapContract>;
+        const contract = getSwapContract(params.asset);
 
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(

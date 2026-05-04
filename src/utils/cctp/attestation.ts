@@ -1,3 +1,5 @@
+import type { Hex } from "viem";
+
 import { config } from "../../config";
 import { constructRequestOptions } from "../helper";
 
@@ -9,14 +11,14 @@ type CctpMessagesResponse = {
 
 type CctpMessageSnapshot = {
     forwardTxHash?: string;
-    message?: string;
-    attestation?: string;
+    message?: Hex;
+    attestation?: Hex;
     status?: string;
 };
 
 export type CctpAttestationResult = {
-    message: string;
-    attestation: string;
+    message: Hex;
+    attestation: Hex;
     status?: string;
 };
 
@@ -96,10 +98,12 @@ const fetchCctpMessage = async (
             throw new Error("invalid CCTP message entry");
         }
 
-        const entry = {
+        const entry: CctpMessageSnapshot = {
             forwardTxHash: readOptionalString(rawEntry, "forwardTxHash"),
-            message: readOptionalString(rawEntry, "message"),
-            attestation: readOptionalString(rawEntry, "attestation"),
+            message: readOptionalString(rawEntry, "message") as Hex | undefined,
+            attestation: readOptionalString(rawEntry, "attestation") as
+                | Hex
+                | undefined,
             status: readOptionalString(rawEntry, "status"),
         };
 

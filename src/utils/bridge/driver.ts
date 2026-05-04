@@ -1,5 +1,4 @@
-import type { Router } from "boltz-core/typechain/Router";
-import type { Signature, TransactionRequest, Wallet } from "ethers";
+import type { Hex, PublicClient, Signature, TransactionRequest } from "viem";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
@@ -7,8 +6,8 @@ import type { BridgeKind, NetworkTransport } from "../../configs/base";
 import { getAssetBridge } from "../../consts/Assets";
 import type { SwapPosition } from "../../consts/Enums";
 import type { Signer } from "../../context/Web3";
+import type { RouterContract } from "../../context/contracts";
 import type { ExplorerKind } from "../explorerLink";
-import type { Provider } from "../provider";
 import type { BridgeDetail } from "../swapCreator";
 import type {
     BridgeContract,
@@ -31,7 +30,7 @@ import type {
 } from "./types";
 
 export type EncodeRouterExecuteArgs = {
-    router: Router;
+    router: RouterContract;
     route: BridgeRoute;
     bridgeContract: BridgeContract;
     routerCalls: {
@@ -46,8 +45,8 @@ export type EncodeRouterExecuteArgs = {
 };
 
 export type PopulateRouterClaimBridgeArgs = {
-    router: Router;
-    signer: Signer | Wallet;
+    router: RouterContract;
+    signer: Signer;
     chainId: bigint;
     preimage: string;
     claimAmount: bigint;
@@ -170,7 +169,7 @@ export abstract class BridgeDriver {
         route: BridgeRoute,
         owner: string,
         amount: bigint,
-        signer: Signer | Wallet,
+        signer: Signer,
     ) => Promise<AlchemyCall | undefined>;
 
     public abstract getQuotedContract: (
@@ -186,7 +185,7 @@ export abstract class BridgeDriver {
         route: BridgeRoute,
     ) => Promise<BridgeContract>;
 
-    public abstract getProvider: (sourceAsset: string) => Provider;
+    public abstract getProvider: (sourceAsset: string) => PublicClient;
 
     public abstract getSentEvent: (
         contract: BridgeTransportClient,
@@ -196,10 +195,7 @@ export abstract class BridgeDriver {
 
     public abstract getReceivedEventByGuid: (
         contract: BridgeTransportClient,
-        // CCTP needs `getTransactionReceipt` (reading the Circle-submitted
-        // mint tx by hash); OFT only reads `getLogs`. Required together so
-        // the type honestly describes what any implementation may use.
-        provider: Pick<Provider, "getLogs" | "getTransactionReceipt">,
+        provider: PublicClient,
         contractAddress: string,
         guid: string,
     ) => Promise<BridgeReceivedEvent | undefined>;
@@ -270,7 +266,7 @@ export abstract class BridgeDriver {
 
     public abstract encodeRouterExecuteData: (
         args: EncodeRouterExecuteArgs,
-    ) => string;
+    ) => Hex;
 
     public abstract populateRouterClaimBridgeTransaction: (
         args: PopulateRouterClaimBridgeArgs,

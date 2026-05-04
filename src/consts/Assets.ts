@@ -253,6 +253,14 @@ export const requireTokenConfig = (
     return tokenConfig;
 };
 
+export const requireChainId = (asset: string): number => {
+    const chainId = config.assets?.[asset]?.network?.chainId;
+    if (chainId === undefined) {
+        throw new Error(`missing chainId for asset: ${asset}`);
+    }
+    return chainId;
+};
+
 export const getAssetNetwork = (asset: string): string | null => {
     switch (asset) {
         case BTC:

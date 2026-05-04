@@ -1,9 +1,10 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import type { TronConnector } from "@reown/appkit-utils/tron";
-import type { Contract, ContractRunner } from "ethers";
+import type { Abi, PublicClient } from "viem";
 
 import type { NetworkTransport } from "../../configs/base";
-import type { BridgeDetails } from "../bridge/details";
+import type { Signer } from "../../context/Web3";
+import type { BridgeTransaction } from "../bridge/types";
 
 export type OftRoute = {
     sourceAsset: string;
@@ -37,12 +38,6 @@ export type OftLimit = [bigint, bigint];
 export type OftFeeDetail = [bigint, string];
 export type OftReceipt = [bigint, bigint];
 
-export type OftTransaction = {
-    hash: string;
-    details?: BridgeDetails;
-    wait: (confirmations?: number) => Promise<unknown>;
-};
-
 export type OftReceiveQuote = {
     amountIn: bigint;
     amountOut: bigint;
@@ -54,7 +49,7 @@ export type OftReceiveQuote = {
 
 export type OftSentEvent = {
     guid: string;
-    dstEid: bigint;
+    dstEid: number;
     fromAddress: string;
     amountSentLD: bigint;
     amountReceivedLD: bigint;
@@ -63,21 +58,22 @@ export type OftSentEvent = {
 
 export type OftReceivedEvent = {
     guid: string;
-    srcEid: bigint;
+    srcEid: number;
     toAddress: string;
     amountReceivedLD: bigint;
     blockNumber: number;
     logIndex: number;
 };
 export type OftTransportRunner =
-    | ContractRunner
+    | PublicClient
+    | Signer
     | SolanaWalletProvider
     | TronConnector
     | undefined;
 
 export type OftTransportClient = {
     transport: NetworkTransport;
-    interface?: Contract["interface"];
+    abi?: Abi;
     quoteOFT: (
         sendParam: SendParam,
     ) => Promise<[OftLimit, OftFeeDetail[], OftReceipt]>;
@@ -89,6 +85,6 @@ export type OftTransportClient = {
         overrides?: {
             value?: bigint;
         },
-    ) => Promise<OftTransaction>;
+    ) => Promise<BridgeTransaction>;
     approvalRequired?: () => Promise<boolean>;
 };

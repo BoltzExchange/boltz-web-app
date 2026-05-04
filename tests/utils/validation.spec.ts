@@ -1,5 +1,4 @@
 import { hex } from "@scure/base";
-import type { Contract } from "ethers";
 import log from "loglevel";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -9,11 +8,12 @@ import { ECPair } from "../../src/utils/ecpair";
 import { validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
-    const getEtherSwap = (code: string): (() => Contract) => {
+    const getEtherSwap = (code: string) => {
         const getDeployedCode = vi.fn().mockResolvedValue(code);
         return vi.fn(() => ({
             getDeployedCode,
-        })) as unknown as () => Contract;
+            address: "0x0000000000000000000000000000000000000000" as const,
+        }));
     };
 
     beforeAll(() => {

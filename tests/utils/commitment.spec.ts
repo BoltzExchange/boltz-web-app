@@ -1,12 +1,51 @@
-const mockPostCommitmentSignature = vi.fn();
-const mockPostCommitmentRefundSignature = vi.fn();
-const mockGetEipRefundSignature = vi.fn();
+import type { PublicClient } from "viem";
+import { encodeAbiParameters, encodeEventTopics } from "viem";
+
+import type * as AssetsModule from "../../src/consts/Assets";
+import { erc20SwapAbi } from "../../src/generated/evm-abis";
+import type * as ProviderModule from "../../src/utils/provider";
+
+const {
+    mockPostCommitmentSignature,
+    mockPostCommitmentRefundSignature,
+    mockGetEipRefundSignature,
+    mockCreateAssetProvider,
+    mockRequireChainId,
+    sentinelAssetProvider,
+} = vi.hoisted(() => {
+    const sentinelAssetProvider = {
+        waitForTransactionReceipt: vi.fn(),
+    } as unknown as PublicClient;
+    return {
+        mockPostCommitmentSignature: vi.fn(),
+        mockPostCommitmentRefundSignature: vi.fn(),
+        mockGetEipRefundSignature: vi.fn(),
+        mockCreateAssetProvider:
+            vi.fn<typeof ProviderModule.createAssetProvider>(),
+        mockRequireChainId: vi.fn<typeof AssetsModule.requireChainId>(),
+        sentinelAssetProvider,
+    };
+});
 
 vi.mock("../../src/utils/boltzClient", () => ({
     postCommitmentSignature: mockPostCommitmentSignature,
     postCommitmentRefundSignature: mockPostCommitmentRefundSignature,
     getEipRefundSignature: mockGetEipRefundSignature,
 }));
+
+vi.mock("../../src/utils/provider", async () => {
+    const actual = await vi.importActual<typeof ProviderModule>(
+        "../../src/utils/provider",
+    );
+    return { ...actual, createAssetProvider: mockCreateAssetProvider };
+});
+
+vi.mock("../../src/consts/Assets", async () => {
+    const actual = await vi.importActual<typeof AssetsModule>(
+        "../../src/consts/Assets",
+    );
+    return { ...actual, requireChainId: mockRequireChainId };
+});
 
 const { SwapType } = await import("../../src/consts/Enums");
 const {
@@ -21,57 +60,65 @@ const {
 describe("commitment", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockCreateAssetProvider.mockReturnValue(sentinelAssetProvider);
+        mockRequireChainId.mockReturnValue(31);
     });
 
-    test("should parse the lockup event and post the commitment signature", async () => {
-        const receipt = {
-            logs: [
-                {
-                    address: "0x1000000000000000000000000000000000000000",
-                    data: "0xdeadbeef",
-                    topics: ["0xtopic"],
-                    index: 7,
-                },
-            ],
-        };
-        const provider = {
-            waitForTransaction: vi.fn().mockResolvedValue(receipt),
-            getNetwork: vi.fn().mockResolvedValue({ chainId: 31n }),
-        };
-        const signer = {
-            provider,
-            signTypedData: vi.fn().mockResolvedValue("0xsigned"),
-        };
-        const connectedErc20Swap = {
-            getAddress: vi
-                .fn()
-                .mockResolvedValue(
-                    "0x1000000000000000000000000000000000000000",
+    const buildLockupReceipt = () => ({
+        logs: [
+            {
+                address: "0x1000000000000000000000000000000000000000",
+                data: encodeAbiParameters(
+                    [
+                        { type: "uint256" },
+                        { type: "address" },
+                        { type: "uint256" },
+                    ],
+                    [123n, "0x2000000000000000000000000000000000000000", 999n],
                 ),
-            version: vi.fn().mockResolvedValue("2"),
-            interface: {
-                parseLog: vi.fn().mockReturnValue({
-                    name: "Lockup",
+                topics: encodeEventTopics({
+                    abi: erc20SwapAbi,
+                    eventName: "Lockup",
                     args: {
-                        amount: 123n,
-                        tokenAddress:
-                            "0x2000000000000000000000000000000000000000",
+                        preimageHash: `0x${"11".repeat(32)}`,
                         claimAddress:
                             "0x3000000000000000000000000000000000000000",
                         refundAddress:
                             "0x4000000000000000000000000000000000000000",
-                        timelock: 999n,
-                        preimageHash: "0xignored",
                     },
                 }),
+                logIndex: 7,
             },
+        ],
+    });
+
+    test("should parse the lockup event and post the commitment signature", async () => {
+        const receipt = buildLockupReceipt();
+        (
+            sentinelAssetProvider.waitForTransactionReceipt as ReturnType<
+                typeof vi.fn
+            >
+        ).mockResolvedValue(receipt);
+        const signer = {
+            // Wallet's provider — must NEVER be reached. The receipt fetch
+            // and chainId derivation both belong to the commitment chain.
+            provider: {
+                waitForTransactionReceipt: vi.fn(),
+                getChainId: vi.fn(),
+            },
+            signTypedData: vi.fn().mockResolvedValue("0xsigned"),
         };
         const erc20Swap = {
-            connect: vi.fn().mockReturnValue(connectedErc20Swap),
+            address: "0x1000000000000000000000000000000000000000",
+            abi: erc20SwapAbi,
+            read: {
+                version: vi.fn().mockResolvedValue("2"),
+            },
         };
 
         await postCommitmentSignatureForTransaction({
             asset: "USDT",
+            commitmentAsset: "RBTC",
             swapId: "swap-1",
             preimageHash: "11".repeat(32),
             commitmentTxHash: "0xcommitment",
@@ -79,21 +126,30 @@ describe("commitment", () => {
             signer: signer as never,
         });
 
-        expect(provider.waitForTransaction).toHaveBeenCalledWith(
-            "0xcommitment",
-            1,
-            120_000,
-        );
-        expect(erc20Swap.connect).toHaveBeenCalledWith(provider);
+        expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
+        expect(mockRequireChainId).toHaveBeenCalledWith("RBTC");
+        expect(
+            sentinelAssetProvider.waitForTransactionReceipt,
+        ).toHaveBeenCalledWith({
+            hash: "0xcommitment",
+            confirmations: 1,
+            timeout: 120_000,
+        });
+        expect(
+            signer.provider.waitForTransactionReceipt,
+        ).not.toHaveBeenCalled();
+        expect(signer.provider.getChainId).not.toHaveBeenCalled();
         expect(signer.signTypedData).toHaveBeenCalledWith(
             expect.objectContaining({
-                chainId: 31n,
-                verifyingContract: "0x1000000000000000000000000000000000000000",
-            }),
-            expect.any(Object),
-            expect.objectContaining({
-                preimageHash: `0x${"11".repeat(32)}`,
-                amount: 123n,
+                domain: expect.objectContaining({
+                    chainId: 31n,
+                    verifyingContract:
+                        "0x1000000000000000000000000000000000000000",
+                }),
+                message: expect.objectContaining({
+                    preimageHash: `0x${"11".repeat(32)}`,
+                    amount: 123n,
+                }),
             }),
         );
         expect(mockPostCommitmentSignature).toHaveBeenCalledWith(
@@ -104,6 +160,42 @@ describe("commitment", () => {
             7,
             10,
         );
+    });
+
+    test("uses the commitmentAsset chainId in the EIP-712 domain regardless of the wallet's chain", async () => {
+        const receipt = buildLockupReceipt();
+        (
+            sentinelAssetProvider.waitForTransactionReceipt as ReturnType<
+                typeof vi.fn
+            >
+        ).mockResolvedValue(receipt);
+        mockRequireChainId.mockReturnValue(30);
+        const signer = {
+            provider: {
+                getChainId: vi.fn().mockResolvedValue(137),
+                waitForTransactionReceipt: vi.fn(),
+            },
+            signTypedData: vi.fn().mockResolvedValue("0xsigned"),
+        };
+        const erc20Swap = {
+            address: "0x1000000000000000000000000000000000000000",
+            abi: erc20SwapAbi,
+            read: { version: vi.fn().mockResolvedValue("2") },
+        };
+
+        await postCommitmentSignatureForTransaction({
+            asset: "USDT",
+            commitmentAsset: "RBTC",
+            swapId: "swap-x",
+            preimageHash: "11".repeat(32),
+            commitmentTxHash: "0xcommitment",
+            erc20Swap: erc20Swap as never,
+            signer: signer as never,
+        });
+
+        const [signTypedDataArgs] = signer.signTypedData.mock.calls[0];
+        expect(signTypedDataArgs.domain.chainId).toBe(30n);
+        expect(signer.provider.getChainId).not.toHaveBeenCalled();
     });
 
     describe("buildCommitmentRefundAuthMessage", () => {
@@ -170,14 +262,14 @@ describe("commitment", () => {
                 signer: signer as never,
             });
 
-            expect(signer.signMessage).toHaveBeenCalledWith(
-                [
+            expect(signer.signMessage).toHaveBeenCalledWith({
+                message: [
                     "Boltz commitment refund authorization",
                     "chain: RBTC",
                     "transactionHash: 0xcommitment",
                     "logIndex: 4",
                 ].join("\n"),
-            );
+            });
             expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
                 "RBTC",
                 "0xcommitment",
@@ -202,7 +294,9 @@ describe("commitment", () => {
             });
 
             expect(signer.signMessage).toHaveBeenCalledWith(
-                expect.stringContaining("logIndex: none"),
+                expect.objectContaining({
+                    message: expect.stringContaining("logIndex: none"),
+                }),
             );
             expect(mockPostCommitmentRefundSignature).toHaveBeenCalledWith(
                 "USDT",

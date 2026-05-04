@@ -1,7 +1,5 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { getAddress } from "ethers";
-import type { Wallet } from "ethers";
 import {
     Match,
     Show,
@@ -10,6 +8,7 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
+import { getAddress } from "viem";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
@@ -22,7 +21,8 @@ import type { AssetType } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
-import { createTokenContract, useWeb3Signer } from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
+import { createTokenContract } from "../context/contracts";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
@@ -35,7 +35,7 @@ import { cropString } from "../utils/helper";
 type SweepData = {
     asset: AssetType;
     amount: bigint;
-    signer: Wallet;
+    signer: Signer;
 };
 
 const isSweepableAsset = (asset: string): asset is AssetType =>
@@ -80,7 +80,7 @@ const GasAbstractionSweepRescue = () => {
         const token = createTokenContract(params.asset, gasSigner);
         return {
             asset: params.asset,
-            amount: await token.balanceOf(gasSigner.address),
+            amount: await token.read.balanceOf([gasSigner.address]),
             signer: gasSigner,
         } satisfies SweepData;
     });
@@ -114,7 +114,7 @@ const GasAbstractionSweepRescue = () => {
             await sweepGasAbstractionToken({
                 asset: params.asset,
                 amount: currentSweepData.amount,
-                destination: await currentSigner.getAddress(),
+                destination: currentSigner.address,
                 signer: currentSweepData.signer,
             }),
         );

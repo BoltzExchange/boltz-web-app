@@ -7,10 +7,13 @@ import lazySolana from "../../../src/lazy/solana";
 import { clearCache } from "../../../src/utils/cache";
 import {
     decodeSolanaAddress,
+    encodeSolanaAtaCreationOption,
+    encodeSolanaRecipient,
     getSolanaAccountInfo,
     getSolanaRentExemptMinimumBalance,
     isValidSolanaAddress,
     shouldCreateSolanaTokenAccount,
+    solanaAtaRentExemptLamports,
 } from "../../../src/utils/chains/solana";
 
 const originalAssets = structuredClone(runtimeConfig.assets);
@@ -36,6 +39,29 @@ afterEach(() => {
 afterAll(() => {
     runtimeConfig.assets = originalAssets;
     runtimeConfig.network = originalNetwork;
+});
+
+test("encodeSolanaAtaCreationOption packs the rent-exempt lamports as the second uint128", () => {
+    expect(encodeSolanaAtaCreationOption()).toBe(
+        "0x00000000000000000000000000000000000000000000000000000000001f1df0",
+    );
+    expect(encodeSolanaAtaCreationOption()).toHaveLength(2 + 64);
+    expect(solanaAtaRentExemptLamports).toBe(2_039_280n);
+});
+
+test("encodeSolanaRecipient produces a 0x-prefixed 32-byte hex of the base58 decode", () => {
+    expect(encodeSolanaRecipient("11111111111111111111111111111111")).toBe(
+        `0x${"00".repeat(32)}`,
+    );
+
+    const recipient = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
+    const encoded = encodeSolanaRecipient(recipient);
+    expect(encoded).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(encoded.slice(2)).toBe(
+        Array.from(decodeSolanaAddress(recipient))
+            .map((byte) => byte.toString(16).padStart(2, "0"))
+            .join(""),
+    );
 });
 
 test("should validate Solana base58 recipients", () => {

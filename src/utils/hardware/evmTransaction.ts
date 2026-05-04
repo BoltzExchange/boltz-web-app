@@ -1,23 +1,35 @@
-import type { FeeData, TransactionLike } from "ethers";
+import type { Address, Hex } from "viem";
+
+import { prefix0x } from "../evmTransaction";
 
 type Quantity = bigint | number | string | null | undefined;
 
-export type HardwareTransactionLike = TransactionLike & {
+export type HardwareFeeData = {
+    gasPrice?: bigint | null;
+    maxFeePerGas?: bigint | null;
+    maxPriorityFeePerGas?: bigint | null;
+};
+
+export type HardwareTransactionLike = {
+    data?: Hex;
+    from?: Address;
     gas?: Quantity;
     gasLimit?: Quantity;
     gasPrice?: Quantity;
     maxFeePerGas?: Quantity;
     maxPriorityFeePerGas?: Quantity;
     nonce?: Quantity;
+    to?: Address | null;
     type?: Quantity;
+    value?: Quantity;
 };
 
 type BaseResolvedTransaction = {
     chainId: bigint;
-    data?: string;
+    data?: Hex;
     gasLimit: bigint;
     nonce: number;
-    to?: string | null;
+    to?: Address | null;
     value: bigint;
 };
 
@@ -32,7 +44,7 @@ export type ResolvedHardwareTransaction =
           type: 0;
       });
 
-const toBigInt = (value: Quantity): bigint | undefined => {
+export const toBigInt = (value: Quantity): bigint | undefined => {
     if (value === undefined || value === null) {
         return undefined;
     }
@@ -49,16 +61,17 @@ const toNumber = (value: Quantity): number | undefined => {
 };
 
 export const toHexQuantity = (value: bigint | number): string => {
-    return `0x${BigInt(value).toString(16)}`;
+    return prefix0x(BigInt(value).toString(16));
 };
 
 export const resolveHardwareTransaction = (
     txParams: HardwareTransactionLike,
     chainId: bigint,
     fallbackNonce: number,
-    feeData: FeeData,
+    feeData: HardwareFeeData,
+    fallbackGas?: bigint,
 ): ResolvedHardwareTransaction => {
-    const gasLimit = toBigInt(txParams.gasLimit ?? txParams.gas);
+    const gasLimit = toBigInt(txParams.gasLimit ?? txParams.gas) ?? fallbackGas;
     if (gasLimit === undefined) {
         throw new Error("missing transaction gas limit");
     }
@@ -76,10 +89,10 @@ export const resolveHardwareTransaction = (
 
     const baseTransaction: BaseResolvedTransaction = {
         chainId,
-        data: txParams.data?.toString(),
+        data: txParams.data,
         gasLimit,
         nonce,
-        to: txParams.to === null ? null : txParams.to?.toString(),
+        to: txParams.to,
         value: toBigInt(txParams.value) ?? 0n,
     };
 
