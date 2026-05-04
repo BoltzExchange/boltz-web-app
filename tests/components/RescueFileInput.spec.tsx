@@ -86,17 +86,17 @@ describe("RescueFileInput", () => {
         expect(getInput().value).toBe("");
     });
 
-    test("uses the controlled fileName prop when provided", () => {
-        renderInput({ fileName: "external.json" });
+    test("uses the displayFileName prop when provided", () => {
+        renderInput({ displayFileName: "external.json" });
 
         expect(screen.getByText("external.json")).toBeInTheDocument();
         expect(screen.queryByText(placeholderText)).not.toBeInTheDocument();
         expect(screen.getByTestId(clearButtonTestId)).toBeInTheDocument();
     });
 
-    test("hides the clear button in controlled mode when fileName is null", async () => {
+    test("hides the clear button in display mode when displayFileName is empty", async () => {
         const user = userEvent.setup();
-        const { getInput } = renderInput({ fileName: null });
+        const { getInput } = renderInput({ displayFileName: "" });
 
         await user.upload(getInput(), makeFile("rescue.json"));
 

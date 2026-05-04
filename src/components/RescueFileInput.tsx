@@ -9,10 +9,10 @@ import { rescueFileTypes } from "../utils/download";
 
 type RescueFileInputProps = Omit<
     ComponentProps<"input">,
-    "type" | "onChange"
+    "accept" | "type" | "onChange"
 > & {
     id: string;
-    fileName?: string | null;
+    displayFileName?: string;
     onChange: (event: Event) => void;
     onClear?: () => void;
 };
@@ -20,15 +20,14 @@ type RescueFileInputProps = Omit<
 const RescueFileInput = (props: RescueFileInputProps) => {
     const { t } = useGlobalContext();
     const [, inputProps] = splitProps(props, [
-        "fileName",
+        "displayFileName",
         "onChange",
         "onClear",
     ]);
     const [selectedFileName, setSelectedFileName] = createSignal<string>();
     let inputRef: HTMLInputElement | undefined;
 
-    const fileName = () =>
-        props.fileName === undefined ? selectedFileName() : props.fileName;
+    const fileName = () => props.displayFileName ?? selectedFileName() ?? "";
 
     createEffect(() => {
         if (!fileName() && inputRef) {
@@ -54,8 +53,8 @@ const RescueFileInput = (props: RescueFileInputProps) => {
     return (
         <div class="rescue-file-input">
             <input
-                accept={rescueFileTypes}
                 {...inputProps}
+                accept={rescueFileTypes}
                 type="file"
                 class="rescue-file-input-control"
                 ref={(el) => {

@@ -862,7 +862,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                     required
                     id="refundUpload"
                     data-testid="refundUpload"
-                    fileName={uploadedRescueFileName() ?? null}
+                    displayFileName={uploadedRescueFileName() ?? ""}
                     onChange={handleFileUpload}
                     onClear={clearUploadedRescueFile}
                 />
