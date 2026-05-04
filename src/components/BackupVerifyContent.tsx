@@ -3,10 +3,10 @@ import QrScanner from "qr-scanner";
 import { Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { rescueFileTypes } from "../utils/download";
 import { validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
 import LoadingSpinner from "./LoadingSpinner";
+import RescueFileInput from "./RescueFileInput";
 
 type BackupVerifyContentProps = {
     onRetry: () => void;
@@ -79,12 +79,10 @@ const BackupVerifyContent = (props: BackupVerifyContentProps) => {
             }>
             <h2>{t("verify_boltz_rescue_key")}</h2>
             <h4>{t("verify_boltz_rescue_key_subline")}</h4>
-            <input
+            <RescueFileInput
                 required
-                type="file"
                 id="rescueFileUpload"
                 data-testid="rescueFileUpload"
-                accept={rescueFileTypes}
                 disabled={inputProcessing()}
                 onChange={(e) => uploadChange(e)}
             />

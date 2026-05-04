@@ -496,6 +496,7 @@ const dict = {
             "Set {{ tokenStandard }} allowance for the swap contract",
         approve_allowance_reset_line:
             "Some {{ tokenStandard }} tokens require resetting the allowance to 0 before setting a new amount. You may need to approve twice.",
+        upload_rescue_key: "Select Rescue Key",
     },
     de: {
         language: "Deutsch",
@@ -1010,6 +1011,7 @@ const dict = {
             "{{ tokenStandard }}-Freigabe für den Swap-Contract festlegen",
         approve_allowance_reset_line:
             "Einige {{ tokenStandard }}-Token verlangen, dass die Freigabe zuerst auf 0 gesetzt wird, bevor ein neuer Betrag gesetzt werden kann. Möglicherweise musst du zweimal freigeben.",
+        upload_rescue_key: "Rettungsschlüssel auswählen",
     },
     es: {
         language: "Español",
@@ -1521,6 +1523,7 @@ const dict = {
             "Configura la asignación de {{ tokenStandard }} para el contrato de intercambio",
         approve_allowance_reset_line:
             "Algunos tokens {{ tokenStandard }} requieren restablecer la asignación a 0 antes de establecer una nueva cantidad. Es posible que debas aprobar dos veces.",
+        upload_rescue_key: "Seleccionar clave de rescate",
     },
     pt: {
         language: "Português",
@@ -2028,6 +2031,7 @@ const dict = {
             "Definir a permissão de {{ tokenStandard }} para o contrato de troca",
         approve_allowance_reset_line:
             "Alguns tokens {{ tokenStandard }} exigem redefinir a permissão para 0 antes de definir um novo valor. Talvez você precise aprovar duas vezes.",
+        upload_rescue_key: "Selecionar chave de resgate",
     },
     zh: {
         language: "中文",
@@ -2485,6 +2489,7 @@ const dict = {
         approve_allowance_line: "为交换合约设置 {{ tokenStandard }} 授权额度",
         approve_allowance_reset_line:
             "某些 {{ tokenStandard }} 代币要求先将授权额度重置为 0，然后才能设置新的额度。你可能需要授权两次。",
+        upload_rescue_key: "选择救援密钥",
     },
     ja: {
         language: "日本語",
@@ -2987,6 +2992,7 @@ const dict = {
             "スワップコントラクトの{{ tokenStandard }}許可額を設定",
         approve_allowance_reset_line:
             "一部の{{ tokenStandard }}トークンでは、新しい金額を設定する前に許可額を0にリセットする必要があります。2回承認が必要になる場合があります。",
+        upload_rescue_key: "レスキューキーを選択",
     },
 };
 
