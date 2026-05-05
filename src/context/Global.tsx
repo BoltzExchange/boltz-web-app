@@ -37,7 +37,7 @@ import { getPairs } from "../utils/boltzClient";
 import type { ECKeys } from "../utils/ecpair";
 import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
-import { getReferral, isMobile } from "../utils/helper";
+import { getRegularReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
@@ -330,7 +330,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         try {
             const data = await getPairs({
                 headers: {
-                    referral: getReferral(),
+                    referral: getRegularReferral(),
                 },
             });
 

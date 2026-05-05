@@ -31,11 +31,14 @@ export const isIos = () =>
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
+export const getRegularReferral = (): string =>
+    isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+
 export const getReferral = (): string => {
     if (config.isPro) {
         return "pro";
     }
-    return isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+    return getRegularReferral();
 };
 
 export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
