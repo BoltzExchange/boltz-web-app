@@ -1,6 +1,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 
+import type * as ConfigModule from "../../src/config";
 import { BTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import type { Pairs } from "../../src/utils/boltzClient";
@@ -9,6 +10,8 @@ import {
     formatAddress,
     getDestinationAddress,
     getPair,
+    getReferral,
+    getRegularReferral,
     parsePrivateKey,
 } from "../../src/utils/helper";
 import type {
@@ -23,6 +26,27 @@ vi.mock("../../src/utils/ecpair", () => {
             fromWIF: vi.fn().mockReturnValue({ key: "data" }),
             fromPrivateKey: vi.fn().mockReturnValue({ key: "data" }),
         },
+    };
+});
+
+const { configMock } = vi.hoisted(() => ({
+    configMock: { isPro: false } as { isPro: boolean },
+}));
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+
+    return {
+        ...actual,
+        config: new Proxy(actual.config as object, {
+            get(target, prop) {
+                if (prop === "isPro") {
+                    return configMock.isPro;
+                }
+                return target[prop as keyof typeof target];
+            },
+        }),
     };
 });
 
@@ -205,6 +229,49 @@ describe("helper", () => {
         test("returns empty string for null/undefined swap", () => {
             expect(getDestinationAddress(null)).toBe("");
             expect(getDestinationAddress(undefined)).toBe("");
+        });
+    });
+
+    describe("referral helpers", () => {
+        const originalUserAgent = navigator.userAgent;
+
+        const setUserAgent = (ua: string) => {
+            Object.defineProperty(navigator, "userAgent", {
+                configurable: true,
+                value: ua,
+            });
+        };
+
+        afterEach(() => {
+            configMock.isPro = false;
+            setUserAgent(originalUserAgent);
+        });
+
+        test("getRegularReferral returns desktop referral on desktop", () => {
+            setUserAgent("Mozilla/5.0 (X11; Linux x86_64)");
+            expect(getRegularReferral()).toBe("boltz_webapp_desktop");
+        });
+
+        test("getRegularReferral returns mobile referral on mobile", () => {
+            setUserAgent("Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36");
+            expect(getRegularReferral()).toBe("boltz_webapp_mobile");
+        });
+
+        test("getRegularReferral ignores config.isPro", () => {
+            configMock.isPro = true;
+            setUserAgent("Mozilla/5.0 (X11; Linux x86_64)");
+            expect(getRegularReferral()).toBe("boltz_webapp_desktop");
+        });
+
+        test("getReferral returns 'pro' when config.isPro is true", () => {
+            configMock.isPro = true;
+            expect(getReferral()).toBe("pro");
+        });
+
+        test("getReferral returns regular referral when config.isPro is false", () => {
+            configMock.isPro = false;
+            setUserAgent("Mozilla/5.0 (X11; Linux x86_64)");
+            expect(getReferral()).toBe("boltz_webapp_desktop");
         });
     });
 });
