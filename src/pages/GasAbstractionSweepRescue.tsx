@@ -2,6 +2,7 @@ import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { getAddress } from "ethers";
 import type { Wallet } from "ethers";
+import log from "loglevel";
 import {
     Match,
     Show,
@@ -18,7 +19,11 @@ import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import type { AssetType } from "../consts/Assets";
+import {
+    type AssetType,
+    getAssetDisplaySymbol,
+    getAssetNetwork,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
@@ -51,6 +56,8 @@ const GasAbstractionSweepRescue = () => {
     const { rescueFile } = useRescueContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
     const [refundTxId, setRefundTxId] = createSignal<string>();
+    const [refundPreparedCallId, setRefundPreparedCallId] =
+        createSignal<string>();
 
     const sweepSource = createMemo(() => {
         const currentSigner = signer();
@@ -98,6 +105,12 @@ const GasAbstractionSweepRescue = () => {
             data.asset,
         );
 
+    const refundDestinationHint = (data: SweepData) =>
+        t("refund_destination_hint", {
+            asset: getAssetDisplaySymbol(data.asset),
+            network: getAssetNetwork(data.asset) ?? data.asset,
+        });
+
     const sweep = async () => {
         const currentSigner = signer();
         const currentSweepData = sweepData();
@@ -110,14 +123,43 @@ const GasAbstractionSweepRescue = () => {
             return;
         }
 
-        setRefundTxId(
-            await sweepGasAbstractionToken({
-                asset: params.asset,
-                amount: currentSweepData.amount,
-                destination: await currentSigner.getAddress(),
-                signer: currentSweepData.signer,
-            }),
-        );
+        let recoveryInfoCaptured = false;
+        const markPreparedCallId = (callId: string) => {
+            recoveryInfoCaptured = true;
+            setRefundPreparedCallId(callId);
+        };
+        const markTransactionHash = (transactionHash: string) => {
+            recoveryInfoCaptured = true;
+            setRefundPreparedCallId(undefined);
+            setRefundTxId(transactionHash);
+        };
+
+        try {
+            const transactionHash = await sweepGasAbstractionToken(
+                {
+                    asset: params.asset,
+                    amount: currentSweepData.amount,
+                    destination: await currentSigner.getAddress(),
+                    signer: currentSweepData.signer,
+                },
+                undefined,
+                {
+                    onPreparedCallId: markPreparedCallId,
+                    onTransactionHash: markTransactionHash,
+                },
+            );
+            markTransactionHash(transactionHash);
+        } catch (error) {
+            if (recoveryInfoCaptured) {
+                log.warn(
+                    "gas abstraction sweep confirmation failed after submission",
+                    error,
+                );
+                return;
+            }
+
+            throw error;
+        }
     };
 
     return (
@@ -154,7 +196,11 @@ const GasAbstractionSweepRescue = () => {
                                             {t("connected_wallet_no_swaps")}
                                         </h3>
                                     </Match>
-                                    <Match when={refundTxId() === undefined}>
+                                    <Match
+                                        when={
+                                            refundTxId() === undefined &&
+                                            refundPreparedCallId() === undefined
+                                        }>
                                         <ContractTransaction
                                             asset={params.asset}
                                             signerOverride={() => data.signer}
@@ -163,11 +209,24 @@ const GasAbstractionSweepRescue = () => {
                                             promptText={`${t("refund")} ${amount(data)} ${formatDenomination(
                                                 denomination(),
                                                 data.asset,
-                                            )}`}
-                                        />
+                                            )}`}>
+                                            <p>{refundDestinationHint(data)}</p>
+                                        </ContractTransaction>
+                                    </Match>
+                                    <Match
+                                        when={
+                                            refundTxId() === undefined &&
+                                            refundPreparedCallId() !== undefined
+                                        }>
+                                        <p>{t("refund_waiting_for_tx_hash")}</p>
+                                        <LoadingSpinner />
                                     </Match>
                                     <Match when={refundTxId() !== undefined}>
-                                        <p>{t("refunded")}</p>
+                                        <p>
+                                            {t(
+                                                "refund_sent_waiting_confirmation",
+                                            )}
+                                        </p>
                                         <hr />
                                         <BlockExplorer
                                             typeLabel={"refund_tx"}

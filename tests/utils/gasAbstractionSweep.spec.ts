@@ -121,9 +121,60 @@ describe("gas abstraction sweep", () => {
             expect.objectContaining({
                 to: config.assets!.USDT0.token!.address,
             }),
+            expect.objectContaining({
+                alchemy: expect.objectContaining({
+                    onPreparedCallId: undefined,
+                }),
+            }),
         );
         expect(transaction.data).toBe(expectedData);
         expect(waitForTransaction).toHaveBeenCalledWith("0xtx", 1);
+    });
+
+    test("exposes recovery info before confirmation finishes", async () => {
+        let resolveWait!: () => void;
+        const waitForTransaction = vi.fn(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveWait = resolve;
+                }),
+        );
+        const signer = {
+            address: "0xsigner",
+            provider: {
+                waitForTransaction,
+            },
+        } as unknown as Wallet;
+        const sendTransaction = vi.fn<typeof sendPopulatedTransaction>(
+            async (_gasAbstraction, _signer, _transaction, options) => {
+                await options?.alchemy?.onPreparedCallId?.("0xprepared");
+                return "0xtx";
+            },
+        );
+        const onPreparedCallId = vi.fn();
+        const onTransactionHash = vi.fn();
+
+        const txHash = sweepGasAbstractionToken(
+            {
+                asset: USDT0,
+                amount: 456n,
+                destination: "0x000000000000000000000000000000000000dEaD",
+                signer,
+            },
+            sendTransaction,
+            {
+                onPreparedCallId,
+                onTransactionHash,
+            },
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(onPreparedCallId).toHaveBeenCalledWith("0xprepared");
+        expect(onTransactionHash).toHaveBeenCalledWith("0xtx");
+
+        resolveWait();
+        await expect(txHash).resolves.toBe("0xtx");
     });
 
     test("throws when the transaction cannot be confirmed", async () => {

@@ -27,6 +27,11 @@ export type GasAbstractionSweep = {
     signer: Wallet;
 };
 
+export type GasAbstractionSweepCallbacks = {
+    onPreparedCallId?: (callId: string) => Promise<void> | void;
+    onTransactionHash?: (transactionHash: string) => Promise<void> | void;
+};
+
 export const getGasAbstractionSweepDisplayAmount = ({
     asset,
     amount,
@@ -85,6 +90,7 @@ export const getSweepableGasAbstractionBalances = async ({
 export const sweepGasAbstractionToken = async (
     sweep: GasAbstractionSweep,
     sendTransaction = sendPopulatedTransaction,
+    callbacks: GasAbstractionSweepCallbacks = {},
 ): Promise<string> => {
     const transactionHash = await sendTransaction(
         GasAbstractionType.Signer,
@@ -96,7 +102,13 @@ export const sweepGasAbstractionToken = async (
                 sweep.amount,
             ]),
         },
+        {
+            alchemy: {
+                onPreparedCallId: callbacks.onPreparedCallId,
+            },
+        },
     );
+    await callbacks.onTransactionHash?.(transactionHash);
 
     if (!sweep.signer.provider) {
         throw new Error("Missing provider: cannot confirm transaction");

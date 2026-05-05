@@ -2,7 +2,7 @@ import type * as SolidRouter from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import type { Wallet } from "ethers";
-import type { Accessor } from "solid-js";
+import type { Accessor, JSX } from "solid-js";
 import { createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
 
@@ -42,7 +42,8 @@ const [rescueFile, setRescueFile] = createSignal<RescueFile | undefined>(
 const getGasAbstractionSigner =
     vi.fn<(asset: string, rescueFile?: RescueFile) => Wallet>();
 const balanceOf = vi.fn<(address: string) => Promise<bigint>>();
-const sweepGasAbstractionToken = vi.fn<() => Promise<string>>();
+const sweepGasAbstractionToken =
+    vi.fn<typeof GasAbstractionSweepModule.sweepGasAbstractionToken>();
 
 vi.mock("../../src/context/Web3", async () => {
     const actual = await vi.importActual<typeof Web3Module>(
@@ -85,6 +86,7 @@ type ContractTxProps = {
     asset: string;
     signerOverride?: Accessor<Wallet>;
     onClick: () => Promise<unknown>;
+    children?: JSX.Element;
     buttonText: string;
     promptText?: string;
 };
@@ -95,6 +97,7 @@ vi.mock("../../src/components/ContractTransaction", () => ({
                 asset: props.asset,
                 signerOverride: props.signerOverride,
                 onClick: props.onClick,
+                children: props.children,
                 buttonText: props.buttonText,
                 promptText: props.promptText,
             };
@@ -102,6 +105,7 @@ vi.mock("../../src/components/ContractTransaction", () => ({
         return (
             <div data-testid="contract-transaction">
                 <p data-testid="prompt-text">{props.promptText}</p>
+                <div data-testid="contract-tx-children">{props.children}</div>
                 <button
                     data-testid="contract-tx-button"
                     onClick={() => void props.onClick()}>
@@ -303,6 +307,22 @@ describe("GasAbstractionSweepRescue", () => {
         },
     );
 
+    test("discloses that funds refund to the connected EVM wallet on the asset network", async () => {
+        resetState();
+        getGasAbstractionSigner.mockReturnValue(makeWallet(validAddress));
+        balanceOf.mockResolvedValue(1_000_000n);
+        setSigner(makeWallet(otherAddress));
+        setRescueFile({ mnemonic: "test" } as RescueFile);
+
+        renderPage();
+
+        expect(
+            await screen.findByTestId("contract-tx-children"),
+        ).toHaveTextContent(
+            "Funds will be refunded as USDT on Arbitrum to your connected EVM wallet.",
+        );
+    });
+
     test("clicking refund sweeps to the connected wallet and shows the explorer link", async () => {
         resetState();
         const user = userEvent.setup();
@@ -320,15 +340,88 @@ describe("GasAbstractionSweepRescue", () => {
         await user.click(button);
 
         await waitFor(() => {
-            expect(sweepGasAbstractionToken).toHaveBeenCalledWith({
-                asset: USDT0,
-                amount: 2_500_000n,
-                destination: otherAddress,
-                signer: gasSigner,
-            });
+            expect(sweepGasAbstractionToken).toHaveBeenCalledWith(
+                {
+                    asset: USDT0,
+                    amount: 2_500_000n,
+                    destination: otherAddress,
+                    signer: gasSigner,
+                },
+                undefined,
+                expect.objectContaining({
+                    onPreparedCallId: expect.any(Function),
+                    onTransactionHash: expect.any(Function),
+                }),
+            );
         });
 
-        expect(await screen.findByText(i18n.en.refunded)).toBeInTheDocument();
+        expect(
+            await screen.findByText(
+                i18n.en.refund_sent_waiting_confirmation,
+            ),
+        ).toBeInTheDocument();
+        expect(await screen.findByTestId("block-explorer")).toHaveTextContent(
+            "0xdeadbeef",
+        );
+    });
+
+    test("shows a pending state when status polling fails after submission", async () => {
+        resetState();
+        const gasSigner = makeWallet(validAddress);
+        const connectedWallet = makeWallet(otherAddress);
+        getGasAbstractionSigner.mockReturnValue(gasSigner);
+        balanceOf.mockResolvedValue(2_500_000n);
+        sweepGasAbstractionToken.mockImplementation(
+            async (_sweep, _sendTransaction, callbacks) => {
+                await callbacks?.onPreparedCallId?.("0xprepared");
+                throw new Error("status unavailable");
+            },
+        );
+        setSigner(connectedWallet);
+        setRescueFile({ mnemonic: "test" } as RescueFile);
+
+        renderPage();
+
+        await screen.findByTestId("contract-transaction");
+        await expect(lastContractTxProps.current!.onClick()).resolves.toBe(
+            undefined,
+        );
+
+        expect(
+            await screen.findByText(i18n.en.refund_waiting_for_tx_hash),
+        ).toBeInTheDocument();
+        expect(await screen.findByTestId("loading-spinner")).toBeInTheDocument();
+        expect(screen.queryByText("0xprepared")).toBeNull();
+        expect(screen.queryByTestId("block-explorer")).toBeNull();
+    });
+
+    test("keeps the transaction hash visible when confirmation fails after hash resolution", async () => {
+        resetState();
+        const gasSigner = makeWallet(validAddress);
+        const connectedWallet = makeWallet(otherAddress);
+        getGasAbstractionSigner.mockReturnValue(gasSigner);
+        balanceOf.mockResolvedValue(2_500_000n);
+        sweepGasAbstractionToken.mockImplementation(
+            async (_sweep, _sendTransaction, callbacks) => {
+                await callbacks?.onTransactionHash?.("0xdeadbeef");
+                throw new Error("confirmation failed");
+            },
+        );
+        setSigner(connectedWallet);
+        setRescueFile({ mnemonic: "test" } as RescueFile);
+
+        renderPage();
+
+        await screen.findByTestId("contract-transaction");
+        await expect(lastContractTxProps.current!.onClick()).resolves.toBe(
+            undefined,
+        );
+
+        expect(
+            await screen.findByText(
+                i18n.en.refund_sent_waiting_confirmation,
+            ),
+        ).toBeInTheDocument();
         expect(await screen.findByTestId("block-explorer")).toHaveTextContent(
             "0xdeadbeef",
         );
