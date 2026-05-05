@@ -740,6 +740,11 @@ const sendLegacyMesh = async (
         );
         return {
             hash: signature,
+            details: {
+                solana: {
+                    blockhash: latestBlockhash.blockhash,
+                },
+            },
             wait: async () =>
                 await context.connection.confirmTransaction(
                     {

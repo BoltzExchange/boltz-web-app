@@ -1,7 +1,7 @@
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Adapter as AbstractTronWalletAdapter } from "@tronweb3/tronwallet-abstract-adapter";
 import { Interface, MaxUint256 } from "ethers";
-import type { TronWeb as TronWebClient } from "tronweb";
+import type { Types as TronTypes, TronWeb as TronWebClient } from "tronweb";
 
 import { NetworkTransport } from "../../configs/base";
 import { getTokenAddress } from "../../consts/Assets";
@@ -89,16 +89,16 @@ const decodeHexToUtf8 = (message: string): string => {
 const normalizeTronSignedTransaction = (
     response: TronSignTransactionResponse,
 ): TronSignedTransaction => {
-    if ("txID" in response) {
-        return response;
+    if ("result" in response) {
+        return response.result;
     }
-    return response.result;
+    return response;
 };
 
 const signTronTransaction = async (
     walletProvider: WalletConnectTronConnector,
     walletAddress: string,
-    transaction: unknown,
+    transaction: TronTypes.Transaction,
 ): Promise<TronSignedTransaction> => {
     if (walletProvider.type === "INJECTED" && "adapter" in walletProvider) {
         const adapter = walletProvider.adapter as AbstractTronWalletAdapter;
@@ -212,7 +212,9 @@ const callTronConstantContract = async (
         );
     }
 
-    const constantResult = response.constant_result?.[0];
+    const constantResult = (
+        response.constant_result as unknown[] | undefined
+    )?.[0];
     if (typeof constantResult !== "string") {
         throw new Error(
             `Missing constant result for Tron contract call ${functionSelector}`,
@@ -269,7 +271,7 @@ const buildTronSmartContractTransaction = async (params: {
     callValue?: bigint;
 }): Promise<{
     client: TronWebClient;
-    transaction: unknown;
+    transaction: TronTypes.Transaction;
 }> => {
     const client = await getTronWeb(params.sourceAsset);
     const options: Record<string, number | string> = {

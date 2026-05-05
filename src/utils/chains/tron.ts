@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58, hex } from "@scure/base";
 import log from "loglevel";
-import type { TronWeb as TronWebClient } from "tronweb";
+import type { Types as TronTypes, TronWeb as TronWebClient } from "tronweb";
 
 import lazyTron from "../../lazy/tron";
 import { getCachedValue } from "../cache";
@@ -15,17 +15,9 @@ const tronRpcProbeTimeout = 5_000;
 const tronSuccessReceiptResult = "SUCCESS";
 const tronClientPrefix = "tron:client:";
 
-export type TronTransaction = Awaited<
-    ReturnType<TronWebClient["trx"]["getTransaction"]>
->;
-
-export type TronTransactionInfo = Awaited<
-    ReturnType<TronWebClient["trx"]["getTransactionInfo"]>
->;
-
-export type TronSignedTransaction = Parameters<
-    TronWebClient["trx"]["sendRawTransaction"]
->[0];
+export type TronTransaction = TronTypes.GetTransactionResponse;
+export type TronTransactionInfo = TronTypes.TransactionInfo;
+export type TronSignedTransaction = TronTypes.SignedTransaction;
 
 const isEmptyTronResponse = (value: unknown): boolean =>
     typeof value === "object" &&
@@ -169,22 +161,26 @@ export const getTronTransaction = async (
     sourceAsset: string,
     txHash: string,
 ): Promise<TronTransaction | undefined> => {
-    const transaction = await (
+    const transaction = (await (
         await getTronWeb(sourceAsset)
-    ).trx.getTransaction(txHash);
+    ).trx.getTransaction(txHash)) as unknown;
 
-    return isEmptyTronResponse(transaction) ? undefined : transaction;
+    return isEmptyTronResponse(transaction)
+        ? undefined
+        : (transaction as TronTransaction);
 };
 
 export const getTronTransactionInfo = async (
     sourceAsset: string,
     txHash: string,
 ): Promise<TronTransactionInfo | undefined> => {
-    const transactionInfo = await (
+    const transactionInfo = (await (
         await getTronWeb(sourceAsset)
-    ).trx.getTransactionInfo(txHash);
+    ).trx.getTransactionInfo(txHash)) as unknown;
 
-    return isEmptyTronResponse(transactionInfo) ? undefined : transactionInfo;
+    return isEmptyTronResponse(transactionInfo)
+        ? undefined
+        : (transactionInfo as TronTransactionInfo);
 };
 
 export const isFailedTronTransaction = (

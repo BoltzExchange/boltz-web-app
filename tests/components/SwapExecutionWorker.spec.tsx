@@ -5,6 +5,8 @@ let mockNetworkTransport = "evm";
 const mockQueryFilter = vi.fn();
 const mockLockupParseLog = vi.fn();
 const mockGetTransaction = vi.fn();
+const mockIsBlockhashValid = vi.fn();
+const mockGetSignatureStatuses = vi.fn();
 const mockGetTransactionReceipt = vi.fn();
 const mockGetBlockNumber = vi.fn();
 const mockProviderCall = vi.fn();
@@ -198,6 +200,8 @@ vi.mock("../../src/utils/calculate", () => ({
 vi.mock("../../src/utils/chains/solana", () => ({
     getSolanaConnection: vi.fn(() => ({
         getTransaction: mockGetTransaction,
+        isBlockhashValid: mockIsBlockhashValid,
+        getSignatureStatuses: mockGetSignatureStatuses,
     })),
 }));
 
@@ -350,6 +354,12 @@ describe("SwapExecutionWorker", () => {
         vi.clearAllMocks();
         mockNetworkTransport = "evm";
         mockGetTransaction.mockReset();
+        mockIsBlockhashValid.mockReset().mockResolvedValue({
+            value: true,
+        });
+        mockGetSignatureStatuses.mockReset().mockResolvedValue({
+            value: [null],
+        });
         mockGetTransactionReceipt.mockReset();
         mockGetBlockNumber.mockReset().mockResolvedValue(12);
         mockProviderCall.mockReset().mockResolvedValue(encodeUint256(0n));
@@ -724,20 +734,149 @@ describe("SwapExecutionWorker", () => {
         await waitFor(() => {
             expect(mockSetSwapStorage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    bridge: expect.objectContaining({
-                        txHash: undefined,
+                    bridge: expect.not.objectContaining({
+                        txHash: expect.any(String),
                     }),
                 }),
             );
         });
+    });
 
-        expect(mockSetSwapStorage).toHaveBeenCalledWith(
-            expect.objectContaining({
-                bridge: expect.objectContaining({
-                    txHash: undefined,
-                }),
-            }),
-        );
+    test("should abandon an expired dropped Solana OFT send", async () => {
+        mockNetworkTransport = "solana";
+        mockGetTransaction.mockResolvedValue(null);
+        mockIsBlockhashValid.mockResolvedValue({
+            value: false,
+        });
+        mockGetSignatureStatuses.mockResolvedValue({
+            value: [null],
+        });
+        currentSwap = {
+            ...currentSwap,
+            bridge: {
+                ...(currentSwap.bridge as Record<string, unknown>),
+                details: {
+                    solana: {
+                        blockhash: "11111111111111111111111111111111",
+                    },
+                },
+            },
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockGetSignatureStatuses).toHaveBeenCalledWith(
+                ["0xoftsend"],
+                {
+                    searchTransactionHistory: true,
+                },
+            );
+            expect(mockIsBlockhashValid).toHaveBeenCalledWith(
+                "11111111111111111111111111111111",
+                {
+                    commitment: "confirmed",
+                },
+            );
+        });
+
+        await waitFor(() => {
+            const savedSwap = mockSetSwapStorage.mock.calls.at(-1)?.[0];
+            const bridge = savedSwap?.bridge as
+                | Record<string, unknown>
+                | undefined;
+
+            expect(bridge?.txHash).toBeUndefined();
+            expect(bridge?.details).toBeUndefined();
+        });
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+    });
+
+    test("should keep waiting for a processed Solana OFT send with an expired blockhash", async () => {
+        mockNetworkTransport = "solana";
+        mockGetTransaction.mockResolvedValue(null);
+        mockIsBlockhashValid.mockResolvedValue({
+            value: false,
+        });
+        mockGetSignatureStatuses.mockResolvedValue({
+            value: [
+                {
+                    confirmationStatus: "processed",
+                    confirmations: 0,
+                    err: null,
+                    slot: 417563870,
+                    status: {
+                        Ok: null,
+                    },
+                },
+            ],
+        });
+        currentSwap = {
+            ...currentSwap,
+            bridge: {
+                ...(currentSwap.bridge as Record<string, unknown>),
+                details: {
+                    solana: {
+                        blockhash: "11111111111111111111111111111111",
+                    },
+                },
+            },
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockGetSignatureStatuses).toHaveBeenCalledWith(
+                ["0xoftsend"],
+                {
+                    searchTransactionHistory: true,
+                },
+            );
+        });
+        expect(mockIsBlockhashValid).not.toHaveBeenCalled();
+        expect(mockSetSwapStorage).not.toHaveBeenCalled();
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+    });
+
+    test("should keep waiting for a dropped Solana OFT send while the blockhash is valid", async () => {
+        mockNetworkTransport = "solana";
+        mockGetTransaction.mockResolvedValue(null);
+        mockIsBlockhashValid.mockResolvedValue({
+            value: true,
+        });
+        mockGetSignatureStatuses.mockResolvedValue({
+            value: [null],
+        });
+        currentSwap = {
+            ...currentSwap,
+            bridge: {
+                ...(currentSwap.bridge as Record<string, unknown>),
+                details: {
+                    solana: {
+                        blockhash: "11111111111111111111111111111111",
+                    },
+                },
+            },
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockGetSignatureStatuses).toHaveBeenCalledWith(
+                ["0xoftsend"],
+                {
+                    searchTransactionHistory: true,
+                },
+            );
+            expect(mockIsBlockhashValid).toHaveBeenCalledWith(
+                "11111111111111111111111111111111",
+                {
+                    commitment: "confirmed",
+                },
+            );
+        });
+        expect(mockSetSwapStorage).not.toHaveBeenCalled();
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
     });
 
     test("should abandon a failed Tron OFT send before decoding the guid", async () => {
@@ -752,13 +891,9 @@ describe("SwapExecutionWorker", () => {
         render(() => <SwapExecutionWorker />);
 
         await waitFor(() => {
-            expect(mockSetSwapStorage).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    bridge: expect.objectContaining({
-                        txHash: undefined,
-                    }),
-                }),
-            );
+            expect(
+                (currentSwap.bridge as Record<string, unknown>).txHash,
+            ).toBeUndefined();
         });
 
         expect(mockGetTronOftGuidFromTransactionInfo).not.toHaveBeenCalled();

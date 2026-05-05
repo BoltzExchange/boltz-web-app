@@ -82,6 +82,9 @@ describe("Solana CCTP send", () => {
         const tx = await contract.send(sendParam, [0n, 0n], ownerAddress);
 
         expect(tx.hash).toBe("solana-signature");
+        expect(tx.details?.solana).toEqual({
+            blockhash: "11111111111111111111111111111111",
+        });
         expect(connection.simulateTransaction).toHaveBeenCalledWith(
             expect.any(Object),
             expect.objectContaining({

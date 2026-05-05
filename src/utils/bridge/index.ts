@@ -2,6 +2,7 @@ export { BridgeDriver } from "./driver";
 export { CctpBridgeDriver } from "./CctpBridgeDriver";
 export { OftBridgeDriver } from "./OftBridgeDriver";
 export { BridgeRegistry, bridgeRegistry } from "./registry";
+export type { BridgeDetails, SolanaDetails } from "./details";
 export type {
     BridgeContract,
     BridgeDirectSendTarget,

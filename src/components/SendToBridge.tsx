@@ -20,7 +20,7 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { bridgeRegistry } from "../utils/bridge";
+import { type BridgeTransaction, bridgeRegistry } from "../utils/bridge";
 import { getTronTokenAllowance } from "../utils/oft/oft";
 import type { OftTransportClient } from "../utils/oft/types";
 import type { BridgeDetail } from "../utils/swapCreator";
@@ -462,14 +462,12 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (
-            await bridgeDriver().sendTransport({
-                contract: bridgeInstance,
-                sendParam,
-                msgFee,
-                refundAddress: wallet.address,
-            })
-        ).hash;
+        return await bridgeDriver().sendTransport({
+            contract: bridgeInstance,
+            sendParam,
+            msgFee,
+            refundAddress: wallet.address,
+        });
     };
 
     const sendBridgeFromTron = async () => {
@@ -526,14 +524,12 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (
-            await bridgeDriver().sendTransport({
-                contract: bridgeInstance,
-                sendParam,
-                msgFee,
-                refundAddress: wallet.address,
-            })
-        ).hash;
+        return await bridgeDriver().sendTransport({
+            contract: bridgeInstance,
+            sendParam,
+            msgFee,
+            refundAddress: wallet.address,
+        });
     };
 
     const sendBridgeFromEvm = async () => {
@@ -583,15 +579,13 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        return (
-            await bridgeDriver().sendDirect({
-                target: directSendTarget,
-                runner: connectedSigner,
-                sendParam,
-                msgFee,
-                refundAddress: signerAddress,
-            })
-        ).hash;
+        return await bridgeDriver().sendDirect({
+            target: directSendTarget,
+            runner: connectedSigner,
+            sendParam,
+            msgFee,
+            refundAddress: signerAddress,
+        });
     };
 
     const sendBridge = async () => {
@@ -613,16 +607,23 @@ const SendToBridge = (props: {
         }
     };
 
-    const persistBridgeSend = async (txHash: string) => {
+    const persistBridgeSend = async (tx: BridgeTransaction) => {
         const currentSwap = await getSwap(props.swapId);
         if (currentSwap === null) {
             return;
         }
         if (currentSwap.bridge !== undefined) {
-            currentSwap.bridge = {
+            const bridge = {
                 ...currentSwap.bridge,
-                txHash,
+                txHash: tx.hash,
             };
+            if (tx.details === undefined) {
+                delete bridge.details;
+            } else {
+                bridge.details = tx.details;
+            }
+
+            currentSwap.bridge = bridge;
         }
 
         setSwap(currentSwap);
@@ -631,7 +632,7 @@ const SendToBridge = (props: {
             swapId: props.swapId,
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
-            txHash,
+            txHash: tx.hash,
         });
     };
 
@@ -709,8 +710,8 @@ const SendToBridge = (props: {
                                 asset={props.bridge.sourceAsset}
                                 /* eslint-disable-next-line solid/reactivity */
                                 onClick={async () => {
-                                    const txHash = await sendBridge();
-                                    await persistBridgeSend(txHash);
+                                    const tx = await sendBridge();
+                                    await persistBridgeSend(tx);
                                 }}
                                 children={
                                     <ConnectWallet
