@@ -571,7 +571,19 @@ export const SwapExecutionWorker = () => {
             },
         );
 
-        return !blockhashStatus.value;
+        if (!blockhashStatus.value) {
+            // To protect against a race where the tx was just included before the blockhash expired
+            const signatureStatuses = await connection.getSignatureStatuses(
+                [txHash],
+                {
+                    searchTransactionHistory: true,
+                },
+            );
+            const signatureStatus = signatureStatuses.value[0];
+            return signatureStatus === null || signatureStatus?.err != null;
+        }
+
+        return false;
     };
 
     const waitForSolanaBridgeSendConfirmation = async (
@@ -603,38 +615,25 @@ export const SwapExecutionWorker = () => {
                 return undefined;
             }
 
-            const getTransaction = async () => {
-                const transaction = await connection.getTransaction(txHash, {
-                    commitment: "confirmed",
-                    maxSupportedTransactionVersion: 0,
-                });
-                if (transaction !== null) {
-                    log.info(
-                        "Swap execution found Solana bridge send confirmation",
-                        getSwapExecutionLogContext(swapId, {
-                            sourceAsset,
-                            txHash,
-                            slot: transaction.slot,
-                        }),
-                    );
-                }
-                return transaction;
-            };
-
-            const transaction = await getTransaction();
+            const transaction = await connection.getTransaction(txHash, {
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0,
+            });
             if (transaction !== null) {
+                log.info(
+                    "Swap execution found Solana bridge send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                        slot: transaction.slot,
+                    }),
+                );
                 return transaction;
             }
 
             if (
                 await shouldAbandonSolanaBridgeSend(connection, txHash, details)
             ) {
-                // To protect against a race condition where the tx was just included before the blockhash expired
-                const transaction = await getTransaction();
-                if (transaction !== null) {
-                    return transaction;
-                }
-
                 await abandonFailedBridgeSend(swapId, sourceAsset, txHash);
                 return undefined;
             }
