@@ -28,6 +28,7 @@ import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
+import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 import { useGlobalContext } from "./Global";
 
@@ -369,13 +370,18 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         return new Pair(pairs(), LN, BTC, regularPairs());
     };
 
+    const hasBlockedOnchainAddress = () =>
+        isKnownStablecoinTokenAddress(pair().toAsset, onchainAddress());
+
     createEffect(() => {
         if (amountValid() && pair().isRoutable) {
             const requiredInput = pair().requiredInput;
+            const validDestinationAddress =
+                addressValid() && !hasBlockedOnchainAddress();
             if (
                 ((requiredInput === RequiredInput.Address ||
                     requiredInput === RequiredInput.Web3) &&
-                    addressValid()) ||
+                    validDestinationAddress) ||
                 (requiredInput === RequiredInput.Invoice && invoiceValid())
             ) {
                 setValid(true);
@@ -383,6 +389,12 @@ const CreateProvider = (props: { children: JSX.Element }) => {
             }
         }
         setValid(false);
+    });
+
+    createEffect(() => {
+        if (addressValid() && hasBlockedOnchainAddress()) {
+            setAddressValid(false);
+        }
     });
 
     createEffect(

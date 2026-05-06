@@ -25,6 +25,7 @@ import {
     extractInvoice,
     isInvoice,
 } from "../utils/invoice";
+import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
 
 const AddressInput = () => {
     let inputRef!: HTMLInputElement;
@@ -68,35 +69,38 @@ const AddressInput = () => {
         try {
             const currentPair = pair();
             const assetName = currentPair.toAsset;
+
+            if (isKnownStablecoinTokenAddress(assetName, address)) {
+                throw new Error("token address");
+            }
+
+            const acceptAddress = (nextAddress: string) => {
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+                setAddressValid(true);
+                setOnchainAddress(nextAddress);
+            };
+
             if (isEvmAsset(assetName)) {
                 if (!isAddress(address)) {
                     throw new Error();
                 }
 
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(getAddress(address));
+                acceptAddress(getAddress(address));
                 return;
             }
 
             const transport = getNetworkTransport(assetName);
             if (transport === NetworkTransport.Solana) {
                 if (isValidSolanaAddress(address)) {
-                    input.setCustomValidity("");
-                    input.classList.remove("invalid");
-                    setAddressValid(true);
-                    setOnchainAddress(address);
+                    acceptAddress(address);
                     return;
                 }
             }
 
             if (transport === NetworkTransport.Tron) {
                 if (isValidTronAddress(address)) {
-                    input.setCustomValidity("");
-                    input.classList.remove("invalid");
-                    setAddressValid(true);
-                    setOnchainAddress(address);
+                    acceptAddress(address);
                     return;
                 }
             }

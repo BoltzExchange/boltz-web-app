@@ -1,7 +1,8 @@
-import { render } from "@solidjs/testing-library";
+import { render, waitFor } from "@solidjs/testing-library";
 
+import { config as runtimeConfig } from "../../src/config";
 import type * as ConfigModule from "../../src/config";
-import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
 import {
@@ -183,4 +184,23 @@ describe("signals", () => {
         expect(signals.addressValid()).toEqual(false);
         expect(signals.valid()).toEqual(false);
     });
+
+    test.each`
+        receiveAsset | address
+        ${USDC}      | ${runtimeConfig.assets!.USDC.token!.address}
+        ${USDT0}     | ${runtimeConfig.assets!.USDC.token!.address}
+    `(
+        "should mark known stablecoin token addresses invalid",
+        async ({ receiveAsset, address }) => {
+            render(() => <TestComponent />, { wrapper: contextWrapper });
+
+            setPairAssets(LN, receiveAsset);
+            signals.setOnchainAddress(address);
+            signals.setAddressValid(true);
+
+            await waitFor(() => {
+                expect(signals.addressValid()).toEqual(false);
+            });
+        },
+    );
 });

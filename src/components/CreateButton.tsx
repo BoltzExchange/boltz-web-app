@@ -45,6 +45,7 @@ import {
     fetchLnurl,
     getAssetByBip21Prefix,
 } from "../utils/invoice";
+import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/quoter";
@@ -413,6 +414,16 @@ const CreateButton = () => {
         (assetReceive() !== LN && onchainAddress() !== ""
             ? onchainAddress()
             : undefined);
+
+    const showInvalidAddress = (asset: string) => {
+        setAddressValid(false);
+        notify(
+            "error",
+            t("invalid_address", {
+                asset,
+            }),
+        );
+    };
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
@@ -878,16 +889,17 @@ const CreateButton = () => {
             );
 
             if (
+                isKnownStablecoinTokenAddress(assetReceive(), onchainAddress())
+            ) {
+                showInvalidAddress(assetReceive());
+                return;
+            }
+
+            if (
                 (assetReceive() === BTC || assetReceive() === LBTC) &&
                 !validateOnchainAddress(assetReceive(), claimAddress)
             ) {
-                setAddressValid(false);
-                notify(
-                    "error",
-                    t("invalid_address", {
-                        asset: assetReceive(),
-                    }),
-                );
+                showInvalidAddress(assetReceive());
                 return;
             }
 
