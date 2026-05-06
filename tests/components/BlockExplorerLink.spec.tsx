@@ -5,10 +5,23 @@ import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
 import { BTC, LBTC, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import { SwapPosition, SwapType } from "../../src/consts/Enums";
+import dict from "../../src/i18n/i18n";
 import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("BlockExplorerLink", () => {
+    const blockExplorerLabel = (typeLabel: string) =>
+        dict.en.blockexplorer.replace("{{ typeLabel }}", typeLabel);
+    const lockupAddressLabel = blockExplorerLabel(
+        dict.en.blockexplorer_lockup_address,
+    );
+    const lockupTransactionLabel = blockExplorerLabel(
+        dict.en.blockexplorer_lockup_tx,
+    );
+    const claimTransactionLabel = blockExplorerLabel(
+        dict.en.blockexplorer_claim_tx,
+    );
+
     describe("Submarine and Reverse Swaps", () => {
         test.each`
             type                  | asset   | address  | params
@@ -30,7 +43,7 @@ describe("BlockExplorerLink", () => {
                 );
 
                 const button = (await screen.findByText(
-                    "open lockup address",
+                    lockupAddressLabel,
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
@@ -59,7 +72,7 @@ describe("BlockExplorerLink", () => {
                 );
 
                 const button = (await screen.findByText(
-                    "open claim transaction",
+                    claimTransactionLabel,
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
@@ -93,7 +106,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open claim transaction",
+                claimTransactionLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
@@ -121,7 +134,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open lockup address",
+                lockupAddressLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
@@ -146,7 +159,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open lockup address",
+                lockupAddressLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
@@ -182,10 +195,8 @@ describe("BlockExplorerLink", () => {
                     { wrapper: contextWrapper },
                 );
 
-                expect(screen.queryByText("open lockup address")).toBeNull();
-                expect(
-                    screen.queryByText("open lockup transaction"),
-                ).toBeNull();
+                expect(screen.queryByText(lockupAddressLabel)).toBeNull();
+                expect(screen.queryByText(lockupTransactionLabel)).toBeNull();
             },
         );
 
@@ -210,10 +221,10 @@ describe("BlockExplorerLink", () => {
                     { wrapper: contextWrapper },
                 );
 
-                expect(screen.queryByText("open lockup address")).toBeNull();
+                expect(screen.queryByText(lockupAddressLabel)).toBeNull();
 
                 const button = (await screen.findByText(
-                    "open lockup transaction",
+                    lockupTransactionLabel,
                 )) as HTMLAnchorElement;
 
                 expect(button.href).toEqual(
@@ -246,7 +257,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open lockup transaction",
+                lockupTransactionLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
@@ -273,7 +284,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open claim transaction",
+                claimTransactionLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
@@ -305,7 +316,7 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                "open claim transaction",
+                claimTransactionLabel,
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
