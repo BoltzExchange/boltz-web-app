@@ -3,8 +3,8 @@ import BigNumber from "bignumber.js";
 import { createProvider } from "boltz-swaps/evm";
 import log from "loglevel";
 import { IoKey, IoWallet } from "solid-icons/io";
-import type { Accessor } from "solid-js";
 import {
+    type Accessor,
     For,
     Match,
     Show,
@@ -24,7 +24,7 @@ import Pagination, {
     mobileItemsPerPage,
 } from "../components/Pagination";
 import RescueFileUpload, {
-    RescueFileError,
+    type RescueFileError,
     type RescueFileResult,
 } from "../components/RescueFileUpload";
 import { SwapIcons } from "../components/SwapIcons";
@@ -52,8 +52,9 @@ import "../style/asset.scss";
 import "../style/rescueExternal.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import { isEmptyPreimageHash } from "../utils/commitment";
-import type { LogRefundData, SwapContract } from "../utils/contractLogs";
 import {
+    type LogRefundData,
+    type SwapContract,
     getTimelockBlockNumber,
     scanLockupEvents,
 } from "../utils/contractLogs";

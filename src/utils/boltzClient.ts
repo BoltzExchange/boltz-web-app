@@ -588,13 +588,15 @@ export const getRestorableSwaps = (
     xpub: string,
     pagination?: { startIndex: number; limit: number },
     signal?: AbortSignal,
-) =>
-    fetcher<RestorableSwap[]>(
+) => {
+    const options = signal === undefined ? undefined : { signal };
+    return fetcher<RestorableSwap[]>(
         `/v2/swap/restore`,
         { xpub, pagination },
-        signal !== undefined ? { signal } : undefined,
+        options,
         30_000,
     );
+};
 
 export const assetRescueSetup = (
     asset: string,

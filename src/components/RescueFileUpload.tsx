@@ -6,9 +6,9 @@ import { Match, Show, Switch, createEffect } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
+import type { DictKey } from "../i18n/i18n";
 import { formatError } from "../utils/errors";
-import type { RescueFile } from "../utils/rescueFile";
-import { validateRescueFile } from "../utils/rescueFile";
+import { type RescueFile, validateRescueFile } from "../utils/rescueFile";
 import MnemonicInput from "./MnemonicInput";
 import RescueFileInput from "./RescueFileInput";
 
@@ -19,6 +19,7 @@ export enum RescueFileError {
 export type RescueFileResult = {
     data: RescueFile;
     fileName?: string;
+    fileNameKey?: DictKey;
 };
 
 type RescueFileUploadProps = {
@@ -27,9 +28,9 @@ type RescueFileUploadProps = {
     onReset?: () => void;
     showMnemonicOption?: boolean;
     autoSubmitMnemonic?: boolean;
-    mnemonicBackLabel?: string;
+    mnemonicBackLabel?: DictKey;
     fileName?: string | null;
-    error?: string;
+    errorKey?: DictKey;
 };
 
 export const checkRefundJsonKeys = (
@@ -113,7 +114,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
 
         props.onFileValidated({
             data,
-            fileName: t("rescue_key"),
+            fileNameKey: "rescue_key",
         });
 
         setSearchParams({
@@ -158,11 +159,15 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                         id="refundUpload"
                         data-testid="refundUpload"
                         displayFileName={props.fileName ?? undefined}
-                        error={props.error}
+                        error={
+                            props.errorKey !== undefined
+                                ? t(props.errorKey)
+                                : undefined
+                        }
                         onChange={(e) => uploadChange(e)}
                         onClear={handleReset}
                     />
-                    <Show when={!props.fileName && !props.error}>
+                    <Show when={!props.fileName && !props.errorKey}>
                         <p style={{ margin: "5px 0" }}>{t("or")}</p>
                         <Show when={showMnemonicOption()}>
                             <button
@@ -193,7 +198,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                                 mode: null,
                             });
                         }}>
-                        {props.mnemonicBackLabel ?? t("back")}
+                        {t(props.mnemonicBackLabel ?? "back")}
                     </button>
                 </Match>
             </Switch>
