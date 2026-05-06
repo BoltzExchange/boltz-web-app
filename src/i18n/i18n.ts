@@ -475,6 +475,8 @@ const dict = {
             "To claim this swap, go back and scan with your rescue file uploaded.",
         refund_scan_required:
             "To refund this balance, go back and scan with your rescue file uploaded.",
+        refund_destination_hint:
+            "Funds will be refunded as USDT on Arbitrum to your connected EVM wallet.",
         invalid_rescue_key_evm:
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
@@ -991,6 +993,8 @@ const dict = {
             "Um diesen Swap zu claimen, gehe zurück und scanne mit hochgeladener Rescue-Datei.",
         refund_scan_required:
             "Um dieses Guthaben zu erstatten, gehe zurück und scanne mit hochgeladener Rescue-Datei.",
+        refund_destination_hint:
+            "Das Guthaben wird als USDT auf Arbitrum an dein verbundenes EVM-Wallet erstattet.",
         invalid_rescue_key_evm:
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
@@ -1503,6 +1507,8 @@ const dict = {
             "Para reclamar este intercambio, vuelve y escanea con tu archivo de rescate cargado.",
         refund_scan_required:
             "Para reembolsar este saldo, vuelve y escanea con tu archivo de rescate cargado.",
+        refund_destination_hint:
+            "Los fondos se reembolsarán como USDT en Arbitrum a tu monedero EVM conectado.",
         invalid_rescue_key_evm:
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
@@ -2011,6 +2017,8 @@ const dict = {
             "Para reivindicar esta troca, volte e escaneie com o arquivo de resgate carregado.",
         refund_scan_required:
             "Para reembolsar este saldo, volte e escaneie com o arquivo de resgate carregado.",
+        refund_destination_hint:
+            "Os fundos serão reembolsados como USDT no Arbitrum para sua carteira EVM conectada.",
         invalid_rescue_key_evm:
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
@@ -2470,6 +2478,8 @@ const dict = {
         claim_scan_required: "要领取此交换，请返回并在上传救援文件后进行扫描。",
         refund_scan_required:
             "要退还此余额，请返回并在上传救援文件后进行扫描。",
+        refund_destination_hint:
+            "资金将以 USDT 的形式在 Arbitrum 上退还到你连接的 EVM 钱包。",
         invalid_rescue_key_evm:
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
@@ -2972,6 +2982,8 @@ const dict = {
             "このスワップを請求するには、レスキューファイルをアップロードして戻り、スキャンしてください。",
         refund_scan_required:
             "この残高を返金するには、レスキューファイルをアップロードして戻り、スキャンしてください。",
+        refund_destination_hint:
+            "資金は Arbitrum 上の USDT として、接続中の EVM ウォレットに返金されます。",
         invalid_rescue_key_evm:
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
