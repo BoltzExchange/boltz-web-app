@@ -4,7 +4,9 @@ import { vi } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import InvoiceInput from "../../src/components/InvoiceInput";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { BTC, LBTC, LN, TBTC } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
@@ -12,6 +14,8 @@ import {
     globalSignals,
     signals,
 } from "../helper";
+
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
 vi.mock("../../src/utils/invoice", async () => {
     const actual = await vi.importActual("../../src/utils/invoice");
@@ -56,6 +60,19 @@ vi.mock("../../src/utils/validation", async () => {
 
 afterEach(() => {
     localStorage.clear();
+});
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        ...runtimeConfig.assets,
+        "USDC-SOL": structuredClone(mainnetConfig.assets!["USDC-SOL"]),
+        "USDT0-SOL": structuredClone(mainnetConfig.assets!["USDT0-SOL"]),
+        "USDT0-TRON": structuredClone(mainnetConfig.assets!["USDT0-TRON"]),
+    };
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
 });
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
@@ -110,6 +127,43 @@ describe("AddressInput", () => {
                     expect(input.className).toContain("invalid");
                 });
             }
+        },
+    );
+
+    test.each`
+        asset           | address
+        ${TBTC}         | ${runtimeConfig.assets!.TBTC.token!.address}
+        ${"USDC-SOL"}   | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
+        ${"USDT0-SOL"}  | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
+        ${"USDT0-SOL"}  | ${"Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"}
+        ${"USDT0-TRON"} | ${"TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"}
+    `(
+        "should reject known token address $address",
+        async ({ asset, address }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <AddressInput />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            setPairAssets(signals.pair().fromAsset, asset);
+
+            const input = (await screen.findByTestId(
+                "onchainAddress",
+            )) as HTMLInputElement;
+
+            fireEvent.input(input, {
+                target: { value: address },
+            });
+
+            await waitFor(() => {
+                expect(signals.addressValid()).toEqual(false);
+                expect(input.className).toContain("invalid");
+            });
         },
     );
 
