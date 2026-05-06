@@ -145,6 +145,7 @@ vi.mock("ethers", () => {
         getAddress: (value: string) => value,
         getBytes,
         id: (value: string) => keccak256(toBytes(value)),
+        isAddress: (value: string) => /^0x[0-9a-fA-F]{40}$/.test(value),
         keccak256: vi.fn((value: string) => value),
         solidityPacked,
         zeroPadValue,
