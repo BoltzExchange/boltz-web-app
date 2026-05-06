@@ -6,7 +6,7 @@ import AddressInput from "../../src/components/AddressInput";
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, TBTC } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
@@ -132,6 +132,7 @@ describe("AddressInput", () => {
 
     test.each`
         asset           | address
+        ${TBTC}         | ${runtimeConfig.assets!.TBTC.token!.address}
         ${"USDC-SOL"}   | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
         ${"USDT0-SOL"}  | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
         ${"USDT0-SOL"}  | ${"Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"}

@@ -1,18 +1,18 @@
-import { isAddress } from "ethers/address";
+import { isAddress } from "ethers";
 
 import { config } from "../config";
-import { isStablecoinAsset } from "../consts/Assets";
+import { AssetKind } from "../consts/AssetKind";
 
 const normalizeAddress = (address: string) => {
     const trimmed = address.trim();
     return isAddress(trimmed) ? trimmed.toLowerCase() : trimmed;
 };
 
-export const isKnownStablecoinTokenAddress = (
+export const isKnownTokenAddress = (
     asset: string,
     address: string,
 ): boolean => {
-    if (!isStablecoinAsset(asset)) {
+    if (config.assets?.[asset]?.type !== AssetKind.ERC20) {
         return false;
     }
 
@@ -21,9 +21,9 @@ export const isKnownStablecoinTokenAddress = (
         return false;
     }
 
-    return Object.entries(config.assets ?? {}).some(
-        ([candidateAsset, candidateConfig]) =>
-            isStablecoinAsset(candidateAsset) &&
+    return Object.values(config.assets ?? {}).some(
+        (candidateConfig) =>
+            candidateConfig.type === AssetKind.ERC20 &&
             candidateConfig.token?.address !== undefined &&
             normalizeAddress(candidateConfig.token.address) ===
                 normalizedAddress,

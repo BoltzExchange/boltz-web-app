@@ -25,7 +25,7 @@ import {
     extractInvoice,
     isInvoice,
 } from "../utils/invoice";
-import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
+import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 
 const AddressInput = () => {
     let inputRef!: HTMLInputElement;
@@ -70,7 +70,7 @@ const AddressInput = () => {
             const currentPair = pair();
             const assetName = currentPair.toAsset;
 
-            if (isKnownStablecoinTokenAddress(assetName, address)) {
+            if (isKnownTokenAddress(assetName, address)) {
                 throw new Error("token address");
             }
 

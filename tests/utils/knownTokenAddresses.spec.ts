@@ -1,7 +1,7 @@
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { isKnownStablecoinTokenAddress } from "../../src/utils/knownTokenAddresses";
+import { BTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import { isKnownTokenAddress } from "../../src/utils/knownTokenAddresses";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
@@ -18,9 +18,10 @@ afterAll(() => {
     runtimeConfig.assets = originalAssets;
 });
 
-describe("known stablecoin token addresses", () => {
+describe("known token addresses", () => {
     test.each`
         asset           | tokenAddress
+        ${TBTC}         | ${"0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40"}
         ${USDC}         | ${"0xAF88D065E77C8CC2239327C5EDB3A432268E5831"}
         ${USDT0}        | ${"0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9"}
         ${"USDC-SOL"}   | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
@@ -29,43 +30,56 @@ describe("known stablecoin token addresses", () => {
     `(
         "matches $asset token address $tokenAddress",
         ({ asset, tokenAddress }) => {
-            expect(isKnownStablecoinTokenAddress(asset, tokenAddress)).toBe(
-                true,
-            );
+            expect(isKnownTokenAddress(asset, tokenAddress)).toBe(true);
         },
     );
 
-    test("matches a different stablecoin's token address", () => {
+    test("matches a different token address", () => {
         expect(
-            isKnownStablecoinTokenAddress(
+            isKnownTokenAddress(
                 "USDT0-SOL",
                 runtimeConfig.assets!["USDC-SOL"].token!.address,
             ),
         ).toBe(true);
     });
 
-    test("matches another configured token address for the same stablecoin", () => {
+    test("matches another configured token address for the same asset", () => {
         expect(
-            isKnownStablecoinTokenAddress(
+            isKnownTokenAddress(
                 "USDC-SOL",
                 runtimeConfig.assets!.USDC.token!.address,
             ),
         ).toBe(true);
     });
 
+    test("does not lowercase case-sensitive token addresses", () => {
+        expect(
+            isKnownTokenAddress(
+                "USDT0-TRON",
+                runtimeConfig.assets![
+                    "USDT0-TRON"
+                ].token!.address.toLowerCase(),
+            ),
+        ).toBe(false);
+    });
+
     test("does not match regular addresses", () => {
         expect(
-            isKnownStablecoinTokenAddress(
+            isKnownTokenAddress(
                 USDC,
                 "0x1000000000000000000000000000000000000000",
             ),
         ).toBe(false);
     });
 
-    test("ignores assets without token config", () => {
+    test.each`
+        asset
+        ${BTC}
+        ${RBTC}
+    `("ignores non-ERC20 asset $asset", ({ asset }) => {
         expect(
-            isKnownStablecoinTokenAddress(
-                BTC,
+            isKnownTokenAddress(
+                asset,
                 runtimeConfig.assets!.USDC.token!.address,
             ),
         ).toBe(false);

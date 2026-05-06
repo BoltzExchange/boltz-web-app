@@ -28,7 +28,7 @@ import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
-import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
+import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 import { useGlobalContext } from "./Global";
 
@@ -371,7 +371,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     };
 
     const hasBlockedOnchainAddress = () =>
-        isKnownStablecoinTokenAddress(pair().toAsset, onchainAddress());
+        isKnownTokenAddress(pair().toAsset, onchainAddress());
 
     createEffect(() => {
         if (amountValid() && pair().isRoutable) {

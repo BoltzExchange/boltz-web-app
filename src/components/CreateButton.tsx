@@ -45,7 +45,7 @@ import {
     fetchLnurl,
     getAssetByBip21Prefix,
 } from "../utils/invoice";
-import { isKnownStablecoinTokenAddress } from "../utils/knownTokenAddresses";
+import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/quoter";
@@ -888,9 +888,7 @@ const CreateButton = () => {
                 getGasToken(),
             );
 
-            if (
-                isKnownStablecoinTokenAddress(assetReceive(), onchainAddress())
-            ) {
+            if (isKnownTokenAddress(assetReceive(), onchainAddress())) {
                 showInvalidAddress(assetReceive());
                 return;
             }
