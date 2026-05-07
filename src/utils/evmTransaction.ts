@@ -1,44 +1,81 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import {
-    Interface,
-    type TransactionReceipt,
-    type TransactionRequest,
-    type Wallet,
-} from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
+import {
+    type Address,
+    type Hash,
+    type Hex,
+    type TransactionReceipt,
+    encodeFunctionData,
+    getAddress,
+    isAddressEqual,
+    parseEventLogs,
+} from "viem";
 
 import {
     type AlchemyCall,
     type SendAlchemyTransactionOptions,
     sendTransaction as sendAlchemyTransaction,
+    toAlchemyCall,
 } from "../alchemy/Alchemy";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+} from "../context/contracts";
+import { erc20Abi, erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import { relayClaimTransaction } from "../rif/Signer";
-import { prefix0x, satsToAssetAmount } from "./rootstock";
+import { satsToAssetAmount } from "./rootstock";
 import { GasAbstractionType } from "./swapCreator";
 
+export const prefix0x = (val: string): Hex =>
+    (val.startsWith("0x") ? val : `0x${val}`) as Hex;
+
 export type LockupEvent = {
-    preimageHash: string;
+    preimageHash: Hex;
     amount: bigint;
-    tokenAddress?: string;
-    claimAddress: string;
-    refundAddress: string;
+    tokenAddress?: Address;
+    claimAddress: Address;
+    refundAddress: Address;
     timelock: bigint;
     logIndex: number;
 };
+
+type SwapAbi = typeof etherSwapAbi | typeof erc20SwapAbi;
 
 type SendPopulatedTransactionOptions = {
     alchemy?: SendAlchemyTransactionOptions;
 };
 
+export type PopulatedEvmTransaction = {
+    to?: Address;
+    data?: Hex;
+    value?: bigint;
+    gas?: bigint;
+    gasPrice?: bigint;
+    maxFeePerGas?: bigint;
+    maxPriorityFeePerGas?: bigint;
+    nonce?: number;
+};
+
+const transactionHashFromResponse = (response: unknown): Hash => {
+    if (typeof response === "string") {
+        return response as Hash;
+    }
+    if (typeof response === "object" && response !== null) {
+        const hash = Reflect.get(response, "hash");
+        if (typeof hash === "string") {
+            return hash as Hash;
+        }
+    }
+    throw new Error("transaction response did not include a hash");
+};
+
 export const getSignerForGasAbstraction = (
     gasAbstraction: GasAbstractionType,
     signer: Signer | undefined,
-    gasAbstractionSigner: Wallet,
-): Signer | Wallet | undefined => {
+    gasAbstractionSigner: Signer,
+): Signer | undefined => {
     switch (gasAbstraction) {
         case GasAbstractionType.None:
         case GasAbstractionType.RifRelay:
@@ -51,10 +88,10 @@ export const getSignerForGasAbstraction = (
 
 export const sendPopulatedTransaction = async (
     gasAbstraction: GasAbstractionType,
-    signer: Signer | Wallet,
-    transaction: TransactionRequest | AlchemyCall[],
+    signer: Signer,
+    transaction: PopulatedEvmTransaction | AlchemyCall[],
     options?: SendPopulatedTransactionOptions,
-): Promise<string> => {
+): Promise<Hash> => {
     switch (gasAbstraction) {
         case GasAbstractionType.None:
         case GasAbstractionType.RifRelay: {
@@ -67,54 +104,34 @@ export const sendPopulatedTransaction = async (
                 transaction.to,
                 transaction.data,
             );
-            const response = await signer.sendTransaction(transaction);
-            return response.hash;
+            // viem's `sendTransaction` discriminates between legacy / EIP-1559
+            // / blob branches; `PopulatedEvmTransaction` deliberately stays
+            // mode-agnostic because we receive it from upstream populators that
+            // pick the mode at runtime. Cast through `never` to bypass the
+            // exhaustive discriminator on the request shape.
+            const params = {
+                account:
+                    signer.account.type === "local"
+                        ? signer.account
+                        : signer.address,
+                chain: null,
+                ...transaction,
+            } as never;
+            const response = await signer.sendTransaction(params);
+            return transactionHashFromResponse(response);
         }
 
         case GasAbstractionType.Signer: {
-            if (signer.provider === null) {
-                throw new Error(
-                    "gas abstraction signer requires a provider to send via Alchemy",
-                );
-            }
+            const calls = Array.isArray(transaction)
+                ? transaction
+                : [toAlchemyCall(transaction)];
+            log.debug("Sending transaction via Alchemy", calls);
 
-            const isCalls = Array.isArray(transaction);
-            log.debug(
-                "Sending transaction via Alchemy",
-                isCalls
-                    ? transaction.map((call) => ({
-                          to: call.to,
-                          data: call.data,
-                          value: call.value?.toString() ?? undefined,
-                      }))
-                    : [
-                          {
-                              to: transaction.to as string,
-                              data: transaction.data,
-                              value: transaction.value?.toString() ?? undefined,
-                          },
-                      ],
-            );
-
-            if (signer.provider === null) {
-                throw new Error("missing provider on signer");
-            }
-            const { chainId } = await signer.provider.getNetwork();
+            const chainId = BigInt(await signer.provider.getChainId());
             return await sendAlchemyTransaction(
-                signer as Wallet,
+                signer,
                 chainId,
-                isCalls
-                    ? transaction
-                    : [
-                          {
-                              data:
-                                  typeof transaction.data === "string"
-                                      ? transaction.data
-                                      : undefined,
-                              to: transaction.to as string,
-                              value: transaction.value?.toString() ?? undefined,
-                          },
-                      ],
+                calls,
                 options?.alchemy,
             );
         }
@@ -128,67 +145,30 @@ export const sendPopulatedTransaction = async (
     }
 };
 
-export const assertTransactionSignerProvider = (
-    signer: Signer | Wallet,
-    context = "transaction signer",
-) => {
-    if (signer.provider === null) {
-        throw new Error(`${context} requires a provider`);
-    }
-
-    return signer.provider;
-};
-
 export const getLockupEvent = (
-    contract: EtherSwap | ERC20Swap,
-    receipt: TransactionReceipt,
-    contractAddress: string,
+    abi: SwapAbi,
+    receipt: Pick<TransactionReceipt, "logs">,
+    contractAddress: Address,
 ): LockupEvent => {
-    const lockupLog = receipt.logs.find((eventLog) => {
-        if (eventLog.address.toLowerCase() !== contractAddress.toLowerCase()) {
-            return false;
-        }
-
-        try {
-            const parsedLog = contract.interface.parseLog({
-                data: eventLog.data,
-                topics: eventLog.topics,
-            });
-            return parsedLog?.name === "Lockup";
-        } catch {
-            return false;
-        }
-    });
+    const [lockupLog] = parseEventLogs({
+        abi,
+        eventName: "Lockup",
+        logs: receipt.logs,
+    }).filter((eventLog) => isAddressEqual(eventLog.address, contractAddress));
 
     if (lockupLog === undefined) {
         throw new Error("could not find commitment lockup event");
     }
 
-    const parsedLockup = contract.interface.parseLog({
-        data: lockupLog.data,
-        topics: lockupLog.topics,
-    });
-    if (parsedLockup?.name !== "Lockup") {
-        throw new Error("could not parse commitment lockup event");
-    }
-
-    const {
-        amount,
-        tokenAddress,
-        claimAddress,
-        refundAddress,
-        timelock,
-        preimageHash,
-    } = parsedLockup.args;
-
+    const { args } = lockupLog;
     return {
-        amount,
-        tokenAddress,
-        claimAddress,
-        refundAddress,
-        timelock,
-        preimageHash,
-        logIndex: lockupLog.index,
+        amount: args.amount,
+        tokenAddress: "tokenAddress" in args ? args.tokenAddress : undefined,
+        claimAddress: args.claimAddress,
+        refundAddress: args.refundAddress,
+        timelock: args.timelock,
+        preimageHash: args.preimageHash,
+        logIndex: lockupLog.logIndex ?? 0,
     };
 };
 
@@ -197,23 +177,19 @@ export type ClaimResult = {
     receiveAmount: bigint;
 };
 
-export const erc20TransferInterface = new Interface([
-    "function transfer(address to, uint256 amount)",
-]);
-
 export const claimAsset = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
     amount: number | bigint,
-    claimAddress: string,
-    refundAddress: string,
+    claimAddress: Address,
+    refundAddress: Address,
     timeoutBlockHeight: number,
-    destination: string,
+    destination: Address,
     signer: Accessor<Signer>,
-    getGasAbstractionSigner: Wallet,
-    etherSwap: EtherSwap,
-    erc20Swap: ERC20Swap,
+    getGasAbstractionSigner: Signer,
+    etherSwap: EtherSwapContract,
+    erc20Swap: Erc20SwapContract,
 ): Promise<ClaimResult> => {
     const assetAmount = satsToAssetAmount(amount, asset);
 
@@ -244,39 +220,50 @@ export const claimAsset = async (
 
             const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;
             const tx = isErc20
-                ? await (erc20Swap.connect(claimSigner) as ERC20Swap)[
-                      "claim(bytes32,uint256,address,address,address,uint256)"
-                  ].populateTransaction(
-                      prefix0x(preimage),
-                      assetAmount,
-                      getTokenAddress(asset),
-                      claimAddress,
-                      refundAddress,
-                      timeoutBlockHeight,
-                  )
-                : await (etherSwap.connect(claimSigner) as EtherSwap)[
-                      "claim(bytes32,uint256,address,address,uint256)"
-                  ].populateTransaction(
-                      prefix0x(preimage),
-                      assetAmount,
-                      claimAddress,
-                      refundAddress,
-                      timeoutBlockHeight,
-                  );
+                ? ({
+                      to: erc20Swap.address,
+                      data: encodeFunctionData({
+                          abi: erc20SwapAbi,
+                          functionName: "claim",
+                          args: [
+                              prefix0x(preimage),
+                              assetAmount,
+                              getAddress(getTokenAddress(asset)),
+                              getAddress(claimAddress),
+                              getAddress(refundAddress),
+                              BigInt(timeoutBlockHeight),
+                          ],
+                      }),
+                  } satisfies PopulatedEvmTransaction)
+                : ({
+                      to: etherSwap.address,
+                      data: encodeFunctionData({
+                          abi: etherSwapAbi,
+                          functionName: "claim",
+                          args: [
+                              prefix0x(preimage),
+                              assetAmount,
+                              getAddress(claimAddress),
+                              getAddress(refundAddress),
+                              BigInt(timeoutBlockHeight),
+                          ],
+                      }),
+                  } satisfies PopulatedEvmTransaction);
 
             if (
                 gasAbstraction === GasAbstractionType.Signer &&
                 isErc20 &&
-                claimAddress.toLowerCase() !== destination.toLowerCase()
+                !isAddressEqual(claimAddress, destination)
             ) {
                 const calls: AlchemyCall[] = [
-                    { to: tx.to as string, data: tx.data as string },
+                    { to: tx.to, data: tx.data },
                     {
-                        to: getTokenAddress(asset),
-                        data: erc20TransferInterface.encodeFunctionData(
-                            "transfer",
-                            [destination, assetAmount],
-                        ),
+                        to: getTokenAddress(asset) as Address,
+                        data: encodeFunctionData({
+                            abi: erc20Abi,
+                            functionName: "transfer",
+                            args: [getAddress(destination), assetAmount],
+                        }),
                     },
                 ];
                 return {

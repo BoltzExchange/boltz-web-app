@@ -3,7 +3,7 @@ import Loader from "./Loader";
 export default new Loader("WalletConnect", async () => {
     const [
         appKit,
-        EthersAdapter,
+        WagmiAdapter,
         SolanaAdapter,
         TronAdapter,
         MetaMaskAdapter,
@@ -12,8 +12,8 @@ export default new Loader("WalletConnect", async () => {
     ] = await Promise.all([
         import("@reown/appkit"),
         (async () => {
-            const ethersAdapter = await import("@reown/appkit-adapter-ethers");
-            return ethersAdapter.EthersAdapter;
+            const wagmiAdapter = await import("@reown/appkit-adapter-wagmi");
+            return wagmiAdapter.WagmiAdapter;
         })(),
         (async () => {
             const solanaAdapter = await import("@reown/appkit-adapter-solana");
@@ -38,7 +38,7 @@ export default new Loader("WalletConnect", async () => {
 
     return {
         appKit,
-        EthersAdapter,
+        WagmiAdapter,
         SolanaAdapter,
         TronAdapter,
         MetaMaskAdapter,

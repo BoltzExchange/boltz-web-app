@@ -1,3 +1,5 @@
+import { type Address } from "viem";
+
 import { NetworkTransport } from "../../configs/base";
 import { getNetworkTransport } from "../../consts/Assets";
 import { createAssetProvider } from "../provider";
@@ -10,7 +12,9 @@ export const getAssetNativeBalance = async (
 ): Promise<bigint> => {
     switch (getNetworkTransport(asset)) {
         case NetworkTransport.Evm:
-            return await createAssetProvider(asset).getBalance(ownerAddress);
+            return await createAssetProvider(asset).getBalance({
+                address: ownerAddress as Address,
+            });
 
         case NetworkTransport.Solana:
             return await getSolanaNativeBalance(asset, ownerAddress);

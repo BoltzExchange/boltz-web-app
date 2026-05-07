@@ -79,10 +79,9 @@ describe("Fees component", () => {
         mockUseWeb3Signer.mockReturnValue({
             signer: () => ({
                 address: "0xsigner",
-                getAddress: vi.fn().mockResolvedValue("0xsigner"),
                 provider: {
                     getBalance: vi.fn().mockResolvedValue(1_000_000_000_000n),
-                    getFeeData: vi.fn().mockResolvedValue({
+                    estimateFeesPerGas: vi.fn().mockResolvedValue({
                         gasPrice: 100_000_000n,
                     }),
                 },
@@ -296,10 +295,9 @@ describe("Fees component", () => {
         mockUseWeb3Signer.mockReturnValueOnce({
             signer: () => ({
                 address: "0xsigner",
-                getAddress: vi.fn().mockResolvedValue("0xsigner"),
                 provider: {
                     getBalance: vi.fn().mockResolvedValue(0n),
-                    getFeeData: vi.fn().mockResolvedValue({
+                    estimateFeesPerGas: vi.fn().mockResolvedValue({
                         gasPrice: 100_000_000n,
                     }),
                 },

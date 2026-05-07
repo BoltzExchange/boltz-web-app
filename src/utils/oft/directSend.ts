@@ -1,9 +1,9 @@
-import { Contract, type ContractRunner } from "ethers";
+import { type PublicClient, getAddress, getContract, parseAbi } from "viem";
 
 import { config } from "../../config";
 import { requireTokenConfig } from "../../consts/Assets";
-import TempoOFTWrapperAbi from "../../consts/abis/tempo/TempoOFTWrapper.json";
-import { createEvmOftContract } from "./evm";
+import type { Signer } from "../../context/Web3";
+import { createEvmOftContract, toViemSendParam } from "./evm";
 import { getBufferedOftNativeFee } from "./oft";
 import {
     type OftContract,
@@ -35,7 +35,6 @@ export type OftDirectSendTarget =
 
 type OftDirectSendTransaction = {
     hash: string;
-    wait: (confirmations?: number) => Promise<unknown>;
 };
 
 type TempoOftWrapperInstance = {
@@ -47,18 +46,42 @@ type TempoOftWrapperInstance = {
     ) => Promise<OftDirectSendTransaction>;
 };
 
+const tempoOftWrapperAbi = parseAbi([
+    "function sendOFT(address oft, address feeToken, (uint32 dstEid, bytes32 to, uint256 amountLD, uint256 minAmountLD, bytes extraOptions, bytes composeMsg, bytes oftCmd) sendParam, uint256 maxNativeFee) returns ((bytes32 guid, uint64 nonce, (uint256 nativeFee, uint256 lzTokenFee) fee), (uint256 amountSentLD, uint256 amountReceivedLD))",
+]);
+
 const tempoChainName = "tempo";
 const tempoWrapperContractName = "TempoOFTWrapper";
 
 const createTempoOftWrapperContract = (
     address: string,
-    runner: ContractRunner,
-): TempoOftWrapperInstance =>
-    new Contract(
-        address,
-        TempoOFTWrapperAbi,
-        runner,
-    ) as unknown as TempoOftWrapperInstance;
+    runner: Signer,
+): TempoOftWrapperInstance => {
+    const contract = getContract({
+        address: getAddress(address),
+        abi: tempoOftWrapperAbi,
+        client: { public: runner.provider, wallet: runner },
+    });
+    return {
+        sendOFT: async (
+            oftAddress,
+            feeTokenAddress,
+            sendParam,
+            maxNativeFee,
+        ) => {
+            const hash = await contract.write.sendOFT(
+                [
+                    getAddress(oftAddress),
+                    getAddress(feeTokenAddress),
+                    toViemSendParam(sendParam),
+                    maxNativeFee,
+                ],
+                { account: runner.account, chain: null },
+            );
+            return { hash };
+        },
+    };
+};
 
 const isTempoSourceAsset = (asset: string): boolean => {
     return (
@@ -141,7 +164,7 @@ export const getOftDirectRequiredNativeBalance = (
 
 export const requiresOftDirectUserApproval = async (
     target: OftDirectSendTarget,
-    runner: ContractRunner,
+    runner: PublicClient | Signer,
 ): Promise<boolean> => {
     switch (target.kind) {
         case OftDirectSendTargetKind.Oft:
@@ -170,7 +193,7 @@ export const sendOftDirect = async ({
     refundAddress,
 }: {
     target: OftDirectSendTarget;
-    runner: ContractRunner;
+    runner: Signer;
     sendParam: SendParam;
     msgFee: MsgFee;
     refundAddress: string;

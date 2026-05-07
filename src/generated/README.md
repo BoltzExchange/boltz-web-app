@@ -10,12 +10,16 @@ Run all Solana binding generation:
 bun run generate
 ```
 
-Run one target:
+## `evm-abis.ts`
+
+Generated from `boltz-core/out/**.json` contract artifacts:
 
 ```sh
-bun run generate:solana-oft
-bun run generate:solana-cctp
+bun run generate:evm-abis
 ```
+
+The generated TypeScript ABI module is intentionally ignored and can be
+recreated with `bun run generate`.
 
 ## `solana-oft-idl.json`
 

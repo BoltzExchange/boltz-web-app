@@ -7,9 +7,9 @@ import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { config } from "src/config";
-import { arbitrumChainId } from "src/configs/base";
 
+import { config } from "../config";
+import { arbitrumChainId } from "../configs/base";
 import {
     type AssetType,
     ETH,

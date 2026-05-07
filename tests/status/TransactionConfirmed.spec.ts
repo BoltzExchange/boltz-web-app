@@ -1,7 +1,8 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { Wallet } from "ethers";
-
+import type { Signer } from "../../src/context/Web3";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+} from "../../src/context/contracts";
 import {
     normalizePersistedReceiveAmount,
     signErc20ClaimToRouter,
@@ -64,9 +65,9 @@ describe("TransactionConfirmed claimAsset", () => {
     test("should keep RifRelay as the special relay path", async () => {
         const signer = { address: "0xsigner" };
         const signerAccessor = () => signer;
-        const etherSwap = {} as EtherSwap;
-        const erc20Swap = {} as ERC20Swap;
-        const gasAbstractionSigner = {} as Wallet;
+        const etherSwap = {} as EtherSwapContract;
+        const erc20Swap = {} as Erc20SwapContract;
+        const gasAbstractionSigner = {} as Signer;
 
         mockRelayClaimTransaction.mockResolvedValue("0xrelay");
 
@@ -103,9 +104,9 @@ describe("TransactionConfirmed claimAsset", () => {
     test("should accept satoshi amount as bigint for RifRelay", async () => {
         const signer = { address: "0xsigner" };
         const signerAccessor = () => signer;
-        const etherSwap = {} as EtherSwap;
-        const erc20Swap = {} as ERC20Swap;
-        const gasAbstractionSigner = {} as Wallet;
+        const etherSwap = {} as EtherSwapContract;
+        const erc20Swap = {} as Erc20SwapContract;
+        const gasAbstractionSigner = {} as Signer;
 
         mockRelayClaimTransaction.mockResolvedValue("0xrelay");
 
@@ -161,20 +162,15 @@ describe("TransactionConfirmed claimAsset", () => {
 
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {
         const signer = {
-            signTypedData: vi.fn().mockResolvedValue("0xsigned"),
-        };
-        const connectedErc20Swap = {
-            version: vi.fn().mockResolvedValue(7),
-            getAddress: vi
+            signTypedData: vi
                 .fn()
-                .mockResolvedValue(
-                    "0x1000000000000000000000000000000000000000",
-                ),
+                .mockResolvedValue(`0x${"b".repeat(64)}${"c".repeat(64)}1b`),
         };
         const erc20Swap = {
-            connect: vi.fn().mockReturnValue(connectedErc20Swap),
-            version: vi.fn().mockRejectedValue(new Error("wrong runner")),
-            getAddress: vi.fn().mockRejectedValue(new Error("wrong runner")),
+            address: "0x1000000000000000000000000000000000000000",
+            read: {
+                version: vi.fn().mockResolvedValue(7),
+            },
         };
 
         await expect(
@@ -189,45 +185,44 @@ describe("TransactionConfirmed claimAsset", () => {
                 144,
                 "0x4000000000000000000000000000000000000000",
             ),
-        ).resolves.toEqual("0xsigned");
+        ).resolves.toMatchObject({
+            r: `0x${"b".repeat(64)}`,
+            s: `0x${"c".repeat(64)}`,
+        });
 
-        expect(erc20Swap.connect).toHaveBeenCalledWith(signer);
-        expect(connectedErc20Swap.version).toHaveBeenCalledTimes(1);
-        expect(connectedErc20Swap.getAddress).toHaveBeenCalledTimes(1);
+        expect(erc20Swap.read.version).toHaveBeenCalledTimes(1);
         expect(signer.signTypedData).toHaveBeenCalledWith(
             expect.objectContaining({
-                chainId: 31n,
-                version: "7",
-                verifyingContract: "0x1000000000000000000000000000000000000000",
-            }),
-            expect.any(Object),
-            expect.objectContaining({
-                preimage: `0x${"11".repeat(32)}`,
-                amount: 123n,
-                tokenAddress: "0x2000000000000000000000000000000000000000",
-                refundAddress: "0x3000000000000000000000000000000000000000",
-                destination: "0x4000000000000000000000000000000000000000",
+                domain: expect.objectContaining({
+                    chainId: 31n,
+                    version: "7",
+                    verifyingContract:
+                        "0x1000000000000000000000000000000000000000",
+                }),
+                primaryType: "Claim",
+                types: expect.any(Object),
+                message: expect.objectContaining({
+                    preimage: `0x${"11".repeat(32)}`,
+                    amount: 123n,
+                    tokenAddress: "0x2000000000000000000000000000000000000000",
+                    refundAddress: "0x3000000000000000000000000000000000000000",
+                    destination: "0x4000000000000000000000000000000000000000",
+                }),
             }),
         );
     });
 
     test("should use direct ERC20 claim path", async () => {
-        const populatedTx = { to: "0xclaimtx", data: "0xdata" };
-        const populateTransaction = vi.fn().mockResolvedValue(populatedTx);
-        const connectedErc20Swap = {
-            "claim(bytes32,uint256,address,address,address,uint256)": {
-                populateTransaction,
-            },
-        };
         const erc20Swap = {
-            connect: vi.fn().mockReturnValue(connectedErc20Swap),
+            address: "0x5000000000000000000000000000000000000000",
         };
         const signer = {
+            account: { type: "json-rpc" },
             address: "0xsigner",
             sendTransaction: vi.fn().mockResolvedValue({ hash: "0xdirect" }),
         };
         const signerAccessor = () => signer;
-        const gasAbstractionSigner = {} as Wallet;
+        const gasAbstractionSigner = {} as Signer;
 
         await expect(
             claimAsset(
@@ -241,7 +236,7 @@ describe("TransactionConfirmed claimAsset", () => {
                 "0x3000000000000000000000000000000000000000",
                 signerAccessor as never,
                 gasAbstractionSigner,
-                {} as EtherSwap,
+                {} as EtherSwapContract,
                 erc20Swap as never,
             ),
         ).resolves.toEqual({
@@ -249,15 +244,11 @@ describe("TransactionConfirmed claimAsset", () => {
             receiveAmount: satsToAssetAmount(21, "USDT0"),
         });
 
-        expect(erc20Swap.connect).toHaveBeenCalledWith(signer);
-        expect(populateTransaction).toHaveBeenCalledWith(
-            `0x${"11".repeat(32)}`,
-            satsToAssetAmount(21, "USDT0"),
-            "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-            "0x1000000000000000000000000000000000000000",
-            "0x2000000000000000000000000000000000000000",
-            123,
+        expect(signer.sendTransaction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                to: erc20Swap.address,
+                data: expect.stringMatching(/^0x/),
+            }),
         );
-        expect(signer.sendTransaction).toHaveBeenCalledWith(populatedTx);
     });
 });

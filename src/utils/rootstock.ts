@@ -8,8 +8,6 @@ export const satoshiToWei = (satoshis: number | bigint) =>
 
 export const weiToSatoshi = (wei: bigint) => BigInt(wei) / weiFactor;
 
-export const prefix0x = (val: string) => `0x${val}`;
-
 const satsToToken = (sats: number | bigint, decimals: number) => {
     const diff = decimals - 8;
     if (diff >= 0) {

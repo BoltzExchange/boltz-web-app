@@ -1,11 +1,27 @@
-import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
+import {
+    type Address,
+    type EIP1193RequestFn,
+    type Hex,
+    type PublicClient,
+    getAddress,
+    hashDomain,
+    hashStruct,
+    serializeSignature,
+    serializeTransaction,
+} from "viem";
 
 import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
-import { type Provider, createProvider, requireRpcUrls } from "../provider";
+import { prefix0x } from "../evmTransaction";
+import {
+    createProvider,
+    estimateFeesPerGas,
+    requireRpcUrls,
+} from "../provider";
+import { yParityFromV } from "../signature";
 import {
     type DerivedAddress,
     type HardwareSigner,
@@ -15,6 +31,7 @@ import {
 import {
     type HardwareTransactionLike,
     resolveHardwareTransaction,
+    toBigInt,
 } from "./evmTransaction";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
@@ -23,7 +40,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private readonly loader: typeof ledgerLoader;
 
     private transport?: Transport;
-    private provider: Provider;
+    private provider: PublicClient;
     private networkAsset: string;
     private derivationPath = derivationPaths.Ethereum;
 
@@ -38,7 +55,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         this.provider = createProvider(requireRpcUrls(this.networkAsset));
     }
 
-    public getProvider = (): Provider => this.provider;
+    public getProvider = (): PublicClient => this.provider;
 
     public setNetworkAsset = (asset: string) => {
         if (asset === this.networkAsset) {
@@ -67,7 +84,10 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         for (let i = 0; i < limit; i++) {
             const path = `${basePath}/${offset + i}`;
             const { address } = await eth.getAddress(path);
-            addresses.push({ path, address: address.toLowerCase() });
+            addresses.push({
+                path,
+                address: address.toLowerCase() as Address,
+            });
         }
 
         return addresses;
@@ -105,62 +125,76 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     throw new Error("missing params for eth_sendTransaction");
                 }
                 const txParams = request.params[0] as HardwareTransactionLike;
-                if (txParams.from === null || txParams.from === undefined) {
-                    throw new Error("missing from address for transaction");
+                if (txParams.from === undefined) {
+                    throw new Error("missing transaction sender");
                 }
 
-                const [nonce, network, feeData] = await Promise.all([
-                    this.provider.getTransactionCount(txParams.from),
-                    this.provider.getNetwork(),
-                    this.provider.getFeeData(),
-                ]);
+                const txGas = txParams.gasLimit ?? txParams.gas;
+                const [nonce, chainId, feeData, fallbackGas] =
+                    await Promise.all([
+                        this.provider.getTransactionCount({
+                            address: getAddress(txParams.from),
+                        }),
+                        this.provider.getChainId().then(BigInt),
+                        estimateFeesPerGas(this.provider),
+                        txGas !== undefined && txGas !== null
+                            ? Promise.resolve(undefined)
+                            : this.provider.estimateGas({
+                                  account: txParams.from as Address,
+                                  to: txParams.to ?? undefined,
+                                  data: txParams.data,
+                                  value: toBigInt(txParams.value),
+                              }),
+                    ]);
 
                 const resolvedTx = resolveHardwareTransaction(
                     txParams,
-                    network.chainId,
+                    chainId,
                     nonce,
                     feeData,
+                    fallbackGas,
                 );
                 const transactionLike = {
-                    chainId: resolvedTx.chainId,
+                    chainId: Number(resolvedTx.chainId),
                     data: resolvedTx.data,
-                    from: undefined,
-                    gasLimit: resolvedTx.gasLimit,
+                    gas: resolvedTx.gasLimit,
                     nonce: resolvedTx.nonce,
-                    to: resolvedTx.to,
+                    to: resolvedTx.to ?? undefined,
                     value: resolvedTx.value,
                     ...(resolvedTx.type === 2
                         ? {
                               maxFeePerGas: resolvedTx.maxFeePerGas,
                               maxPriorityFeePerGas:
                                   resolvedTx.maxPriorityFeePerGas,
-                              type: 2,
+                              type: "eip1559" as const,
                           }
                         : {
                               gasPrice: resolvedTx.gasPrice,
-                              type: 0,
+                              type: "legacy" as const,
                           }),
                 };
 
                 log.debug("Broadcasting Ledger transaction", transactionLike);
 
-                const tx = Transaction.from(transactionLike);
+                const unsignedSerialized =
+                    serializeTransaction(transactionLike);
 
                 const modules = await this.loader.get();
                 const transport = await this.checkApp(modules);
                 const eth = new modules.eth(transport);
                 const signature = await eth.clearSignTransaction(
                     this.derivationPath,
-                    tx.unsignedSerialized.substring(2),
+                    unsignedSerialized.substring(2),
                     {},
                 );
 
-                tx.signature = this.serializeSignature(signature);
-                await this.provider.send("eth_sendRawTransaction", [
-                    tx.serialized,
-                ]);
-
-                return tx.hash;
+                const signedSerialized = serializeTransaction(
+                    transactionLike,
+                    this.normalizeSignature(signature),
+                );
+                return await this.provider.sendRawTransaction({
+                    serializedTransaction: signedSerialized,
+                });
             }
 
             case "eth_signTypedData_v4": {
@@ -184,27 +218,35 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     // Compatibility with Ledger Nano S
                     log.warn("Clear signing EIP-712 message failed", e);
 
-                    const types = message.types;
+                    // hashDomain reads `types["EIP712Domain"]`; hashStruct
+                    // for the user struct must not see it. Clone so the
+                    // delete doesn't strip it from the caller's object —
+                    // and so hashDomain still has it on `message.types`.
+                    const types = { ...message.types };
                     delete types["EIP712Domain"];
 
                     const signature = await eth.signEIP712HashedMessage(
                         this.derivationPath,
-                        TypedDataEncoder.hashDomain(message.domain),
-                        TypedDataEncoder.hashStruct(
-                            message.primaryType,
+                        hashDomain({
+                            domain: message.domain,
+                            types: message.types,
+                        }),
+                        hashStruct({
+                            primaryType: message.primaryType,
                             types,
-                            message.message,
-                        ),
+                            data: message.message,
+                        }),
                     );
                     return this.serializeSignature(signature);
                 }
             }
         }
 
-        return (await this.provider.send(
-            request.method,
-            request.params ?? [],
-        )) as never;
+        const forwardRequest = this.provider.request as EIP1193RequestFn;
+        return await forwardRequest({
+            method: request.method,
+            params: request.params ?? [],
+        });
     };
 
     public on = () => {};
@@ -261,21 +303,31 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         };
     };
 
-    private serializeSignature = (signature: {
+    private normalizeSignature = (signature: {
         v: number | string;
         r: string;
         s: string;
     }) => {
-        const v =
+        const v = BigInt(
             typeof signature.v === "string" && !signature.v.startsWith("0x")
-                ? BigInt(`0x${signature.v}`)
-                : signature.v;
+                ? prefix0x(signature.v)
+                : signature.v,
+        );
 
-        return Signature.from({
+        return {
             v,
-            r: BigInt(`0x${signature.r}`).toString(),
-            s: BigInt(`0x${signature.s}`).toString(),
-        }).serialized;
+            yParity: yParityFromV(v),
+            r: prefix0x(signature.r),
+            s: prefix0x(signature.s),
+        };
+    };
+
+    private serializeSignature = (signature: {
+        v: number | string;
+        r: string;
+        s: string;
+    }): Hex => {
+        return serializeSignature(this.normalizeSignature(signature));
     };
 }
 

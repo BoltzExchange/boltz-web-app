@@ -5,7 +5,10 @@ import { NetworkTransport } from "../../src/configs/base";
 import * as globalContext from "../../src/context/Global";
 import * as web3Context from "../../src/context/Web3";
 import WalletConnectProvider from "../../src/utils/WalletConnectProvider";
-import { sendTronTokenApproval } from "../../src/utils/oft/tron";
+import {
+    sendTronTokenApproval,
+    waitForSuccessfulTronTransaction,
+} from "../../src/utils/oft/tron";
 
 vi.mock("../../src/components/ConnectWallet", () => ({
     default: () => <div data-testid="connect-wallet" />,
@@ -28,6 +31,7 @@ vi.mock("../../src/components/ContractTransaction", () => ({
 
 vi.mock("../../src/utils/oft/tron", () => ({
     sendTronTokenApproval: vi.fn(),
+    waitForSuccessfulTronTransaction: vi.fn(),
 }));
 
 describe("ApproveTrc20", () => {
@@ -68,11 +72,12 @@ describe("ApproveTrc20", () => {
     });
 
     it("submits a single approval by default", async () => {
-        const finalTx = {
+        vi.mocked(sendTronTokenApproval).mockResolvedValue({
             hash: "tron-approve",
-            wait: vi.fn().mockResolvedValue(undefined),
-        };
-        vi.mocked(sendTronTokenApproval).mockResolvedValue(finalTx as never);
+        });
+        vi.mocked(waitForSuccessfulTronTransaction).mockResolvedValue(
+            undefined as never,
+        );
 
         renderApprove();
         fireEvent.click(screen.getByRole("button", { name: "approve" }));
@@ -85,7 +90,10 @@ describe("ApproveTrc20", () => {
                 walletProvider,
             });
         });
-        expect(finalTx.wait).toHaveBeenCalledWith(1);
+        expect(waitForSuccessfulTronTransaction).toHaveBeenCalledWith(
+            "USDT0-TRON",
+            "tron-approve",
+        );
         await waitFor(() => {
             expect(mockSetNeedsApproval).toHaveBeenCalledWith(false);
         });

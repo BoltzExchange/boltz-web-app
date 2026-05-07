@@ -1,15 +1,16 @@
 import log from "loglevel";
-import { getBridgeMesh } from "src/consts/Assets";
+import type { Address } from "viem";
 
 import { config } from "../../config";
 import { Usdt0Kind } from "../../configs/base";
+import { getBridgeMesh } from "../../consts/Assets";
 import { getCachedValue } from "../cache";
 import { formatError } from "../errors";
 import type { OftRoute } from "./types";
 
 export type OftContract = {
     name: string;
-    address: string;
+    address: Address;
     explorer: string;
 };
 

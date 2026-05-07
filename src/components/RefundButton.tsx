@@ -1,12 +1,3 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import {
-    Signature,
-    type TransactionRequest,
-    type Wallet,
-    ZeroAddress,
-    getAddress,
-} from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import {
@@ -18,8 +9,18 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
+import {
+    type Hash,
+    type Hex,
+    type Signature,
+    type TransactionRequest,
+    encodeFunctionData,
+    getAddress,
+    parseSignature,
+    zeroAddress,
+} from "viem";
 
-import { type AlchemyCall, prefixHex, toAlchemyCall } from "../alchemy/Alchemy";
+import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
 import {
@@ -32,11 +33,15 @@ import { SwapPosition, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { type Signer, useWeb3Signer } from "../context/Web3";
 import {
-    type Signer,
+    type Erc20SwapContract,
+    type EtherSwapContract,
     createRouterContract,
-    useWeb3Signer,
-} from "../context/Web3";
+    resolveErc20SwapAbi,
+    resolveEtherSwapAbi,
+} from "../context/contracts";
+import { erc20Abi, erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
     encodeDexQuote,
     quoteDexAmountIn,
@@ -56,14 +61,14 @@ import { getTimelockBlockNumber } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
-    assertTransactionSignerProvider,
-    erc20TransferInterface,
+    type PopulatedEvmTransaction,
     getLockupEvent,
     getSignerForGasAbstraction,
+    prefix0x,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
-import { createAssetProvider } from "../utils/provider";
 import { RefundType, refund } from "../utils/rescue";
+import { vFromSignature } from "../utils/signature";
 import {
     type BridgeDetail,
     type ChainSwap,
@@ -80,21 +85,21 @@ export const incorrectAssetError = "incorrect asset was sent";
 
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
-    transactionSigner: Signer | Wallet,
+    transactionSigner: Signer,
     asset: AssetType,
     timeoutBlockHeight: number,
     refundCooperative: () => Promise<TransactionRequest | AlchemyCall[]>,
     refundTimeout: () => Promise<TransactionRequest | AlchemyCall[]>,
 ): Promise<string> => {
-    const provider = assertTransactionSignerProvider(transactionSigner);
-    let transactionHash: string;
+    const provider = transactionSigner.provider;
+    let transactionHash: Hash;
 
     try {
         const tx = await refundCooperative();
         transactionHash = await sendPopulatedTransaction(
             gasAbstraction,
             transactionSigner,
-            tx,
+            tx as PopulatedEvmTransaction | AlchemyCall[],
         );
     } catch (cooperativeError) {
         const currentBlock = await getTimelockBlockNumber(provider, asset);
@@ -109,16 +114,19 @@ export const sendRefundTransaction = async (
         transactionHash = await sendPopulatedTransaction(
             gasAbstraction,
             transactionSigner,
-            tx,
+            tx as PopulatedEvmTransaction | AlchemyCall[],
         );
     }
 
-    await provider.waitForTransaction(transactionHash, 1);
+    await provider.waitForTransactionReceipt({
+        hash: transactionHash as Hash,
+        confirmations: 1,
+    });
     return transactionHash;
 };
 
 const buildRefundFollowUpCalls = async (
-    transactionSigner: Signer | Wallet,
+    transactionSigner: Signer,
     refundData: LockupEvent,
     slippage: number,
     dexDetails?: DexDetail,
@@ -223,8 +231,7 @@ const buildRefundFollowUpCalls = async (
         reverseBridgeRoute.sourceAsset,
         transactionSigner,
     );
-    const [routerAddress, bridgeContract, quotedBridge] = await Promise.all([
-        router.getAddress(),
+    const [bridgeContract, quotedBridge] = await Promise.all([
         bridgeDriver.getContract(reverseBridgeRoute),
         bridgeDriver.getQuotedContract(reverseBridgeRoute),
     ]);
@@ -245,7 +252,7 @@ const buildRefundFollowUpCalls = async (
         const [msgFeeQuote] = await quoteDexAmountOut(
             quoteChain,
             refundData.tokenAddress,
-            ZeroAddress,
+            zeroAddress,
             msgFeeAmountOut,
         );
         if (msgFeeQuote === undefined) {
@@ -260,7 +267,7 @@ const buildRefundFollowUpCalls = async (
 
         const msgFeeCalldata = await encodeDexQuote(
             quoteChain,
-            routerAddress,
+            router.address,
             msgFeeAmountIn,
             msgFee[0],
             msgFeeQuote.data,
@@ -288,7 +295,7 @@ const buildRefundFollowUpCalls = async (
     );
     const tradeCalldata = await encodeDexQuote(
         quoteChain,
-        routerAddress,
+        router.address,
         tradeAmountIn,
         tradeAmountOutMin,
         tradeQuote.data,
@@ -301,12 +308,12 @@ const buildRefundFollowUpCalls = async (
     const routerCalls = [...tradeCalls, ...msgFeeCalls].map((call) => ({
         target: call.to,
         value: call.value ?? "0",
-        callData: prefixHex(call.data ?? "0x"),
+        callData: prefix0x(call.data ?? "0x"),
     }));
 
     const approvalCall = await bridgeDriver.buildApprovalCall(
         reverseBridgeRoute,
-        routerAddress,
+        router.address,
         BigInt(tradeQuote.quote),
         transactionSigner,
     );
@@ -314,7 +321,7 @@ const buildRefundFollowUpCalls = async (
         routerCalls.push({
             target: approvalCall.to,
             value: approvalCall.value ?? "0",
-            callData: prefixHex(approvalCall.data ?? "0x"),
+            callData: prefix0x(approvalCall.data ?? "0x"),
         });
     }
 
@@ -339,13 +346,14 @@ const buildRefundFollowUpCalls = async (
     return [
         {
             to: refundData.tokenAddress,
-            data: erc20TransferInterface.encodeFunctionData("transfer", [
-                routerAddress,
-                refundData.amount,
-            ]),
+            data: encodeFunctionData({
+                abi: erc20Abi,
+                functionName: "transfer",
+                args: [getAddress(router.address), refundData.amount],
+            }),
         },
         {
-            to: routerAddress,
+            to: router.address,
             data: executeBridgeData,
         },
     ];
@@ -365,8 +373,8 @@ const buildErc20RefundTransaction = async ({
     commitmentRefund = false,
 }: {
     gasAbstraction: GasAbstractionType;
-    transactionSigner: Signer | Wallet;
-    contract: ERC20Swap;
+    transactionSigner: Signer;
+    contract: Erc20SwapContract;
     refundData: LockupEvent;
     signature?: Signature;
     slippage: number;
@@ -380,57 +388,55 @@ const buildErc20RefundTransaction = async ({
         throw new Error("missing token address for ERC20 refund");
     }
 
-    let data: string;
-    if (cooperative) {
-        if (signature === undefined) {
-            throw new Error("missing cooperative refund signature");
-        }
-
-        data = commitmentRefund
-            ? contract.interface.encodeFunctionData(
-                  "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)",
-                  [
-                      refundData.preimageHash,
-                      refundData.amount,
-                      refundData.tokenAddress,
-                      refundData.claimAddress,
-                      refundData.timelock,
-                      signature.v,
-                      signature.r,
-                      signature.s,
-                  ],
-              )
-            : contract.interface.encodeFunctionData(
-                  "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
-                  [
-                      refundData.preimageHash,
-                      refundData.amount,
-                      refundData.tokenAddress,
-                      refundData.claimAddress,
-                      refundData.refundAddress,
-                      refundData.timelock,
-                      signature.v,
-                      signature.r,
-                      signature.s,
-                  ],
-              );
-    } else {
-        data = contract.interface.encodeFunctionData(
-            "refund(bytes32,uint256,address,address,address,uint256)",
-            [
-                refundData.preimageHash,
-                refundData.amount,
-                refundData.tokenAddress,
-                refundData.claimAddress,
-                refundData.refundAddress,
-                refundData.timelock,
-            ],
-        );
+    if (cooperative && signature === undefined) {
+        throw new Error("missing cooperative refund signature");
     }
 
     const refundTransaction: TransactionRequest = {
-        to: await contract.getAddress(),
-        data,
+        to: contract.address,
+        data: cooperative
+            ? commitmentRefund
+                ? encodeFunctionData({
+                      abi: erc20SwapAbi,
+                      functionName: "refundCooperative",
+                      args: [
+                          refundData.preimageHash as Hex,
+                          refundData.amount,
+                          getAddress(refundData.tokenAddress),
+                          getAddress(refundData.claimAddress),
+                          refundData.timelock,
+                          vFromSignature(signature!),
+                          signature!.r,
+                          signature!.s,
+                      ],
+                  })
+                : encodeFunctionData({
+                      abi: erc20SwapAbi,
+                      functionName: "refundCooperative",
+                      args: [
+                          refundData.preimageHash as Hex,
+                          refundData.amount,
+                          getAddress(refundData.tokenAddress),
+                          getAddress(refundData.claimAddress),
+                          getAddress(refundData.refundAddress),
+                          refundData.timelock,
+                          vFromSignature(signature!),
+                          signature!.r,
+                          signature!.s,
+                      ],
+                  })
+            : encodeFunctionData({
+                  abi: erc20SwapAbi,
+                  functionName: "refund",
+                  args: [
+                      refundData.preimageHash as Hex,
+                      refundData.amount,
+                      getAddress(refundData.tokenAddress),
+                      getAddress(refundData.claimAddress),
+                      getAddress(refundData.refundAddress),
+                      refundData.timelock,
+                  ],
+              }),
     };
 
     if (gasAbstraction !== GasAbstractionType.Signer) {
@@ -462,10 +468,11 @@ const buildErc20RefundTransaction = async ({
             toAlchemyCall(refundTransaction),
             {
                 to: refundData.tokenAddress,
-                data: erc20TransferInterface.encodeFunctionData("transfer", [
-                    destination,
-                    refundData.amount,
-                ]),
+                data: encodeFunctionData({
+                    abi: erc20Abi,
+                    functionName: "transfer",
+                    args: [getAddress(destination), refundData.amount],
+                }),
             },
         ];
     }
@@ -476,7 +483,7 @@ const buildErc20RefundTransaction = async ({
 export const RefundEvm = (props: {
     asset: string;
     gasAbstraction?: GasAbstractionType;
-    transactionSigner?: Signer | Wallet;
+    transactionSigner?: Signer;
     disabled?: boolean;
     swapId?: string;
     signerAddress?: string;
@@ -489,14 +496,19 @@ export const RefundEvm = (props: {
     destination?: string;
     bridge?: BridgeDetail;
 }) => {
-    const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
-        useWeb3Signer();
+    const {
+        getErc20Swap,
+        getEtherSwap,
+        getSwapContractVersion,
+        signer,
+        getGasAbstractionSigner,
+    } = useWeb3Signer();
     const { t, slippage } = useGlobalContext();
 
     const gasAbstraction = createMemo(
         () => props.gasAbstraction ?? GasAbstractionType.None,
     );
-    const transactionSigner = createMemo<Signer | Wallet | undefined>(() => {
+    const transactionSigner = createMemo<Signer | undefined>(() => {
         if (props.transactionSigner) {
             return props.transactionSigner;
         }
@@ -518,8 +530,8 @@ export const RefundEvm = (props: {
             return;
         }
         void ts.provider
-            ?.getNetwork()
-            .then((network) => setSignerNetwork(Number(network?.chainId)))
+            .getChainId()
+            .then((chainId) => setSignerNetwork(Number(chainId)))
             .catch(() => setSignerNetwork(undefined));
     });
 
@@ -541,7 +553,7 @@ export const RefundEvm = (props: {
               lockupTx?: string;
               commitmentLockupTxHash?: string;
               contractKind: AssetKind;
-              transactionSigner: Signer | Wallet;
+              transactionSigner: Signer;
           }
         | undefined
     >(() => {
@@ -572,11 +584,10 @@ export const RefundEvm = (props: {
             contractKind,
             transactionSigner,
         }) => {
-            const contract = (
+            const contract =
                 contractKind === AssetKind.ERC20
                     ? getErc20Swap(asset)
-                    : getEtherSwap(asset)
-            ).connect(createAssetProvider(asset));
+                    : getEtherSwap(asset);
 
             log.debug("Fetching lockup data");
             const txHash = lockupTx ?? commitmentLockupTxHash;
@@ -586,45 +597,53 @@ export const RefundEvm = (props: {
                 );
             }
             const receipt =
-                await assertTransactionSignerProvider(
-                    transactionSigner,
-                ).getTransactionReceipt(txHash);
+                await transactionSigner.provider.getTransactionReceipt({
+                    hash: txHash as Hash,
+                });
             if (receipt === null) {
                 throw new Error("could not fetch lockup transaction receipt");
             }
 
-            const data = getLockupEvent(
-                contract,
-                receipt,
-                await contract.getAddress(),
-            );
+            const lockupAbi =
+                contractKind === AssetKind.ERC20
+                    ? resolveErc20SwapAbi(
+                          getSwapContractVersion(asset, "ERC20Swap"),
+                      )
+                    : resolveEtherSwapAbi(
+                          getSwapContractVersion(asset, "EtherSwap"),
+                      );
+            const data = getLockupEvent(lockupAbi, receipt, contract.address);
 
-            let swapHash: string;
+            let swapHash: Hex;
             if (contractKind === AssetKind.ERC20) {
                 if (data.tokenAddress === undefined) {
                     throw new Error(
                         "missing token address in lockup data for ERC20 swap",
                     );
                 }
-                swapHash = await (contract as ERC20Swap).hashValues(
-                    data.preimageHash,
+                swapHash = await (
+                    contract as Erc20SwapContract
+                ).read.hashValues([
+                    data.preimageHash as Hex,
                     data.amount,
-                    data.tokenAddress,
-                    data.claimAddress,
-                    data.refundAddress,
+                    getAddress(data.tokenAddress),
+                    getAddress(data.claimAddress),
+                    getAddress(data.refundAddress),
                     data.timelock,
-                );
+                ]);
             } else {
-                swapHash = await (contract as EtherSwap).hashValues(
-                    data.preimageHash,
+                swapHash = await (
+                    contract as EtherSwapContract
+                ).read.hashValues([
+                    data.preimageHash as Hex,
                     data.amount,
-                    data.claimAddress,
-                    data.refundAddress,
+                    getAddress(data.claimAddress),
+                    getAddress(data.refundAddress),
                     data.timelock,
-                );
+                ]);
             }
 
-            const stillLocked = await contract.swaps(swapHash);
+            const stillLocked = await contract.read.swaps([swapHash]);
             log.debug("Funds still locked", stillLocked);
 
             return {
@@ -700,12 +719,10 @@ export const RefundEvm = (props: {
                                     logIndex: currentRefundData.logIndex,
                                     signer: currentTransactionSigner,
                                 });
-                            const decSignature = Signature.from(signatureHex);
+                            const decSignature = parseSignature(signatureHex);
 
                             if (currentContractKind === AssetKind.ERC20) {
-                                const contract = getErc20Swap(
-                                    props.asset,
-                                ).connect(currentTransactionSigner);
+                                const contract = getErc20Swap(props.asset);
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
@@ -721,41 +738,53 @@ export const RefundEvm = (props: {
                                 });
                             }
 
-                            const contract = getEtherSwap(props.asset).connect(
-                                currentTransactionSigner,
-                            );
+                            const contract = getEtherSwap(props.asset);
                             if (isCommitmentLockup) {
-                                return await contract[
-                                    "refundCooperative(bytes32,uint256,address,uint256,uint8,bytes32,bytes32)"
-                                ].populateTransaction(
-                                    currentRefundData.preimageHash,
-                                    currentRefundData.amount,
-                                    currentRefundData.claimAddress,
-                                    currentRefundData.timelock,
-                                    decSignature.v,
-                                    decSignature.r,
-                                    decSignature.s,
-                                );
+                                return {
+                                    to: contract.address,
+                                    data: encodeFunctionData({
+                                        abi: etherSwapAbi,
+                                        functionName: "refundCooperative",
+                                        args: [
+                                            currentRefundData.preimageHash as Hex,
+                                            currentRefundData.amount,
+                                            getAddress(
+                                                currentRefundData.claimAddress,
+                                            ),
+                                            currentRefundData.timelock,
+                                            vFromSignature(decSignature),
+                                            decSignature.r,
+                                            decSignature.s,
+                                        ],
+                                    }),
+                                };
                             }
-                            return await contract[
-                                "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
-                            ].populateTransaction(
-                                currentRefundData.preimageHash,
-                                currentRefundData.amount,
-                                currentRefundData.claimAddress,
-                                currentRefundData.refundAddress,
-                                currentRefundData.timelock,
-                                decSignature.v,
-                                decSignature.r,
-                                decSignature.s,
-                            );
+                            return {
+                                to: contract.address,
+                                data: encodeFunctionData({
+                                    abi: etherSwapAbi,
+                                    functionName: "refundCooperative",
+                                    args: [
+                                        currentRefundData.preimageHash as Hex,
+                                        currentRefundData.amount,
+                                        getAddress(
+                                            currentRefundData.claimAddress,
+                                        ),
+                                        getAddress(
+                                            currentRefundData.refundAddress,
+                                        ),
+                                        currentRefundData.timelock,
+                                        vFromSignature(decSignature),
+                                        decSignature.r,
+                                        decSignature.s,
+                                    ],
+                                }),
+                            };
                         };
 
                         const refundTimeout = async () => {
                             if (currentContractKind === AssetKind.ERC20) {
-                                const contract = getErc20Swap(
-                                    props.asset,
-                                ).connect(currentTransactionSigner);
+                                const contract = getErc20Swap(props.asset);
                                 return await buildErc20RefundTransaction({
                                     gasAbstraction: gasAbstraction(),
                                     transactionSigner: currentTransactionSigner,
@@ -769,18 +798,25 @@ export const RefundEvm = (props: {
                                 });
                             }
 
-                            const contract = getEtherSwap(props.asset).connect(
-                                currentTransactionSigner,
-                            );
-                            return await contract[
-                                "refund(bytes32,uint256,address,address,uint256)"
-                            ].populateTransaction(
-                                currentRefundData.preimageHash,
-                                currentRefundData.amount,
-                                currentRefundData.claimAddress,
-                                currentRefundData.refundAddress,
-                                currentRefundData.timelock,
-                            );
+                            const contract = getEtherSwap(props.asset);
+                            return {
+                                to: contract.address,
+                                data: encodeFunctionData({
+                                    abi: etherSwapAbi,
+                                    functionName: "refund",
+                                    args: [
+                                        currentRefundData.preimageHash as Hex,
+                                        currentRefundData.amount,
+                                        getAddress(
+                                            currentRefundData.claimAddress,
+                                        ),
+                                        getAddress(
+                                            currentRefundData.refundAddress,
+                                        ),
+                                        currentRefundData.timelock,
+                                    ],
+                                }),
+                            };
                         };
 
                         const transactionHash = await sendRefundTransaction(

@@ -1,7 +1,7 @@
-import { prefixHex } from "../alchemy/Alchemy";
 import { chooseUrl, config } from "../config";
 import { NetworkTransport } from "../configs/base";
 import { getNetworkTransport } from "../consts/Assets";
+import { prefix0x } from "./evmTransaction";
 
 export enum ExplorerKind {
     Asset = "asset",
@@ -36,7 +36,7 @@ const normalizeExplorerValue = (
         explorer === ExplorerKind.LayerZero &&
         getNetworkTransport(asset) === NetworkTransport.Tron
     ) {
-        return prefixHex(val);
+        return prefix0x(val);
     }
 
     return val;

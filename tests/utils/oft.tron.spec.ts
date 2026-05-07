@@ -1,8 +1,14 @@
 // @vitest-environment node
 import type { TronConnector } from "@reown/appkit-utils/tron";
+import {
+    encodeAbiParameters,
+    encodeEventTopics,
+    encodeFunctionResult,
+} from "viem";
 
 import type { TronTransactionInfo } from "../../src/utils/chains/tron";
 import type * as TronChainsModule from "../../src/utils/chains/tron";
+import { oftAbi } from "../../src/utils/oft/evm";
 
 vi.mock("../../src/utils/chains/tron", async () => {
     const actual = await vi.importActual<typeof TronChainsModule>(
@@ -16,7 +22,11 @@ vi.mock("../../src/utils/chains/tron", async () => {
     };
 });
 
-const { createTronOftContract } = await import("../../src/utils/oft/tron");
+const {
+    createTronOftContract,
+    getTronOftGuidFromTransactionInfo,
+    waitForSuccessfulTronTransaction,
+} = await import("../../src/utils/oft/tron");
 const { getTronTransactionInfo, getTronWeb } =
     await import("../../src/utils/chains/tron");
 
@@ -163,6 +173,111 @@ describe("tron oft", () => {
             walletProvider,
         }).send([...sendParam], [...msgFee], refundAddress);
 
-        await expect(transaction.wait()).rejects.toThrow("OUT_OF_ENERGY");
+        await expect(
+            waitForSuccessfulTronTransaction("USDT0-TRON", transaction.hash),
+        ).rejects.toThrow("OUT_OF_ENERGY");
+    });
+
+    test("should decode the named-tuple return of quoteOFT", async () => {
+        const encodedResult = encodeFunctionResult({
+            abi: oftAbi,
+            functionName: "quoteOFT",
+            result: [
+                { minAmountLD: 10n, maxAmountLD: 1_000n },
+                [{ feeAmountLD: -5n, description: "slippage" }],
+                { amountSentLD: 100n, amountReceivedLD: 95n },
+            ],
+        });
+        const walletProvider = createWalletProvider();
+        const { client, triggerConstantContract } = createMockClient();
+        triggerConstantContract.mockResolvedValue(
+            createConstantResponse(encodedResult.replace(/^0x/, "")),
+        );
+        vi.mocked(getTronWeb).mockResolvedValue(client);
+
+        const [oftLimit, oftFeeDetails, oftReceipt] =
+            await createTronOftContract({
+                sourceAsset: "USDT0-TRON",
+                contractAddress,
+                walletProvider,
+            }).quoteOFT([...sendParam]);
+
+        expect(oftLimit).toEqual([10n, 1_000n]);
+        expect(oftFeeDetails).toEqual([[-5n, "slippage"]]);
+        expect(oftReceipt).toEqual([100n, 95n]);
+    });
+
+    test("should decode the named-tuple return of quoteSend", async () => {
+        const encodedResult = encodeFunctionResult({
+            abi: oftAbi,
+            functionName: "quoteSend",
+            result: { nativeFee: 7n, lzTokenFee: 3n },
+        });
+        const walletProvider = createWalletProvider();
+        const { client, triggerConstantContract } = createMockClient();
+        triggerConstantContract.mockResolvedValue(
+            createConstantResponse(encodedResult.replace(/^0x/, "")),
+        );
+        vi.mocked(getTronWeb).mockResolvedValue(client);
+
+        const fee = await createTronOftContract({
+            sourceAsset: "USDT0-TRON",
+            contractAddress,
+            walletProvider,
+        }).quoteSend([...sendParam], false);
+
+        expect(fee).toEqual([7n, 3n]);
+    });
+
+    test("should decode the OFTSent event from a Tron transaction info log", () => {
+        const guid = `0x${"ab".repeat(32)}` as const;
+        const dstEid = 30420;
+        const fromAddressHex = `0x${"11".repeat(20)}` as const;
+        const amountSentLD = 1_000n;
+        const amountReceivedLD = 950n;
+
+        const topics = encodeEventTopics({
+            abi: oftAbi,
+            eventName: "OFTSent",
+            args: { guid, fromAddress: fromAddressHex },
+        });
+        const data = encodeAbiParameters(
+            [{ type: "uint32" }, { type: "uint256" }, { type: "uint256" }],
+            [dstEid, amountSentLD, amountReceivedLD],
+        );
+
+        // Tron RPC returns logs without 0x prefixes — decoder must handle both.
+        const transactionInfo = {
+            log: [
+                {
+                    address: contractAddress,
+                    data: data.replace(/^0x/, ""),
+                    topics: topics.map((topic) =>
+                        String(topic).replace(/^0x/, ""),
+                    ),
+                },
+            ],
+        } as unknown as Pick<TronTransactionInfo, "log">;
+
+        expect(
+            getTronOftGuidFromTransactionInfo(transactionInfo, contractAddress),
+        ).toBe(guid);
+    });
+
+    test("should ignore non-OFTSent logs and unrelated contract addresses", () => {
+        const otherContract = "TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH";
+        const transactionInfo = {
+            log: [
+                {
+                    address: otherContract,
+                    data: "00".repeat(64),
+                    topics: ["aa".repeat(32)],
+                },
+            ],
+        } as unknown as Pick<TronTransactionInfo, "log">;
+
+        expect(
+            getTronOftGuidFromTransactionInfo(transactionInfo, contractAddress),
+        ).toBeUndefined();
     });
 });

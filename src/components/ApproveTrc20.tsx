@@ -5,7 +5,10 @@ import { NetworkTransport } from "../configs/base";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { sendTronTokenApproval } from "../utils/oft/tron";
+import {
+    sendTronTokenApproval,
+    waitForSuccessfulTronTransaction,
+} from "../utils/oft/tron";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 
@@ -39,7 +42,7 @@ const ApproveTrc20 = (props: {
                     spenderAddress: props.approvalTarget,
                     walletProvider,
                 });
-                await tx.wait(1);
+                await waitForSuccessfulTronTransaction(props.asset, tx.hash);
                 log.info("Tron TRC20 approval successful", tx.hash);
                 props.setNeedsApproval(false);
             }}

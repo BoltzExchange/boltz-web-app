@@ -1,54 +1,32 @@
 import { hex } from "@scure/base";
-import { Contract, type ContractRunner } from "ethers";
+import { type Address, getAddress, getContract, parseAbi } from "viem";
 
 import { getTokenAddress } from "../../consts/Assets";
+import type { Signer } from "../../context/Web3";
 import type { BridgeRoute } from "../bridge/types";
 import type { CctpSendParam } from "./types";
 
-const tokenMessengerV2Abi = [
+const tokenMessengerV2Abi = parseAbi([
     "function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold) external returns (uint64 nonce)",
     "function depositForBurnWithHook(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold, bytes hookData) external returns (uint64 nonce)",
-] as const;
-
-type TokenMessengerV2Instance = {
-    depositForBurn: (
-        amount: bigint,
-        destinationDomain: number,
-        mintRecipient: string,
-        burnToken: string,
-        destinationCaller: string,
-        maxFee: bigint,
-        minFinalityThreshold: number,
-    ) => Promise<CctpDirectSendTransaction>;
-    depositForBurnWithHook: (
-        amount: bigint,
-        destinationDomain: number,
-        mintRecipient: string,
-        burnToken: string,
-        destinationCaller: string,
-        maxFee: bigint,
-        minFinalityThreshold: number,
-        hookData: string,
-    ) => Promise<CctpDirectSendTransaction>;
-};
+]);
 
 // Shape is compatible with OftDirectSendTarget for the subset used by
 // `SendToBridge` (reads `executionContract.address` as the approval spender).
 // `executionContract` always points at the source-chain TokenMessenger, which
 // is what the user approves USDC for.
 export type CctpDirectSendTarget = {
-    executionContract: { address: string };
+    executionContract: { address: Address };
     burnToken: string;
 };
 
 export type CctpDirectSendTransaction = {
     hash: string;
-    wait: (confirmations?: number) => Promise<unknown>;
 };
 
 export const getCctpDirectSendTarget = (
     route: BridgeRoute,
-    tokenMessenger: string,
+    tokenMessenger: Address,
 ): CctpDirectSendTarget => ({
     executionContract: { address: tokenMessenger },
     burnToken: getTokenAddress(route.sourceAsset),
@@ -79,35 +57,47 @@ export const sendCctpDirect = async ({
     sendParam,
 }: {
     target: CctpDirectSendTarget;
-    runner: ContractRunner;
+    runner: Signer;
     sendParam: CctpSendParam;
 }): Promise<CctpDirectSendTransaction> => {
-    const messenger = new Contract(
-        target.executionContract.address,
-        tokenMessengerV2Abi,
-        runner,
-    ) as unknown as TokenMessengerV2Instance;
+    const messenger = getContract({
+        address: getAddress(target.executionContract.address),
+        abi: tokenMessengerV2Abi,
+        client: { public: runner.provider, wallet: runner },
+    });
+
+    const writeOptions = { account: runner.account, chain: null };
 
     if (isEmptyHookData(sendParam.hookData)) {
-        return await messenger.depositForBurn(
-            sendParam.amount,
-            sendParam.destinationDomain,
-            sendParam.mintRecipient,
-            target.burnToken,
-            sendParam.destinationCaller,
-            sendParam.maxFee,
-            sendParam.minFinalityThreshold,
-        );
+        return {
+            hash: await messenger.write.depositForBurn(
+                [
+                    sendParam.amount,
+                    sendParam.destinationDomain,
+                    sendParam.mintRecipient,
+                    getAddress(target.burnToken),
+                    sendParam.destinationCaller,
+                    sendParam.maxFee,
+                    sendParam.minFinalityThreshold,
+                ],
+                writeOptions,
+            ),
+        };
     }
 
-    return await messenger.depositForBurnWithHook(
-        sendParam.amount,
-        sendParam.destinationDomain,
-        sendParam.mintRecipient,
-        target.burnToken,
-        sendParam.destinationCaller,
-        sendParam.maxFee,
-        sendParam.minFinalityThreshold,
-        sendParam.hookData,
-    );
+    return {
+        hash: await messenger.write.depositForBurnWithHook(
+            [
+                sendParam.amount,
+                sendParam.destinationDomain,
+                sendParam.mintRecipient,
+                getAddress(target.burnToken),
+                sendParam.destinationCaller,
+                sendParam.maxFee,
+                sendParam.minFinalityThreshold,
+                sendParam.hookData,
+            ],
+            writeOptions,
+        ),
+    };
 };

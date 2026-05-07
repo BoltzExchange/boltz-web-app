@@ -98,7 +98,7 @@ describe("cctp events", () => {
                 {
                     topics: [cctpMessageSentTopic],
                     data: encodeBytesData(message),
-                    index: 7,
+                    logIndex: 7,
                 },
             ],
         });
@@ -176,7 +176,7 @@ describe("cctp events", () => {
                         tokenTopic,
                     ],
                     data: `0x${u256Hex(987_654n)}`,
-                    index: 3,
+                    logIndex: 3,
                 },
                 { topics: ["0xunrelated"], data: "0x" },
             ],

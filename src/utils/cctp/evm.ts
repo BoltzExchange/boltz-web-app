@@ -1,15 +1,21 @@
 import { hex } from "@scure/base";
 import {
-    AbiCoder,
-    type ContractRunner,
-    Interface,
+    type Address,
+    type Hex,
+    type PublicClient,
     concat,
+    encodeAbiParameters,
+    encodeFunctionData,
     getAddress,
     keccak256,
-    zeroPadValue,
-} from "ethers";
+    padHex,
+    parseAbi,
+    parseAbiParameters,
+    toBytes,
+} from "viem";
 
 import { decodeSolanaAddress } from "../chains/solana";
+import { prefix0x } from "../evmTransaction";
 import type { CctpData } from "./types";
 
 export const cctpFastFinalityThreshold = 1000;
@@ -29,7 +35,7 @@ export const cctpEmptyHookData = "0x";
 export const cctpForwardHookData =
     "0x636374702d666f72776172640000000000000000000000000000000000000000";
 
-const cctpForwardPrefix = cctpForwardHookData.slice(0, 58);
+const cctpForwardPrefix = cctpForwardHookData.slice(0, 58) as Hex;
 
 export const createCctpSolanaForwardHookData = (
     recipientWallet: string,
@@ -40,14 +46,9 @@ export const createCctpSolanaForwardHookData = (
 
     return concat([
         cctpForwardPrefix,
-        `0x${length}${ataCreationFlag}${wallet}`,
+        prefix0x(`${length}${ataCreationFlag}${wallet}`),
     ]);
 };
-
-const messageTransmitterV2Interface = new Interface([
-    "function receiveMessage(bytes message, bytes attestation) external returns (bool)",
-    "function usedNonces(bytes32 nonce) view returns (uint256)",
-]);
 
 // EIP-712 struct typehash for Router.CctpData. Must match the Router's
 // TYPEHASH_CCTP_DATA constant:
@@ -55,44 +56,40 @@ const messageTransmitterV2Interface = new Interface([
 //     "CctpData(uint32 destinationDomain,bytes32 mintRecipient,bytes32 destinationCaller,uint256 maxFee,uint32 minFinalityThreshold,bytes32 hookData)"
 //   )
 export const cctpDataTypehash = keccak256(
-    new TextEncoder().encode(
+    toBytes(
         "CctpData(uint32 destinationDomain,bytes32 mintRecipient,bytes32 destinationCaller,uint256 maxFee,uint32 minFinalityThreshold,bytes32 hookData)",
     ),
 );
 
 // Left-pad a 20-byte EVM address to bytes32 (used for mintRecipient when the
 // destination chain is EVM).
-export const addressToBytes32 = (address: string): string =>
-    zeroPadValue(getAddress(address), 32);
+export const addressToBytes32 = (address: string): Hex =>
+    padHex(getAddress(address), { size: 32 });
 
-export const encodeCctpReceiveMessage = (
-    message: string,
-    attestation: string,
-): string =>
-    messageTransmitterV2Interface.encodeFunctionData("receiveMessage", [
-        message,
-        attestation,
-    ]);
+const messageTransmitterV2Abi = parseAbi([
+    "function receiveMessage(bytes message, bytes attestation) external returns (bool)",
+    "function usedNonces(bytes32 nonce) view returns (uint256)",
+]);
+
+export const encodeCctpReceiveMessage = (message: Hex, attestation: Hex): Hex =>
+    encodeFunctionData({
+        abi: messageTransmitterV2Abi,
+        functionName: "receiveMessage",
+        args: [message, attestation],
+    });
 
 export const isCctpNonceUsed = async (
-    messageTransmitter: string,
-    runner: ContractRunner,
-    nonce: string,
+    messageTransmitter: Address,
+    runner: PublicClient,
+    nonce: Hex,
 ): Promise<boolean> => {
-    if (typeof runner.call !== "function") {
-        throw new Error("CCTP nonce check requires a contract runner");
-    }
-
-    const result = await runner.call({
-        to: messageTransmitter,
-        data: messageTransmitterV2Interface.encodeFunctionData("usedNonces", [
-            nonce,
-        ]),
+    const usedNonce = await runner.readContract({
+        address: messageTransmitter,
+        abi: messageTransmitterV2Abi,
+        functionName: "usedNonces",
+        args: [nonce],
+        authorizationList: undefined,
     });
-    const usedNonce = messageTransmitterV2Interface.decodeFunctionResult(
-        "usedNonces",
-        result,
-    )[0] as bigint;
 
     return usedNonce !== 0n;
 };
@@ -100,16 +97,10 @@ export const isCctpNonceUsed = async (
 // EIP-712 struct hash for a CctpData value. Matches Router.hashCctpData().
 export const hashCctpData = (sendParam: CctpData): string =>
     keccak256(
-        AbiCoder.defaultAbiCoder().encode(
-            [
-                "bytes32",
-                "uint32",
-                "bytes32",
-                "bytes32",
-                "uint256",
-                "uint32",
-                "bytes32",
-            ],
+        encodeAbiParameters(
+            parseAbiParameters(
+                "bytes32, uint32, bytes32, bytes32, uint256, uint32, bytes32",
+            ),
             [
                 cctpDataTypehash,
                 sendParam.destinationDomain,

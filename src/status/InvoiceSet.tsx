@@ -1,4 +1,5 @@
 import { Show, createMemo } from "solid-js";
+import { getAddress } from "viem";
 
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
@@ -37,7 +38,7 @@ const InvoiceSet = () => {
                 swapId={submarine.id}
                 gasAbstraction={getLockupGasAbstraction(submarine)}
                 amount={submarine.expectedAmount}
-                claimAddress={submarine.claimAddress!}
+                claimAddress={getAddress(submarine.claimAddress!)}
                 preimageHash={preimageHash()}
                 timeoutBlockHeight={submarine.timeoutBlockHeight}
                 asset={submarine.assetSend}

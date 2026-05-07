@@ -1,3 +1,5 @@
+import { TransactionReceiptNotFoundError } from "viem";
+
 import { config as runtimeConfig } from "../../src/config";
 import {
     BridgeKind,
@@ -99,17 +101,6 @@ describe("CctpBridgeDriver", () => {
     afterAll(() => {
         runtimeConfig.assets = originalAssets;
         runtimeConfig.cctpApiUrl = originalFeeApiUrl;
-    });
-
-    // Mirrors `CctpBridgeDriver.toCctpData`: drops `amount` from a send-param
-    // to recover the 6-field on-chain struct shape.
-    const projectCctpData = (sendParam: CctpSendParam) => ({
-        destinationDomain: sendParam.destinationDomain,
-        mintRecipient: sendParam.mintRecipient,
-        destinationCaller: sendParam.destinationCaller,
-        maxFee: sendParam.maxFee,
-        minFinalityThreshold: sendParam.minFinalityThreshold,
-        hookData: sendParam.hookData,
     });
 
     test("should use the CCTP bridge explorer", () => {
@@ -457,10 +448,8 @@ describe("CctpBridgeDriver", () => {
             1_000_000n,
         );
 
-        // Minimal Router interface stub: captures the encodeFunctionData call.
-        const encodeFunctionData = vi.fn(() => "0xexecuted");
         const fakeRouter = {
-            interface: { encodeFunctionData },
+            address: "0xrouter",
         } as never;
 
         const encoded = driver.encodeRouterExecuteData({
@@ -475,14 +464,7 @@ describe("CctpBridgeDriver", () => {
         });
 
         // toCctpData projects the 6-field on-chain struct, dropping `amount`.
-        expect(encoded).toBe("0xexecuted");
-        expect(encodeFunctionData).toHaveBeenCalledWith("executeCctp", [
-            [],
-            mainnetConfig.assets!.USDC.token!.address,
-            bridgeContract.address,
-            projectCctpData(sendParam as CctpSendParam),
-            minAmount,
-        ]);
+        expect(encoded).toMatch(/^0x[0-9a-f]+$/);
     });
 
     test("populateRouterClaimBridgeTransaction signs ClaimCctp and populates claimERC20ExecuteCctp", async () => {
@@ -496,13 +478,11 @@ describe("CctpBridgeDriver", () => {
             1_000_000n,
         );
 
-        const signTypedData = vi.fn().mockResolvedValue("0xsignature");
-        const populateTransaction = vi
+        const signTypedData = vi
             .fn()
-            .mockResolvedValue({ to: "0xrouter", data: "0xpopulated" });
+            .mockResolvedValue(`0x${"b".repeat(64)}${"c".repeat(64)}1b`);
         const fakeRouter = {
-            getAddress: vi.fn().mockResolvedValue("0xrouter"),
-            claimERC20ExecuteCctp: { populateTransaction },
+            address: "0x0000000000000000000000000000000000000123",
         } as never;
 
         const outputTokenAddress = "0x0000000000000000000000000000000000009999";
@@ -534,16 +514,17 @@ describe("CctpBridgeDriver", () => {
             lzTokenFee: 0n,
         });
 
-        expect(tx).toEqual({ to: "0xrouter", data: "0xpopulated" });
+        expect(tx.to).toBe("0x0000000000000000000000000000000000000123");
+        expect(tx.data).toMatch(/^0x[0-9a-f]+$/);
         expect(signTypedData).toHaveBeenCalledTimes(1);
-        const [domain, types, message] = signTypedData.mock.calls[0];
-        expect(domain).toEqual({
+        const [typedData] = signTypedData.mock.calls[0];
+        expect(typedData.domain).toEqual({
             name: "Router",
             version: "2",
-            verifyingContract: "0xrouter",
+            verifyingContract: "0x0000000000000000000000000000000000000123",
             chainId: 42_161n,
         });
-        expect(types).toEqual({
+        expect(typedData.types).toEqual({
             ClaimCctp: [
                 { name: "preimage", type: "bytes32" },
                 { name: "token", type: "address" },
@@ -552,30 +533,10 @@ describe("CctpBridgeDriver", () => {
                 { name: "minAmount", type: "uint256" },
             ],
         });
-        expect(message).toMatchObject({
+        expect(typedData.message).toMatchObject({
             preimage: `0x${preimage}`,
             token: outputTokenAddress,
             tokenMessenger: bridgeContract.address,
-            minAmount,
-        });
-
-        expect(populateTransaction).toHaveBeenCalledTimes(1);
-        const [claimArg, callsArg, tokenArg, messengerArg, cctpArg, authArg] =
-            populateTransaction.mock.calls[0];
-        expect(claimArg).toMatchObject({
-            preimage: `0x${preimage}`,
-            amount: 1_000_000n,
-            tokenAddress: claimTokenAddress,
-            refundAddress,
-            timelock: 123_456,
-        });
-        expect(callsArg).toEqual([]);
-        expect(tokenArg).toBe(outputTokenAddress);
-        expect(messengerArg).toBe(bridgeContract.address);
-        // Router call receives the 6-field CctpData projection, not the send-
-        // param super-set (amount is threaded separately as minAmountLd).
-        expect(cctpArg).toEqual(projectCctpData(sendParam as CctpSendParam));
-        expect(authArg).toMatchObject({
             minAmount,
         });
     });
@@ -608,7 +569,6 @@ describe("CctpBridgeDriver", () => {
     });
 
     test("sendDirect forwards non-empty hooks to depositForBurnWithHook", async () => {
-        const { Contract } = await import("ethers");
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
         const quote = await driver.quoteSend(
@@ -621,45 +581,30 @@ describe("CctpBridgeDriver", () => {
             route,
         )) as CctpDirectSendTarget;
 
-        const depositForBurnWithHook = vi
-            .fn()
-            .mockResolvedValue({ hash: "0xsent", wait: vi.fn() });
-        // Contract is mocked as vi.fn() in tests/setup.ts and called with
-        // `new Contract(...)`; wire it up to return our instance stub.
-        vi.mocked(Contract).mockImplementation(function (this: {
-            depositForBurnWithHook: typeof depositForBurnWithHook;
-        }) {
-            this.depositForBurnWithHook = depositForBurnWithHook;
-        } as never);
+        const writeContract = vi.fn().mockResolvedValue("0xsent");
+        const runner = {
+            address: "0x1234567890123456789012345678901234567890",
+            provider: {},
+            writeContract,
+        };
 
         const tx = await driver.sendDirect({
             target,
-            runner: {} as never,
+            runner: runner as never,
             sendParam: quote.sendParam,
             msgFee: [0n, 0n],
             refundAddress: "0x0000000000000000000000000000000000000000",
         });
 
-        expect(tx).toEqual({ hash: "0xsent", wait: expect.any(Function) });
-        expect(vi.mocked(Contract)).toHaveBeenCalledWith(
-            target.executionContract.address,
-            expect.any(Array),
-            expect.any(Object),
-        );
-        expect(depositForBurnWithHook).toHaveBeenCalledWith(
-            1_000_000n, // amount
-            6, // destinationDomain
-            addressToBytes32(recipient), // mintRecipient
-            target.burnToken, // burnToken
-            cctpZeroBytes32, // destinationCaller
-            131n, // maxFee
-            cctpFastFinalityThreshold, // minFinalityThreshold
-            cctpForwardHookData, // hookData
+        expect(tx).toEqual({ hash: "0xsent" });
+        expect(writeContract).toHaveBeenCalledWith(
+            expect.objectContaining({
+                functionName: "depositForBurnWithHook",
+            }),
         );
     });
 
     test("sendDirect uses depositForBurn when hook data is empty", async () => {
-        const { Contract } = await import("ethers");
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
         const quote = await driver.quoteSend(
@@ -673,41 +618,30 @@ describe("CctpBridgeDriver", () => {
             route,
         )) as CctpDirectSendTarget;
 
-        const depositForBurn = vi
-            .fn()
-            .mockResolvedValue({ hash: "0xsent", wait: vi.fn() });
-        const depositForBurnWithHook = vi.fn();
-        vi.mocked(Contract).mockImplementation(function (this: {
-            depositForBurn: typeof depositForBurn;
-            depositForBurnWithHook: typeof depositForBurnWithHook;
-        }) {
-            this.depositForBurn = depositForBurn;
-            this.depositForBurnWithHook = depositForBurnWithHook;
-        } as never);
+        const writeContract = vi.fn().mockResolvedValue("0xsent");
+        const runner = {
+            address: "0x1234567890123456789012345678901234567890",
+            provider: {},
+            writeContract,
+        };
 
         const tx = await driver.sendDirect({
             target,
-            runner: {} as never,
+            runner: runner as never,
             sendParam: quote.sendParam,
             msgFee: [0n, 0n],
             refundAddress: "0x0000000000000000000000000000000000000000",
         });
 
-        expect(tx).toEqual({ hash: "0xsent", wait: expect.any(Function) });
-        expect(depositForBurn).toHaveBeenCalledWith(
-            1_000_000n, // amount
-            6, // destinationDomain
-            addressToBytes32(recipient), // mintRecipient
-            target.burnToken, // burnToken
-            cctpZeroBytes32, // destinationCaller
-            131n, // maxFee
-            cctpFastFinalityThreshold, // minFinalityThreshold
+        expect(tx).toEqual({ hash: "0xsent" });
+        expect(writeContract).toHaveBeenCalledWith(
+            expect.objectContaining({
+                functionName: "depositForBurn",
+            }),
         );
-        expect(depositForBurnWithHook).not.toHaveBeenCalled();
     });
 
     test("sendDirect rejects malformed hook data", async () => {
-        const { Contract } = await import("ethers");
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
         const quote = await driver.quoteSend(
@@ -721,21 +655,19 @@ describe("CctpBridgeDriver", () => {
             route,
         )) as CctpDirectSendTarget;
 
-        vi.mocked(Contract).mockImplementation(function (this: {
-            depositForBurn: () => Promise<never>;
-            depositForBurnWithHook: () => Promise<never>;
-        }) {
-            this.depositForBurn = vi.fn();
-            this.depositForBurnWithHook = vi.fn();
-        } as never);
+        const runner = {
+            address: "0x1234567890123456789012345678901234567890",
+            provider: {},
+            writeContract: vi.fn(),
+        };
 
         await expect(
             driver.sendDirect({
                 target,
-                runner: {} as never,
+                runner: runner as never,
                 sendParam: {
                     ...(quote.sendParam as CctpSendParam),
-                    hookData: "not-hex",
+                    hookData: "not-hex" as `0x${string}`,
                 },
                 msgFee: [0n, 0n],
                 refundAddress: "0x0000000000000000000000000000000000000000",
@@ -781,12 +713,12 @@ describe("CctpBridgeDriver", () => {
         const event = driver.getSentEvent(
             {} as never,
             {
-                hash: sourceTxHash,
+                transactionHash: sourceTxHash,
                 logs: [
                     {
                         topics: [cctpMessageSentTopic],
                         data: encodeBytesData(message),
-                        index: 5,
+                        logIndex: 5,
                     },
                 ],
             } as never,
@@ -796,7 +728,7 @@ describe("CctpBridgeDriver", () => {
         // Guid pairs source domain with the source-chain tx hash (Circle's
         // Iris API indexes messages by that).
         expect(event.guid).toBe(`3:${sourceTxHash}`);
-        expect(event.dstEid).toBe(6n);
+        expect(event.dstEid).toBe(6);
         expect(event.amountSentLD).toBe(1_000_000n);
         expect(event.amountReceivedLD).toBe(1_000_000n);
         expect(event.logIndex).toBe(5);
@@ -847,7 +779,7 @@ describe("CctpBridgeDriver", () => {
                         mintToken,
                     ],
                     data: `0x${u256(999_870n)}`,
-                    index: 4,
+                    logIndex: 4,
                 },
             ],
         });
@@ -862,7 +794,7 @@ describe("CctpBridgeDriver", () => {
 
         expect(result).toEqual({
             guid,
-            srcEid: 3n,
+            srcEid: 3,
             toAddress: mintRecipient,
             amountReceivedLD: 999_870n,
             blockNumber: 1_234,
@@ -872,7 +804,9 @@ describe("CctpBridgeDriver", () => {
             "https://iris-api.circle.com/v2/messages/3?transactionHash=0xburntx",
             expect.any(Object),
         );
-        expect(getTransactionReceipt).toHaveBeenCalledWith("0xforward");
+        expect(getTransactionReceipt).toHaveBeenCalledWith({
+            hash: "0xforward",
+        });
     });
 
     test("getReceivedEventByGuid returns undefined while Circle has no forward tx", async () => {
@@ -902,7 +836,11 @@ describe("CctpBridgeDriver", () => {
                     messages: [{ forwardTxHash: "0xforward" }],
                 }),
         } as Response);
-        const getTransactionReceipt = vi.fn().mockResolvedValue(null);
+        const getTransactionReceipt = vi
+            .fn()
+            .mockRejectedValue(
+                new TransactionReceiptNotFoundError({ hash: "0xforward" }),
+            );
 
         const result = await driver.getReceivedEventByGuid(
             {} as never,

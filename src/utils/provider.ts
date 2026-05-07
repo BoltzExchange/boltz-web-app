@@ -1,38 +1,6 @@
-import {
-    FallbackProvider as EthersFallbackProvider,
-    type Provider as EthersProvider,
-    JsonRpcProvider,
-} from "ethers";
+import { type PublicClient, createPublicClient, fallback, http } from "viem";
 
 import { config } from "../config";
-import { formatError } from "./errors";
-
-export type Provider = EthersProvider & {
-    send: (method: string, params: unknown[]) => Promise<unknown>;
-};
-
-class FallbackProvider extends EthersFallbackProvider {
-    constructor(private readonly providers: JsonRpcProvider[]) {
-        super(providers, undefined, { quorum: 1 });
-    }
-
-    public send = async (
-        method: string,
-        params: Array<unknown> | Record<string, unknown>,
-    ): Promise<unknown> => {
-        const prms = await Promise.allSettled(
-            this.providers.map((provider) => provider.send(method, params)),
-        );
-
-        if (prms.every((prm) => prm.status === "rejected")) {
-            throw new Error(
-                prms.map((prm) => formatError(prm.reason)).join(", "),
-            );
-        }
-
-        return prms.find((prm) => prm.status === "fulfilled")?.value;
-    };
-}
 
 export const getRpcUrls = (asset: string): readonly string[] | undefined => {
     const rpcUrls = config.assets?.[asset]?.network?.rpcUrls;
@@ -49,19 +17,46 @@ export const requireRpcUrls = (asset: string): readonly string[] => {
     return rpcUrls;
 };
 
-export const createProvider = (
-    rpcUrls: readonly string[] | undefined,
-): Provider => {
+export const createProviderTransport = (rpcUrls: readonly string[]) =>
+    rpcUrls.length === 1
+        ? http(rpcUrls[0])
+        : fallback(
+              rpcUrls.map((url) => http(url)),
+              { rank: false },
+          );
+
+export const createProvider = (rpcUrls: readonly string[] | undefined) => {
     if (rpcUrls === undefined || rpcUrls.length === 0) {
         throw new Error("missing RPC configuration");
     }
 
-    if (rpcUrls.length === 1) {
-        return new JsonRpcProvider(rpcUrls[0]);
-    }
-
-    return new FallbackProvider(rpcUrls.map((url) => new JsonRpcProvider(url)));
+    return createPublicClient({ transport: createProviderTransport(rpcUrls) });
 };
 
-export const createAssetProvider = (asset: string): Provider =>
+export type FeeEstimate = {
+    gasPrice: bigint;
+    maxFeePerGas?: bigint;
+    maxPriorityFeePerGas?: bigint;
+    maxFeePerBlobGas?: bigint;
+};
+
+// Some legacy EVM RPCs do not support the fee endpoints viem uses for EIP-1559
+// estimation. Falling back to eth_gasPrice keeps those chains working while
+// preserving viem's native fee estimation everywhere it is available.
+export const estimateFeesPerGas = async (
+    provider: Pick<PublicClient, "estimateFeesPerGas" | "getGasPrice">,
+): Promise<FeeEstimate> => {
+    const fees = await provider.estimateFeesPerGas().catch(async () => ({
+        gasPrice: await provider.getGasPrice(),
+    }));
+
+    return "gasPrice" in fees && fees.gasPrice !== undefined
+        ? fees
+        : {
+              ...fees,
+              gasPrice: await provider.getGasPrice(),
+          };
+};
+
+export const createAssetProvider = (asset: string): PublicClient =>
     createProvider(requireRpcUrls(asset));

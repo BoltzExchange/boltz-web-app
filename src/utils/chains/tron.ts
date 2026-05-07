@@ -2,6 +2,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { base58, hex } from "@scure/base";
 import log from "loglevel";
 import type { Types as TronTypes, TronWeb as TronWebClient } from "tronweb";
+import type { Address } from "viem";
 
 import lazyTron from "../../lazy/tron";
 import { getCachedValue } from "../cache";
@@ -80,7 +81,7 @@ export const tronHexToBase58Address = (address: string): string =>
         hex.decode(normalizeTronHexAddress(address).slice(2)),
     );
 
-export const tronBase58ToHexAddress = (address: string): `0x${string}` =>
+export const tronBase58ToHexAddress = (address: string): Address =>
     `0x${hex.encode(decodeTronBase58Address(address))}`;
 
 export const isValidTronAddress = (address: string): boolean => {

@@ -1,4 +1,4 @@
-import { prefix0x, satoshiToWei } from "../../src/utils/rootstock";
+import { satoshiToWei } from "../../src/utils/rootstock";
 
 describe("rootstock", () => {
     test.each`
@@ -10,10 +10,5 @@ describe("rootstock", () => {
         ${234_903_147} | ${2_349_031_470_000_000_000n}
     `("should convert $satoshis sats to $wei wei", ({ satoshis, wei }) => {
         expect(satoshiToWei(satoshis)).toEqual(wei);
-    });
-
-    test("should prefix 0x", () => {
-        const val = "asdf";
-        expect(prefix0x(val)).toEqual(`0x${val}`);
     });
 });

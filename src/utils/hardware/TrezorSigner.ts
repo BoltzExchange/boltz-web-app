@@ -1,5 +1,13 @@
-import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
+import {
+    type EIP1193RequestFn,
+    type PublicClient,
+    type Address as ViemAddress,
+    getAddress,
+    hashDomain,
+    hashStruct,
+    serializeTransaction,
+} from "viem";
 
 import type { EIP1193Provider } from "../../consts/Types";
 import type {
@@ -9,7 +17,13 @@ import type {
     Unsuccessful,
 } from "../../lazy/trezor";
 import trezorLoader from "../../lazy/trezor";
-import { type Provider, createProvider, requireRpcUrls } from "../provider";
+import { prefix0x } from "../evmTransaction";
+import {
+    createProvider,
+    estimateFeesPerGas,
+    requireRpcUrls,
+} from "../provider";
+import { yParityFromV } from "../signature";
 import { trimPrefix } from "../strings";
 import {
     type DerivedAddress,
@@ -20,6 +34,7 @@ import {
 import {
     type HardwareTransactionLike,
     resolveHardwareTransaction,
+    toBigInt,
     toHexQuantity,
 } from "./evmTransaction";
 
@@ -27,7 +42,8 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly loader: typeof trezorLoader;
 
     private initialized = false;
-    private provider: Provider;
+    private initializing?: Promise<void>;
+    private provider: PublicClient;
     private networkAsset: string;
     private derivationPath!: string;
 
@@ -75,7 +91,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         );
 
         return addresses.payload.map((res) => ({
-            address: res.address.toLowerCase(),
+            address: res.address.toLowerCase() as ViemAddress,
             path: trimPrefix(res.serializedPath, "m/"),
         }));
     };
@@ -103,7 +119,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     await connect.ethereumGetAddress({
                         showOnTrezor: false,
                         path: this.derivationPath,
-                    } as never),
+                    }),
                 );
 
                 return [addresses.payload.address.toLowerCase()];
@@ -118,22 +134,35 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     throw new Error("missing params for eth_sendTransaction");
                 }
                 const txParams = request.params[0] as HardwareTransactionLike;
-                if (txParams.from === null || txParams.from === undefined) {
-                    throw new Error("missing from address for transaction");
+                if (txParams.from === undefined) {
+                    throw new Error("missing transaction sender");
                 }
 
-                const [connect, nonce, network, feeData] = await Promise.all([
-                    this.loader.get(),
-                    this.provider.getTransactionCount(txParams.from),
-                    this.provider.getNetwork(),
-                    this.provider.getFeeData(),
-                ]);
+                const txGas = txParams.gasLimit ?? txParams.gas;
+                const [connect, nonce, chainId, feeData, fallbackGas] =
+                    await Promise.all([
+                        this.loader.get(),
+                        this.provider.getTransactionCount({
+                            address: getAddress(txParams.from),
+                        }),
+                        this.provider.getChainId().then(BigInt),
+                        estimateFeesPerGas(this.provider),
+                        txGas !== undefined && txGas !== null
+                            ? Promise.resolve(undefined)
+                            : this.provider.estimateGas({
+                                  account: txParams.from as ViemAddress,
+                                  to: txParams.to ?? undefined,
+                                  data: txParams.data,
+                                  value: toBigInt(txParams.value),
+                              }),
+                    ]);
 
                 const resolvedTx = resolveHardwareTransaction(
                     txParams,
-                    network.chainId,
+                    chainId,
                     nonce,
                     feeData,
+                    fallbackGas,
                 );
                 const trezorTx = {
                     chainId: Number(resolvedTx.chainId),
@@ -161,39 +190,39 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     await connect.ethereumSignTransaction({
                         transaction: trezorTx,
                         path: this.derivationPath,
-                    } as unknown as never),
+                    }),
                 );
 
                 const transactionLike = {
-                    chainId: resolvedTx.chainId,
+                    chainId: Number(resolvedTx.chainId),
                     data: resolvedTx.data,
-                    gasLimit: resolvedTx.gasLimit,
+                    gas: resolvedTx.gasLimit,
                     nonce: resolvedTx.nonce,
-                    to: resolvedTx.to,
+                    to: resolvedTx.to ?? undefined,
                     value: resolvedTx.value,
                     ...(resolvedTx.type === 2
                         ? {
                               maxFeePerGas: resolvedTx.maxFeePerGas,
                               maxPriorityFeePerGas:
                                   resolvedTx.maxPriorityFeePerGas,
-                              type: 2,
+                              type: "eip1559" as const,
                           }
                         : {
                               gasPrice: resolvedTx.gasPrice,
-                              type: 0,
+                              type: "legacy" as const,
                           }),
-                    signature: Signature.from(signature.payload),
                 };
 
                 log.debug("Broadcasting Trezor transaction", transactionLike);
 
-                const tx = Transaction.from(transactionLike);
+                const signedSerialized = serializeTransaction(
+                    transactionLike,
+                    this.normalizeSignature(signature.payload),
+                );
 
-                await this.provider.send("eth_sendRawTransaction", [
-                    tx.serialized,
-                ]);
-
-                return tx.hash;
+                return await this.provider.sendRawTransaction({
+                    serializedTransaction: signedSerialized,
+                });
             }
 
             case "eth_signTypedData_v4": {
@@ -216,24 +245,26 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                         data: message,
                         metamask_v4_compat: true,
                         path: this.derivationPath,
-                        domain_separator_hash: TypedDataEncoder.hashDomain(
-                            message.domain,
-                        ),
-                        message_hash: TypedDataEncoder.hashStruct(
-                            message.primaryType,
+                        domain_separator_hash: hashDomain({
+                            domain: message.domain,
+                            types: message.types,
+                        } as never),
+                        message_hash: hashStruct({
+                            primaryType: message.primaryType,
                             types,
-                            message.message,
-                        ),
+                            data: message.message,
+                        } as never),
                     }),
                 );
                 return signature.payload.signature;
             }
         }
 
-        return (await this.provider.send(
-            request.method,
-            request.params ?? [],
-        )) as never;
+        const forwardRequest = this.provider.request as EIP1193RequestFn;
+        return await forwardRequest({
+            method: request.method,
+            params: request.params ?? [],
+        });
     };
 
     public on = () => {};
@@ -244,28 +275,38 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         if (this.initialized) {
             return;
         }
-
-        try {
-            const connect = await this.loader.get();
-            await connect.init({
-                lazyLoad: true,
-                manifest: {
-                    appName: "Boltz",
-                    email: "hi@bol.tz",
-                    appUrl: "https://boltz.exchange",
-                },
-            });
-        } catch (e) {
-            if (
-                !(e instanceof Error) ||
-                e.message !== "TrezorConnect has been already initialized"
-            ) {
-                log.debug("TrezorConnect already initialized");
-                return;
-            }
+        if (this.initializing === undefined) {
+            this.initializing = (async () => {
+                try {
+                    const connect = await this.loader.get();
+                    await connect.init({
+                        lazyLoad: true,
+                        manifest: {
+                            appName: "Boltz",
+                            email: "hi@bol.tz",
+                            appUrl: "https://boltz.exchange",
+                        },
+                    });
+                } catch (e) {
+                    // Tolerate the SDK's idempotency string; rethrow
+                    // anything else so the caller learns about transport
+                    // / popup / user-cancel failures instead of running
+                    // on an uninitialised SDK.
+                    const isAlreadyInitialized =
+                        e instanceof Error &&
+                        e.message ===
+                            "TrezorConnect has been already initialized";
+                    if (!isAlreadyInitialized) {
+                        this.initializing = undefined;
+                        throw e;
+                    }
+                    log.debug("TrezorConnect was already initialized");
+                }
+                this.initialized = true;
+            })();
         }
 
-        this.initialized = true;
+        await this.initializing;
     };
 
     private handleError = <T>(
@@ -276,6 +317,28 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         }
 
         throw (res as Unsuccessful).payload.error;
+    };
+
+    private normalizeSignature = (signature: {
+        v?: string | number;
+        r: string;
+        s: string;
+    }) => {
+        if (signature.v === undefined) {
+            throw new Error("Trezor signature is missing v");
+        }
+        const v = BigInt(
+            typeof signature.v === "string" && !signature.v.startsWith("0x")
+                ? prefix0x(signature.v)
+                : signature.v,
+        );
+
+        return {
+            v,
+            yParity: yParityFromV(v),
+            r: prefix0x(signature.r),
+            s: prefix0x(signature.s),
+        };
     };
 }
 

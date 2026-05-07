@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
-import { ZeroAddress } from "ethers";
 import log from "loglevel";
+import { zeroAddress } from "viem";
 
 import { config } from "../config";
 import { BridgeKind, CctpReceiveMode, isTor } from "../configs/base";
@@ -830,7 +830,7 @@ export default class Pair {
             const [quoteRes] = await quoteDexAmountOut(
                 quoteDetails.chain,
                 quoteDetails.tokenIn,
-                ZeroAddress,
+                zeroAddress,
                 msgFee,
             );
 

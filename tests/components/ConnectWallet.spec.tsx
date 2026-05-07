@@ -3,147 +3,6 @@ import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import BigNumber from "bignumber.js";
 import type { JSX } from "solid-js";
 import { createEffect, createMemo, createSignal } from "solid-js";
-import { keccak256, toBytes } from "viem";
-
-vi.mock("ethers", () => {
-    const encodedFunctionData =
-        "0x123456780000000000000000000000000000000000000000000000000000000000000000";
-    const encodedAbiData =
-        "0x0000000000000000000000000000000000000000000000000000000000000000";
-    const stripPrefix = (value: string) =>
-        value.startsWith("0x") ? value.slice(2) : value;
-    const decodeFunctionResult = (name: string, value: string) => {
-        const normalized = stripPrefix(value);
-        if (name === "approvalRequired") {
-            return [normalized !== "" && BigInt(`0x${normalized}`) !== 0n];
-        }
-
-        return [normalized === "" ? 0n : BigInt(`0x${normalized}`)];
-    };
-    const zeroPadValue = (value: string, length: number) =>
-        `0x${stripPrefix(value).padStart(length * 2, "0")}`;
-    const getBytes = (value: string) =>
-        Uint8Array.from(Buffer.from(stripPrefix(value), "hex"));
-    const concat = (values: string[]) =>
-        `0x${values.map((value) => stripPrefix(value)).join("")}`;
-    const solidityPacked = (types: string[], values: Array<string | bigint>) =>
-        `0x${types
-            .map((type, index) => {
-                if (type.startsWith("uint")) {
-                    const bytes = Number(type.slice(4)) / 8;
-                    return BigInt(values[index] as bigint | number)
-                        .toString(16)
-                        .padStart(bytes * 2, "0");
-                }
-
-                if (type === "bytes32") {
-                    return stripPrefix(
-                        zeroPadValue(values[index] as string, 32),
-                    );
-                }
-
-                throw new Error(`unsupported solidityPacked type: ${type}`);
-            })
-            .join("")}`;
-
-    class MockJsonRpcProvider {
-        public send = vi.fn();
-        public getTransactionCount = vi.fn();
-        public getNetwork = vi.fn();
-        public getFeeData = vi.fn();
-    }
-
-    class MockFallbackProvider extends MockJsonRpcProvider {}
-
-    class MockBrowserProvider {
-        constructor(
-            private readonly provider: {
-                request: (request: {
-                    method: string;
-                    params?: Array<unknown>;
-                }) => Promise<unknown>;
-            },
-        ) {}
-
-        public getNetwork = async () => {
-            const chainId = (await this.provider.request({
-                method: "eth_chainId",
-            })) as string;
-
-            return {
-                chainId: BigInt(chainId),
-            };
-        };
-    }
-
-    class MockJsonRpcSigner {
-        public readonly provider: MockBrowserProvider;
-        public readonly address: string;
-
-        constructor(provider: MockBrowserProvider, address: string) {
-            this.provider = provider;
-            this.address = address;
-        }
-
-        public getAddress = () => this.address;
-    }
-
-    class MockContract {
-        constructor(
-            public readonly address?: string,
-            public readonly abi?: unknown,
-            public readonly runner?: unknown,
-        ) {}
-    }
-
-    class MockWallet {
-        public address = "0x0000000000000000000000000000000000000000";
-
-        constructor() {}
-    }
-
-    class Interface {
-        public encodeFunctionData = vi.fn(() => encodedFunctionData);
-        public decodeFunctionResult = vi.fn(decodeFunctionResult);
-
-        public encodeFilterTopics = vi.fn(() => []);
-
-        public parseLog = vi.fn();
-    }
-
-    return {
-        AbiCoder: {
-            defaultAbiCoder: () => ({
-                encode: vi.fn(() => encodedAbiData),
-            }),
-        },
-        BrowserProvider: MockBrowserProvider,
-        Contract: MockContract,
-        FallbackProvider: MockFallbackProvider,
-        Interface,
-        JsonRpcProvider: MockJsonRpcProvider,
-        JsonRpcSigner: MockJsonRpcSigner,
-        Signature: {
-            from: vi.fn((value: unknown) => value),
-        },
-        Transaction: {
-            from: vi.fn(),
-        },
-        TypedDataEncoder: {
-            hashDomain: vi.fn(),
-            hashStruct: vi.fn(),
-        },
-        Wallet: MockWallet,
-        ZeroAddress: "0x0000000000000000000000000000000000000000",
-        concat,
-        getAddress: (value: string) => value,
-        getBytes,
-        id: (value: string) => keccak256(toBytes(value)),
-        keccak256: vi.fn(() => "0xkeccak"),
-        solidityPacked,
-        zeroPadValue,
-    };
-});
 
 vi.mock("../../src/utils/boltzClient", async () => {
     const { config } = await import("../../src/config");
@@ -251,8 +110,8 @@ const Probe = () => {
             return;
         }
 
-        void activeSigner.provider.getNetwork().then((network) => {
-            setChainId(String(network.chainId));
+        void activeSigner.provider.getChainId().then((nextChainId) => {
+            setChainId(String(nextChainId));
         });
     });
 

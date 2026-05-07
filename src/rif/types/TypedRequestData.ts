@@ -1,4 +1,4 @@
-import type { TypedDataDomain, TypedDataField } from "ethers";
+import type { Address, TypedDataDomain, TypedDataParameter } from "viem";
 
 export const relayDataType = [
     { name: "gasPrice", type: "uint256" },
@@ -39,7 +39,7 @@ export const deployRequestType = [
 ];
 
 export function getDomainSeparator(
-    verifyingContract: string,
+    verifyingContract: Address,
     chainId: number,
 ): TypedDataDomain {
     return {
@@ -57,14 +57,14 @@ export type EnvelopingRequest = {
 
 type GetRequestDataFieldProps = {
     chainId: number;
-    verifier: string;
-    requestTypes: TypedDataField[];
+    verifier: Address;
+    requestTypes: TypedDataParameter[];
     envelopingRequest: EnvelopingRequest;
 };
 
 export type EnvelopingMessageTypes = {
-    RelayRequest: TypedDataField[];
-    RelayData: TypedDataField[];
+    RelayRequest: TypedDataParameter[];
+    RelayData: TypedDataParameter[];
 };
 
 export type TypedMessage<T> = {

@@ -1,10 +1,11 @@
-import type { ContractRunner, TransactionReceipt } from "ethers";
+import type { PublicClient, TransactionReceipt } from "viem";
 
 import type {
     CctpReceiveMode,
     CctpTransferMode,
     NetworkTransport,
 } from "../../configs/base";
+import type { Signer } from "../../context/Web3";
 import type { CctpDirectSendTarget } from "../cctp/directSend";
 import type { SolanaCctpTransportClient } from "../cctp/solana";
 import type { CctpSendParam } from "../cctp/types";
@@ -18,14 +19,18 @@ import type {
     OftReceivedEvent,
     OftRoute,
     OftSentEvent,
-    OftTransaction,
     OftTransportClient,
     OftTransportRunner,
     SendParam,
 } from "../oft/types";
-import type { Provider } from "../provider";
+import type { BridgeDetails } from "./details";
 
 export type BridgeRoute = OftRoute;
+
+export type BridgeTransaction = {
+    hash: string;
+    details?: BridgeDetails;
+};
 
 export type BridgeNativeDrop = {
     amount: bigint;
@@ -60,7 +65,7 @@ export type BridgeQuoteOptions = {
 
 export type BridgeSendParam = SendParam | CctpSendParam;
 export type BridgeDirectSendTarget = OftDirectSendTarget | CctpDirectSendTarget;
-export type BridgeDirectSendRunner = ContractRunner;
+export type BridgeDirectSendRunner = Signer | PublicClient;
 
 // Transport-level handle returned by a bridge driver's `createContract` /
 // `getQuotedContract`. Used by cross-driver code (SendToBridge,
@@ -72,10 +77,9 @@ export type CctpTransportClient =
       }
     | SolanaCctpTransportClient;
 export type BridgeTransportClient = OftTransportClient | CctpTransportClient;
-export type BridgeProvider = Provider;
+export type BridgeProvider = PublicClient;
 
 export type BridgeMsgFee = MsgFee;
-export type BridgeTransaction = OftTransaction;
 export type BridgeSentReceipt = TransactionReceipt;
 
 export type BridgeSendQuote = {

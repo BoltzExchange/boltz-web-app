@@ -56,7 +56,7 @@ export default [
                                 "@solana/spl-token",
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
-                                "@reown/appkit-adapter-ethers",
+                                "@reown/appkit-adapter-wagmi",
                                 "@reown/appkit-adapter-solana",
                                 "@reown/appkit-adapter-tron",
                                 "@tronweb3/tronwallet-adapter-metamask-tron",

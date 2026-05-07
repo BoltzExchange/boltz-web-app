@@ -1,19 +1,18 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
-import type { Wallet } from "ethers";
 import log from "loglevel";
+import { type Hash, type Hex } from "viem";
 
+import { requireChainId } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { Signer } from "../context/Web3";
+import type { Erc20SwapContract } from "../context/contracts";
+import { erc20SwapAbi } from "../generated/evm-abis";
 import {
     getEipRefundSignature,
     postCommitmentRefundSignature,
     postCommitmentSignature,
 } from "./boltzClient";
-import {
-    assertTransactionSignerProvider,
-    getLockupEvent,
-} from "./evmTransaction";
-import { prefix0x } from "./rootstock";
+import { getLockupEvent, prefix0x } from "./evmTransaction";
+import { createAssetProvider } from "./provider";
 
 export const emptyPreimageHash = prefix0x("00".repeat(32));
 
@@ -26,11 +25,12 @@ export const isEmptyPreimageHash = (preimageHash: string | undefined) =>
 
 type PostCommitmentSignatureParams = {
     asset: string;
+    commitmentAsset: string;
     swapId: string;
     preimageHash: string;
-    commitmentTxHash: string;
-    erc20Swap: ERC20Swap;
-    signer: Signer | Wallet;
+    commitmentTxHash: Hash;
+    erc20Swap: Erc20SwapContract;
+    signer: Signer;
     waitTimeoutMs?: number;
 };
 
@@ -40,6 +40,7 @@ const maxAllowedOverpaymentPercentage = 10;
 
 export const postCommitmentSignatureForTransaction = async ({
     asset,
+    commitmentAsset,
     swapId,
     preimageHash,
     commitmentTxHash,
@@ -49,22 +50,18 @@ export const postCommitmentSignatureForTransaction = async ({
 }: PostCommitmentSignatureParams) => {
     log.info("Waiting for commitment lockup receipt", {
         asset,
+        commitmentAsset,
         swapId,
         commitmentTxHash,
         waitTimeoutMs,
     });
 
-    const provider = assertTransactionSignerProvider(
-        signer,
-        "commitment transaction signer",
-    );
-    const connectedErc20Swap = erc20Swap.connect(provider) as ERC20Swap;
-
-    const receipt = await provider.waitForTransaction(
-        commitmentTxHash,
-        1,
-        waitTimeoutMs,
-    );
+    const commitmentProvider = createAssetProvider(commitmentAsset);
+    const receipt = await commitmentProvider.waitForTransactionReceipt({
+        hash: commitmentTxHash,
+        confirmations: 1,
+        timeout: waitTimeoutMs,
+    });
     if (receipt === null) {
         throw new Error(
             "could not fetch commitment lockup transaction receipt",
@@ -73,16 +70,14 @@ export const postCommitmentSignatureForTransaction = async ({
 
     log.info("Commitment lockup receipt found", {
         asset,
+        commitmentAsset,
         swapId,
         commitmentTxHash,
         blockNumber: receipt.blockNumber,
     });
 
-    const [chainId, contractAddress, version] = await Promise.all([
-        provider.getNetwork().then((n) => n.chainId),
-        connectedErc20Swap.getAddress(),
-        connectedErc20Swap.version(),
-    ]);
+    const chainId = BigInt(requireChainId(commitmentAsset));
+    const version = await erc20Swap.read.version();
 
     const {
         amount,
@@ -91,13 +86,17 @@ export const postCommitmentSignatureForTransaction = async ({
         refundAddress,
         timelock,
         logIndex,
-    } = getLockupEvent(connectedErc20Swap, receipt, contractAddress);
+    } = getLockupEvent(erc20SwapAbi, receipt, erc20Swap.address);
+
+    if (tokenAddress === undefined) {
+        throw new Error("missing tokenAddress in commitment lockup event");
+    }
 
     log.debug("Parsed commitment lockup event", {
         asset,
         swapId,
         commitmentTxHash,
-        contractAddress,
+        contractAddress: erc20Swap.address,
         chainId: chainId.toString(),
         amount: amount.toString(),
         tokenAddress,
@@ -107,14 +106,15 @@ export const postCommitmentSignatureForTransaction = async ({
         logIndex,
     });
 
-    const commitmentSignature = await signer.signTypedData(
-        {
+    const commitmentSignature = await signer.signTypedData({
+        account: signer.account,
+        domain: {
             name: "ERC20Swap",
             version: String(version),
-            verifyingContract: contractAddress,
+            verifyingContract: erc20Swap.address,
             chainId,
         },
-        {
+        types: {
             Commit: [
                 { name: "preimageHash", type: "bytes32" },
                 { name: "amount", type: "uint256" },
@@ -123,22 +123,23 @@ export const postCommitmentSignatureForTransaction = async ({
                 { name: "refundAddress", type: "address" },
                 { name: "timelock", type: "uint256" },
             ],
-        },
-        {
+        } as const,
+        primaryType: "Commit",
+        message: {
             preimageHash: prefix0x(preimageHash),
             amount,
-            tokenAddress,
-            claimAddress,
-            refundAddress,
+            tokenAddress: tokenAddress,
+            claimAddress: claimAddress,
+            refundAddress: refundAddress,
             timelock,
         },
-    );
+    });
 
     log.debug("Signed commitment typed data", {
         asset,
         swapId,
         commitmentTxHash,
-        contractAddress,
+        contractAddress: erc20Swap.address,
     });
 
     await postCommitmentSignature(
@@ -174,7 +175,7 @@ type GetCommitmentRefundSignatureParams = {
     chainSymbol: string;
     transactionHash: string;
     logIndex?: number;
-    signer: Signer | Wallet;
+    signer: Signer;
 };
 
 export const getCommitmentRefundSignature = async ({
@@ -182,7 +183,7 @@ export const getCommitmentRefundSignature = async ({
     transactionHash,
     logIndex,
     signer,
-}: GetCommitmentRefundSignatureParams): Promise<string> => {
+}: GetCommitmentRefundSignatureParams): Promise<Hex> => {
     const message = buildCommitmentRefundAuthMessage(
         chainSymbol,
         transactionHash,
@@ -195,7 +196,10 @@ export const getCommitmentRefundSignature = async ({
         logIndex,
     });
 
-    const refundAddressSignature = await signer.signMessage(message);
+    const refundAddressSignature = await signer.signMessage({
+        account: signer.account,
+        message,
+    });
 
     const { signature } = await postCommitmentRefundSignature(
         chainSymbol,
@@ -220,7 +224,7 @@ type GetEvmRefundCooperativeSignatureParams = {
     swapType?: SwapType;
     commitmentTxHash?: string;
     logIndex?: number;
-    signer: Signer | Wallet;
+    signer: Signer;
 };
 
 export const getEvmRefundCooperativeSignature = async ({
@@ -231,7 +235,7 @@ export const getEvmRefundCooperativeSignature = async ({
     commitmentTxHash,
     logIndex,
     signer,
-}: GetEvmRefundCooperativeSignatureParams): Promise<string> => {
+}: GetEvmRefundCooperativeSignatureParams): Promise<Hex> => {
     const fetchUnlinked = () => {
         if (commitmentTxHash === undefined) {
             throw new Error("commitment lockup transaction hash is required");

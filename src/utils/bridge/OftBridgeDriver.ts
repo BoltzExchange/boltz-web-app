@@ -1,16 +1,26 @@
-import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
-import type { ERC20 } from "boltz-core/typechain/ERC20";
-import type { Router } from "boltz-core/typechain/Router";
-import { AbiCoder, Contract, Signature, keccak256 } from "ethers";
-import type { TransactionRequest, Wallet } from "ethers";
+import {
+    type Hex,
+    type PublicClient,
+    type TransactionRequest,
+    encodeAbiParameters,
+    encodeFunctionData,
+    getAddress,
+    getContract,
+    keccak256,
+    parseAbiParameters,
+    parseSignature,
+} from "viem";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { BridgeKind, NetworkTransport } from "../../configs/base";
 import { getTokenAddress } from "../../consts/Assets";
 import type { Signer } from "../../context/Web3";
+import type { RouterContract } from "../../context/contracts";
+import { erc20Abi, routerAbi } from "../../generated/evm-abis";
 import { getSolanaNativeBalance } from "../chains/solana";
 import { getTronNativeBalance } from "../chains/tron";
+import { prefix0x } from "../evmTransaction";
 import { ExplorerKind } from "../explorerLink";
 import {
     type OftDirectSendTarget,
@@ -42,8 +52,9 @@ import {
 import { getOftContract } from "../oft/registry";
 import { getSolanaOftGuidFromLogs } from "../oft/solana";
 import type { OftTransportClient, SendParam } from "../oft/types";
-import type { Provider } from "../provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../quoter";
+import { toRouterCalls } from "../router";
+import { vFromSignature } from "../signature";
 import {
     BridgeDriver,
     type EncodeRouterExecuteArgs,
@@ -192,7 +203,7 @@ export class OftBridgeDriver extends BridgeDriver {
         route: BridgeRoute,
         owner: string,
         amount: bigint,
-        signer: Signer | Wallet,
+        signer: Signer,
     ): Promise<AlchemyCall | undefined> => {
         return await buildOftApprovalCall(route, owner, amount, signer);
     };
@@ -216,7 +227,7 @@ export class OftBridgeDriver extends BridgeDriver {
         return await getOftContract(route);
     };
 
-    public getProvider = (sourceAsset: string): Provider => {
+    public getProvider = (sourceAsset: string): PublicClient => {
         return getOftProvider(sourceAsset);
     };
 
@@ -227,13 +238,13 @@ export class OftBridgeDriver extends BridgeDriver {
     ): BridgeSentEvent =>
         getOftSentEvent(
             contract as OftTransportClient,
-            receipt,
+            receipt as Parameters<typeof getOftSentEvent>[1],
             contractAddress,
         );
 
     public getReceivedEventByGuid = async (
         contract: BridgeTransportClient,
-        provider: Pick<Provider, "getLogs" | "getTransactionReceipt">,
+        provider: PublicClient,
         contractAddress: string,
         guid: string,
     ): Promise<BridgeReceivedEvent | undefined> => {
@@ -284,13 +295,15 @@ export class OftBridgeDriver extends BridgeDriver {
             case NetworkTransport.Solana:
                 return await getSolanaOftTokenBalance(route, ownerAddress);
             case NetworkTransport.Evm: {
-                const tokenContract = new Contract(
-                    getTokenAddress(route.sourceAsset),
-                    ERC20Abi,
-                    this.getProvider(route.sourceAsset),
-                ) as unknown as ERC20;
+                const tokenContract = getContract({
+                    address: getAddress(getTokenAddress(route.sourceAsset)),
+                    abi: erc20Abi,
+                    client: this.getProvider(route.sourceAsset),
+                });
 
-                return await tokenContract.balanceOf(ownerAddress);
+                return await tokenContract.read.balanceOf([
+                    getAddress(ownerAddress),
+                ]);
             }
             case NetworkTransport.Tron:
                 return await getTronOftTokenBalance(route, ownerAddress);
@@ -316,9 +329,9 @@ export class OftBridgeDriver extends BridgeDriver {
                     ownerAddress,
                 );
             case NetworkTransport.Evm:
-                return await this.getProvider(route.sourceAsset).getBalance(
-                    ownerAddress,
-                );
+                return await this.getProvider(route.sourceAsset).getBalance({
+                    address: getAddress(ownerAddress),
+                });
             case NetworkTransport.Tron:
                 return await getTronNativeBalance(
                     route.sourceAsset,
@@ -386,6 +399,7 @@ export class OftBridgeDriver extends BridgeDriver {
         await sendOftDirect({
             ...args,
             target: args.target as OftDirectSendTarget,
+            runner: args.runner as Signer,
             sendParam: args.sendParam as SendParam,
         });
 
@@ -401,18 +415,27 @@ export class OftBridgeDriver extends BridgeDriver {
             args.refundAddress,
         );
 
-    public encodeRouterExecuteData = (
-        args: EncodeRouterExecuteArgs,
-    ): string => {
-        return args.router.interface.encodeFunctionData("executeOft", [
-            args.routerCalls,
-            getTokenAddress(args.route.sourceAsset),
-            args.bridgeContract.address,
-            this.toSendData(args.sendParam),
-            args.minAmountLd,
-            args.lzTokenFee,
-            args.refundAddress,
-        ]);
+    public encodeRouterExecuteData = (args: EncodeRouterExecuteArgs): Hex => {
+        const sendData = this.toSendData(args.sendParam);
+        return encodeFunctionData({
+            abi: routerAbi,
+            functionName: "executeOft",
+            args: [
+                toRouterCalls(args.routerCalls),
+                getAddress(getTokenAddress(args.route.sourceAsset)),
+                getAddress(args.bridgeContract.address),
+                {
+                    ...sendData,
+                    to: sendData.to as Hex,
+                    extraOptions: sendData.extraOptions as Hex,
+                    composeMsg: sendData.composeMsg as Hex,
+                    oftCmd: sendData.oftCmd as Hex,
+                },
+                args.minAmountLd,
+                args.lzTokenFee,
+                getAddress(args.refundAddress),
+            ],
+        });
     };
 
     public populateRouterClaimBridgeTransaction = async (
@@ -426,15 +449,16 @@ export class OftBridgeDriver extends BridgeDriver {
         }
 
         const sendData = this.toSendData(args.sendParam);
-        const authSignature = Signature.from(
-            await args.signer.signTypedData(
-                {
+        const authSignature = parseSignature(
+            await args.signer.signTypedData({
+                account: args.signer.account,
+                domain: {
                     name: "Router",
                     version: "2",
-                    verifyingContract: await args.router.getAddress(),
+                    verifyingContract: args.router.address,
                     chainId: args.chainId,
                 },
-                {
+                types: {
                     ClaimSend: [
                         { name: "preimage", type: "bytes32" },
                         { name: "token", type: "address" },
@@ -444,43 +468,60 @@ export class OftBridgeDriver extends BridgeDriver {
                         { name: "lzTokenFee", type: "uint256" },
                         { name: "refundAddress", type: "address" },
                     ],
-                },
-                {
-                    preimage: `0x${args.preimage}`,
-                    token: args.outputTokenAddress,
-                    oft: args.bridgeContract.address,
-                    sendData: await this.hashSendData(args.router, sendData),
+                } as const,
+                primaryType: "ClaimSend",
+                message: {
+                    preimage: prefix0x(args.preimage),
+                    token: getAddress(args.outputTokenAddress),
+                    oft: getAddress(args.bridgeContract.address),
+                    sendData: (await this.hashSendData(
+                        args.router,
+                        sendData,
+                    )) as Hex,
                     minAmountLD: args.minAmountLd,
                     lzTokenFee: args.lzTokenFee,
-                    refundAddress: args.refundAddress,
+                    refundAddress: getAddress(args.refundAddress),
                 },
-            ),
+            }),
         );
 
-        return await args.router.claimERC20ExecuteOft.populateTransaction(
-            {
-                preimage: `0x${args.preimage}`,
-                amount: args.claimAmount,
-                tokenAddress: args.claimTokenAddress,
-                refundAddress: args.refundAddress,
-                timelock: args.timeoutBlockHeight,
-                v: args.claimSignature.v,
-                r: args.claimSignature.r,
-                s: args.claimSignature.s,
-            },
-            args.routerCalls,
-            args.outputTokenAddress,
-            args.bridgeContract.address,
-            sendData,
-            {
-                minAmountLd: args.minAmountLd,
-                lzTokenFee: args.lzTokenFee,
-                refundAddress: args.refundAddress,
-                v: authSignature.v,
-                r: authSignature.r,
-                s: authSignature.s,
-            },
-        );
+        return {
+            to: args.router.address,
+            data: encodeFunctionData({
+                abi: routerAbi,
+                functionName: "claimERC20ExecuteOft",
+                args: [
+                    {
+                        preimage: prefix0x(args.preimage),
+                        amount: args.claimAmount,
+                        tokenAddress: getAddress(args.claimTokenAddress),
+                        refundAddress: getAddress(args.refundAddress),
+                        timelock: BigInt(args.timeoutBlockHeight),
+                        v: vFromSignature(args.claimSignature),
+                        r: args.claimSignature.r,
+                        s: args.claimSignature.s,
+                    },
+                    toRouterCalls(args.routerCalls),
+                    getAddress(args.outputTokenAddress),
+                    getAddress(args.bridgeContract.address),
+                    {
+                        dstEid: sendData.dstEid,
+                        to: sendData.to as Hex,
+                        extraOptions: sendData.extraOptions as Hex,
+                        composeMsg: sendData.composeMsg as Hex,
+                        oftCmd: sendData.oftCmd as Hex,
+                    },
+                    {
+                        minAmountLd: args.minAmountLd,
+                        lzTokenFee: args.lzTokenFee,
+                        refundAddress: getAddress(args.refundAddress),
+                        v: vFromSignature(authSignature),
+                        r: authSignature.r,
+                        s: authSignature.s,
+                    },
+                ],
+            }),
+        } satisfies TransactionRequest;
     };
 
     // Structured projection of the positional OFT send-param tuple.
@@ -497,7 +538,7 @@ export class OftBridgeDriver extends BridgeDriver {
     };
 
     private hashSendData = async (
-        router: Router,
+        router: RouterContract,
         sendData: {
             dstEid: number;
             to: string;
@@ -507,22 +548,17 @@ export class OftBridgeDriver extends BridgeDriver {
         },
     ): Promise<string> =>
         keccak256(
-            AbiCoder.defaultAbiCoder().encode(
+            encodeAbiParameters(
+                parseAbiParameters(
+                    "bytes32,uint32,bytes32,bytes32,bytes32,bytes32",
+                ),
                 [
-                    "bytes32",
-                    "uint32",
-                    "bytes32",
-                    "bytes32",
-                    "bytes32",
-                    "bytes32",
-                ],
-                [
-                    await router.TYPEHASH_SEND_DATA(),
+                    (await router.read.TYPEHASH_SEND_DATA()) as Hex,
                     sendData.dstEid,
-                    sendData.to,
-                    keccak256(sendData.extraOptions),
-                    keccak256(sendData.composeMsg),
-                    keccak256(sendData.oftCmd),
+                    sendData.to as Hex,
+                    keccak256(sendData.extraOptions as Hex),
+                    keccak256(sendData.composeMsg as Hex),
+                    keccak256(sendData.oftCmd as Hex),
                 ],
             ),
         );

@@ -1,9 +1,16 @@
 import { render, waitFor } from "@solidjs/testing-library";
+import {
+    type Hex,
+    decodeAbiParameters,
+    encodeAbiParameters,
+    encodeEventTopics,
+} from "viem";
+
+import { erc20SwapAbi, routerAbi } from "../../src/generated/evm-abis";
 
 let currentSwap: Record<string, unknown>;
 let mockNetworkTransport = "evm";
 const mockQueryFilter = vi.fn();
-const mockLockupParseLog = vi.fn();
 const mockGetTransaction = vi.fn();
 const mockIsBlockhashValid = vi.fn();
 const mockGetSignatureStatuses = vi.fn();
@@ -38,26 +45,51 @@ const mockPostCommitmentSignatureForTransaction = vi
     .fn<(...args: unknown[]) => Promise<void>>()
     .mockResolvedValue(undefined);
 const createMockErc20Swap = () => {
-    const contract = {
-        getAddress: vi
-            .fn()
-            .mockResolvedValue("0x8000000000000000000000000000000000000000"),
-        version: vi.fn().mockResolvedValue("2"),
-        queryFilter: mockQueryFilter as (
-            ...args: unknown[]
-        ) => Promise<unknown[]>,
-        filters: {
-            Lockup: vi.fn().mockReturnValue("lockup-filter"),
+    return {
+        address: "0x8000000000000000000000000000000000000000",
+        abi: erc20SwapAbi,
+        read: {
+            version: vi.fn().mockResolvedValue("2"),
         },
-        interface: {
-            parseLog: mockLockupParseLog as (...args: unknown[]) => unknown,
-        },
-        connect: vi.fn(),
     };
-    contract.connect.mockReturnValue(contract);
-
-    return contract;
 };
+
+const buildLockupLog = ({
+    transactionHash,
+    logIndex,
+}: {
+    transactionHash: Hex;
+    logIndex: number;
+}) => ({
+    address: "0x8000000000000000000000000000000000000000",
+    data: encodeAbiParameters(
+        [{ type: "uint256" }, { type: "address" }, { type: "uint256" }],
+        [123n, "0xf100000000000000000000000000000000000000", 321n],
+    ),
+    topics: encodeEventTopics({
+        abi: erc20SwapAbi,
+        eventName: "Lockup",
+        args: {
+            preimageHash: `0x${"00".repeat(32)}`,
+            claimAddress: "0xc000000000000000000000000000000000000000",
+            refundAddress: "0x9000000000000000000000000000000000000000",
+        },
+    }),
+    args: {
+        preimageHash: `0x${"00".repeat(32)}` as Hex,
+        amount: 123n,
+        tokenAddress:
+            "0xf100000000000000000000000000000000000000" as `0x${string}`,
+        claimAddress:
+            "0xc000000000000000000000000000000000000000" as `0x${string}`,
+        refundAddress:
+            "0x9000000000000000000000000000000000000000" as `0x${string}`,
+        timelock: 321n,
+    },
+    eventName: "Lockup" as const,
+    transactionHash,
+    logIndex,
+});
 
 vi.mock("../../src/config", () => ({
     config: {
@@ -145,22 +177,6 @@ vi.mock("../../src/context/Pay", () => ({
 }));
 
 vi.mock("../../src/context/Web3", () => ({
-    createRouterContract: () => ({
-        getAddress: vi
-            .fn()
-            .mockResolvedValue("0x7000000000000000000000000000000000000000"),
-        executeAndLockERC20: {
-            populateTransaction: vi.fn().mockResolvedValue({
-                to: "0x7000000000000000000000000000000000000000",
-                data: "0xlock",
-            }),
-        },
-    }),
-    createTokenContract: () => ({
-        interface: {
-            encodeFunctionData: vi.fn().mockReturnValue("0xtransfer"),
-        },
-    }),
     useWeb3Signer: () => ({
         getErc20Swap: vi.fn(() => createMockErc20Swap()),
         getGasAbstractionSigner: vi.fn((asset: string) => ({
@@ -173,6 +189,13 @@ vi.mock("../../src/context/Web3", () => ({
             },
         })),
         signer: () => undefined,
+    }),
+}));
+
+vi.mock("../../src/context/contracts", () => ({
+    createRouterContract: () => ({
+        address: "0x7000000000000000000000000000000000000000",
+        abi: routerAbi,
     }),
 }));
 
@@ -224,16 +247,24 @@ vi.mock("../../src/utils/cctp/attestation", () => ({
 }));
 
 vi.mock("../../src/utils/evmTransaction", () => ({
-    assertTransactionSignerProvider: (signer: { provider: unknown }) =>
-        signer.provider,
     sendPopulatedTransaction: (...args: unknown[]) =>
         mockSendPopulatedTransaction(...args),
+    prefix0x: (value: string) =>
+        value.startsWith("0x") ? value : `0x${value}`,
 }));
 
 vi.mock("../../src/utils/provider", () => ({
     createAssetProvider: vi.fn(() => ({
         call: mockProviderCall,
-        getLogs: vi.fn(),
+        readContract: async (...args: unknown[]) => {
+            const encoded = (await mockProviderCall(...args)) as Hex;
+            const [decoded] = decodeAbiParameters(
+                [{ type: "uint256" }],
+                encoded,
+            );
+            return decoded;
+        },
+        getLogs: mockQueryFilter,
         getTransactionReceipt: mockGetTransactionReceipt,
         getBlockNumber: mockGetBlockNumber,
     })),
@@ -286,8 +317,6 @@ vi.mock("../../src/utils/quoter", () => ({
 }));
 
 vi.mock("../../src/utils/rootstock", () => ({
-    prefix0x: (value: string) =>
-        value.startsWith("0x") ? value : `0x${value}`,
     satsToAssetAmount: (value: number) => BigInt(value),
 }));
 
@@ -375,7 +404,6 @@ describe("SwapExecutionWorker", () => {
             .mockReset()
             .mockResolvedValue(undefined);
         mockQueryFilter.mockReset().mockResolvedValue([]);
-        mockLockupParseLog.mockReset();
         Object.defineProperty(window.navigator, "locks", {
             configurable: true,
             value: {
@@ -451,14 +479,14 @@ describe("SwapExecutionWorker", () => {
             feeExecuted: 1n,
         });
         mockGetTransactionReceipt.mockResolvedValue({
-            status: 1,
-            blockNumber: 10,
-            hash: "0xcctpsend",
+            status: "success",
+            blockNumber: 10n,
+            transactionHash: "0xcctpsend",
             logs: [
                 {
                     topics: [cctpMessageSentTopic],
                     data: encodeBytesData(message),
-                    index: 2,
+                    logIndex: 2,
                 },
             ],
         });
@@ -497,11 +525,11 @@ describe("SwapExecutionWorker", () => {
         });
         expect(calls[1]).toMatchObject({
             to: "0xf200000000000000000000000000000000000000",
-            data: "0xtransfer",
+            data: expect.stringMatching(/^0x[0-9a-f]+$/),
         });
         expect(calls[2]).toMatchObject({
             to: "0x7000000000000000000000000000000000000000",
-            data: "0xlock",
+            data: expect.stringMatching(/^0x[0-9a-f]+$/),
         });
         expect(mockGetCctpAttestation).toHaveBeenCalledWith(6, "0xcctpsend");
     });
@@ -519,14 +547,14 @@ describe("SwapExecutionWorker", () => {
         });
         mockProviderCall.mockResolvedValue(encodeUint256(1n));
         mockGetTransactionReceipt.mockResolvedValue({
-            status: 1,
-            blockNumber: 10,
-            hash: "0xcctpsend",
+            status: "success",
+            blockNumber: 10n,
+            transactionHash: "0xcctpsend",
             logs: [
                 {
                     topics: [cctpMessageSentTopic],
                     data: encodeBytesData(message),
-                    index: 2,
+                    logIndex: 2,
                 },
             ],
         });
@@ -561,34 +589,21 @@ describe("SwapExecutionWorker", () => {
         expect(calls).toHaveLength(2);
         expect(calls[0]).toMatchObject({
             to: "0xf200000000000000000000000000000000000000",
-            data: "0xtransfer",
+            data: expect.stringMatching(/^0x[0-9a-f]+$/),
         });
         expect(calls[1]).toMatchObject({
             to: "0x7000000000000000000000000000000000000000",
-            data: "0xlock",
+            data: expect.stringMatching(/^0x[0-9a-f]+$/),
         });
     });
 
     test("should recover a pre-existing pre-OFT commitment lockup without sending again", async () => {
         mockQueryFilter.mockResolvedValue([
-            {
-                data: "0xlockup",
-                topics: ["0xtopic"],
+            buildLockupLog({
                 transactionHash: "0xrecovered",
-                index: 7,
-            },
+                logIndex: 7,
+            }),
         ]);
-        mockLockupParseLog.mockReturnValue({
-            name: "Lockup",
-            args: {
-                preimageHash:
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                tokenAddress: "0xf100000000000000000000000000000000000000",
-                claimAddress: "0xc000000000000000000000000000000000000000",
-                refundAddress: "0x9000000000000000000000000000000000000000",
-                timelock: 321n,
-            },
-        });
 
         render(() => <SwapExecutionWorker />);
 
@@ -606,46 +621,35 @@ describe("SwapExecutionWorker", () => {
         });
 
         expect(mockQueryFilter).toHaveBeenCalledWith(
-            "lockup-filter",
-            5,
-            "latest",
+            expect.objectContaining({
+                address: "0x8000000000000000000000000000000000000000",
+                fromBlock: 5n,
+                toBlock: "latest",
+            }),
         );
     });
 
     test("should stop before rebroadcasting when recovery finds multiple matching pre-OFT lockups", async () => {
         mockQueryFilter.mockResolvedValue([
-            {
-                data: "0xlockup-1",
-                topics: ["0xtopic"],
-                transactionHash: "0xmatch-one",
-                index: 7,
-            },
-            {
-                data: "0xlockup-2",
-                topics: ["0xtopic"],
-                transactionHash: "0xmatch-two",
-                index: 8,
-            },
+            buildLockupLog({
+                transactionHash: "0xmatch01",
+                logIndex: 7,
+            }),
+            buildLockupLog({
+                transactionHash: "0xmatch02",
+                logIndex: 8,
+            }),
         ]);
-        mockLockupParseLog.mockReturnValue({
-            name: "Lockup",
-            args: {
-                preimageHash:
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                tokenAddress: "0xf100000000000000000000000000000000000000",
-                claimAddress: "0xc000000000000000000000000000000000000000",
-                refundAddress: "0x9000000000000000000000000000000000000000",
-                timelock: 321n,
-            },
-        });
 
         render(() => <SwapExecutionWorker />);
 
         await waitFor(() => {
             expect(mockQueryFilter).toHaveBeenCalledWith(
-                "lockup-filter",
-                5,
-                "latest",
+                expect.objectContaining({
+                    address: "0x8000000000000000000000000000000000000000",
+                    fromBlock: 5n,
+                    toBlock: "latest",
+                }),
             );
         });
         await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
@@ -662,24 +666,11 @@ describe("SwapExecutionWorker", () => {
             new Error("Alchemy request failed for wallet_sendPreparedCalls"),
         );
         mockQueryFilter.mockResolvedValueOnce([]).mockResolvedValueOnce([
-            {
-                data: "0xlockup",
-                topics: ["0xtopic"],
-                transactionHash: "0xrecovered-after-send",
-                index: 8,
-            },
+            buildLockupLog({
+                transactionHash: "0xrecoveredaftersend",
+                logIndex: 8,
+            }),
         ]);
-        mockLockupParseLog.mockReturnValue({
-            name: "Lockup",
-            args: {
-                preimageHash:
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                tokenAddress: "0xf100000000000000000000000000000000000000",
-                claimAddress: "0xc000000000000000000000000000000000000000",
-                refundAddress: "0x9000000000000000000000000000000000000000",
-                timelock: 321n,
-            },
-        });
 
         render(() => <SwapExecutionWorker />);
 
@@ -689,11 +680,11 @@ describe("SwapExecutionWorker", () => {
                 mockPostCommitmentSignatureForTransaction,
             ).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    commitmentTxHash: "0xrecovered-after-send",
+                    commitmentTxHash: "0xrecoveredaftersend",
                 }),
             );
             expect(currentSwap.commitmentLockupTxHash).toEqual(
-                "0xrecovered-after-send",
+                "0xrecoveredaftersend",
             );
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
         });

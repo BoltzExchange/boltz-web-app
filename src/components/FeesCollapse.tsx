@@ -1,5 +1,4 @@
 import { BigNumber } from "bignumber.js";
-import { formatUnits } from "ethers";
 import log from "loglevel";
 import { VsChevronRight } from "solid-icons/vs";
 import {
@@ -9,6 +8,7 @@ import {
     createSignal,
     onMount,
 } from "solid-js";
+import { formatUnits } from "viem";
 
 import { config } from "../config";
 import {

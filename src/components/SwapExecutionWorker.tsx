@@ -3,6 +3,15 @@ import { hex } from "@scure/base";
 import type { Connection } from "@solana/web3.js";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
+import {
+    type Address,
+    type Hash,
+    type Hex,
+    encodeFunctionData,
+    getAbiItem,
+    getAddress,
+    isAddressEqual,
+} from "viem";
 
 import {
     type AlchemyCall,
@@ -16,11 +25,9 @@ import { SwapPosition, SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import {
-    createRouterContract,
-    createTokenContract,
-    useWeb3Signer,
-} from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
+import { createRouterContract } from "../context/contracts";
+import { erc20Abi, erc20SwapAbi, routerAbi } from "../generated/evm-abis";
 import {
     encodeDexQuote,
     getCommitmentLockupDetails,
@@ -47,11 +54,12 @@ import {
     postCommitmentSignatureForTransaction,
 } from "../utils/commitment";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
+import { prefix0x } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import { getTronOftGuidFromTransactionInfo } from "../utils/oft/tron";
 import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
-import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import { satsToAssetAmount } from "../utils/rootstock";
 import {
     type BridgeDetail,
     type ChainSwap,
@@ -165,7 +173,7 @@ const enum PreBridgeCommitmentLockupRecoveryStatus {
 type PreBridgeCommitmentLockupRecoveryResult =
     | {
           status: PreBridgeCommitmentLockupRecoveryStatus.Recovered;
-          transactionHash: string;
+          transactionHash: Hex;
       }
     | {
           status: PreBridgeCommitmentLockupRecoveryStatus.Ambiguous;
@@ -237,21 +245,21 @@ export const SwapExecutionWorker = () => {
     const recoverPreBridgeCommitmentLockup = async (
         currentSwap: SomeSwap,
         receivedEvent: {
-            blockNumber: number;
+            blockNumber: number | bigint;
         },
         gasAbstractionSigner: {
             address: string;
         },
     ): Promise<PreBridgeCommitmentLockupRecoveryResult> => {
         const commitmentAsset = currentSwap.assetSend;
-        const erc20Swap = getErc20Swap(commitmentAsset).connect(
-            createAssetProvider(commitmentAsset),
-        );
-        const lockupLogs = await erc20Swap.queryFilter(
-            erc20Swap.filters.Lockup(),
-            receivedEvent.blockNumber,
-            "latest",
-        );
+        const erc20Swap = getErc20Swap(commitmentAsset);
+        const provider = createAssetProvider(commitmentAsset);
+        const lockupLogs = await provider.getLogs({
+            address: erc20Swap.address,
+            event: getAbiItem({ abi: erc20SwapAbi, name: "Lockup" }),
+            fromBlock: BigInt(receivedEvent.blockNumber),
+            toBlock: "latest",
+        });
         const claimAddress = getPreBridgeCommitmentClaimAddress(currentSwap);
         if (typeof claimAddress !== "string") {
             log.warn(
@@ -267,29 +275,25 @@ export const SwapExecutionWorker = () => {
         }
         const tokenAddress = getTokenAddress(commitmentAsset);
         const matchingLockups = lockupLogs.flatMap((event) => {
-            const parsedLog = erc20Swap.interface.parseLog({
-                data: event.data,
-                topics: [...event.topics],
-            });
-            if (parsedLog?.name !== "Lockup") {
-                return [];
-            }
-
             const {
                 preimageHash,
                 tokenAddress: lockupTokenAddress,
                 claimAddress: lockupClaimAddress,
                 refundAddress,
-            } = parsedLog.args;
+            } = event.args;
             const matches =
                 typeof event.transactionHash === "string" &&
+                preimageHash !== undefined &&
+                lockupTokenAddress !== undefined &&
+                lockupClaimAddress !== undefined &&
+                refundAddress !== undefined &&
                 isEmptyPreimageHash(preimageHash) &&
-                lockupTokenAddress.toLowerCase() ===
-                    tokenAddress.toLowerCase() &&
-                lockupClaimAddress.toLowerCase() ===
-                    claimAddress.toLowerCase() &&
-                refundAddress.toLowerCase() ===
-                    gasAbstractionSigner.address.toLowerCase();
+                isAddressEqual(lockupTokenAddress, getAddress(tokenAddress)) &&
+                isAddressEqual(lockupClaimAddress, getAddress(claimAddress)) &&
+                isAddressEqual(
+                    refundAddress,
+                    getAddress(gasAbstractionSigner.address),
+                );
 
             if (!matches) {
                 return [];
@@ -298,7 +302,7 @@ export const SwapExecutionWorker = () => {
             return [
                 {
                     transactionHash: event.transactionHash,
-                    logIndex: event.index,
+                    logIndex: event.logIndex ?? 0,
                 },
             ];
         });
@@ -425,7 +429,7 @@ export const SwapExecutionWorker = () => {
             const [fromBlock, nonceUsed] = await Promise.all([
                 destinationProvider.getBlockNumber(),
                 isCctpNonceUsed(
-                    destinationConfig.messageTransmitter,
+                    getAddress(destinationConfig.messageTransmitter),
                     destinationProvider,
                     burn.nonce,
                 ),
@@ -445,7 +449,7 @@ export const SwapExecutionWorker = () => {
                 receiveCall: nonceUsed
                     ? undefined
                     : ({
-                          to: destinationConfig.messageTransmitter,
+                          to: destinationConfig.messageTransmitter as Address,
                           value: "0",
                           data: encodeCctpReceiveMessage(
                               attestation.message,
@@ -454,7 +458,7 @@ export const SwapExecutionWorker = () => {
                       } satisfies AlchemyCall),
                 receivedEvent: {
                     guid,
-                    srcEid: BigInt(burn.sourceDomain),
+                    srcEid: burn.sourceDomain,
                     toAddress: burn.mintRecipient,
                     amountReceivedLD: burn.amountReceived,
                     blockNumber: fromBlock,
@@ -521,7 +525,11 @@ export const SwapExecutionWorker = () => {
                 return undefined;
             }
 
-            const receipt = await sourceProvider.getTransactionReceipt(txHash);
+            const receipt = await sourceProvider
+                .getTransactionReceipt({
+                    hash: txHash as Hash,
+                })
+                .catch(() => null);
             if (receipt !== null) {
                 log.info(
                     "Swap execution found bridge send receipt",
@@ -809,7 +817,7 @@ export const SwapExecutionWorker = () => {
                     return;
                 }
 
-                if (sendReceipt.status === 0) {
+                if (sendReceipt.status === "reverted") {
                     await abandonFailedBridgeSend(
                         currentSwap.id,
                         currentSwap.bridge.sourceAsset,
@@ -1000,29 +1008,27 @@ export const SwapExecutionWorker = () => {
             latestSwap.assetSend,
             gasAbstractionSigner,
         );
-        const routerAddress = await router.getAddress();
         const encoded = await encodeDexQuote(
             hop.dexDetails.chain,
-            routerAddress,
+            router.address,
             receivedAmount,
             calculateAmountOutMin(quote.trade.amountOut, slippage()),
             quote.trade.data,
         );
 
-        const token = createTokenContract(
-            latestSwap.bridge.destinationAsset,
-            gasAbstractionSigner,
-        );
-        const transferData = token.interface.encodeFunctionData("transfer", [
-            routerAddress,
-            receivedAmount,
-        ]);
+        const transferData = encodeFunctionData({
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [router.address, receivedAmount],
+        });
         const calls: AlchemyCall[] = [
             ...(manualCctpReceive?.receiveCall === undefined
                 ? []
                 : [manualCctpReceive.receiveCall]),
             {
-                to: getTokenAddress(latestSwap.bridge.destinationAsset),
+                to: getTokenAddress(
+                    latestSwap.bridge.destinationAsset,
+                ) as Address,
                 value: "0",
                 data: transferData,
             },
@@ -1042,18 +1048,25 @@ export const SwapExecutionWorker = () => {
         if (preBridgeClaimAddress === undefined) {
             throw new Error("missing pre-bridge commitment claim address");
         }
-        const tx = await router.executeAndLockERC20.populateTransaction(
-            emptyPreimageHash,
-            getTokenAddress(latestSwap.assetSend),
-            preBridgeClaimAddress,
-            gasAbstractionSigner.address,
-            commitmentLockupDetails.timelock,
-            encoded.calls.map((call) => ({
-                target: call.to,
-                value: call.value,
-                callData: prefix0x(call.data),
-            })),
-        );
+        const tx = {
+            to: router.address,
+            data: encodeFunctionData({
+                abi: routerAbi,
+                functionName: "executeAndLockERC20",
+                args: [
+                    emptyPreimageHash,
+                    getAddress(getTokenAddress(latestSwap.assetSend)),
+                    getAddress(preBridgeClaimAddress),
+                    getAddress(gasAbstractionSigner.address),
+                    BigInt(commitmentLockupDetails.timelock),
+                    encoded.calls.map((call) => ({
+                        target: getAddress(call.to),
+                        value: BigInt(call.value),
+                        callData: prefix0x(call.data),
+                    })),
+                ],
+            }),
+        };
         calls.push(toAlchemyCall(tx));
 
         try {
@@ -1251,9 +1264,10 @@ export const SwapExecutionWorker = () => {
                 );
                 await postCommitmentSignatureForTransaction({
                     asset: storedSwap.assetSend,
+                    commitmentAsset,
                     swapId: storedSwap.id,
                     preimageHash: getSwapPreimageHash(storedSwap),
-                    commitmentTxHash: storedSwap.commitmentLockupTxHash,
+                    commitmentTxHash: storedSwap.commitmentLockupTxHash as Hash,
                     erc20Swap: getErc20Swap(commitmentAsset),
                     signer: transactionSigner,
                 });

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { base58 } from "@scure/base";
-import { isAddress } from "ethers/address";
+import { isAddress } from "viem";
 
 import { config as runtimeConfig } from "../../src/config";
 import { NetworkTransport } from "../../src/configs/base";

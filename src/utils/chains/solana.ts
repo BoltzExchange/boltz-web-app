@@ -1,14 +1,15 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { base58, hex } from "@scure/base";
 import type { Connection } from "@solana/web3.js";
-import { solidityPacked } from "ethers";
 import log from "loglevel";
+import { encodePacked } from "viem";
 
 import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolana from "../../lazy/solana";
 import { getCachedValue } from "../cache";
 import { formatError } from "../errors";
+import { prefix0x } from "../evmTransaction";
 import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
@@ -42,10 +43,10 @@ export const isValidSolanaAddress = (address: string): boolean => {
 };
 
 export const encodeSolanaRecipient = (recipient: string): string =>
-    `0x${hex.encode(decodeSolanaAddress(recipient))}`;
+    prefix0x(hex.encode(decodeSolanaAddress(recipient)));
 
 export const encodeSolanaAtaCreationOption = (): string =>
-    solidityPacked(["uint128", "uint128"], [0n, solanaAtaRentExemptLamports]);
+    encodePacked(["uint128", "uint128"], [0n, solanaAtaRentExemptLamports]);
 
 export const getConnectedSolanaWalletAddress = async (
     walletProvider: SolanaWalletProvider,

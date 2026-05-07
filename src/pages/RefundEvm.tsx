@@ -105,9 +105,7 @@ const RefundEvm = () => {
         }
 
         const provider = createAssetProvider(params.asset);
-        const contract = getSwapContract(params.asset).connect(
-            provider,
-        ) as ReturnType<typeof getSwapContract>;
+        const contract = getSwapContract(params.asset);
 
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(

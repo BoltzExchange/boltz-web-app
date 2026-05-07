@@ -1,14 +1,16 @@
-import { id } from "ethers";
+import { type Hex, keccak256, toBytes } from "viem";
+
+import { prefix0x } from "../evmTransaction";
 
 // keccak256("MessageSent(bytes)") — event on `MessageTransmitterV2` emitted
 // once per `depositForBurn*` call.
-export const cctpMessageSentTopic = id("MessageSent(bytes)");
+export const cctpMessageSentTopic = keccak256(toBytes("MessageSent(bytes)"));
 
 // keccak256("MintAndWithdraw(address,uint256,address,uint256)") — event on
 // `TokenMinterV2` emitted by a destination mint. `mintRecipient` and
 // `mintToken` are indexed; `amount` and `feeCollected` are in data.
-export const cctpMintAndWithdrawTopic = id(
-    "MintAndWithdraw(address,uint256,address,uint256)",
+export const cctpMintAndWithdrawTopic = keccak256(
+    toBytes("MintAndWithdraw(address,uint256,address,uint256)"),
 );
 
 // CCTP v2 outer message header byte offsets (see Circle's MessageV2.sol).
@@ -28,7 +30,7 @@ const burnFeeExecutedBodyOffset = 164; // uint256 after maxFee
 type LogLike = {
     topics: ReadonlyArray<string>;
     data: string;
-    index?: number;
+    logIndex?: number | null;
 };
 
 const stripPrefix = (value: string): string =>
@@ -47,7 +49,7 @@ const decodeMessageBytes = (data: string): string => {
     }
     const messageHexLength = messageLengthBytes * 2;
     const messageHex = hex.slice(128, 128 + messageHexLength);
-    return `0x${messageHex}`;
+    return prefix0x(messageHex);
 };
 
 const readUint32 = (message: string, byteOffset: number): number => {
@@ -56,14 +58,14 @@ const readUint32 = (message: string, byteOffset: number): number => {
     return Number.parseInt(slice, 16);
 };
 
-const readBytes32 = (message: string, byteOffset: number): string => {
+const readBytes32 = (message: string, byteOffset: number): Hex => {
     const hex = stripPrefix(message);
-    return `0x${hex.slice(byteOffset * 2, byteOffset * 2 + 64)}`;
+    return prefix0x(hex.slice(byteOffset * 2, byteOffset * 2 + 64));
 };
 
 const readUint256 = (data: string, byteOffset: number): bigint => {
     const hex = stripPrefix(data);
-    return BigInt(`0x${hex.slice(byteOffset * 2, byteOffset * 2 + 64)}`);
+    return BigInt(prefix0x(hex.slice(byteOffset * 2, byteOffset * 2 + 64)));
 };
 
 export type CctpMessageSentInfo = {
@@ -71,10 +73,10 @@ export type CctpMessageSentInfo = {
     message: string;
     sourceDomain: number;
     destinationDomain: number;
-    nonce: string; // bytes32
-    sender: string; // bytes32
-    recipient: string; // bytes32
-    destinationCaller: string; // bytes32
+    nonce: Hex; // bytes32
+    sender: Hex; // bytes32
+    recipient: Hex; // bytes32
+    destinationCaller: Hex; // bytes32
     // Burn amount extracted from the inner BurnMessage body.
     amountSent: bigint;
     logIndex: number;
@@ -83,11 +85,11 @@ export type CctpMessageSentInfo = {
 export type CctpBurnMessageInfo = {
     sourceDomain: number;
     destinationDomain: number;
-    nonce: string; // bytes32
-    sender: string; // bytes32
-    recipient: string; // bytes32
-    destinationCaller: string; // bytes32
-    mintRecipient: string; // bytes32
+    nonce: Hex; // bytes32
+    sender: Hex; // bytes32
+    recipient: Hex; // bytes32
+    destinationCaller: Hex; // bytes32
+    mintRecipient: Hex; // bytes32
     amount: bigint;
     feeExecuted: bigint;
     amountReceived: bigint;
@@ -146,7 +148,7 @@ export const parseCctpMessageSent = (receipt: {
         recipient: burn.recipient,
         destinationCaller: burn.destinationCaller,
         amountSent: burn.amount,
-        logIndex: log.index ?? 0,
+        logIndex: log.logIndex ?? 0,
     };
 };
 
@@ -174,7 +176,7 @@ export const parseCctpMintAndWithdraws = (receipt: {
             mintRecipient: entry.topics[1] ?? "",
             mintToken: entry.topics[2] ?? "",
             amount: readUint256(entry.data, 0),
-            logIndex: entry.index ?? 0,
+            logIndex: entry.logIndex ?? 0,
             blockNumber: receipt.blockNumber,
         }));
 };

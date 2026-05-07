@@ -82,6 +82,27 @@ const waitForSwapCreated = async (page: Page) => {
     await expect(page.locator("div[data-status='swap.created']")).toBeVisible();
 };
 
+const waitForLockupConfirmed = async (
+    page: Page,
+    sendAsset: string,
+    receiveAsset: string,
+) => {
+    let status: string;
+    if (sendAsset === "BTC" && receiveAsset === "RBTC") {
+        status = "transaction.server.confirmed";
+    } else if (sendAsset === "RBTC" && receiveAsset === "BTC") {
+        status = "transaction.claim.pending";
+    } else {
+        throw new Error(
+            `waitForLockupConfirmed: unsupported asset pair ${sendAsset} -> ${receiveAsset}`,
+        );
+    }
+
+    const success = page.locator(`div[data-status='${status}']`);
+    const failed = page.locator("div[data-status='transaction.failed']");
+    await expect(success.or(failed)).toBeVisible({ timeout: 30_000 });
+};
+
 const copyLockupAddress = async (page: Page) => {
     await page
         .locator("div[data-testid='pay-onchain-buttons']")
@@ -170,7 +191,7 @@ test.describe("RSK Rescue", () => {
 
         await bitcoinSendToAddress(lockupAddress, sendAmount);
         await generateBitcoinBlock();
-        await page.waitForTimeout(500);
+        await waitForLockupConfirmed(page, "BTC", "RBTC");
 
         await clearBrowserStorage(page);
 
@@ -206,7 +227,7 @@ test.describe("RSK Rescue", () => {
 
         await bitcoinSendToAddress(lockupAddress, sendAmount);
         await generateBitcoinBlock();
-        await page.waitForTimeout(500);
+        await waitForLockupConfirmed(page, "BTC", "RBTC");
 
         const rescueFileContent = JSON.parse(
             fs.readFileSync(rescueFileName, "utf8"),
@@ -249,7 +270,7 @@ test.describe("RSK Rescue", () => {
         await waitForSwapCreated(page);
 
         await page.getByRole("button", { name: "Send" }).click();
-        await page.waitForTimeout(1000);
+        await waitForLockupConfirmed(page, "RBTC", "BTC");
         await clearBrowserStorage(page);
 
         await generateAnvilBlock(360);

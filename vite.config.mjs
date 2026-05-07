@@ -193,6 +193,15 @@ export default defineConfig({
         commonjsOptions: {
             transformMixedEsModules: true,
         },
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes("/node_modules/viem/")) {
+                        return "viem";
+                    }
+                },
+            },
+        },
     },
     css: {
         preprocessorOptions: {

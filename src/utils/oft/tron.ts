@@ -1,10 +1,20 @@
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Adapter as AbstractTronWalletAdapter } from "@tronweb3/tronwallet-abstract-adapter";
-import { Interface, MaxUint256 } from "ethers";
 import type { Types as TronTypes, TronWeb as TronWebClient } from "tronweb";
+import {
+    type ContractFunctionArgs,
+    type DecodeEventLogReturnType,
+    type Hex,
+    decodeEventLog,
+    decodeFunctionResult,
+    encodeFunctionData,
+    maxUint256,
+} from "viem";
 
 import { NetworkTransport } from "../../configs/base";
 import { getTokenAddress } from "../../consts/Assets";
+import { erc20Abi } from "../../generated/evm-abis";
+import type { BridgeTransaction } from "../bridge";
 import {
     type TronSignedTransaction,
     type TronTransactionInfo,
@@ -15,6 +25,7 @@ import {
     tronBase58ToHexAddress,
     tronHexToBase58Address,
 } from "../chains/tron";
+import { prefix0x } from "../evmTransaction";
 import { oftAbi } from "./evm";
 import type {
     MsgFee,
@@ -22,17 +33,10 @@ import type {
     OftLimit,
     OftReceipt,
     OftSentEvent,
-    OftTransaction,
     SendParam,
 } from "./types";
 
 const tronSendFeeLimit = 150_000_000n;
-const oftInterface = new Interface(oftAbi);
-const erc20Interface = new Interface([
-    "function balanceOf(address) view returns (uint256)",
-    "function allowance(address,address) view returns (uint256)",
-    "function approve(address,uint256) returns (bool)",
-]);
 const quoteOftSelector =
     "quoteOFT((uint32,bytes32,uint256,uint256,bytes,bytes,bytes))";
 const quoteSendSelector =
@@ -47,6 +51,21 @@ type TronSignTransactionResponse =
     | {
           result: TronSignedTransaction;
       };
+
+type TronOftSendParam = ContractFunctionArgs<
+    typeof oftAbi,
+    "view",
+    "quoteOFT"
+>[0];
+
+type TronOftMsgFee = ContractFunctionArgs<typeof oftAbi, "payable", "send">[1];
+
+type TronOftSentLog = DecodeEventLogReturnType<
+    typeof oftAbi,
+    "OFTSent",
+    Hex[],
+    Hex
+>;
 
 // The `TronConnector` type doesn't have the `tron_signTransaction` rpc method,
 // so we have to extend it here.
@@ -137,8 +156,39 @@ const encodeContractParams = (data: string): string => {
     return data.slice(10);
 };
 
-const decodeConstantResult = (functionName: string, result: string) =>
-    oftInterface.decodeFunctionResult(functionName, `0x${result}`);
+const toTronOftSendParam = (sendParam: SendParam): TronOftSendParam => ({
+    dstEid: sendParam[0],
+    to: prefix0x(sendParam[1]),
+    amountLD: sendParam[2],
+    minAmountLD: sendParam[3],
+    extraOptions: prefix0x(sendParam[4]),
+    composeMsg: prefix0x(sendParam[5]),
+    oftCmd: prefix0x(sendParam[6]),
+});
+
+const toTronOftMsgFee = (msgFee: MsgFee): TronOftMsgFee => ({
+    nativeFee: msgFee[0],
+    lzTokenFee: msgFee[1],
+});
+
+const getTronLogTopics = (topics: readonly string[]): [Hex, ...Hex[]] => {
+    const [signature, ...args] = topics.map(prefix0x);
+    if (signature === undefined) {
+        throw new Error("Missing Tron event signature topic");
+    }
+    return [signature, ...args];
+};
+
+const decodeTronOftSentLog = (eventLog: {
+    data: string;
+    topics: readonly string[];
+}): TronOftSentLog =>
+    decodeEventLog({
+        abi: oftAbi,
+        eventName: "OFTSent",
+        data: prefix0x(eventLog.data),
+        topics: getTronLogTopics(eventLog.topics),
+    });
 
 const decodeTronOftSentEvent = (
     transactionInfo: Pick<TronTransactionInfo, "log">,
@@ -153,19 +203,14 @@ const decodeTronOftSentEvent = (
             continue;
         }
 
-        let parsedLog;
-        try {
-            parsedLog = oftInterface.parseLog({
-                data: `0x${eventLog.data}`,
-                topics: eventLog.topics.map((topic) =>
-                    topic.startsWith("0x") ? topic : `0x${topic}`,
-                ),
-            });
-        } catch {
-            continue;
-        }
-
-        if (parsedLog?.name !== "OFTSent") {
+        const parsedLog = (() => {
+            try {
+                return decodeTronOftSentLog(eventLog);
+            } catch {
+                return undefined;
+            }
+        })();
+        if (parsedLog === undefined) {
             continue;
         }
 
@@ -241,7 +286,7 @@ const waitForTronTransactionConfirmation = async (
     }
 };
 
-const waitForSuccessfulTronTransaction = async (
+export const waitForSuccessfulTronTransaction = async (
     sourceAsset: string,
     txHash: string,
 ) => {
@@ -309,10 +354,9 @@ const buildTronSmartContractTransaction = async (params: {
 };
 
 const submitSignedTronTransaction = async (
-    sourceAsset: string,
     client: TronWebClient,
     signedTransaction: TronSignedTransaction,
-): Promise<OftTransaction> => {
+): Promise<BridgeTransaction> => {
     const transactionHash = signedTransaction.txID;
     if (transactionHash === undefined || transactionHash === "") {
         throw new Error("Tron wallet did not return a transaction ID");
@@ -329,14 +373,7 @@ const submitSignedTronTransaction = async (
         );
     }
 
-    return {
-        hash: transactionHash,
-        wait: async () =>
-            await waitForSuccessfulTronTransaction(
-                sourceAsset,
-                transactionHash,
-            ),
-    };
+    return { hash: transactionHash };
 };
 
 export const getTronOftGuidFromTransactionInfo = (
@@ -354,15 +391,18 @@ export const getTronTokenBalance = async (
         route.sourceAsset,
         tokenAddress,
         "balanceOf(address)",
-        erc20Interface.encodeFunctionData("balanceOf", [
-            tronBase58ToHexAddress(ownerAddress),
-        ]),
+        encodeFunctionData({
+            abi: erc20Abi,
+            functionName: "balanceOf",
+            args: [tronBase58ToHexAddress(ownerAddress)],
+        }),
         ownerAddress,
     );
-    const [balance] = erc20Interface.decodeFunctionResult(
-        "balanceOf",
-        `0x${result}`,
-    ) as unknown as [bigint];
+    const balance = decodeFunctionResult({
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        data: prefix0x(result),
+    });
 
     return balance;
 };
@@ -377,16 +417,21 @@ export const getTronTokenAllowance = async (
         sourceAsset,
         tokenAddress,
         "allowance(address,address)",
-        erc20Interface.encodeFunctionData("allowance", [
-            tronBase58ToHexAddress(ownerAddress),
-            tronBase58ToHexAddress(spenderAddress),
-        ]),
+        encodeFunctionData({
+            abi: erc20Abi,
+            functionName: "allowance",
+            args: [
+                tronBase58ToHexAddress(ownerAddress),
+                tronBase58ToHexAddress(spenderAddress),
+            ],
+        }),
         ownerAddress,
     );
-    const [allowance] = erc20Interface.decodeFunctionResult(
-        "allowance",
-        `0x${result}`,
-    ) as unknown as [bigint];
+    const allowance = decodeFunctionResult({
+        abi: erc20Abi,
+        functionName: "allowance",
+        data: prefix0x(result),
+    });
 
     return allowance;
 };
@@ -396,16 +441,17 @@ export const sendTronTokenApproval = async (params: {
     ownerAddress: string;
     spenderAddress: string;
     walletProvider: TronConnector;
-}): Promise<OftTransaction> => {
+}): Promise<BridgeTransaction> => {
     const tokenAddress = getTokenAddress(params.sourceAsset);
     const { client, transaction } = await buildTronSmartContractTransaction({
         sourceAsset: params.sourceAsset,
         contractAddress: tokenAddress,
         functionSelector: approveSelector,
-        encodedCall: erc20Interface.encodeFunctionData("approve", [
-            tronBase58ToHexAddress(params.spenderAddress),
-            MaxUint256,
-        ]),
+        encodedCall: encodeFunctionData({
+            abi: erc20Abi,
+            functionName: "approve",
+            args: [tronBase58ToHexAddress(params.spenderAddress), maxUint256],
+        }),
         ownerAddress: params.ownerAddress,
         errorContext: "Tron token approval transaction",
     });
@@ -416,11 +462,7 @@ export const sendTronTokenApproval = async (params: {
         transaction,
     );
 
-    return await submitSignedTronTransaction(
-        params.sourceAsset,
-        client,
-        signedTransaction,
-    );
+    return await submitSignedTronTransaction(client, signedTransaction);
 };
 
 type TronOftContractParams = {
@@ -440,20 +482,25 @@ const quoteTronOft = async (
         params.sourceAsset,
         params.contractAddress,
         quoteOftSelector,
-        oftInterface.encodeFunctionData("quoteOFT", [sendParam]),
+        encodeFunctionData({
+            abi: oftAbi,
+            functionName: "quoteOFT",
+            args: [toTronOftSendParam(sendParam)],
+        }),
     );
-    const [oftLimit, oftFeeDetails, oftReceipt] = decodeConstantResult(
-        "quoteOFT",
-        result,
-    ) as unknown as [OftLimit, OftFeeDetail[], OftReceipt];
+    const [oftLimit, oftFeeDetails, oftReceipt] = decodeFunctionResult({
+        abi: oftAbi,
+        functionName: "quoteOFT",
+        data: prefix0x(result),
+    });
 
     return [
-        [BigInt(oftLimit[0]), BigInt(oftLimit[1])],
-        oftFeeDetails.map(([feeAmountLd, description]) => [
-            BigInt(feeAmountLd),
+        [BigInt(oftLimit.minAmountLD), BigInt(oftLimit.maxAmountLD)],
+        oftFeeDetails.map(({ feeAmountLD, description }) => [
+            BigInt(feeAmountLD),
             String(description),
         ]),
-        [BigInt(oftReceipt[0]), BigInt(oftReceipt[1])],
+        [BigInt(oftReceipt.amountSentLD), BigInt(oftReceipt.amountReceivedLD)],
     ] as [OftLimit, OftFeeDetail[], OftReceipt];
 };
 
@@ -466,13 +513,19 @@ const quoteTronSend = async (
         params.sourceAsset,
         params.contractAddress,
         quoteSendSelector,
-        oftInterface.encodeFunctionData("quoteSend", [sendParam, payInLzToken]),
+        encodeFunctionData({
+            abi: oftAbi,
+            functionName: "quoteSend",
+            args: [toTronOftSendParam(sendParam), payInLzToken],
+        }),
     );
-    const [msgFee] = decodeConstantResult("quoteSend", result) as unknown as [
-        MsgFee,
-    ];
+    const msgFee = decodeFunctionResult({
+        abi: oftAbi,
+        functionName: "quoteSend",
+        data: prefix0x(result),
+    });
 
-    return [BigInt(msgFee[0]), BigInt(msgFee[1])] as MsgFee;
+    return [BigInt(msgFee.nativeFee), BigInt(msgFee.lzTokenFee)] as MsgFee;
 };
 
 const getTronOftApprovalRequired = async (
@@ -482,14 +535,17 @@ const getTronOftApprovalRequired = async (
         params.sourceAsset,
         params.contractAddress,
         "approvalRequired()",
-        oftInterface.encodeFunctionData("approvalRequired", []),
+        encodeFunctionData({
+            abi: oftAbi,
+            functionName: "approvalRequired",
+            args: [],
+        }),
     );
-    const [approvalRequired] = oftInterface.decodeFunctionResult(
-        "approvalRequired",
-        `0x${result}`,
-    ) as unknown as [boolean];
-
-    return approvalRequired;
+    return decodeFunctionResult({
+        abi: oftAbi,
+        functionName: "approvalRequired",
+        data: prefix0x(result),
+    }) as boolean;
 };
 
 const sendTronOft = async (params: {
@@ -499,16 +555,20 @@ const sendTronOft = async (params: {
     sendParam: SendParam;
     msgFee: MsgFee;
     refundAddress: string;
-}): Promise<OftTransaction> => {
+}): Promise<BridgeTransaction> => {
     const { client, transaction } = await buildTronSmartContractTransaction({
         sourceAsset: params.sourceAsset,
         contractAddress: params.contractAddress,
         functionSelector: sendSelector,
-        encodedCall: oftInterface.encodeFunctionData("send", [
-            params.sendParam,
-            params.msgFee,
-            tronBase58ToHexAddress(params.refundAddress),
-        ]),
+        encodedCall: encodeFunctionData({
+            abi: oftAbi,
+            functionName: "send",
+            args: [
+                toTronOftSendParam(params.sendParam),
+                toTronOftMsgFee(params.msgFee),
+                tronBase58ToHexAddress(params.refundAddress),
+            ],
+        }),
         ownerAddress: params.refundAddress,
         errorContext: "Tron OFT send transaction",
         callValue: params.msgFee[0],
@@ -520,16 +580,12 @@ const sendTronOft = async (params: {
         transaction,
     );
 
-    return await submitSignedTronTransaction(
-        params.sourceAsset,
-        client,
-        signedTransaction,
-    );
+    return await submitSignedTronTransaction(client, signedTransaction);
 };
 
 export const createTronOftContract = (params: CreateTronOftContractParams) => ({
     transport: NetworkTransport.Tron,
-    interface: oftInterface,
+    abi: oftAbi,
     quoteOFT: async (sendParam: SendParam) =>
         await quoteTronOft(params, sendParam),
     quoteSend: async (sendParam: SendParam, payInLzToken: boolean) =>
@@ -539,7 +595,7 @@ export const createTronOftContract = (params: CreateTronOftContractParams) => ({
         sendParam: SendParam,
         msgFee: MsgFee,
         refundAddress: string,
-    ): Promise<OftTransaction> => {
+    ): Promise<BridgeTransaction> => {
         if (params.walletProvider === undefined) {
             throw new Error(
                 `Missing connected Tron wallet for OFT send from ${params.sourceAsset}`,

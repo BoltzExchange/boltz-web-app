@@ -1,7 +1,6 @@
 import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import type { AppKitNetwork } from "@reown/appkit/networks";
-import { BrowserProvider } from "ethers";
 import log from "loglevel";
 import { createEffect, createResource } from "solid-js";
 
@@ -50,7 +49,7 @@ export const WalletConnect = () => {
 
         const {
             appKit,
-            EthersAdapter,
+            WagmiAdapter,
             MetaMaskAdapter,
             SolanaAdapter,
             TronAdapter,
@@ -78,7 +77,10 @@ export const WalletConnect = () => {
             enableEIP6963: false,
             enableInjected: false,
             adapters: [
-                new EthersAdapter(),
+                new WagmiAdapter({
+                    networks: nets,
+                    projectId,
+                }),
                 new SolanaAdapter(),
                 new TronAdapter({
                     walletAdapters: [
@@ -135,7 +137,7 @@ export const WalletConnect = () => {
                         break;
                     }
 
-                    provider = new BrowserProvider(evmProvider);
+                    provider = evmProvider;
                     WalletConnectProvider.setRawEvmProvider(evmProvider);
                     WalletConnectProvider.setEvmChainId(chainId);
                     break;

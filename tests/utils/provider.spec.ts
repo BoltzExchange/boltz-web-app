@@ -1,9 +1,4 @@
 import {
-    FallbackProvider as EthersFallbackProvider,
-    JsonRpcProvider,
-} from "ethers";
-
-import {
     createAssetProvider,
     getRpcUrls,
     requireRpcUrls,
@@ -36,38 +31,31 @@ vi.mock("../../src/config", () => ({
 }));
 
 describe("provider utils", () => {
-    beforeEach(() => {
-        vi.mocked(JsonRpcProvider).mockClear();
-        vi.mocked(EthersFallbackProvider).mockClear();
-    });
-
-    test("creates a fallback provider for multi-rpc assets", () => {
-        createAssetProvider("MULTI");
+    test("creates a provider for multi-rpc assets", () => {
+        const provider = createAssetProvider("MULTI");
+        expect(provider.transport.type).toEqual("fallback");
+        expect(
+            provider.transport.transports.map(
+                (transport: { value: unknown }) => {
+                    const value: unknown = transport.value;
+                    if (typeof value !== "object" || value === null) {
+                        return undefined;
+                    }
+                    const url = Reflect.get(value, "url");
+                    return typeof url === "string" ? url : undefined;
+                },
+            ),
+        ).toEqual([
+            "https://one.example",
+            "https://two.example",
+            "https://three.example",
+        ]);
 
         expect(requireRpcUrls("MULTI")).toEqual([
             "https://one.example",
             "https://two.example",
             "https://three.example",
         ]);
-        expect(JsonRpcProvider).toHaveBeenCalledTimes(3);
-        expect(JsonRpcProvider).toHaveBeenNthCalledWith(
-            1,
-            "https://one.example",
-        );
-        expect(JsonRpcProvider).toHaveBeenNthCalledWith(
-            2,
-            "https://two.example",
-        );
-        expect(JsonRpcProvider).toHaveBeenNthCalledWith(
-            3,
-            "https://three.example",
-        );
-        expect(EthersFallbackProvider).toHaveBeenCalledTimes(1);
-        expect(EthersFallbackProvider).toHaveBeenCalledWith(
-            expect.any(Array),
-            undefined,
-            { quorum: 1 },
-        );
     });
 
     test("treats empty rpc configuration as unavailable", () => {
@@ -75,14 +63,11 @@ describe("provider utils", () => {
         expect(() => createAssetProvider("EMPTY")).toThrow(
             /missing RPC configuration/,
         );
-        expect(EthersFallbackProvider).not.toHaveBeenCalled();
     });
 
-    test("creates a single json-rpc provider when only one url exists", () => {
-        createAssetProvider("SINGLE");
-
-        expect(JsonRpcProvider).toHaveBeenCalledTimes(1);
-        expect(JsonRpcProvider).toHaveBeenCalledWith("https://single.example");
-        expect(EthersFallbackProvider).not.toHaveBeenCalled();
+    test("creates a provider when only one url exists", () => {
+        const provider = createAssetProvider("SINGLE");
+        expect(provider.transport.type).toEqual("http");
+        expect(requireRpcUrls("SINGLE")).toEqual(["https://single.example"]);
     });
 });

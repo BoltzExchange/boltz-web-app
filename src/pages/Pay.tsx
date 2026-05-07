@@ -13,7 +13,6 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
-import { getSwapUTXOs } from "src/utils/blockchain";
 
 import BackupFlow from "../components/BackupFlow";
 import BlockExplorer, {
@@ -53,6 +52,7 @@ import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
+import { getSwapUTXOs } from "../utils/blockchain";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
 import {
     clipboard,
