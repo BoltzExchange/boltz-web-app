@@ -11,7 +11,8 @@ describe("Nav", () => {
                 wrapper: contextWrapper,
             });
 
-            const networkLabel = screen.queryAllByText(network);
+            const label = network.toUpperCase();
+            const networkLabel = screen.queryAllByText(label);
             expect(networkLabel.length).toBe(1);
         },
     );
@@ -23,5 +24,14 @@ describe("Nav", () => {
 
         const networkLabel = screen.queryAllByText(network);
         expect(networkLabel.length).toBe(0);
+    });
+
+    test("should uppercase pro label", () => {
+        render(() => <Nav network="mainnet" isPro />, {
+            wrapper: contextWrapper,
+        });
+
+        const proLabel = screen.queryAllByText("PRO");
+        expect(proLabel.length).toBe(1);
     });
 });
