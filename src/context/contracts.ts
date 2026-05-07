@@ -6,8 +6,15 @@ import {
 } from "viem";
 
 import { requireRouterAddress, requireTokenConfig } from "../consts/Assets";
-import type { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
-import { erc20Abi, routerAbi } from "../generated/evm-abis";
+import erc20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
+import etherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
+import {
+    erc20Abi,
+    erc20SwapAbi,
+    etherSwapAbi,
+    routerAbi,
+} from "../generated/evm-abis";
+import type { ContractAddresses, Contracts } from "../utils/boltzClient";
 import { createAssetProvider } from "../utils/provider";
 import type { Signer } from "./Web3";
 
@@ -53,4 +60,25 @@ export const createRouterContract = (
         abi: routerAbi,
         client: { public: createAssetProvider(asset), wallet: signer },
     });
+};
+
+// EtherSwap and ERC20Swap v6 added `claimAddress` to the indexed topics
+
+export const resolveEtherSwapAbi = (version: number) =>
+    (version <= 5 ? etherSwapAbiV5 : etherSwapAbi) as typeof etherSwapAbi;
+
+export const resolveErc20SwapAbi = (version: number) =>
+    (version <= 5 ? erc20SwapAbiV5 : erc20SwapAbi) as typeof erc20SwapAbi;
+
+export const resolveSwapContractVersion = (
+    contracts: Contracts,
+    contractType: keyof ContractAddresses,
+): number => {
+    const address = contracts.swapContracts[contractType];
+    return Number(
+        Object.keys(contracts.supportedContracts).find(
+            (key) =>
+                contracts.supportedContracts[key][contractType] === address,
+        ) ?? 5,
+    );
 };

@@ -1,3 +1,5 @@
+import { TransactionReceiptNotFoundError } from "viem";
+
 import { config as runtimeConfig } from "../../src/config";
 import {
     BridgeKind,
@@ -834,7 +836,11 @@ describe("CctpBridgeDriver", () => {
                     messages: [{ forwardTxHash: "0xforward" }],
                 }),
         } as Response);
-        const getTransactionReceipt = vi.fn().mockResolvedValue(null);
+        const getTransactionReceipt = vi
+            .fn()
+            .mockRejectedValue(
+                new TransactionReceiptNotFoundError({ hash: "0xforward" }),
+            );
 
         const result = await driver.getReceivedEventByGuid(
             {} as never,

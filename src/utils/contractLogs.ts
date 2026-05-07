@@ -8,6 +8,7 @@ import {
     type PublicClient,
     getAbiItem,
     getAddress,
+    getContract,
     isAddressEqual,
     parseEventLogs,
     toHex,
@@ -17,9 +18,11 @@ import { config } from "../config";
 import { arbitrumChainId } from "../configs/base";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
-import type {
-    Erc20SwapContract,
-    EtherSwapContract,
+import {
+    type Erc20SwapContract,
+    type EtherSwapContract,
+    resolveErc20SwapAbi,
+    resolveEtherSwapAbi,
 } from "../context/contracts";
 import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
@@ -236,18 +239,36 @@ const createScanContext = async (
 
     const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
     const provider = createProvider([providerUrl]);
-    const connected = contract as SwapContract;
-    const contractAddress = connected.address;
+    const contractAddress = contract.address;
     const minBlock = config.assets?.[asset]?.contracts?.deployHeight ?? 0;
-    const swapReadContract = connected as unknown as SwapReadContract;
 
     const [latestBlock, version] = await Promise.all([
         provider.getBlockNumber().then(Number),
-        swapReadContract.read.version().then(Number),
+        provider
+            .readContract({
+                address: contractAddress,
+                abi: isErc20 ? erc20SwapAbi : etherSwapAbi,
+                functionName: "version",
+            })
+            .then(Number),
     ]);
 
-    const abi: LockupAbi = isErc20 ? erc20SwapAbi : etherSwapAbi;
+    const abi: LockupAbi = isErc20
+        ? resolveErc20SwapAbi(version)
+        : resolveEtherSwapAbi(version);
     const args = buildLockupFilterArgs(version, scanConfig);
+
+    const scopedContract: SwapContract = isErc20
+        ? getContract({
+              address: contractAddress,
+              abi: resolveErc20SwapAbi(version),
+              client: { public: provider },
+          })
+        : getContract({
+              address: contractAddress,
+              abi: resolveEtherSwapAbi(version),
+              client: { public: provider },
+          });
 
     const interval = scanConfig.scanInterval ?? defaultScanInterval;
 
@@ -263,7 +284,7 @@ const createScanContext = async (
         minBlock,
         scanInterval: interval,
         totalBlocks: latestBlock - minBlock,
-        contract: connected,
+        contract: scopedContract,
     };
 };
 
@@ -402,18 +423,21 @@ export const getLogsFromReceipt = async (
     txHash: string,
 ): Promise<LogRefundData> => {
     const contractAddress = contract.address;
-    const receipt = await provider.getTransactionReceipt({
-        hash: txHash as Hash,
-    });
+    const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
+    const swapReadContract = contract as unknown as SwapReadContract;
+
+    const [receipt, version] = await Promise.all([
+        provider.getTransactionReceipt({ hash: txHash as Hash }),
+        swapReadContract.read.version().then(Number),
+    ]);
 
     if (receipt === null) {
         throw new Error(`Transaction receipt not found for ${txHash}`);
     }
 
-    const abi: LockupAbi =
-        getKindForAsset(asset) === AssetKind.ERC20
-            ? erc20SwapAbi
-            : etherSwapAbi;
+    const abi: LockupAbi = isErc20
+        ? resolveErc20SwapAbi(version)
+        : resolveEtherSwapAbi(version);
     const [lockupLog] = parseEventLogs({
         abi,
         eventName: "Lockup",

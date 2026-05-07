@@ -3,6 +3,8 @@ import {
     type Hash,
     type Hex,
     type PublicClient,
+    type TransactionReceipt,
+    TransactionReceiptNotFoundError,
     type TransactionRequest,
     encodeFunctionData,
     getAddress,
@@ -365,13 +367,16 @@ export class CctpBridgeDriver extends BridgeDriver {
             return undefined;
         }
 
-        const forwardReceipt = await provider.getTransactionReceipt({
-            hash: forwardTxHash as Hash,
-        });
-        if (forwardReceipt === null) {
-            // Forward tx was returned by Circle but isn't visible on the RPC
-            // yet — surface as "not ready" and let the caller poll again.
-            return undefined;
+        let forwardReceipt: TransactionReceipt;
+        try {
+            forwardReceipt = await provider.getTransactionReceipt({
+                hash: forwardTxHash as Hash,
+            });
+        } catch (error) {
+            if (error instanceof TransactionReceiptNotFoundError) {
+                return undefined;
+            }
+            throw error;
         }
 
         // A forward tx is typically 1:1 with a source message. Take the first

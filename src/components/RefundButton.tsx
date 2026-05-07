@@ -38,6 +38,8 @@ import {
     type Erc20SwapContract,
     type EtherSwapContract,
     createRouterContract,
+    resolveErc20SwapAbi,
+    resolveEtherSwapAbi,
 } from "../context/contracts";
 import { erc20Abi, erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
@@ -494,8 +496,13 @@ export const RefundEvm = (props: {
     destination?: string;
     bridge?: BridgeDetail;
 }) => {
-    const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
-        useWeb3Signer();
+    const {
+        getErc20Swap,
+        getEtherSwap,
+        getSwapContractVersion,
+        signer,
+        getGasAbstractionSigner,
+    } = useWeb3Signer();
     const { t, slippage } = useGlobalContext();
 
     const gasAbstraction = createMemo(
@@ -597,11 +604,15 @@ export const RefundEvm = (props: {
                 throw new Error("could not fetch lockup transaction receipt");
             }
 
-            const data = getLockupEvent(
-                contractKind === AssetKind.ERC20 ? erc20SwapAbi : etherSwapAbi,
-                receipt,
-                contract.address,
-            );
+            const lockupAbi =
+                contractKind === AssetKind.ERC20
+                    ? resolveErc20SwapAbi(
+                          getSwapContractVersion(asset, "ERC20Swap"),
+                      )
+                    : resolveEtherSwapAbi(
+                          getSwapContractVersion(asset, "EtherSwap"),
+                      );
+            const data = getLockupEvent(lockupAbi, receipt, contract.address);
 
             let swapHash: Hex;
             if (contractKind === AssetKind.ERC20) {

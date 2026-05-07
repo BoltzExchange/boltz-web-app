@@ -36,9 +36,6 @@ import {
     isEvmAsset,
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
-import erc20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
-import etherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
-import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { ContractAddresses, Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
@@ -56,11 +53,14 @@ import {
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import { type RescueFile } from "../utils/rescueFile";
 import { useGlobalContext } from "./Global";
-import type {
-    Erc20SwapContract,
-    EtherSwapContract,
-    ReadOnlyClient,
-    SignerClient,
+import {
+    type Erc20SwapContract,
+    type EtherSwapContract,
+    type ReadOnlyClient,
+    type SignerClient,
+    resolveErc20SwapAbi,
+    resolveEtherSwapAbi,
+    resolveSwapContractVersion,
 } from "./contracts";
 
 declare global {
@@ -151,6 +151,10 @@ const Web3SignerContext = createContext<{
     getContractsForAsset: (asset: string) => Contracts | undefined;
     getEtherSwap: (asset: string) => EtherSwapContract;
     getErc20Swap: (asset: string) => Erc20SwapContract;
+    getSwapContractVersion: (
+        asset: string,
+        contractType: keyof ContractAddresses,
+    ) => number;
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
@@ -387,14 +391,7 @@ const Web3SignerProvider = (props: {
         if (assetContracts === undefined) {
             return 5;
         }
-        const address = assetContracts.swapContracts[contractType];
-        return Number(
-            Object.keys(assetContracts.supportedContracts).find(
-                (key) =>
-                    assetContracts.supportedContracts[key][contractType] ===
-                    address,
-            ) ?? 5,
-        );
+        return resolveSwapContractVersion(assetContracts, contractType);
     };
 
     const swapClient = (asset: string): SignerClient | ReadOnlyClient => {
@@ -409,25 +406,21 @@ const Web3SignerProvider = (props: {
     };
 
     const getEtherSwap = (asset: string): EtherSwapContract => {
-        const version = getSwapContractVersion(asset, "EtherSwap");
-        const abi = (
-            version <= 5 ? etherSwapAbiV5 : etherSwapAbi
-        ) as typeof etherSwapAbi;
         return getContract({
             address: requireSwapAddress(asset, "EtherSwap"),
-            abi,
+            abi: resolveEtherSwapAbi(
+                getSwapContractVersion(asset, "EtherSwap"),
+            ),
             client: swapClient(asset),
         });
     };
 
     const getErc20Swap = (asset: string): Erc20SwapContract => {
-        const version = getSwapContractVersion(asset, "ERC20Swap");
-        const abi = (
-            version <= 5 ? erc20SwapAbiV5 : erc20SwapAbi
-        ) as typeof erc20SwapAbi;
         return getContract({
             address: requireSwapAddress(asset, "ERC20Swap"),
-            abi,
+            abi: resolveErc20SwapAbi(
+                getSwapContractVersion(asset, "ERC20Swap"),
+            ),
             client: swapClient(asset),
         });
     };
@@ -769,6 +762,7 @@ const Web3SignerProvider = (props: {
                 providers,
                 getEtherSwap,
                 getErc20Swap,
+                getSwapContractVersion,
                 switchNetwork,
                 connectProvider,
                 browserWalletTransports,

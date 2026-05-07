@@ -324,19 +324,18 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         r: string;
         s: string;
     }) => {
-        const v =
-            signature.v === undefined
-                ? undefined
-                : BigInt(
-                      typeof signature.v === "string" &&
-                          !signature.v.startsWith("0x")
-                          ? prefix0x(signature.v)
-                          : signature.v,
-                  );
+        if (signature.v === undefined) {
+            throw new Error("Trezor signature is missing v");
+        }
+        const v = BigInt(
+            typeof signature.v === "string" && !signature.v.startsWith("0x")
+                ? prefix0x(signature.v)
+                : signature.v,
+        );
 
         return {
             v,
-            yParity: v !== undefined ? yParityFromV(v) : 0,
+            yParity: yParityFromV(v),
             r: prefix0x(signature.r),
             s: prefix0x(signature.s),
         };
