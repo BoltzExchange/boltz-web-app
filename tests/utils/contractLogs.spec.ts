@@ -8,6 +8,7 @@ import {
 
 import { RskRescueMode } from "../../src/consts/Enums";
 import etherSwapAbiV5 from "../../src/consts/abis/v5/EtherSwap.json";
+import { etherSwapAbi } from "../../src/generated/evm-abis";
 import type * as ProviderModule from "../../src/utils/provider";
 
 const {
@@ -209,6 +210,44 @@ describe("contractLogs", () => {
             {
                 address: swapAddress,
                 read: { version: vi.fn().mockResolvedValue(5) },
+            } as never,
+            rawLog.transactionHash,
+        );
+
+        expect(data).toMatchObject({
+            amount: 123n,
+            preimageHash: preimageHash.replace(/^0x/, ""),
+            claimAddress,
+            refundAddress,
+            timelock: 456n,
+            transactionHash: rawLog.transactionHash,
+        });
+    });
+
+    test("decodes v6 Lockup receipts with indexed claimAddress", async () => {
+        const rawLog = {
+            address: swapAddress,
+            blockNumber: 10n,
+            transactionHash: `0x${"cc".repeat(32)}` as Hex,
+            logIndex: 0,
+            topics: encodeEventTopics({
+                abi: etherSwapAbi,
+                eventName: "Lockup",
+                args: { preimageHash, claimAddress, refundAddress },
+            }),
+            data: encodeAbiParameters(
+                [{ type: "uint256" }, { type: "uint256" }],
+                [123n, 456n],
+            ),
+        };
+        getTransactionReceipt.mockResolvedValue({ logs: [rawLog] });
+
+        const data = await getLogsFromReceipt(
+            provider as never,
+            "RBTC",
+            {
+                address: swapAddress,
+                read: { version: vi.fn().mockResolvedValue(6) },
             } as never,
             rawLog.transactionHash,
         );
