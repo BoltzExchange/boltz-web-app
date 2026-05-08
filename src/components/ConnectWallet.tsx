@@ -240,7 +240,7 @@ const ShowAddress = (props: {
             onClick={() => clearSigner()}
             onMouseEnter={() => setText(t("disconnect_address"))}
             onMouseLeave={() => setText(undefined)}
-            class="btn btn-light btn-wallet-address">
+            class="btn btn-light">
             {text() ||
                 (props.addressOverride
                     ? props.addressOverride() ||
