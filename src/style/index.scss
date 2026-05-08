@@ -89,7 +89,7 @@ hr.spacer {
     color: inherit;
     text-align: left;
     background-color: var(--color-secondary-800);
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     position: absolute;
     border-radius: 999rem;
     padding: 0;
@@ -537,7 +537,7 @@ input,
 textarea {
     color: var(--color-white-80);
     background: var(--color-secondary-800);
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     border-radius: var(--border-radius-md);
     width: 100%;
     font-size: 16px;
@@ -710,7 +710,7 @@ textarea.invalid {
     flex-grow: 0;
     background: var(--color-secondary-800);
     border-radius: 999rem;
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     padding: 3px;
     align-items: center;
     display: flex;
@@ -899,11 +899,7 @@ textarea.invalid {
     position: relative;
     border-left: 0;
     border-right: 0;
-    background: color-mix(
-        in srgb,
-        var(--color-secondary-700) 96%,
-        var(--color-white) 4%
-    );
+    background: var(--color-secondary-700);
     line-height: 1.45;
 }
 .frame-title {
@@ -991,7 +987,7 @@ textarea.invalid {
     padding: 8px;
     background: var(--color-secondary-800);
     margin: -21px auto;
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     border-radius: 6px;
     cursor: pointer;
     z-index: 1;
@@ -1106,7 +1102,7 @@ textarea.invalid {
     input {
         width: 100%;
         padding: 10px 34px 10px 12px;
-        border: 1px solid var(--color-white-30);
+        border: 1px solid var(--color-white-15);
         border-radius: var(--border-radius-md);
         background: var(--color-secondary-800);
         color: var(--color-text);
@@ -1398,7 +1394,7 @@ textarea.invalid {
     font-weight: 600;
     color: var(--color-text);
     background: var(--color-secondary-800);
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     border-radius: var(--border-radius-md);
     box-sizing: border-box;
     .denominator {
@@ -1489,7 +1485,7 @@ header {
 
     color: var(--color-secondary-100);
     background: var(--color-secondary-800);
-    border: 1px solid var(--color-white-30);
+    border: 1px solid var(--color-white-15);
     border-radius: var(--border-radius-md);
 
     user-select: none;
@@ -1562,7 +1558,7 @@ header {
 
         color: var(--color-secondary-100);
         background: var(--color-secondary-800);
-        border: 1px solid var(--color-white-30);
+        border: 1px solid var(--color-white-15);
         border-radius: var(--border-radius-md);
 
         .input-box {
