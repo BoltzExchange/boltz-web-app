@@ -30,12 +30,12 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                 </A>
                 <Show when={props.network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
-                        {props.network}
+                        {props.network.toUpperCase()}
                     </div>
                 </Show>
                 <Show when={props.isPro}>
                     <div id="network" boltz-theme="pro" class="btn btn-small">
-                        {t("pro")}
+                        {t("pro").toUpperCase()}
                     </div>
                 </Show>
                 <div

@@ -24,7 +24,7 @@ const dict = {
         onion: "Onion",
         terms: "Terms",
         privacy: "Privacy",
-        blockexplorer: "open {{ typeLabel }}",
+        blockexplorer: "Open {{ typeLabel }}",
         blockexplorer_lockup_address: "lockup address",
         blockexplorer_lockup_tx: "lockup transaction",
         blockexplorer_claim_tx: "claim transaction",
@@ -79,9 +79,9 @@ const dict = {
         invalid_invoice:
             "Please provide a valid Lightning invoice, BOLT12 or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
-        copy_invoice: "lightning invoice",
-        copy_address: "address",
-        copy_amount: "amount",
+        copy_invoice: "Lightning invoice",
+        copy_address: "Address",
+        copy_amount: "Amount",
         copy_bip21: "BIP21",
         refund_swap: "Refund Swap",
         rescue_a_swap_subline:
@@ -120,8 +120,8 @@ const dict = {
         invoice_pending_pro:
             "Transaction received, invoice queued. In some occasions, swap might be cancelled.",
         invoice_expired: "Invoice expired, try again!",
-        create_invoice_webln: "create invoice via WebLN",
-        pay_invoice_webln: "pay invoice via WebLN",
+        create_invoice_webln: "Create invoice via WebLN",
+        pay_invoice_webln: "Pay invoice via WebLN",
         select_asset: "Select {{ direction }} Asset",
         select_network: "Select network",
         search: "Search",
@@ -1094,9 +1094,9 @@ const dict = {
         invalid_invoice:
             "Por favor, pegue una factura Lightning, BOLT12 o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
-        copy_invoice: "factura Lightning",
-        copy_address: "dirección",
-        copy_amount: "importe",
+        copy_invoice: "Factura Lightning",
+        copy_address: "Dirección",
+        copy_amount: "Importe",
         copy_bip21: "BIP21",
         refund_swap: "Reembolsar Intercambio",
         rescue_a_swap_subline:
@@ -1550,7 +1550,7 @@ const dict = {
         onion: "Onion",
         terms: "Termos",
         privacy: "Privacidade",
-        blockexplorer: "abrir {{ typeLabel }}",
+        blockexplorer: "Abrir {{ typeLabel }}",
         blockexplorer_lockup_address: "endereço de lockup",
         blockexplorer_lockup_tx: "transação de lockup",
         blockexplorer_claim_tx: "transação de reivindicação",
@@ -1606,9 +1606,9 @@ const dict = {
         invalid_invoice:
             "Por favor, forneça um invoice Lightning, BOLT12 ou LNURL válido",
         invalid_0_amount: "Invoices sem valor não são suportadas",
-        copy_invoice: "invoice lightning",
-        copy_address: "endereço",
-        copy_amount: "quantia",
+        copy_invoice: "Invoice Lightning",
+        copy_address: "Endereço",
+        copy_amount: "Quantia",
         copy_bip21: "BIP21",
         refund_swap: "Reembolsar troca",
         rescue_a_swap_subline:
@@ -1648,8 +1648,8 @@ const dict = {
         invoice_pending_pro:
             "Transação recebida, invoice em fila. Em algumas ocasiões, a troca pode ser cancelada.",
         invoice_expired: "Invoice expirado, tente novamente!",
-        create_invoice_webln: "criar invoice via WebLN",
-        pay_invoice_webln: "pagar invoice via WebLN",
+        create_invoice_webln: "Criar invoice via WebLN",
+        pay_invoice_webln: "Pagar invoice via WebLN",
         select_asset: "Selecionar ativo de {{ direction }}",
         select_network: "Selecionar rede",
         search: "Pesquisar",
