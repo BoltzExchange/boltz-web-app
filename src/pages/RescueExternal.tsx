@@ -51,7 +51,7 @@ import {
     USDT0,
     getAssetDisplaySymbol,
 } from "../consts/Assets";
-import { RskRescueMode } from "../consts/Enums";
+import { RskRescueMode, SwapType } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -61,7 +61,15 @@ import {
 } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
+import { getSwapUTXOs } from "../utils/blockchain";
+import {
+    type ChainSwapDetails,
+    type LockupTransaction,
+    type RestorableSwap,
+    getChainSwapTransactions,
+    getLockupTransaction,
+    getRestorableSwaps,
+} from "../utils/boltzClient";
 import type { LogRefundData, SwapContract } from "../utils/contractLogs";
 import { scanLockupEvents } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
@@ -72,11 +80,7 @@ import {
     getSweepableGasAbstractionBalances,
 } from "../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../utils/helper";
-import {
-    RescueAction,
-    createRescueList,
-    getRescuableUTXOs,
-} from "../utils/rescue";
+import { RescueAction, createRescueList } from "../utils/rescue";
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import {
     type RescueFile,
@@ -90,6 +94,76 @@ import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
 
+// Legacy `asset`-style refund files always migrate to Submarine, but the same
+// shape was also emitted for Chain swaps. Reshape into a ChainSwap so the
+// refund flow hits the chain-swap code paths.
+const remapLegacyToChainSwap = (
+    swap: SubmarineSwap,
+    chainTransactions: Awaited<ReturnType<typeof getChainSwapTransactions>>,
+): ChainSwap =>
+    ({
+        ...swap,
+        type: SwapType.Chain,
+        lockupDetails: {
+            swapTree: swap.swapTree,
+            serverPublicKey: swap.claimPublicKey,
+            timeoutBlockHeight: chainTransactions.userLock.timeout.blockHeight,
+            lockupAddress: "",
+            amount: 0,
+        } as unknown as ChainSwapDetails,
+    }) as unknown as ChainSwap;
+
+const resolveExternalRefundSwap = async (
+    originalSwap: SubmarineSwap | ChainSwap,
+): Promise<{
+    swap: SubmarineSwap | ChainSwap;
+    lockupTx: LockupTransaction | null;
+}> => {
+    try {
+        const lockupTx = await getLockupTransaction(
+            originalSwap.id,
+            originalSwap.type,
+        );
+        return { swap: originalSwap, lockupTx };
+    } catch (e) {
+        if (originalSwap.type !== SwapType.Submarine) {
+            log.debug(
+                `failed to fetch lockup tx for ${originalSwap.type} swap ${originalSwap.id}`,
+                formatError(e),
+            );
+            return { swap: originalSwap, lockupTx: null };
+        }
+    }
+
+    try {
+        const chainTransactions = await getChainSwapTransactions(
+            originalSwap.id,
+        );
+        log.info(
+            `external refund file ${originalSwap.id} is a chain swap; remapping`,
+        );
+        return {
+            swap: remapLegacyToChainSwap(
+                originalSwap as SubmarineSwap,
+                chainTransactions,
+            ),
+            lockupTx: {
+                id: chainTransactions.userLock.transaction.id,
+                hex: chainTransactions.userLock.transaction.hex ?? "",
+                timeoutBlockHeight:
+                    chainTransactions.userLock.timeout.blockHeight,
+                timeoutEta: chainTransactions.userLock.timeout.eta,
+            },
+        };
+    } catch (e) {
+        log.debug(
+            `failed to resolve lockup tx for swap ${originalSwap.id}`,
+            formatError(e),
+        );
+        return { swap: originalSwap, lockupTx: null };
+    }
+};
+
 const BtcLikeLegacy = (props: {
     refundJson: Accessor<SubmarineSwap | ChainSwap>;
     refundInvalid: Accessor<RescueFileError | undefined>;
@@ -98,22 +172,60 @@ const BtcLikeLegacy = (props: {
     const { setRefundableUTXOs } = usePayContext();
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
+    const [resolvedSwap, setResolvedSwap] = createSignal<
+        SubmarineSwap | ChainSwap | null
+    >(null);
 
-    const swap = createMemo(() => props.refundJson());
+    const swap = createMemo(() => resolvedSwap() ?? props.refundJson());
 
-    createResource(swap, async (swap) => {
-        const utxos = await getRescuableUTXOs(swap);
-        setRefundableUTXOs(utxos);
-    });
+    createResource(
+        () => props.refundJson(),
+        async (originalSwap) => {
+            const { swap: effectiveSwap, lockupTx } =
+                await resolveExternalRefundSwap(originalSwap);
+
+            if (effectiveSwap !== originalSwap) {
+                setResolvedSwap(effectiveSwap);
+            }
+
+            let utxos: Awaited<ReturnType<typeof getSwapUTXOs>> | null = null;
+            try {
+                utxos = await getSwapUTXOs(effectiveSwap);
+            } catch (e) {
+                log.debug(
+                    `getSwapUTXOs failed for swap ${effectiveSwap.id}`,
+                    formatError(e),
+                );
+            }
+
+            if (utxos && utxos.length > 0) {
+                setRefundableUTXOs(utxos);
+                return;
+            }
+
+            // Explorer has nothing (unreachable, missing address, or already
+            // claimed). Fall back to Boltz's lockup tx so the user can try;
+            // the broadcast surfaces any "already spent" error.
+            if (lockupTx !== null) {
+                setRefundableUTXOs([lockupTx]);
+                return;
+            }
+
+            log.error(
+                `no lockup data available for external refund of swap ${effectiveSwap.id}`,
+            );
+            setRefundableUTXOs([]);
+        },
+    );
 
     onCleanup(() => {
         setRefundableUTXOs([]);
+        setResolvedSwap(null);
     });
 
     return (
         <>
             <Show when={refundTxId() === ""}>
-                <hr />
                 <RefundButton
                     swap={swap}
                     setRefundTxId={setRefundTxId}
