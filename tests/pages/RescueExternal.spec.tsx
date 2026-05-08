@@ -141,7 +141,7 @@ describe("RescueExternal", () => {
 
         expect(mockGetRestorableSwaps).not.toHaveBeenCalled();
         expect(
-            screen.getByRole("button", { name: i18n.en.search }),
+            screen.getByRole("button", { name: i18n.en.rescue }),
         ).toBeEnabled();
         expect(
             screen.getByText("BTC").closest(".rescue-external-chip"),
@@ -299,7 +299,7 @@ describe("RescueExternal", () => {
         await user.upload(uploadInput, rescueFile);
         expect(screen.getByText("rescue.json")).toBeInTheDocument();
 
-        await user.click(screen.getByRole("button", { name: i18n.en.search }));
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
 
         await waitFor(() => {
             expect(screen.queryByTestId("refundUpload")).toBeNull();
@@ -430,7 +430,7 @@ describe("RescueExternal", () => {
                     "horse olympic laundry marriage material private arch civil theory crew alone thank",
             });
         await user.upload(uploadInput, rescueFile);
-        await user.click(screen.getByRole("button", { name: i18n.en.search }));
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
 
         await waitFor(() => {
             expect(

@@ -1,3 +1,5 @@
+@use "vars";
+
 .rescue-external {
     .rescue-external-frame {
         max-width: 560px;
@@ -128,24 +130,134 @@
         width: 12px;
     }
 
-    .rescue-external-legend {
-        align-items: center;
-        color: var(--color-white-60);
-        display: flex;
-        font-size: 0.75rem;
-        gap: 14px;
-        justify-content: center;
-        margin-top: 10px;
+    .rescue-external-chip .asset-USDT .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 72%;
     }
 
-    .rescue-external-legend span {
-        align-items: center;
-        display: inline-flex;
-        gap: 4px;
+    .rescue-external-wallet-slot {
+        --rescue-success-tint: color-mix(
+            in srgb,
+            var(--color-success-500) 35%,
+            transparent
+        );
+        --rescue-success-tint-soft: color-mix(
+            in srgb,
+            var(--color-success-500) 14%,
+            transparent
+        );
+        --rescue-success-edge: color-mix(
+            in srgb,
+            var(--color-success-500) 70%,
+            transparent
+        );
+        --rescue-success-glow: color-mix(
+            in srgb,
+            var(--color-success-500) 45%,
+            transparent
+        );
+        --rescue-success-text: color-mix(
+            in srgb,
+            var(--color-success-500) 70%,
+            var(--color-text)
+        );
+
+        display: contents;
+    }
+
+    .rescue-external-wallet-slot .btn::before {
+        content: "";
+        display: inline-block;
+        flex: 0 0 auto;
+        width: 16px;
+        height: 16px;
+        margin-right: 7px;
+        background-color: currentColor;
+        --rescue-wallet-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4'/><path d='M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'/><path d='M18 12a2 2 0 0 0 0 4h4v-4Z'/></svg>");
+        -webkit-mask-image: var(--rescue-wallet-icon);
+        mask-image: var(--rescue-wallet-icon);
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+    }
+
+    .rescue-external-wallet-slot[data-connected="true"] .btn-light {
+        position: relative;
+        overflow: hidden;
+        color: var(--rescue-success-text);
+        background-image: linear-gradient(
+            135deg,
+            var(--rescue-success-tint) 0%,
+            var(--rescue-success-tint-soft) 100%
+        );
+        background-color: var(--color-black-40);
+        box-shadow:
+            inset 0 0 0 1px var(--rescue-success-tint),
+            0 0 0 1px var(--rescue-success-edge),
+            0 6px 18px -8px var(--rescue-success-glow);
+        transition:
+            background-color 0.3s ease,
+            box-shadow 0.3s ease,
+            color 0.25s ease;
+    }
+
+    .rescue-external-wallet-slot[data-connected="true"] .btn-light::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            100deg,
+            transparent 30%,
+            color-mix(in srgb, var(--color-success-500) 28%, transparent) 50%,
+            transparent 70%
+        );
+        transform: translateX(-100%);
+        animation: rescue-external-wallet-shimmer 0.9s ease-out 1;
+        pointer-events: none;
+    }
+
+    @media (hover: hover) {
+        .rescue-external-wallet-slot[data-connected="true"] .btn-light:hover {
+            background-image: linear-gradient(
+                135deg,
+                color-mix(in srgb, var(--color-success-500) 50%, transparent) 0%,
+                color-mix(in srgb, var(--color-success-500) 22%, transparent)
+                    100%
+            );
+            background-color: var(--color-black-40);
+            color: var(--color-text);
+            box-shadow:
+                inset 0 0 0 1px var(--rescue-success-tint),
+                0 0 0 2px var(--rescue-success-edge),
+                0 8px 22px -8px var(--rescue-success-glow);
+        }
     }
 
     .rescue-external-actions {
         margin-top: 12px;
+    }
+
+    @keyframes rescue-external-wallet-shimmer {
+        0% {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        20% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .rescue-external-wallet-slot[data-connected="true"] .btn-light::after {
+            animation: none;
+        }
     }
 
     .rescue-external-results {

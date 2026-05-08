@@ -201,7 +201,7 @@ const executeRefund = async (
             .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
         await page
-            .getByRole("button", { name: dict.en.search, exact: true })
+            .getByRole("button", { name: dict.en.rescue, exact: true })
             .click();
     } else {
         await page.getByRole("link", { name: "Rescue" }).click();

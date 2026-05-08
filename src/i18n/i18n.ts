@@ -125,7 +125,7 @@ const dict = {
         pay_invoice_webln: "Pay invoice via WebLN",
         select_asset: "Select {{ direction }} Asset",
         select_network: "Select network",
-        search: "Rescue",
+        search: "Search",
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "Claiming transaction now...",
         refunded: "Swap has been refunded successfully!",
@@ -485,8 +485,6 @@ const dict = {
         rescue_external_subtitle:
             "Choose one or both rescue methods to rescue a swap that is not available in this browser's swap history.",
         rescue_external_coverage: "Rescuable with the provided rescue methods",
-        rescue_external_method_rescue_key: "Rescue key",
-        rescue_external_method_wallet: "Wallet",
         rescue_external_requires_rescue_key: "Requires rescue key",
         rescue_external_requires_wallet: "Requires wallet",
         rescue_external_requires_rescue_key_wallet:
@@ -1017,8 +1015,6 @@ const dict = {
             "Wähle eine oder beide Rettungsmethoden, um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.",
         rescue_external_coverage:
             "Rettbar mit den bereitgestellten Rettungsmethoden",
-        rescue_external_method_rescue_key: "Rettungsschlüssel",
-        rescue_external_method_wallet: "Wallet",
         rescue_external_requires_rescue_key: "Benötigt Rettungsschlüssel",
         rescue_external_requires_wallet: "Benötigt Wallet",
         rescue_external_requires_rescue_key_wallet:
@@ -1121,7 +1117,7 @@ const dict = {
         onchain_address:
             "Ingrese una dirección {{ asset }} para recibir los fondos",
         onchain_address_no_asset: "Ingrese la dirección",
-        invalid_refund_file: "'Clave de rescate no válido",
+        invalid_refund_file: "Clave de rescate no válido",
         invalid_invoice:
             "Por favor, pegue una factura Lightning, BOLT12 o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
@@ -1545,8 +1541,6 @@ const dict = {
             "Elige uno o ambos métodos de rescate para rescatar un intercambio que no está disponible en el historial de este navegador.",
         rescue_external_coverage:
             "Rescatable con los métodos de rescate proporcionados",
-        rescue_external_method_rescue_key: "Clave de rescate",
-        rescue_external_method_wallet: "Monedero",
         rescue_external_requires_rescue_key: "Requiere clave de rescate",
         rescue_external_requires_wallet: "Requiere monedero",
         rescue_external_requires_rescue_key_wallet:
@@ -2069,8 +2063,6 @@ const dict = {
             "Escolha um ou ambos os métodos de resgate para resgatar uma troca que não está disponível no histórico deste navegador.",
         rescue_external_coverage:
             "Resgatável com os métodos de resgate fornecidos",
-        rescue_external_method_rescue_key: "Chave de resgate",
-        rescue_external_method_wallet: "Carteira",
         rescue_external_requires_rescue_key: "Requer chave de resgate",
         rescue_external_requires_wallet: "Requer carteira",
         rescue_external_requires_rescue_key_wallet:
@@ -2542,8 +2534,6 @@ const dict = {
         rescue_external_subtitle:
             "选择一种或两种救援方式，来救援未显示在此浏览器交换历史中的交换。",
         rescue_external_coverage: "可使用已提供的救援方式救援",
-        rescue_external_method_rescue_key: "救援密钥",
-        rescue_external_method_wallet: "钱包",
         rescue_external_requires_rescue_key: "需要救援密钥",
         rescue_external_requires_wallet: "需要钱包",
         rescue_external_requires_rescue_key_wallet: "需要救援密钥和钱包",
@@ -3058,8 +3048,6 @@ const dict = {
         rescue_external_subtitle:
             "このブラウザのスワップ履歴にないスワップを復旧するため、1つまたは両方の復旧方法を選択してください。",
         rescue_external_coverage: "提供された復旧方法で復旧可能",
-        rescue_external_method_rescue_key: "レスキューキー",
-        rescue_external_method_wallet: "ウォレット",
         rescue_external_requires_rescue_key: "レスキューキーが必要です",
         rescue_external_requires_wallet: "ウォレットが必要です",
         rescue_external_requires_rescue_key_wallet:

@@ -2,6 +2,56 @@
     position: relative;
     width: 100%;
     margin-top: 0.4375rem;
+    --rescue-success-tint: color-mix(
+        in srgb,
+        var(--color-success-500) 35%,
+        transparent
+    );
+    --rescue-success-tint-soft: color-mix(
+        in srgb,
+        var(--color-success-500) 12%,
+        transparent
+    );
+    --rescue-success-edge: color-mix(
+        in srgb,
+        var(--color-success-500) 70%,
+        transparent
+    );
+    --rescue-success-glow: color-mix(
+        in srgb,
+        var(--color-success-500) 45%,
+        transparent
+    );
+    --rescue-success-text: color-mix(
+        in srgb,
+        var(--color-success-500) 70%,
+        var(--color-text)
+    );
+    --rescue-error-tint: color-mix(
+        in srgb,
+        var(--color-error-500) 35%,
+        transparent
+    );
+    --rescue-error-tint-soft: color-mix(
+        in srgb,
+        var(--color-error-500) 12%,
+        transparent
+    );
+    --rescue-error-edge: color-mix(
+        in srgb,
+        var(--color-error-500) 70%,
+        transparent
+    );
+    --rescue-error-glow: color-mix(
+        in srgb,
+        var(--color-error-500) 45%,
+        transparent
+    );
+    --rescue-error-text: color-mix(
+        in srgb,
+        var(--color-error) 70%,
+        var(--color-text)
+    );
 }
 
 .rescue-file-input-control {
@@ -23,6 +73,12 @@
     border-radius: 0.625rem;
     background-color: var(--color-black-20);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition:
+        border-color 0.25s ease,
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .rescue-file-input-area:hover,
@@ -48,12 +104,14 @@
     color: var(--color-white-60);
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color 0.3s ease;
 }
 
 .rescue-file-input-clear {
     position: absolute;
     top: 50%;
     right: 0.5rem;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -72,5 +130,150 @@
     .rescue-file-input-clear:hover {
         background-color: var(--color-primary);
         color: var(--color-secondary-700);
+    }
+}
+
+// === Success / uploaded state ===
+
+.rescue-file-input[data-uploaded="true"] .rescue-file-input-area {
+    border: 0.0625rem solid var(--rescue-success-edge);
+    background-image: linear-gradient(
+        135deg,
+        var(--rescue-success-tint) 0%,
+        var(--rescue-success-tint-soft) 100%
+    );
+    background-color: var(--color-black-20);
+    box-shadow:
+        inset 0 0 0 1px var(--rescue-success-tint),
+        0 0 0 1px var(--rescue-success-glow),
+        0 6px 18px -8px var(--rescue-success-glow);
+}
+
+.rescue-file-input[data-uploaded="true"] .rescue-file-input-area::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        100deg,
+        transparent 30%,
+        color-mix(in srgb, var(--color-success-500) 25%, transparent) 50%,
+        transparent 70%
+    );
+    transform: translateX(-100%);
+    animation: rescue-file-input-shimmer 0.9s ease-out 1;
+    pointer-events: none;
+}
+
+.rescue-file-input[data-uploaded="true"]:hover .rescue-file-input-area,
+.rescue-file-input[data-uploaded="true"]
+    .rescue-file-input-control:focus-visible
+    + .rescue-file-input-area {
+    border-color: var(--color-success-500);
+    box-shadow:
+        inset 0 0 0 1px var(--rescue-success-tint),
+        0 0 0 2px var(--rescue-success-glow),
+        0 8px 22px -8px var(--rescue-success-glow);
+}
+
+.rescue-file-input-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--rescue-success-text);
+    max-width: 100%;
+    min-width: 0;
+    animation: rescue-file-input-fade-in 0.35s ease-out 1;
+}
+
+.rescue-file-input-success .rescue-file-input-filename {
+    color: var(--rescue-success-text);
+    font-weight: 500;
+}
+
+.rescue-file-input-key-icon {
+    color: var(--rescue-success-text);
+    flex: 0 0 auto;
+}
+
+@keyframes rescue-file-input-shimmer {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes rescue-file-input-fade-in {
+    0% {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// === Error state ===
+
+.rescue-file-input[data-error="true"] .rescue-file-input-area {
+    border: 0.0625rem solid var(--rescue-error-edge);
+    background-image: linear-gradient(
+        135deg,
+        var(--rescue-error-tint) 0%,
+        var(--rescue-error-tint-soft) 100%
+    );
+    background-color: var(--color-black-20);
+    box-shadow:
+        inset 0 0 0 1px var(--rescue-error-tint),
+        0 0 0 1px var(--rescue-error-glow),
+        0 6px 18px -8px var(--rescue-error-glow);
+}
+
+.rescue-file-input[data-error="true"]:hover .rescue-file-input-area,
+.rescue-file-input[data-error="true"]
+    .rescue-file-input-control:focus-visible
+    + .rescue-file-input-area {
+    border-color: var(--color-error);
+    box-shadow:
+        inset 0 0 0 1px var(--rescue-error-tint),
+        0 0 0 2px var(--rescue-error-glow),
+        0 8px 22px -8px var(--rescue-error-glow);
+}
+
+.rescue-file-input-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--rescue-error-text);
+    max-width: 100%;
+    min-width: 0;
+    animation: rescue-file-input-fade-in 0.35s ease-out 1;
+}
+
+.rescue-file-input-error-message {
+    overflow: hidden;
+    color: var(--rescue-error-text);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rescue-file-input-error-icon {
+    color: var(--rescue-error-text);
+    flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rescue-file-input[data-uploaded="true"] .rescue-file-input-area::before,
+    .rescue-file-input-success,
+    .rescue-file-input-error {
+        animation: none;
     }
 }

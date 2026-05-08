@@ -97,7 +97,7 @@ test.describe("Asset Rescue", () => {
             .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
         await page
-            .getByRole("button", { name: dict.en.search, exact: true })
+            .getByRole("button", { name: dict.en.rescue, exact: true })
             .click();
         await page.locator(".swaplist-item").first().click();
 
