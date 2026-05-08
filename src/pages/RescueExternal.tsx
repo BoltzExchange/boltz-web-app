@@ -184,9 +184,9 @@ const BtcLikeLegacy = (props: {
             const { swap: effectiveSwap, lockupTx } =
                 await resolveExternalRefundSwap(originalSwap);
 
-            if (effectiveSwap !== originalSwap) {
-                setResolvedSwap(effectiveSwap);
-            }
+            setResolvedSwap(
+                effectiveSwap !== originalSwap ? effectiveSwap : null,
+            );
 
             let utxos: Awaited<ReturnType<typeof getSwapUTXOs>> | null = null;
             try {
