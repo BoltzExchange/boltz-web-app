@@ -296,6 +296,7 @@ vi.mock("../../src/utils/oft/oft", () => ({
             logs: [],
             blockNumber: 1,
         }),
+        getBlockNumber: mockGetBlockNumber,
     })),
     getOftTransport: vi.fn(() => mockNetworkTransport),
     getOftReceivedEventByGuid: vi.fn().mockResolvedValue({

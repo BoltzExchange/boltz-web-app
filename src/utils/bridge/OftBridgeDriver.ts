@@ -247,12 +247,14 @@ export class OftBridgeDriver extends BridgeDriver {
         provider: PublicClient,
         contractAddress: string,
         guid: string,
+        options?: { fromBlock?: bigint },
     ): Promise<BridgeReceivedEvent | undefined> => {
         return await getOftReceivedEventByGuid(
             contract as OftTransportClient,
             provider,
             contractAddress,
             guid,
+            options,
         );
     };
 

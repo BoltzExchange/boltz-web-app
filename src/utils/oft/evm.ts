@@ -13,6 +13,7 @@ import {
 
 import { NetworkTransport } from "../../configs/base";
 import type { Signer } from "../../context/Web3";
+import { generateBlockRangeBatches } from "../evmBlockRanges";
 import type {
     MsgFee,
     OftFeeDetail,
@@ -23,6 +24,15 @@ import type {
     OftTransportClient,
     SendParam,
 } from "./types";
+
+// Cap the initial scan window for OFT receive lookups. The function is
+// polled while waiting for a bridge receive after the source send, so the
+// matching event is always recent. ~24h on Arbitrum at ~0.25s/block.
+const maxLookbackBlocks = 350_000;
+
+// Per-chunk window for parallel log scanning. ~12h on Arbitrum at ~0.25s/
+// block — two chunks cover the full lookback in a single parallel batch.
+const scanIntervalBlocks = 175_000;
 
 export type EvmOftTransportClient = OftTransportClient & {
     abi: typeof oftAbi;
@@ -216,51 +226,75 @@ export const getEvmOftReceivedEvent = (
 
 export const getEvmOftReceivedEventByGuid = async (
     contract: EvmOftTransportClient,
-    provider: Pick<PublicClient, "getLogs">,
+    provider: Pick<PublicClient, "getLogs" | "getBlockNumber">,
     contractAddress: string,
     guid: string,
+    options?: { fromBlock?: bigint },
 ): Promise<OftReceivedEvent | undefined> => {
     if (!isHex(guid, { strict: true })) {
         throw new Error("invalid OFT guid");
     }
 
-    const logs = await provider.getLogs({
-        address: getAddress(contractAddress),
-        event: getAbiItem({
-            abi: oftAbi,
-            name: "OFTReceived",
-        }),
-        args: { guid },
-        fromBlock: 0n,
-        toBlock: "latest",
-    });
-    const receivedLog = parseEventLogs({
-        abi: contract.abi,
-        eventName: "OFTReceived",
-        logs,
-    })[0];
+    const address = getAddress(contractAddress);
+    const event = getAbiItem({ abi: oftAbi, name: "OFTReceived" });
+    const latestBlock = Number(await provider.getBlockNumber());
+    const minBlock =
+        options?.fromBlock !== undefined
+            ? Math.max(0, Math.min(Number(options.fromBlock), latestBlock))
+            : Math.max(0, latestBlock - maxLookbackBlocks);
 
-    if (receivedLog === undefined) {
-        return undefined;
+    for (const ranges of generateBlockRangeBatches(
+        latestBlock,
+        minBlock,
+        scanIntervalBlocks,
+    )) {
+        const results = await Promise.all(
+            ranges.map(({ fromBlock, toBlock }) =>
+                provider.getLogs({
+                    address,
+                    event,
+                    args: { guid },
+                    fromBlock: BigInt(fromBlock),
+                    toBlock: BigInt(toBlock),
+                }),
+            ),
+        );
+
+        const logs = results.flat();
+        if (logs.length === 0) {
+            continue;
+        }
+
+        const [receivedLog] = parseEventLogs({
+            abi: contract.abi,
+            eventName: "OFTReceived",
+            logs,
+        });
+
+        if (receivedLog === undefined) {
+            continue;
+        }
+
+        const decoded = {
+            guid: receivedLog.args.guid,
+            srcEid: receivedLog.args.srcEid,
+            toAddress: receivedLog.args.toAddress,
+            amountReceivedLD: receivedLog.args.amountReceivedLD,
+            blockNumber: Number(receivedLog.blockNumber ?? 0),
+            logIndex: receivedLog.logIndex ?? 0,
+        };
+        log.debug("Found OFTReceived event by guid", {
+            contractAddress,
+            guid: decoded.guid,
+            srcEid: decoded.srcEid.toString(),
+            toAddress: decoded.toAddress,
+            amountReceivedLD: decoded.amountReceivedLD.toString(),
+            blockNumber: decoded.blockNumber,
+            logIndex: decoded.logIndex,
+        });
+
+        return decoded;
     }
 
-    const event = {
-        guid: receivedLog.args.guid,
-        srcEid: receivedLog.args.srcEid,
-        toAddress: receivedLog.args.toAddress,
-        amountReceivedLD: receivedLog.args.amountReceivedLD,
-        blockNumber: Number(receivedLog.blockNumber ?? 0),
-        logIndex: receivedLog.logIndex ?? 0,
-    };
-    log.debug("Found OFTReceived event by guid", {
-        contractAddress,
-        guid: event.guid,
-        srcEid: event.srcEid.toString(),
-        toAddress: event.toAddress,
-        amountReceivedLD: event.amountReceivedLD.toString(),
-        blockNumber: event.blockNumber,
-        logIndex: event.logIndex,
-    });
-
-    return event;
+    return undefined;
 };

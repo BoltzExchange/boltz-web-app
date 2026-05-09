@@ -198,6 +198,7 @@ export abstract class BridgeDriver {
         provider: PublicClient,
         contractAddress: string,
         guid: string,
+        options?: { fromBlock?: bigint },
     ) => Promise<BridgeReceivedEvent | undefined>;
 
     public abstract deriveSolanaSentGuid: (args: {
