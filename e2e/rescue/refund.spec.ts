@@ -36,7 +36,7 @@ const navigateToSwapRescue = async (page: Page, swapId: string) => {
     await expect(page.getByTestId("loading-spinner")).not.toBeVisible({
         timeout: 15_000,
     });
-    await expect(swapItem.getByRole("link", { name: "Refund" })).toBeVisible();
+    await expect(swapItem.getByText("Refund")).toBeVisible();
     await swapItem.click();
 };
 
