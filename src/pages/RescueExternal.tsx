@@ -14,9 +14,6 @@ import {
     onCleanup,
 } from "solid-js";
 
-import BlockExplorer, {
-    BlockExplorerTargetKind,
-} from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput from "../components/MnemonicInput";
@@ -24,12 +21,9 @@ import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
 } from "../components/Pagination";
-import RefundButton from "../components/RefundButton";
 import RescueFileInput from "../components/RescueFileInput";
 import RescueFileUpload, {
-    RescueFileError,
-    type RescueFileResult,
-    RescueFileType,
+    type RescueFileError,
     processUploadedFile,
 } from "../components/RescueFileUpload";
 import SwapList, {
@@ -54,7 +48,6 @@ import {
 import { RskRescueMode } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 import {
     rescueKeyMode as rescueKeyModeConst,
     useRescueContext,
@@ -72,11 +65,7 @@ import {
     getSweepableGasAbstractionBalances,
 } from "../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../utils/helper";
-import {
-    RescueAction,
-    createRescueList,
-    getRescuableUTXOs,
-} from "../utils/rescue";
+import { RescueAction, createRescueList } from "../utils/rescue";
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import {
     type RescueFile,
@@ -84,64 +73,11 @@ import {
     getXpub,
     mnemonicToHDKey,
 } from "../utils/rescueFile";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
-
-const BtcLikeLegacy = (props: {
-    refundJson: Accessor<SubmarineSwap | ChainSwap>;
-    refundInvalid: Accessor<RescueFileError | undefined>;
-}) => {
-    const { t } = useGlobalContext();
-    const { setRefundableUTXOs } = usePayContext();
-
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
-
-    const swap = createMemo(() => props.refundJson());
-
-    createResource(swap, async (swap) => {
-        const utxos = await getRescuableUTXOs(swap);
-        setRefundableUTXOs(utxos);
-    });
-
-    onCleanup(() => {
-        setRefundableUTXOs([]);
-    });
-
-    return (
-        <>
-            <Show when={refundTxId() === ""}>
-                <hr />
-                <RefundButton
-                    swap={swap}
-                    setRefundTxId={setRefundTxId}
-                    buttonOverride={
-                        props.refundInvalid() == RescueFileError.InvalidData
-                            ? t("invalid_refund_file")
-                            : undefined
-                    }
-                />
-            </Show>
-            <Show when={refundTxId() !== ""}>
-                <hr />
-                <p class="frame-text">{t("refunded")}</p>
-                <hr />
-                <BlockExplorer
-                    typeLabel={"refund_tx"}
-                    asset={
-                        (props.refundJson() as never as Record<string, string>)
-                            .asset || props.refundJson().assetSend
-                    }
-                    kind={BlockExplorerTargetKind.Tx}
-                    id={refundTxId()}
-                />
-            </Show>
-            <SettingsMenu />
-        </>
-    );
-};
 
 export const RefundBtcLike = () => {
     const navigate = useNavigate();
@@ -152,10 +88,7 @@ export const RefundBtcLike = () => {
     const [refundInvalid, setRefundInvalid] = createSignal<
         RescueFileError | undefined
     >(undefined);
-    const [refundJson, setRefundJson] = createSignal<
-        RescueFile | SubmarineSwap | ChainSwap | null
-    >(null);
-    const [refundType, setRefundType] = createSignal<RescueFileType>();
+    const [refundJson, setRefundJson] = createSignal<RescueFile | null>(null);
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<Partial<SomeSwap>[]>(
         [],
@@ -199,14 +132,11 @@ export const RefundBtcLike = () => {
     };
 
     const [rescuableSwaps] = createResource(
-        () => ({ refundJson: refundJson(), type: refundType() }),
+        () => ({ file: refundJson() }),
         // eslint-disable-next-line solid/reactivity
         async (source) => {
             try {
-                if (
-                    source.type !== RescueFileType.Rescue ||
-                    source.refundJson === null
-                ) {
+                if (source.file === null) {
                     return undefined;
                 }
 
@@ -228,21 +158,18 @@ export const RefundBtcLike = () => {
         );
     });
 
-    const handleFileValidated = (result: RescueFileResult) => {
-        setRefundType(result.type);
-        setRefundJson(result.data as RescueFile);
+    const handleFileValidated = (data: RescueFile) => {
+        setRefundJson(data);
         setRefundInvalid(undefined);
     };
 
     const handleFileError = (error: RescueFileError) => {
-        setRefundType(undefined);
         setRefundInvalid(error);
     };
 
     const handleReset = () => {
         setRefundJson(null);
         setRefundInvalid(undefined);
-        setRefundType(undefined);
     };
 
     return (
@@ -250,14 +177,6 @@ export const RefundBtcLike = () => {
             <Show when={searchParams.mode !== rescueKeyModeConst}>
                 <p class="frame-text">{t("rescue_a_swap_subline")}</p>
                 <hr />
-            </Show>
-            <Show when={refundType() === RescueFileType.Legacy}>
-                <BtcLikeLegacy
-                    refundJson={
-                        refundJson as Accessor<SubmarineSwap | ChainSwap>
-                    }
-                    refundInvalid={refundInvalid}
-                />
             </Show>
             <Show
                 when={
@@ -269,7 +188,7 @@ export const RefundBtcLike = () => {
                 </h3>
             </Show>
 
-            <Show when={refundType() === RescueFileType.Rescue}>
+            <Show when={refundJson() !== null && refundInvalid() === undefined}>
                 <Switch>
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
@@ -763,13 +682,7 @@ export const RescueEvm = (props: { mode?: string }) => {
         clearUploadedRescueFile();
 
         try {
-            const result = await processUploadedFile(inputFile);
-
-            if (!Object.values(RescueFileType).includes(result.type)) {
-                throw new Error("invalid rescue file type: " + result.type);
-            }
-
-            const rescueFile = result.data as RescueFile;
+            const rescueFile = await processUploadedFile(inputFile);
             setUploadedRescueFile(rescueFile);
             setUploadedRescueFileName(inputFile.name);
             setContextRescueFile(rescueFile);
