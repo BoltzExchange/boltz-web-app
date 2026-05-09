@@ -344,15 +344,17 @@ export const getOftReceivedGuid = (
 
 export const getOftReceivedEventByGuid = async (
     contract: OftTransportClient,
-    provider: Pick<PublicClient, "getLogs">,
+    provider: Pick<PublicClient, "getLogs" | "getBlockNumber">,
     contractAddress: string,
     guid: string,
+    options?: { fromBlock?: bigint },
 ): Promise<OftReceivedEvent | undefined> =>
     await getEvmOftReceivedEventByGuid(
         requireEvmOftClient(contract, "OFT receive lookup"),
         provider,
         contractAddress,
         guid,
+        options,
     );
 
 const newOptions = (): string => encodePacked(["uint16"], [type3Option]);

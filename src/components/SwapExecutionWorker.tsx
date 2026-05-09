@@ -726,6 +726,9 @@ export const SwapExecutionWorker = () => {
             }),
         );
 
+        let lastSeenBlock: bigint | undefined;
+        const reorgOverlapBlocks = 100n;
+
         while (true) {
             const currentSwap = await getSwap<SomeSwap>(swapId);
             if (!needsPreBridgeLockup(currentSwap)) {
@@ -739,11 +742,18 @@ export const SwapExecutionWorker = () => {
                 return undefined;
             }
 
+            const blockNumberSnapshot = await provider.getBlockNumber();
+            const fromBlock =
+                lastSeenBlock !== undefined
+                    ? lastSeenBlock - reorgOverlapBlocks
+                    : undefined;
+
             const receivedEvent = await bridgeDriver.getReceivedEventByGuid(
                 contract,
                 provider,
                 bridgeContract.address,
                 guid,
+                fromBlock !== undefined ? { fromBlock } : undefined,
             );
             if (receivedEvent !== undefined) {
                 log.info(
@@ -759,6 +769,7 @@ export const SwapExecutionWorker = () => {
                 return receivedEvent;
             }
 
+            lastSeenBlock = blockNumberSnapshot;
             await sleep(retryIntervalMs);
         }
     };

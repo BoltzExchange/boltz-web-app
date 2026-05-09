@@ -664,71 +664,189 @@ describe("oft", () => {
         ).rejects.toThrow();
     });
 
-    test("should fetch the received event by guid", async () => {
-        const provider = {
-            getLogs: vi.fn().mockResolvedValue([
-                {
-                    data: "0x1234",
-                    topics: ["0xtopic", "0xguid"],
-                    blockNumber: 123,
-                    index: 5,
-                },
-            ]),
-        };
+    describe("getOftReceivedEventByGuid", () => {
+        const contractAddress = "0x1000000000000000000000000000000000000000";
         const guid = `0x${"11".repeat(32)}` as `0x${string}`;
         const toAddress =
             "0x5000000000000000000000000000000000000000" as `0x${string}`;
-        const topics = encodeEventTopics({
-            abi: oftAbi,
-            eventName: "OFTReceived",
-            args: {
-                guid,
-                toAddress,
-            },
-        });
         const contract = {
             transport: NetworkTransport.Evm,
             approvalRequired: vi.fn(),
             abi: oftAbi,
         };
-        provider.getLogs.mockResolvedValue([
-            {
-                address: "0x1000000000000000000000000000000000000000",
-                data: encodeAbiParameters(
-                    [{ type: "uint32" }, { type: "uint256" }],
-                    [40161, 42n],
-                ),
-                topics,
-                blockNumber: 123,
-                logIndex: 5,
-            },
-        ]);
 
-        await expect(
-            getOftReceivedEventByGuid(
-                contract as never,
-                provider as never,
-                "0x1000000000000000000000000000000000000000",
-                guid,
+        const buildMatchingLog = () => ({
+            address: contractAddress,
+            data: encodeAbiParameters(
+                [{ type: "uint32" }, { type: "uint256" }],
+                [40161, 42n],
             ),
-        ).resolves.toEqual({
-            guid,
-            srcEid: 40161,
-            toAddress,
-            amountReceivedLD: 42n,
+            topics: encodeEventTopics({
+                abi: oftAbi,
+                eventName: "OFTReceived",
+                args: { guid, toAddress },
+            }),
             blockNumber: 123,
             logIndex: 5,
         });
 
-        expect(provider.getLogs).toHaveBeenCalledWith({
-            address: "0x1000000000000000000000000000000000000000",
-            event: getAbiItem({
-                abi: oftAbi,
-                name: "OFTReceived",
-            }),
-            args: { guid },
-            fromBlock: 0n,
-            toBlock: "latest",
+        test("should fetch the received event by guid using chunked ranges", async () => {
+            const latestBlock = 1_000_000n;
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(latestBlock),
+                getLogs: vi
+                    .fn()
+                    .mockImplementation(({ toBlock }: { toBlock: bigint }) =>
+                        Promise.resolve(
+                            toBlock === latestBlock ? [buildMatchingLog()] : [],
+                        ),
+                    ),
+            };
+
+            await expect(
+                getOftReceivedEventByGuid(
+                    contract as never,
+                    provider as never,
+                    contractAddress,
+                    guid,
+                ),
+            ).resolves.toEqual({
+                guid,
+                srcEid: 40161,
+                toAddress,
+                amountReceivedLD: 42n,
+                blockNumber: 123,
+                logIndex: 5,
+            });
+
+            // First parallel batch starts at the latest block and walks back
+            // in 175_000-block chunks (~12h on Arbitrum).
+            expect(provider.getLogs).toHaveBeenCalledWith({
+                address: contractAddress,
+                event: getAbiItem({ abi: oftAbi, name: "OFTReceived" }),
+                args: { guid },
+                fromBlock: 825_001n,
+                toBlock: latestBlock,
+            });
+        });
+
+        test("should stop scanning after the first batch with a match", async () => {
+            const latestBlock = 1_000_000n;
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(latestBlock),
+                getLogs: vi
+                    .fn()
+                    .mockImplementation(({ toBlock }: { toBlock: bigint }) =>
+                        Promise.resolve(
+                            toBlock === latestBlock ? [buildMatchingLog()] : [],
+                        ),
+                    ),
+            };
+
+            await getOftReceivedEventByGuid(
+                contract as never,
+                provider as never,
+                contractAddress,
+                guid,
+            );
+
+            // The first batch covers all 1_000_000 blocks down to the
+            // 650_000 lookback floor in 3 parallel calls (175_000-block
+            // chunks), then the loop terminates because that batch matched.
+            expect(provider.getLogs).toHaveBeenCalledTimes(3);
+        });
+
+        test("should return undefined and bound calls when no event is found", async () => {
+            // Pick a latestBlock above maxLookbackBlocks so the cap engages
+            // rather than the 0-block clamp.
+            const latestBlock = 50_000_000n;
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(latestBlock),
+                getLogs: vi.fn().mockResolvedValue([]),
+            };
+
+            await expect(
+                getOftReceivedEventByGuid(
+                    contract as never,
+                    provider as never,
+                    contractAddress,
+                    guid,
+                ),
+            ).resolves.toBeUndefined();
+
+            // 350_000 lookback / 175_000 chunk = 2 ranges, plus the final
+            // range that lands exactly on minBlock. The whole sweep fits in
+            // a single parallel batch.
+            expect(provider.getLogs).toHaveBeenCalledTimes(3);
+        });
+
+        test("should respect a fromBlock hint instead of the default lookback", async () => {
+            const latestBlock = 50_000_000n;
+            const fromBlock = 49_999_500n;
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(latestBlock),
+                getLogs: vi.fn().mockResolvedValue([]),
+            };
+
+            await getOftReceivedEventByGuid(
+                contract as never,
+                provider as never,
+                contractAddress,
+                guid,
+                { fromBlock },
+            );
+
+            // Window of 501 blocks fits in a single chunk of the first batch.
+            expect(provider.getLogs).toHaveBeenCalledTimes(1);
+            expect(provider.getLogs).toHaveBeenCalledWith({
+                address: contractAddress,
+                event: getAbiItem({ abi: oftAbi, name: "OFTReceived" }),
+                args: { guid },
+                fromBlock,
+                toBlock: latestBlock,
+            });
+        });
+
+        test("should clamp a fromBlock hint above latestBlock to latestBlock", async () => {
+            const latestBlock = 1_000n;
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(latestBlock),
+                getLogs: vi.fn().mockResolvedValue([]),
+            };
+
+            await getOftReceivedEventByGuid(
+                contract as never,
+                provider as never,
+                contractAddress,
+                guid,
+                { fromBlock: 5_000n },
+            );
+
+            expect(provider.getLogs).toHaveBeenCalledTimes(1);
+            expect(provider.getLogs).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    fromBlock: latestBlock,
+                    toBlock: latestBlock,
+                }),
+            );
+        });
+
+        test("should reject malformed guids", async () => {
+            const provider = {
+                getBlockNumber: vi.fn().mockResolvedValue(0n),
+                getLogs: vi.fn(),
+            };
+
+            await expect(
+                getOftReceivedEventByGuid(
+                    contract as never,
+                    provider as never,
+                    contractAddress,
+                    "not-hex",
+                ),
+            ).rejects.toThrow("invalid OFT guid");
+
+            expect(provider.getLogs).not.toHaveBeenCalled();
         });
     });
 

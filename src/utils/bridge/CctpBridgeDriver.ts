@@ -350,9 +350,11 @@ export class CctpBridgeDriver extends BridgeDriver {
         provider: PublicClient,
         contractAddress: string,
         guid: string,
+        options?: { fromBlock?: bigint },
     ): Promise<BridgeReceivedEvent | undefined> => {
         void contract;
         void contractAddress;
+        void options;
 
         const decoded = decodeCctpGuid(guid);
         if (decoded === undefined) {
