@@ -3,8 +3,8 @@ import log from "loglevel";
 import { createSignal } from "solid-js";
 
 import { BridgeKind } from "../configs/base";
-import { LN, RBTC, isEvmAsset } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { RBTC, isEvmAsset } from "../consts/Assets";
+import { SwapPosition } from "../consts/Enums";
 import {
     type BridgeDetail,
     GasAbstractionType,
@@ -51,40 +51,6 @@ const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     setLocalStorageSwaps([]);
 
     return migratedSwapCount;
-};
-
-export const migrateSwapToChainSwapFormat = (
-    swap: Record<string, unknown>,
-): SomeSwap => {
-    if (swap.reverse) {
-        return {
-            ...swap,
-            assetSend: LN,
-            type: SwapType.Reverse,
-            assetReceive: swap.asset,
-            claimPrivateKey: swap.privateKey,
-        } as SomeSwap;
-    } else {
-        return {
-            ...swap,
-            assetReceive: LN,
-            assetSend: swap.asset,
-            type: SwapType.Submarine,
-            refundPrivateKey: swap.privateKey,
-        } as SomeSwap;
-    }
-};
-
-const migrateStorageToChainSwaps = async (swapsForage: LocalForage) => {
-    const swaps = await swapsForage.keys();
-
-    for (const swapId of swaps) {
-        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
-        if (swap === null) continue;
-        await swapsForage.setItem(swapId, migrateSwapToChainSwapFormat(swap));
-    }
-
-    return swaps.length;
 };
 
 export const migrateSwapGasAbstraction = (
@@ -369,10 +335,6 @@ const migrateLocalForage = async (
             return;
 
         case null: {
-            log.info(`Migrating storage to chain swaps format`);
-            const migratedSwaps = await migrateStorageToChainSwaps(swapsForage);
-            log.info(`Migrated ${migratedSwaps} to chain swap storage format`);
-
             await paramsForage.setItem(storageVersionKey, 1);
             await migrateLocalForage(paramsForage, swapsForage);
             break;

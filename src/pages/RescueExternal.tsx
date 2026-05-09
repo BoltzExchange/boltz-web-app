@@ -96,7 +96,7 @@ export const RefundBtcLike = () => {
     const [loading, setLoading] = createSignal(false);
     const [loadedSwaps, setLoadedSwaps] = createSignal(0);
 
-    const fetchPaginatedSwaps = async () => {
+    const fetchPaginatedSwaps = async (file: RescueFile) => {
         let startIndex = 0;
         const restorableSwaps: RestorableSwap[] = [];
 
@@ -104,10 +104,6 @@ export const RefundBtcLike = () => {
 
         while (true) {
             try {
-                const file = refundJson() as RescueFile | null;
-                if (file === null) {
-                    break;
-                }
                 const res = await getRestorableSwaps(getXpub(file), {
                     startIndex,
                     limit: paginationLimit,
@@ -131,25 +127,17 @@ export const RefundBtcLike = () => {
         return restorableSwaps;
     };
 
-    const [rescuableSwaps] = createResource(
-        () => ({ file: refundJson() }),
-        // eslint-disable-next-line solid/reactivity
-        async (source) => {
-            try {
-                if (source.file === null) {
-                    return undefined;
-                }
+    const [rescuableSwaps] = createResource(refundJson, async (file) => {
+        try {
+            const res = await fetchPaginatedSwaps(file);
+            rescueContext.setRescuableSwaps(res);
 
-                const res = await fetchPaginatedSwaps();
-                rescueContext.setRescuableSwaps(res);
-
-                return res.map((swap) => mapSwap(swap));
-            } catch (e) {
-                log.error("failed to get restorable swaps", formatError(e));
-                throw e;
-            }
-        },
-    );
+            return res.map((swap) => mapSwap(swap));
+        } catch (e) {
+            log.error("failed to get restorable swaps", formatError(e));
+            throw e;
+        }
+    });
 
     const [refundList] = createResource(currentSwaps, async (swaps) => {
         setLoading(true);
@@ -274,7 +262,11 @@ export const RefundBtcLike = () => {
                             </Show>
                         </div>
                     </Match>
-                    <Match when={rescuableSwaps.state === "refreshing"}>
+                    <Match
+                        when={
+                            rescuableSwaps.state === "pending" ||
+                            rescuableSwaps.state === "refreshing"
+                        }>
                         <p class="restore-loading-progress">
                             {t("swaps_found", { count: loadedSwaps() })}
                         </p>
@@ -287,7 +279,7 @@ export const RefundBtcLike = () => {
                     </Match>
                 </Switch>
             </Show>
-            <Show when={rescuableSwaps.state !== "refreshing"}>
+            <Show when={!rescuableSwaps.loading}>
                 <RescueFileUpload
                     onFileValidated={handleFileValidated}
                     onError={handleFileError}

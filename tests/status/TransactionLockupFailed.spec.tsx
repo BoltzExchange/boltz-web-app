@@ -15,40 +15,6 @@ describe("TransactionLockupFailed", () => {
         vi.clearAllMocks();
     });
 
-    test.each([OutputType.Bech32, OutputType.Compatibility, undefined])(
-        "should show timeout for legacy swaps",
-        async (type) => {
-            // eslint-disable-next-line solid/reactivity
-            const [, setStatusOverride] = createSignal<string>();
-
-            render(
-                () => (
-                    <>
-                        <TestComponent />
-                        <TransactionLockupFailed
-                            setStatusOverride={setStatusOverride}
-                        />
-                    </>
-                ),
-                {
-                    wrapper: contextWrapper,
-                },
-            );
-            payContext.setFailureReason(i18n.en.refund_explainer);
-            payContext.setSwap({
-                assetReceive: BTC,
-                version: type,
-                type: SwapType.Chain,
-            } as SomeSwap);
-
-            await expect(
-                screen.findByText((content) =>
-                    content.includes(i18n.en.refund_explainer),
-                ),
-            ).resolves.not.toBeUndefined();
-        },
-    );
-
     test("should show refund button for Taproot swaps", async () => {
         // eslint-disable-next-line solid/reactivity
         const [, setStatusOverride] = createSignal<string>();

@@ -1,11 +1,10 @@
 import { LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
-import { SwapPosition, SwapType } from "../../src/consts/Enums";
+import { SwapPosition } from "../../src/consts/Enums";
 import {
     migrateSwapBridgeShape,
     migrateSwapDexPositionShape,
     migrateSwapGasAbstraction,
     migrateSwapGasAbstractionShape,
-    migrateSwapToChainSwapFormat,
 } from "../../src/utils/migration";
 import {
     GasAbstractionType,
@@ -14,52 +13,6 @@ import {
 } from "../../src/utils/swapCreator";
 
 describe("migration", () => {
-    test("should migrate legacy format to chain swap format", () => {
-        const swaps = [
-            {
-                id: "submarine",
-                reverse: false,
-                asset: LBTC,
-                privateKey: "123",
-                other: "data",
-            },
-            {
-                id: "reverse",
-                reverse: true,
-                asset: RBTC,
-                privateKey: "321",
-                other: "info",
-            },
-        ];
-
-        const migrated = swaps
-            .map(migrateSwapToChainSwapFormat)
-            .map((swap) => migrateSwapGasAbstraction(swap as never));
-
-        expect(migrated).toEqual([
-            {
-                ...swaps[0],
-                assetSend: LBTC,
-                assetReceive: LN,
-                gasAbstraction: createUniformGasAbstraction(
-                    GasAbstractionType.None,
-                ),
-                type: SwapType.Submarine,
-                refundPrivateKey: swaps[0].privateKey,
-            },
-            {
-                ...swaps[1],
-                assetSend: LN,
-                assetReceive: RBTC,
-                gasAbstraction: createUniformGasAbstraction(
-                    GasAbstractionType.None,
-                ),
-                type: SwapType.Reverse,
-                claimPrivateKey: swaps[1].privateKey,
-            },
-        ]);
-    });
-
     test("should migrate legacy gas abstraction booleans", () => {
         const swaps = [
             {
