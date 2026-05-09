@@ -3,7 +3,7 @@ import { createSignal } from "solid-js";
 
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
-import { BTC, LBTC, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { SwapPosition, SwapType } from "../../src/consts/Enums";
 import dict from "../../src/i18n/i18n";
 import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
@@ -21,6 +21,7 @@ describe("BlockExplorerLink", () => {
     const claimTransactionLabel = blockExplorerLabel(
         dict.en.blockexplorer_claim_tx,
     );
+    const bridgeStatusLabel = dict.en.check_bridge_status;
 
     describe("Submarine and Reverse Swaps", () => {
         test.each`
@@ -81,7 +82,7 @@ describe("BlockExplorerLink", () => {
             },
         );
 
-        test("should show LayerZero claim transaction for OFT swaps", async () => {
+        test("should show LayerZero bridge status for OFT swaps", async () => {
             const claimTx = "123";
             const [swap] = createSignal<SomeSwap>({
                 type: SwapType.Reverse,
@@ -106,11 +107,47 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                claimTransactionLabel,
+                bridgeStatusLabel,
             )) as HTMLAnchorElement;
 
+            expect(screen.queryByText(claimTransactionLabel)).toBeNull();
             expect(button.href).toEqual(
                 `${config.layerZeroExplorerUrl}/tx/${claimTx}`,
+            );
+        });
+
+        test("should show CCTP bridge status for CCTP swaps", async () => {
+            const claimTx =
+                "0x3ca4451e3008d523eec1c64e617663894e47cabd335654bd9f65724772682de8";
+            const [swap] = createSignal<SomeSwap>({
+                type: SwapType.Reverse,
+                assetReceive: USDC,
+                claimTx,
+                bridge: {
+                    kind: "cctp",
+                    sourceAsset: USDC,
+                    destinationAsset: "USDC-BASE",
+                    position: SwapPosition.Post,
+                },
+            } as unknown as SomeSwap);
+
+            render(
+                () => (
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={() => "transaction.claimed"}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const button = (await screen.findByText(
+                bridgeStatusLabel,
+            )) as HTMLAnchorElement;
+
+            expect(screen.queryByText(claimTransactionLabel)).toBeNull();
+            expect(button.href).toEqual(
+                `${config.cctpExplorerUrl}/messages?transactionHash=${claimTx}`,
             );
         });
     });
@@ -292,7 +329,7 @@ describe("BlockExplorerLink", () => {
             );
         });
 
-        test("should show LayerZero claim transaction for OFT chain swaps", async () => {
+        test("should show LayerZero bridge status for OFT chain swaps", async () => {
             const claimTx = "123";
             const [swap] = createSignal<ChainSwap>({
                 type: SwapType.Chain,
@@ -316,11 +353,46 @@ describe("BlockExplorerLink", () => {
             );
 
             const button = (await screen.findByText(
-                claimTransactionLabel,
+                bridgeStatusLabel,
             )) as HTMLAnchorElement;
 
+            expect(screen.queryByText(claimTransactionLabel)).toBeNull();
             expect(button.href).toEqual(
                 `${config.layerZeroExplorerUrl}/tx/${claimTx}`,
+            );
+        });
+
+        test("should show CCTP bridge status for CCTP chain swaps", async () => {
+            const claimTx =
+                "0x3ca4451e3008d523eec1c64e617663894e47cabd335654bd9f65724772682de8";
+            const [swap] = createSignal<ChainSwap>({
+                type: SwapType.Chain,
+                assetSend: LBTC,
+                assetReceive: USDC,
+                claimTx,
+                bridge: {
+                    kind: "cctp",
+                    sourceAsset: USDC,
+                    destinationAsset: "USDC-BASE",
+                    position: SwapPosition.Post,
+                },
+                lockupDetails: {
+                    lockupAddress: "bc1",
+                },
+            } as unknown as ChainSwap);
+
+            render(
+                () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
+                { wrapper: contextWrapper },
+            );
+
+            const button = (await screen.findByText(
+                bridgeStatusLabel,
+            )) as HTMLAnchorElement;
+
+            expect(screen.queryByText(claimTransactionLabel)).toBeNull();
+            expect(button.href).toEqual(
+                `${config.cctpExplorerUrl}/messages?transactionHash=${claimTx}`,
             );
         });
     });

@@ -15,7 +15,12 @@ const BlockExplorer = (props: {
     kind: BlockExplorerTargetKind;
     id: string;
     explorer?: ExplorerKind;
-    typeLabel?: "lockup_address" | "lockup_tx" | "claim_tx" | "refund_tx";
+    typeLabel?:
+        | "lockup_address"
+        | "lockup_tx"
+        | "claim_tx"
+        | "refund_tx"
+        | "bridge_status";
 }) => {
     const { t } = useGlobalContext();
 
@@ -30,13 +35,21 @@ const BlockExplorer = (props: {
             ? "claim_tx"
             : "lockup_address");
 
+    const label = () => {
+        const current = typeLabel();
+        if (current === "bridge_status") {
+            return t("check_bridge_status");
+        }
+        return t("blockexplorer", {
+            typeLabel: t(`blockexplorer_${current}`),
+        });
+    };
+
     return (
         <Show when={href()}>
             {(resolved) => (
                 <ExternalLink class="btn btn-explorer" href={resolved()}>
-                    {t("blockexplorer", {
-                        typeLabel: t(`blockexplorer_${typeLabel()}`),
-                    })}
+                    {label()}
                 </ExternalLink>
             )}
         </Show>
