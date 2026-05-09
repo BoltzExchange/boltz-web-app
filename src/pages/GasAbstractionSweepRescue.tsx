@@ -17,7 +17,11 @@ import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import type { AssetType } from "../consts/Assets";
+import {
+    type AssetType,
+    getAssetDisplaySymbol,
+    getAssetNetwork,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
@@ -163,8 +167,18 @@ const GasAbstractionSweepRescue = () => {
                                             promptText={`${t("refund")} ${amount(data)} ${formatDenomination(
                                                 denomination(),
                                                 data.asset,
-                                            )}`}
-                                        />
+                                            )}`}>
+                                            <p>
+                                                {t("refund_destination_hint", {
+                                                    symbol: getAssetDisplaySymbol(
+                                                        data.asset,
+                                                    ),
+                                                    network: getAssetNetwork(
+                                                        data.asset,
+                                                    ),
+                                                })}
+                                            </p>
+                                        </ContractTransaction>
                                     </Match>
                                     <Match when={refundTxId() !== undefined}>
                                         <p>{t("refunded")}</p>
