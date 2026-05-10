@@ -306,7 +306,7 @@ export class CctpBridgeDriver extends BridgeDriver {
         const sourceConfig = this.requireCctpConfig(route.sourceAsset);
         return Promise.resolve({
             name: "CCTP",
-            address: getAddress(sourceConfig.tokenMessenger),
+            address: sourceConfig.tokenMessenger,
             explorer: "",
         });
     };

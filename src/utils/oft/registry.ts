@@ -1,5 +1,4 @@
 import log from "loglevel";
-import type { Address } from "viem";
 
 import { config } from "../../config";
 import { Usdt0Kind } from "../../configs/base";
@@ -10,7 +9,7 @@ import type { OftRoute } from "./types";
 
 export type OftContract = {
     name: string;
-    address: Address;
+    address: string;
     explorer: string;
 };
 
