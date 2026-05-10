@@ -1,19 +1,18 @@
 import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import type { AppKitNetwork } from "@reown/appkit/networks";
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, createResource } from "solid-js";
 
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import { getEvmAssets } from "../consts/Assets";
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";
-import type {
-    RawEvmProvider,
-    WalletConnectRuntimeProvider,
+import WalletConnectProvider, {
+    type RawEvmProvider,
+    type WalletConnectRuntimeProvider,
 } from "../utils/WalletConnectProvider";
-import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { buildWalletConnectNetworks } from "../utils/walletConnectNetworks";
 
 const getWalletConnectNamespace = (

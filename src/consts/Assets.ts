@@ -1,13 +1,12 @@
-import { config } from "../config";
 import {
     type AssetBridge,
+    AssetKind,
     BridgeKind,
     NetworkTransport,
     Usdt0Kind,
-} from "../configs/base";
-import { AssetKind } from "./AssetKind";
+} from "boltz-swaps/types";
 
-export { AssetKind };
+import { config } from "../config";
 
 export const LN = "LN";
 export const BTC = "BTC";

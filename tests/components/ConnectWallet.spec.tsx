@@ -1,8 +1,7 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import BigNumber from "bignumber.js";
-import type { JSX } from "solid-js";
-import { createEffect, createMemo, createSignal } from "solid-js";
+import { type JSX, createEffect, createMemo, createSignal } from "solid-js";
 
 vi.mock("../../src/utils/boltzClient", async () => {
     const { config } = await import("../../src/config");

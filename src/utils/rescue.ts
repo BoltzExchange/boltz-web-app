@@ -1,7 +1,11 @@
 import { hex } from "@scure/base";
 import type { Transaction as BtcTransaction } from "@scure/btc-signer";
-import type { RefundDetails } from "boltz-core";
-import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
+import {
+    OutputType,
+    type RefundDetails,
+    SwapTreeSerializer,
+    detectSwap,
+} from "boltz-core";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
@@ -37,8 +41,9 @@ import {
     getLockupTransaction,
     getPartialRefundSignature,
 } from "./boltzClient";
-import type { DecodedAddress, TransactionInterface } from "./compat";
 import {
+    type DecodedAddress,
+    type TransactionInterface,
     decodeAddress,
     getConstructRefundTransaction,
     getNetwork,

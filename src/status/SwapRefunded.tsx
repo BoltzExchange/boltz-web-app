@@ -1,12 +1,12 @@
 import { useNavigate } from "@solidjs/router";
+import { bridgeRegistry } from "boltz-swaps/bridge";
+import { SwapPosition } from "boltz-swaps/types";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
-import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { bridgeRegistry } from "../utils/bridge";
 
 const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();

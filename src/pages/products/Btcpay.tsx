@@ -1,8 +1,8 @@
 import {
     BsGithub,
+    BsChatFill as ChatIcon,
     BsShieldFillCheck as SelfCustodialIcon,
 } from "solid-icons/bs";
-import { BsChatFill as ChatIcon } from "solid-icons/bs";
 import { FaSolidRobot as AutoSwapIcon } from "solid-icons/fa";
 import { IoWater as LiquidIcon } from "solid-icons/io";
 import { OcLinkexternal2 } from "solid-icons/oc";

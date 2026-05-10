@@ -1,7 +1,7 @@
+import { Explorer, type ExplorerUrl, type Url } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
-import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
 import {
     BTC,
     ETH,

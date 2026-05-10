@@ -1,3 +1,5 @@
+import { createAssetProvider } from "boltz-swaps/evm";
+import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
 import log from "loglevel";
 import { type Hash, type Hex } from "viem";
 
@@ -5,14 +7,12 @@ import { requireChainId } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { Signer } from "../context/Web3";
 import type { Erc20SwapContract } from "../context/contracts";
-import { erc20SwapAbi } from "../generated/evm-abis";
 import {
     getEipRefundSignature,
     postCommitmentRefundSignature,
     postCommitmentSignature,
 } from "./boltzClient";
 import { getLockupEvent, prefix0x } from "./evmTransaction";
-import { createAssetProvider } from "./provider";
 
 export const emptyPreimageHash = prefix0x("00".repeat(32));
 

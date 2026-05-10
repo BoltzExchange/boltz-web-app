@@ -1,11 +1,11 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
+import type * as OftModule from "boltz-swaps/oft";
+import { waitForOftTransactionConfirmationTimestamp } from "boltz-swaps/oft";
+import { BridgeKind, SwapPosition } from "boltz-swaps/types";
 
 import WaitForBridge from "../../src/components/WaitForBridge";
 import type * as ConfigModule from "../../src/config";
-import { BridgeKind } from "../../src/configs/base";
 import type * as MainnetConfigModule from "../../src/configs/mainnet";
-import { SwapPosition } from "../../src/consts/Enums";
-import { waitForOftTransactionConfirmationTimestamp } from "../../src/utils/oft/oft";
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -42,7 +42,8 @@ vi.mock("../../src/context/Global", () => ({
     }),
 }));
 
-vi.mock("../../src/utils/oft/oft", () => ({
+vi.mock("boltz-swaps/oft", async (importActual) => ({
+    ...(await importActual<typeof OftModule>()),
     waitForOftTransactionConfirmationTimestamp: vi.fn(),
 }));
 

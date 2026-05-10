@@ -1,4 +1,8 @@
 import { render, waitFor } from "@solidjs/testing-library";
+import type * as CctpModule from "boltz-swaps/cctp";
+import type * as EvmModule from "boltz-swaps/evm";
+import { erc20SwapAbi, routerAbi } from "boltz-swaps/generated/evm-abis";
+import type * as OftModule from "boltz-swaps/oft";
 import {
     type Hex,
     decodeAbiParameters,
@@ -6,7 +10,8 @@ import {
     encodeEventTopics,
 } from "viem";
 
-import { erc20SwapAbi, routerAbi } from "../../src/generated/evm-abis";
+import type * as LibProviderModule from "../../packages/boltz-swaps/src/evm/provider";
+import { config as runtimeConfig } from "../../src/config";
 
 let currentSwap: Record<string, unknown>;
 let mockNetworkTransport = "evm";
@@ -91,32 +96,92 @@ const buildLockupLog = ({
     logIndex,
 });
 
-vi.mock("../../src/config", () => ({
-    config: {
-        assets: {
-            SRC: {
-                network: {
-                    chainId: 1,
-                },
+const originalAssets = runtimeConfig.assets;
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        SRC: {
+            network: {
+                chainId: 1,
+                transport: "evm",
             },
-            DST: {
-                network: {
-                    chainId: 2,
-                },
+            bridge: {
+                kind: "oft",
+                canonicalAsset: "FINAL",
             },
-            "CCTP-SRC": {
-                network: {
-                    chainId: 6,
-                },
-            },
-            USDC: {
-                network: {
-                    chainId: 3,
-                },
+            token: {
+                address: "0xf200000000000000000000000000000000000000",
             },
         },
-    },
-}));
+        DST: {
+            network: {
+                chainId: 2,
+                transport: "evm",
+            },
+            bridge: {
+                kind: "oft",
+                canonicalAsset: "FINAL",
+            },
+            token: {
+                address: "0xf200000000000000000000000000000000000000",
+            },
+        },
+        FINAL: {
+            network: {
+                transport: "evm",
+            },
+            token: {
+                address: "0xf100000000000000000000000000000000000000",
+            },
+        },
+        "CCTP-SRC": {
+            network: {
+                chainId: 6,
+                transport: "evm",
+            },
+            bridge: {
+                kind: "cctp",
+                canonicalAsset: "USDC",
+                cctp: {
+                    domain: 6,
+                    tokenMessenger:
+                        "0x5100000000000000000000000000000000000000",
+                    messageTransmitter:
+                        "0x5200000000000000000000000000000000000000",
+                    transferMode: "fast",
+                },
+            },
+            token: {
+                address: "0xf200000000000000000000000000000000000000",
+            },
+        },
+        USDC: {
+            network: {
+                chainId: 3,
+                transport: "evm",
+            },
+            bridge: {
+                kind: "cctp",
+                canonicalAsset: "USDC",
+                cctp: {
+                    domain: 3,
+                    tokenMessenger:
+                        "0x5300000000000000000000000000000000000000",
+                    messageTransmitter:
+                        "0x5400000000000000000000000000000000000000",
+                    transferMode: "fast",
+                },
+            },
+            token: {
+                address: "0xf200000000000000000000000000000000000000",
+            },
+        },
+    } as never;
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
+});
 
 vi.mock("../../src/consts/Assets", () => ({
     USDC: "USDC",
@@ -220,7 +285,7 @@ vi.mock("../../src/utils/calculate", () => ({
     calculateAmountWithSlippage: (amount: bigint) => amount,
 }));
 
-vi.mock("../../src/utils/chains/solana", () => ({
+vi.mock("boltz-swaps/solana", () => ({
     getSolanaConnection: vi.fn(() => ({
         getTransaction: mockGetTransaction,
         isBlockhashValid: mockIsBlockhashValid,
@@ -228,7 +293,7 @@ vi.mock("../../src/utils/chains/solana", () => ({
     })),
 }));
 
-vi.mock("../../src/utils/chains/tron", () => ({
+vi.mock("boltz-swaps/tron", () => ({
     getTronTransactionInfo: mockGetTronTransactionInfo,
     isFailedTronTransaction,
 }));
@@ -241,10 +306,14 @@ vi.mock("../../src/utils/commitment", () => ({
         mockPostCommitmentSignatureForTransaction(...args),
 }));
 
-vi.mock("../../src/utils/cctp/attestation", () => ({
-    getCctpAttestation: async (...args: unknown[]): Promise<unknown> =>
-        await mockGetCctpAttestation(...args),
-}));
+vi.mock("boltz-swaps/cctp", async () => {
+    const actual = await vi.importActual<typeof CctpModule>("boltz-swaps/cctp");
+    return {
+        ...actual,
+        getCctpAttestation: async (...args: unknown[]): Promise<unknown> =>
+            await mockGetCctpAttestation(...args),
+    };
+});
 
 vi.mock("../../src/utils/evmTransaction", () => ({
     sendPopulatedTransaction: (...args: unknown[]) =>
@@ -253,24 +322,33 @@ vi.mock("../../src/utils/evmTransaction", () => ({
         value.startsWith("0x") ? value : `0x${value}`,
 }));
 
-vi.mock("../../src/utils/provider", () => ({
-    createAssetProvider: vi.fn(() => ({
-        call: mockProviderCall,
-        readContract: async (...args: unknown[]) => {
-            const encoded = (await mockProviderCall(...args)) as Hex;
-            const [decoded] = decodeAbiParameters(
-                [{ type: "uint256" }],
-                encoded,
-            );
-            return decoded;
-        },
-        getLogs: mockQueryFilter,
-        getTransactionReceipt: mockGetTransactionReceipt,
-        getBlockNumber: mockGetBlockNumber,
-    })),
+const mockCreateAssetProvider = vi.fn(() => ({
+    call: mockProviderCall,
+    readContract: async (...args: unknown[]) => {
+        const encoded = (await mockProviderCall(...args)) as Hex;
+        const [decoded] = decodeAbiParameters([{ type: "uint256" }], encoded);
+        return decoded;
+    },
+    getLogs: mockQueryFilter,
+    getTransactionReceipt: mockGetTransactionReceipt,
+    getBlockNumber: mockGetBlockNumber,
+    getTransaction: mockGetTransaction,
 }));
 
-vi.mock("../../src/utils/oft/registry", () => ({
+vi.mock("../../src/utils/provider", () => ({
+    createAssetProvider: mockCreateAssetProvider,
+}));
+
+vi.mock(
+    "../../packages/boltz-swaps/src/evm/provider.ts",
+    async (importActual) => ({
+        ...(await importActual<typeof LibProviderModule>()),
+        createAssetProvider: mockCreateAssetProvider,
+    }),
+);
+
+vi.mock("boltz-swaps/oft", async (importActual) => ({
+    ...(await importActual<typeof OftModule>()),
     getOftContract: vi.fn((route: { sourceAsset: string }) =>
         Promise.resolve({
             address:
@@ -279,17 +357,8 @@ vi.mock("../../src/utils/oft/registry", () => ({
                     : "0x2222222222222222222222222222222222222222",
         }),
     ),
-}));
-
-vi.mock("../../src/utils/oft/solana", () => ({
     getSolanaOftGuidFromLogs: vi.fn().mockReturnValue("0xguid"),
-}));
-
-vi.mock("../../src/utils/oft/tron", () => ({
     getTronOftGuidFromTransactionInfo: mockGetTronOftGuidFromTransactionInfo,
-}));
-
-vi.mock("../../src/utils/oft/oft", () => ({
     createOftContract: vi.fn((address: string) => ({ address })),
     getOftProvider: vi.fn(() => ({
         getTransactionReceipt: vi.fn().mockResolvedValue({
@@ -317,13 +386,15 @@ vi.mock("../../src/utils/quoter", () => ({
     }),
 }));
 
-vi.mock("../../src/utils/rootstock", () => ({
+vi.mock("boltz-swaps/evm", async (importActual) => ({
+    ...(await importActual<typeof EvmModule>()),
     satsToAssetAmount: (value: number) => BigInt(value),
+    createAssetProvider: mockCreateAssetProvider,
 }));
 
 const { SwapExecutionWorker } =
     await import("../../src/components/SwapExecutionWorker");
-const oftUtils = await import("../../src/utils/oft/oft");
+const oftUtils = await import("boltz-swaps/oft");
 
 const cctpMessageSentTopic =
     "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";

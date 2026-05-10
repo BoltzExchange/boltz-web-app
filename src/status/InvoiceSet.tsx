@@ -1,10 +1,10 @@
+import { SwapPosition } from "boltz-swaps/types";
 import { Show, createMemo } from "solid-js";
 import { getAddress } from "viem";
 
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapPosition } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import { decodeInvoice } from "../utils/invoice";
 import {

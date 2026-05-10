@@ -1,34 +1,37 @@
-import {
-    createAssetProvider,
-    getRpcUrls,
-    requireRpcUrls,
-} from "../../src/utils/provider";
+import { getRpcUrls, requireRpcUrls } from "boltz-swaps/config";
+import { createAssetProvider } from "boltz-swaps/evm";
 
-vi.mock("../../src/config", () => ({
-    config: {
-        assets: {
-            EMPTY: {
-                network: {
-                    rpcUrls: [],
-                },
-            },
-            MULTI: {
-                network: {
-                    rpcUrls: [
-                        "https://one.example",
-                        "https://two.example",
-                        "https://three.example",
-                    ],
-                },
-            },
-            SINGLE: {
-                network: {
-                    rpcUrls: ["https://single.example"],
-                },
+import { config as runtimeConfig } from "../../src/config";
+
+const originalAssets = runtimeConfig.assets;
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        EMPTY: {
+            network: {
+                rpcUrls: [],
             },
         },
-    },
-}));
+        MULTI: {
+            network: {
+                rpcUrls: [
+                    "https://one.example",
+                    "https://two.example",
+                    "https://three.example",
+                ],
+            },
+        },
+        SINGLE: {
+            network: {
+                rpcUrls: ["https://single.example"],
+            },
+        },
+    } as never;
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
+});
 
 describe("provider utils", () => {
     test("creates a provider for multi-rpc assets", () => {

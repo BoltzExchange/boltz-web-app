@@ -1,4 +1,5 @@
 import pluginJs from "@eslint/js";
+import importX from "eslint-plugin-import-x";
 import solid from "eslint-plugin-solid";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -18,8 +19,10 @@ export default [
             "dnssec-prover",
             "vite.config.mjs",
             "src/utils/dnssec/dnssec_prover*",
-            "src/generated/solana-oft/src/generated/**",
-            "src/generated/solana-cctp-token-messenger-minter/src/generated/**",
+            "packages/*/src/generated/**",
+            "packages/*/dist/**",
+            "packages/*/tests/**",
+            "packages/*/vitest.config.mjs",
             "playwright-report",
         ],
     },
@@ -27,11 +30,22 @@ export default [
     ...tseslint.configs.recommendedTypeChecked,
     solid.configs["flat/typescript"],
     {
+        plugins: { "import-x": importX },
+        rules: {
+            "import-x/no-duplicates": ["error", { "prefer-inline": true }],
+        },
+    },
+    {
         languageOptions: {
             parserOptions: {
                 projectService: {
                     defaultProject: "tsconfig.json",
-                    allowDefaultProject: ["public/*.js", "*.mjs", "*.js"],
+                    allowDefaultProject: [
+                        "public/*.js",
+                        "*.mjs",
+                        "*.js",
+                        "packages/*/scripts/*.ts",
+                    ],
                 },
                 tsconfigRootDir: import.meta.dirname,
             },

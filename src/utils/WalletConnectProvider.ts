@@ -1,15 +1,15 @@
 import type { TronConnector } from "@reown/appkit-adapter-tron";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
+import { createProvider } from "boltz-swaps/evm";
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import type { Setter } from "solid-js";
 import type { PublicClient } from "viem";
 
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import type { EIP1193Provider } from "../consts/Types";
 import type { DictKey } from "../i18n/i18n";
 import { prefix0x } from "./evmTransaction";
-import { createProvider } from "./provider";
 
 export type RawEvmProvider = {
     request: (

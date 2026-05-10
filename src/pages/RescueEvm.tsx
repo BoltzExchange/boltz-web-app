@@ -1,8 +1,16 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
+import { AssetKind } from "boltz-swaps/types";
 import log from "loglevel";
-import type { Setter } from "solid-js";
-import { Match, Show, Switch, createResource, createSignal } from "solid-js";
+import {
+    Match,
+    type Setter,
+    Show,
+    Switch,
+    createResource,
+    createSignal,
+} from "solid-js";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
@@ -14,7 +22,6 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import {
-    AssetKind,
     type AssetType,
     RBTC,
     type blockChainsAssets,
@@ -26,8 +33,8 @@ import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim } from "../rif/Signer";
 import { isEmptyPreimageHash } from "../utils/commitment";
-import type { LogRefundData } from "../utils/contractLogs";
 import {
+    type LogRefundData,
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "../utils/contractLogs";
@@ -35,9 +42,8 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
-import { createAssetProvider, estimateFeesPerGas } from "../utils/provider";
+import { estimateFeesPerGas } from "../utils/provider";
 import { getTimeoutEta } from "../utils/rescue";
-import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 
 type RescueData = LogRefundData & { currentHeight: bigint };

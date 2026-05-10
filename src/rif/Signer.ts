@@ -1,3 +1,5 @@
+import { satoshiToWei } from "boltz-swaps/evm";
+import { etherSwapAbi } from "boltz-swaps/generated/evm-abis";
 import log from "loglevel";
 import {
     type Address,
@@ -8,20 +10,17 @@ import {
 
 import type { Signer } from "../context/Web3";
 import type { EtherSwapContract } from "../context/contracts";
-import { etherSwapAbi } from "../generated/evm-abis";
 import { prefix0x } from "../utils/evmTransaction";
 import { estimateFeesPerGas } from "../utils/provider";
-import { satoshiToWei } from "../utils/rootstock";
 import {
     getForwarder,
     getRifDeployVerifierAddress,
     getSmartWalletFactory,
 } from "./Contracts";
-import type { Metadata } from "./Relay";
-import { estimate, getChainInfo, relay } from "./Relay";
+import { type Metadata, estimate, getChainInfo, relay } from "./Relay";
 import { calculateGasPrice, getValidUntilTime, isDeployRequest } from "./Utils";
-import type { EnvelopingRequest } from "./types/TypedRequestData";
 import {
+    type EnvelopingRequest,
     deployRequestType,
     getEnvelopingRequestDataV4Field,
     relayRequestType,

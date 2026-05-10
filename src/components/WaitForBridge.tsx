@@ -1,11 +1,11 @@
+import { waitForOftTransactionConfirmationTimestamp } from "boltz-swaps/oft";
+import { BridgeKind } from "boltz-swaps/types";
 import log from "loglevel";
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
-import { BridgeKind } from "../configs/base";
 import { getAssetDisplaySymbol } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { formatError } from "../utils/errors";
-import { waitForOftTransactionConfirmationTimestamp } from "../utils/oft/oft";
 import { computeOftEtaSeconds } from "../utils/oftEta";
 import type { BridgeDetail } from "../utils/swapCreator";
 import LoadingSpinner from "./LoadingSpinner";

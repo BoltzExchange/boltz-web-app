@@ -1,7 +1,7 @@
+import { AssetKind, Explorer, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 
-import { Explorer, NetworkTransport } from "../../src/configs/base";
-import { AssetKind, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
+import { RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import { buildWalletConnectNetworks } from "../../src/utils/walletConnectNetworks";
 
 const makeEvmNetwork = (

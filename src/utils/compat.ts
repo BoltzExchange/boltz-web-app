@@ -6,27 +6,26 @@ import {
 } from "@scure/btc-signer";
 import type { TransactionOutput } from "@scure/btc-signer/psbt.js";
 import { type BTC_NETWORK, equalBytes } from "@scure/btc-signer/utils.js";
-import type { ClaimDetails, RefundDetails } from "boltz-core";
 import {
+    type ClaimDetails,
     Networks,
+    type RefundDetails,
     constructClaimTransaction,
     constructRefundTransaction,
     targetFee,
 } from "boltz-core";
-import type {
-    LiquidClaimDetails,
-    LiquidRefundDetails,
-} from "boltz-core/liquid";
 import {
+    type LiquidClaimDetails,
+    type LiquidRefundDetails,
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/liquid";
 import { Buffer } from "buffer";
-import type { TxOutput as LiquidTransactionOutput } from "liquidjs-lib";
 import {
     address as LiquidAddress,
     networks as LiquidNetworks,
     Transaction as LiquidTransaction,
+    type TxOutput as LiquidTransactionOutput,
     confidential,
 } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";

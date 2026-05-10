@@ -1,3 +1,12 @@
+import {
+    type BlockRange,
+    createAssetProvider,
+    createProvider,
+    defaultScanInterval,
+    generateBlockRangeBatches,
+} from "boltz-swaps/evm";
+import { erc20SwapAbi, etherSwapAbi } from "boltz-swaps/generated/evm-abis";
+import { AssetKind } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type AbiEvent,
@@ -16,7 +25,7 @@ import {
 
 import { config } from "../config";
 import { arbitrumChainId } from "../configs/base";
-import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
+import { type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import {
     type Erc20SwapContract,
@@ -24,18 +33,11 @@ import {
     resolveErc20SwapAbi,
     resolveEtherSwapAbi,
 } from "../context/contracts";
-import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
     PreimageHashesWorker,
     type PreimageMap,
 } from "../workers/preimageHashes/PreimageHashesWorker";
-import {
-    type BlockRange,
-    defaultScanInterval,
-    generateBlockRangeBatches,
-} from "./evmBlockRanges";
 import { prefix0x } from "./evmTransaction";
-import { createAssetProvider, createProvider } from "./provider";
 
 export type SwapContract = EtherSwapContract | Erc20SwapContract;
 type SwapReadContract = {

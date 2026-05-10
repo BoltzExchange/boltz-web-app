@@ -1,6 +1,5 @@
 import { useNavigate } from "@solidjs/router";
-import type { Accessor } from "solid-js";
-import { For, Show, createMemo } from "solid-js";
+import { type Accessor, For, Show, createMemo } from "solid-js";
 
 import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";
 import type { RskRescueMode } from "../consts/Enums";

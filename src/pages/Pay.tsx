@@ -2,8 +2,8 @@ import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import type { Accessor } from "solid-js";
 import {
+    type Accessor,
     Match,
     Show,
     Switch,

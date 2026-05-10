@@ -1,4 +1,4 @@
-import { satoshiToWei } from "../../src/utils/rootstock";
+import { satoshiToWei } from "boltz-swaps/evm";
 
 describe("rootstock", () => {
     test.each`

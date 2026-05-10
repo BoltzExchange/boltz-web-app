@@ -1,4 +1,4 @@
-import Loader from "./Loader";
+import Loader from "boltz-swaps/lazy";
 
 export default new Loader("WalletConnect", async () => {
     const [

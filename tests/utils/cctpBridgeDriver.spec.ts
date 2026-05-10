@@ -1,31 +1,29 @@
-import { TransactionReceiptNotFoundError } from "viem";
-
-import { config as runtimeConfig } from "../../src/config";
+import { CctpBridgeDriver } from "boltz-swaps/bridge";
 import {
-    BridgeKind,
-    CctpReceiveMode,
-    CctpTransferMode,
-} from "../../src/configs/base";
-import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { CctpBridgeDriver } from "../../src/utils/bridge/CctpBridgeDriver";
-import { clearCache } from "../../src/utils/cache";
-import type { CctpDirectSendTarget } from "../../src/utils/cctp/directSend";
-import {
-    cctpMessageSentTopic,
-    cctpMintAndWithdrawTopic,
-    encodeCctpGuid,
-} from "../../src/utils/cctp/events";
-import {
+    type CctpDirectSendTarget,
+    type CctpSendParam,
     addressToBytes32,
     cctpEmptyHookData,
     cctpFastFinalityThreshold,
     cctpForwardHookData,
+    cctpMessageSentTopic,
+    cctpMintAndWithdrawTopic,
     cctpStandardFinalityThreshold,
     cctpZeroBytes32,
-} from "../../src/utils/cctp/evm";
-import type { CctpSendParam } from "../../src/utils/cctp/types";
-import * as solanaChain from "../../src/utils/chains/solana";
-import { ExplorerKind } from "../../src/utils/explorerLink";
+    encodeCctpGuid,
+} from "boltz-swaps/cctp";
+import * as solanaChain from "boltz-swaps/solana";
+import {
+    BridgeKind,
+    CctpReceiveMode,
+    CctpTransferMode,
+    ExplorerKind,
+} from "boltz-swaps/types";
+import { TransactionReceiptNotFoundError } from "viem";
+
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { clearCache } from "../../src/utils/cache";
 
 describe("CctpBridgeDriver", () => {
     const driver = new CctpBridgeDriver();

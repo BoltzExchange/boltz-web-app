@@ -1,3 +1,5 @@
+import { satsToAssetAmount } from "boltz-swaps/evm";
+
 import type { Signer } from "../../src/context/Web3";
 import type {
     Erc20SwapContract,
@@ -10,7 +12,6 @@ import {
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
 import { claimAsset } from "../../src/utils/evmTransaction";
 import type * as QouterModule from "../../src/utils/quoter";
-import { satsToAssetAmount } from "../../src/utils/rootstock";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
 const {

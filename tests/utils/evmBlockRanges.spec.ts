@@ -3,7 +3,7 @@ import {
     defaultScanInterval,
     generateBlockRangeBatches,
     parallelBatchSize,
-} from "../../src/utils/evmBlockRanges";
+} from "boltz-swaps/evm";
 
 const collect = (
     ...args: Parameters<typeof generateBlockRangeBatches>

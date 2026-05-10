@@ -1,14 +1,14 @@
-import log from "loglevel";
-import type { Setter } from "solid-js";
-
-import { NetworkTransport } from "../configs/base";
-import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
-import WalletConnectProvider from "../utils/WalletConnectProvider";
 import {
     sendTronTokenApproval,
     waitForSuccessfulTronTransaction,
-} from "../utils/oft/tron";
+} from "boltz-swaps/oft";
+import { NetworkTransport } from "boltz-swaps/types";
+import log from "loglevel";
+import type { Setter } from "solid-js";
+
+import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
+import WalletConnectProvider from "../utils/WalletConnectProvider";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 

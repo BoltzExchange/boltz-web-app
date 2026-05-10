@@ -1,6 +1,7 @@
 import { BigNumber } from "bignumber.js";
-import type { Accessor } from "solid-js";
+import { weiToSatoshi } from "boltz-swaps/evm";
 import {
+    type Accessor,
     Show,
     createEffect,
     createMemo,
@@ -17,7 +18,6 @@ import { useWeb3Signer } from "../context/Web3";
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
-import { weiToSatoshi } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 import AmountDenominator from "./AmountDenominator";
 import { getClaimAddress } from "./CreateButton";

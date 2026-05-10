@@ -1,7 +1,12 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import type { Accessor } from "solid-js";
-import { Show, createEffect, createSignal, mergeProps } from "solid-js";
+import {
+    type Accessor,
+    Show,
+    createEffect,
+    createSignal,
+    mergeProps,
+} from "solid-js";
 
 import { copyIconTimeout } from "../consts/CopyContent";
 import { useGlobalContext } from "../context/Global";

@@ -1,9 +1,14 @@
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
-import type { Accessor, JSX } from "solid-js";
-import { Show, createEffect, createSignal } from "solid-js";
+import {
+    type Accessor,
+    type JSX,
+    Show,
+    createEffect,
+    createSignal,
+} from "solid-js";
 
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import { getNetworkTransport } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { type Signer, useWeb3Signer } from "../context/Web3";

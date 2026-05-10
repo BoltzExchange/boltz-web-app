@@ -1,8 +1,10 @@
 import BigNumber from "bignumber.js";
+import { SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
-import type { Accessor, Setter } from "solid-js";
 import {
+    type Accessor,
+    type Setter,
     Show,
     createEffect,
     createResource,
@@ -13,7 +15,7 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton, { incorrectAssetError } from "../components/RefundButton";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import type { DictKey } from "../i18n/i18n";

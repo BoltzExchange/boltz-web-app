@@ -1,9 +1,17 @@
 import BigNumber from "bignumber.js";
+import { weiToSatoshi } from "boltz-swaps/evm";
 import log from "loglevel";
 import { ImArrowLeft2, ImArrowRight2 } from "solid-icons/im";
 import { IoClose } from "solid-icons/io";
-import type { Accessor, Setter } from "solid-js";
-import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import {
+    type Accessor,
+    For,
+    type Setter,
+    Show,
+    createMemo,
+    createResource,
+    createSignal,
+} from "solid-js";
 
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
@@ -12,14 +20,13 @@ import { type notifyFn, useGlobalContext } from "../context/Global";
 import { type ConnectProviderOptions, useWeb3Signer } from "../context/Web3";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
-import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
+    type HardwareSigner,
     derivationPaths,
     derivationPathsMainnet,
     derivationPathsTestnet,
 } from "../utils/hardware/HardwareSigner";
 import { cropString } from "../utils/helper";
-import { weiToSatoshi } from "../utils/rootstock";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const connect = async (

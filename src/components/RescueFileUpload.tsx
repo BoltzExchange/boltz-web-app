@@ -6,8 +6,7 @@ import { Match, Show, Switch } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
 import { formatError } from "../utils/errors";
-import type { RescueFile } from "../utils/rescueFile";
-import { validateRescueFile } from "../utils/rescueFile";
+import { type RescueFile, validateRescueFile } from "../utils/rescueFile";
 import MnemonicInput from "./MnemonicInput";
 import RescueFileInput from "./RescueFileInput";
 

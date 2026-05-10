@@ -1,6 +1,5 @@
 import { useNavigate } from "@solidjs/router";
-import type { Accessor } from "solid-js";
-import { Show, createResource, createSignal } from "solid-js";
+import { type Accessor, Show, createResource, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import Pagination, {

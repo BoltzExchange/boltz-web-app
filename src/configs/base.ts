@@ -1,130 +1,5 @@
+import type { Asset, Url } from "boltz-swaps/types";
 import type log from "loglevel";
-
-import { type AssetKind } from "../consts/AssetKind";
-
-export const enum NetworkTransport {
-    Evm = "evm",
-    Solana = "solana",
-    Tron = "tron",
-}
-
-export const enum BridgeKind {
-    Oft = "oft",
-    Cctp = "cctp",
-}
-
-export const enum CctpTransferMode {
-    Fast = "fast",
-    Standard = "standard",
-}
-
-export const enum CctpReceiveMode {
-    Forwarded = "forwarded",
-    Manual = "manual",
-}
-
-export const enum Usdt0Kind {
-    Native = "native",
-    Legacy = "legacy",
-}
-
-type OftAssetBridge = {
-    kind: BridgeKind.Oft;
-    canonicalAsset: string;
-    oft?: {
-        mesh?: Usdt0Kind;
-        // Address used to simulate bridge quote transactions when no wallet
-        // is connected. Only needed on Solana
-        quotePayer?: string;
-    };
-};
-
-type CctpAssetBridge = {
-    kind: BridgeKind.Cctp;
-    canonicalAsset: string;
-    cctp: {
-        domain: number;
-        tokenMessenger: string;
-        messageTransmitter: string;
-        transferMode: CctpTransferMode;
-    };
-};
-
-export type AssetBridge = OftAssetBridge | CctpAssetBridge;
-
-// TODO: which properties do we really need?
-export type Usdt0Variant = {
-    asset: string;
-    canSend: boolean;
-    disabled?: boolean;
-    chainName: string;
-    symbol: string;
-    nativeDecimals?: number;
-    minGas?: bigint;
-    gasToken?: string;
-    transport?: NetworkTransport;
-    chainId?: number;
-    oftQuotePayer?: string;
-    tokenAddress: string;
-    blockExplorerUrl: string;
-    rpcUrls: readonly string[];
-    mesh?: Usdt0Kind;
-};
-
-export type Asset = {
-    type: AssetKind;
-    canSend?: boolean;
-    disabled?: boolean;
-
-    blockExplorerUrl?: ExplorerUrl;
-    blockExplorerApis?: ExplorerUrl[];
-
-    rifRelay?: string;
-    contracts?: {
-        deployHeight: number;
-        router?: string;
-        smartWalletFactory?: string;
-        deployVerifier?: string;
-    };
-    network?: {
-        chainName: string;
-        symbol: string;
-        gasToken: string;
-        transport: NetworkTransport;
-        chainId?: number;
-        rpcUrls: readonly string[];
-        nativeCurrency?: {
-            name: string;
-            symbol: string;
-            decimals: number;
-            // Minimum native token balance, in base units, to target for gas top-ups.
-            minGas?: bigint;
-        };
-    };
-    bridge?: AssetBridge;
-    token?: {
-        address: string;
-        decimals: number;
-        routeVia?: string;
-    };
-};
-
-export enum Explorer {
-    Mempool = "mempool",
-    Esplora = "esplora",
-    Blockscout = "blockscout",
-    Solscan = "solscan",
-    Tronscan = "tronscan",
-}
-
-export type Url = {
-    normal: string;
-    tor?: string;
-};
-
-export type ExplorerUrl = Url & {
-    id: Explorer;
-};
 
 export type Config = {
     apiUrl: Url;
@@ -169,6 +44,7 @@ const defaults = {
     preimageValidation: "https://validate-payment.com",
     layerZeroExplorerUrl: "https://layerzeroscan.com",
     cctpExplorerUrl: "https://ccxp.space",
+    oftDeploymentsUrl: "https://docs.usdt0.to/api/deployments",
     rateProviders: {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",

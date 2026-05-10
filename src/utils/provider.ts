@@ -1,37 +1,4 @@
-import { type PublicClient, createPublicClient, fallback, http } from "viem";
-
-import { config } from "../config";
-
-export const getRpcUrls = (asset: string): readonly string[] | undefined => {
-    const rpcUrls = config.assets?.[asset]?.network?.rpcUrls;
-
-    return rpcUrls && rpcUrls.length > 0 ? rpcUrls : undefined;
-};
-
-export const requireRpcUrls = (asset: string): readonly string[] => {
-    const rpcUrls = getRpcUrls(asset);
-    if (rpcUrls === undefined || rpcUrls.length === 0) {
-        throw new Error(`missing RPC configuration for asset: ${asset}`);
-    }
-
-    return rpcUrls;
-};
-
-export const createProviderTransport = (rpcUrls: readonly string[]) =>
-    rpcUrls.length === 1
-        ? http(rpcUrls[0])
-        : fallback(
-              rpcUrls.map((url) => http(url)),
-              { rank: false },
-          );
-
-export const createProvider = (rpcUrls: readonly string[] | undefined) => {
-    if (rpcUrls === undefined || rpcUrls.length === 0) {
-        throw new Error("missing RPC configuration");
-    }
-
-    return createPublicClient({ transport: createProviderTransport(rpcUrls) });
-};
+import type { PublicClient } from "viem";
 
 export type FeeEstimate = {
     gasPrice: bigint;
@@ -57,6 +24,3 @@ export const estimateFeesPerGas = async (
               gasPrice: await provider.getGasPrice(),
           };
 };
-
-export const createAssetProvider = (asset: string): PublicClient =>
-    createProvider(requireRpcUrls(asset));

@@ -5,8 +5,7 @@ import type {
     SuccessWithDevice,
     Unsuccessful,
 } from "@trezor/connect/lib/types/params";
-
-import Loader from "./Loader";
+import Loader from "boltz-swaps/lazy";
 
 // `@trezor/connect-web`'s CJS module sets both `exports.default = TrezorConnect`
 // and re-exports named members via `__exportStar`, which trips esbuild's

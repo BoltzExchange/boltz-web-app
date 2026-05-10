@@ -1,12 +1,14 @@
 import log from "loglevel";
 import {
+    type Accessor,
+    type JSX,
+    type Setter,
     createContext,
     createEffect,
     createSignal,
     on,
     useContext,
 } from "solid-js";
-import type { Accessor, JSX, Setter } from "solid-js";
 
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import { BTC, LBTC } from "../consts/Assets";

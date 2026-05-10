@@ -1,15 +1,17 @@
 import { makePersisted } from "@solid-primitives/storage";
-import type { Navigator } from "@solidjs/router";
-import { useNavigate } from "@solidjs/router";
+import { type Navigator, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { isKnownTokenAddress } from "boltz-swaps/evm";
 import {
+    type Accessor,
+    type JSX,
+    type Setter,
     createContext,
     createEffect,
     createSignal,
     on,
     useContext,
 } from "solid-js";
-import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import {
@@ -25,7 +27,6 @@ import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
-import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 import { useGlobalContext } from "./Global";
 

@@ -1,8 +1,8 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
 import log from "loglevel";
-import type { Accessor } from "solid-js";
 import {
+    type Accessor,
     Match,
     Show,
     Switch,
@@ -26,8 +26,11 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import type { ChainSwapDetails, RestorableSwap } from "../utils/boltzClient";
-import { getSwapStatus } from "../utils/boltzClient";
+import {
+    type ChainSwapDetails,
+    type RestorableSwap,
+    getSwapStatus,
+} from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import {
     getCurrentBlockHeight,

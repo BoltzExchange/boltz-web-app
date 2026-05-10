@@ -1,5 +1,11 @@
-import type { Asset, Usdt0Variant } from "src/configs/base";
-import { BridgeKind, NetworkTransport, Usdt0Kind } from "src/configs/base";
+import {
+    type Asset,
+    AssetKind,
+    BridgeKind,
+    NetworkTransport,
+    Usdt0Kind,
+    type Usdt0Variant,
+} from "boltz-swaps/types";
 import {
     berachainExplorerUrl,
     confluxExplorerUrl,
@@ -50,7 +56,6 @@ import {
     unichainRpcUrls,
     xlayerRpcUrls,
 } from "src/configs/rpcs";
-import { AssetKind } from "src/consts/AssetKind";
 import { solanaMinGasTopUpLamports } from "src/consts/Solana";
 import { getExplorerId } from "src/utils/explorer";
 

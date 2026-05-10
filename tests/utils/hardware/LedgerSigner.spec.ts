@@ -1,6 +1,5 @@
 // @vitest-environment node
-import type { PublicClient } from "viem";
-import { hashDomain, hashStruct } from "viem";
+import { type PublicClient, hashDomain, hashStruct } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import ledgerLoader from "../../../src/lazy/ledger";

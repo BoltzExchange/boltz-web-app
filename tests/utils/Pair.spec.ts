@@ -1,9 +1,10 @@
 import { BigNumber } from "bignumber.js";
+import { CctpReceiveMode } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
 import type * as BaseConfigModule from "../../src/configs/base";
-import { CctpReceiveMode, isTor } from "../../src/configs/base";
+import { isTor } from "../../src/configs/base";
 import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
@@ -252,7 +253,7 @@ vi.mock("../../src/config", async () => {
     };
 });
 
-vi.mock("../../src/utils/bridge/registry", () => ({
+vi.mock("boltz-swaps/bridge", () => ({
     bridgeRegistry: {
         getDriverForAsset: bridgeGetDriverForAssetMock,
     },

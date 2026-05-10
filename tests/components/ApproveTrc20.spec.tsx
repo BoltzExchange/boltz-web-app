@@ -1,14 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
-
-import ApproveTrc20 from "../../src/components/ApproveTrc20";
-import { NetworkTransport } from "../../src/configs/base";
-import * as globalContext from "../../src/context/Global";
-import * as web3Context from "../../src/context/Web3";
-import WalletConnectProvider from "../../src/utils/WalletConnectProvider";
+import type * as OftModule from "boltz-swaps/oft";
 import {
     sendTronTokenApproval,
     waitForSuccessfulTronTransaction,
-} from "../../src/utils/oft/tron";
+} from "boltz-swaps/oft";
+import { NetworkTransport } from "boltz-swaps/types";
+
+import ApproveTrc20 from "../../src/components/ApproveTrc20";
+import * as globalContext from "../../src/context/Global";
+import * as web3Context from "../../src/context/Web3";
+import WalletConnectProvider from "../../src/utils/WalletConnectProvider";
 
 vi.mock("../../src/components/ConnectWallet", () => ({
     default: () => <div data-testid="connect-wallet" />,
@@ -29,7 +30,8 @@ vi.mock("../../src/components/ContractTransaction", () => ({
     ),
 }));
 
-vi.mock("../../src/utils/oft/tron", () => ({
+vi.mock("boltz-swaps/oft", async (importActual) => ({
+    ...(await importActual<typeof OftModule>()),
     sendTronTokenApproval: vi.fn(),
     waitForSuccessfulTronTransaction: vi.fn(),
 }));

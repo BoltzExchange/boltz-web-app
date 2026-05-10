@@ -1,9 +1,12 @@
-import type { PublicClient } from "viem";
-import { encodeAbiParameters, encodeEventTopics } from "viem";
+import type * as EvmModule from "boltz-swaps/evm";
+import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
+import {
+    type PublicClient,
+    encodeAbiParameters,
+    encodeEventTopics,
+} from "viem";
 
 import type * as AssetsModule from "../../src/consts/Assets";
-import { erc20SwapAbi } from "../../src/generated/evm-abis";
-import type * as ProviderModule from "../../src/utils/provider";
 
 const {
     mockPostCommitmentSignature,
@@ -20,8 +23,7 @@ const {
         mockPostCommitmentSignature: vi.fn(),
         mockPostCommitmentRefundSignature: vi.fn(),
         mockGetEipRefundSignature: vi.fn(),
-        mockCreateAssetProvider:
-            vi.fn<typeof ProviderModule.createAssetProvider>(),
+        mockCreateAssetProvider: vi.fn<typeof EvmModule.createAssetProvider>(),
         mockRequireChainId: vi.fn<typeof AssetsModule.requireChainId>(),
         sentinelAssetProvider,
     };
@@ -33,10 +35,8 @@ vi.mock("../../src/utils/boltzClient", () => ({
     getEipRefundSignature: mockGetEipRefundSignature,
 }));
 
-vi.mock("../../src/utils/provider", async () => {
-    const actual = await vi.importActual<typeof ProviderModule>(
-        "../../src/utils/provider",
-    );
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
     return { ...actual, createAssetProvider: mockCreateAssetProvider };
 });
 

@@ -1,6 +1,5 @@
 import type Transport from "@ledgerhq/hw-transport";
-
-import Loader from "./Loader";
+import Loader from "boltz-swaps/lazy";
 
 export default new Loader("Ledger", async () => {
     const [eth, webhid] = await Promise.all([

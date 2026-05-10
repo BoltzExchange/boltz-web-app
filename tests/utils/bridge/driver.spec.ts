@@ -1,55 +1,52 @@
-import type * as ConfigModule from "../../../src/config";
-import { BridgeKind } from "../../../src/configs/base";
-import { SwapPosition } from "../../../src/consts/Enums";
+import { BridgeKind, SwapPosition } from "boltz-swaps/types";
+
+import { config as runtimeConfig } from "../../../src/config";
 import { TestBridgeDriver } from "./testDriver";
 
+const originalAssets = runtimeConfig.assets;
+
 // Populate a small runtime-config fixture. `getAssetBridge` reads from here.
-vi.mock("../../../src/config", async () => {
-    const actual = await vi.importActual<typeof ConfigModule>(
-        "../../../src/config",
-    );
-    return {
-        ...actual,
-        config: {
-            ...actual.config,
-            assets: {
-                HUB: {
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                "HUB-A": {
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                "HUB-NO-CANONICAL-CONFIG": {
-                    // Variant that points at a canonical that is not in config.
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "DOES-NOT-EXIST",
-                    },
-                },
-                "ALIEN-KIND": {
-                    type: "erc20",
-                    bridge: {
-                        // Cast to simulate an asset belonging to a future
-                        // bridge kind that this driver doesn't serve.
-                        kind: "alien" as BridgeKind,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                BTC: {
-                    type: "utxo",
-                },
+beforeAll(() => {
+    runtimeConfig.assets = {
+        HUB: {
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "HUB",
             },
         },
-    };
+        "HUB-A": {
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "HUB",
+            },
+        },
+        "HUB-NO-CANONICAL-CONFIG": {
+            // Variant that points at a canonical that is not in config.
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "DOES-NOT-EXIST",
+            },
+        },
+        "ALIEN-KIND": {
+            type: "erc20",
+            bridge: {
+                // Cast to simulate an asset belonging to a future
+                // bridge kind that this driver doesn't serve.
+                kind: "alien" as BridgeKind,
+                canonicalAsset: "HUB",
+            },
+        },
+        BTC: {
+            type: "utxo",
+        },
+    } as never;
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
 });
 
 describe("BridgeDriver (base class)", () => {

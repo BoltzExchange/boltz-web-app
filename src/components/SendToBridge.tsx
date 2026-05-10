@@ -1,3 +1,14 @@
+import { type BridgeTransaction, bridgeRegistry } from "boltz-swaps/bridge";
+import {
+    type OftTransportClient,
+    getTronTokenAllowance,
+} from "boltz-swaps/oft";
+import {
+    BridgeKind,
+    CctpReceiveMode,
+    NetworkTransport,
+    SwapPosition,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Show,
@@ -9,18 +20,13 @@ import {
 import { type Address, getAddress } from "viem";
 
 import { config } from "../config";
-import { BridgeKind, CctpReceiveMode, NetworkTransport } from "../configs/base";
 import { USDC } from "../consts/Assets";
-import { SwapPosition } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import { createTokenContract } from "../context/contracts";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { type BridgeTransaction, bridgeRegistry } from "../utils/bridge";
-import { getTronTokenAllowance } from "../utils/oft/oft";
-import type { OftTransportClient } from "../utils/oft/types";
 import type { BridgeDetail } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ApproveTrc20 from "./ApproveTrc20";

@@ -3,18 +3,19 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { equalBytes } from "@scure/btc-signer/utils.js";
 import { BigNumber } from "bignumber.js";
-import type { Types } from "boltz-core";
 import {
     Scripts,
     SwapTreeSerializer,
+    type Types,
     compareTrees,
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
+import { createAssetProvider } from "boltz-swaps/evm";
+import { AssetKind } from "boltz-swaps/types";
 import { type Address, keccak256 } from "viem";
 
 import {
-    AssetKind,
     type AssetType,
     BTC,
     LBTC,
@@ -29,7 +30,6 @@ import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
-import { createAssetProvider } from "./provider";
 import type {
     ChainSwap,
     ReverseSwap,

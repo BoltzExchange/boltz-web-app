@@ -1,5 +1,6 @@
+import { SwapPosition } from "boltz-swaps/types";
+
 import { LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
-import { SwapPosition } from "../../src/consts/Enums";
 import {
     migrateSwapBridgeShape,
     migrateSwapDexPositionShape,

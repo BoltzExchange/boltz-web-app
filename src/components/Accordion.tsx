@@ -1,6 +1,5 @@
 import { VsChevronDown, VsChevronRight } from "solid-icons/vs";
-import type { JSX } from "solid-js";
-import { Show } from "solid-js";
+import { type JSX, Show } from "solid-js";
 
 const Accordion = (props: {
     title: string;

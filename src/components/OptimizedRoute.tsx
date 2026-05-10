@@ -1,9 +1,7 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { BiSolidHelpCircle } from "solid-icons/bi";
-import type { Accessor } from "solid-js";
-import { createResource } from "solid-js";
-import { Show } from "solid-js";
+import { type Accessor, Show, createResource } from "solid-js";
 
 import { LBTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";

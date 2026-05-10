@@ -1,5 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
+import { SwapPosition } from "boltz-swaps/types";
 import { Show } from "solid-js";
 import { getAddress } from "viem";
 
@@ -7,7 +8,7 @@ import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import {
     type ChainSwap,

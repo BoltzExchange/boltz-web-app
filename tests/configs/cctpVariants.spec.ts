@@ -1,5 +1,5 @@
-import { BridgeKind } from "../../src/configs/base";
-import { NetworkTransport } from "../../src/configs/base";
+import { BridgeKind, NetworkTransport } from "boltz-swaps/types";
+
 import { cctpVariantAssets, tokenMessengerV2 } from "../../src/configs/cctp";
 
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;

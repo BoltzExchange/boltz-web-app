@@ -33,8 +33,12 @@ import type {
     ReverseSwap,
     SomeSwap,
 } from "../../src/utils/swapCreator";
-import { TestComponent } from "../helper";
-import { contextWrapper, globalSignals, payContext } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    payContext,
+} from "../helper";
 
 vi.mock("@solid-primitives/storage", () => ({
     makePersisted: <T,>(signal: T) => signal,

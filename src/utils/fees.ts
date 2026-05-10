@@ -1,7 +1,7 @@
+import { Explorer } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { config } from "../config";
-import { Explorer } from "../configs/base";
 import { BTC, LBTC } from "../consts/Assets";
 import { getFeeEstimations as getFeeEstimationsFromExplorer } from "./blockchain";
 import { getFeeEstimations } from "./boltzClient";

@@ -1,5 +1,4 @@
-import { Show } from "solid-js";
-import type { Accessor } from "solid-js";
+import { type Accessor, Show } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapType } from "../consts/Enums";

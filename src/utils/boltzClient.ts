@@ -5,8 +5,7 @@ import type { Address, Hex } from "viem";
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { broadcastToExplorer } from "./blockchain";
-import type { TransactionInterface } from "./compat";
-import { txToHex } from "./compat";
+import { type TransactionInterface, txToHex } from "./compat";
 import { fetcher, getReferral } from "./helper";
 import { validateInvoiceForOffer } from "./invoice";
 

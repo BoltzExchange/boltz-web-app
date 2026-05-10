@@ -1,13 +1,8 @@
+import { ExplorerKind, NetworkTransport } from "boltz-swaps/types";
+
 import { chooseUrl, config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import { getNetworkTransport } from "../consts/Assets";
 import { prefix0x } from "./evmTransaction";
-
-export enum ExplorerKind {
-    Asset = "asset",
-    Cctp = "cctp",
-    LayerZero = "layerzero",
-}
 
 const getExplorerBaseUrl = (
     asset: string,

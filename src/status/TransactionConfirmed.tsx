@@ -1,4 +1,12 @@
 import BigNumber from "bignumber.js";
+import {
+    bridgeRegistry,
+    toRouterCalls,
+    vFromSignature,
+} from "boltz-swaps/bridge";
+import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
+import { routerAbi } from "boltz-swaps/generated/evm-abis";
+import { AssetKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import {
@@ -20,14 +28,8 @@ import {
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
-import {
-    AssetKind,
-    getKindForAsset,
-    getTokenAddress,
-    isEvmAsset,
-} from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { getKindForAsset, getTokenAddress, isEvmAsset } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -36,7 +38,6 @@ import {
     type Erc20SwapContract,
     createRouterContract,
 } from "../context/contracts";
-import { routerAbi } from "../generated/evm-abis";
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
 import {
@@ -45,7 +46,6 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
-import { bridgeRegistry } from "../utils/bridge";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
@@ -69,9 +69,6 @@ import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
 } from "../utils/quoter";
-import { assetAmountToSats, satsToAssetAmount } from "../utils/rootstock";
-import { toRouterCalls } from "../utils/router";
-import { vFromSignature } from "../utils/signature";
 import {
     type BridgeDetail,
     type ChainSwap,

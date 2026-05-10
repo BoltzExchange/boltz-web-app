@@ -1,7 +1,13 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
-import type { ClaimDetails, Musig, Types } from "boltz-core";
-import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
+import {
+    type ClaimDetails,
+    type Musig,
+    OutputType,
+    SwapTreeSerializer,
+    type Types,
+    detectSwap,
+} from "boltz-core";
 import type { LiquidClaimDetails } from "boltz-core/liquid";
 import { type Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
@@ -19,8 +25,8 @@ import {
     postChainSwapDetails,
     postSubmarineClaimDetails,
 } from "./boltzClient";
-import type { TransactionInterface } from "./compat";
 import {
+    type TransactionInterface,
     decodeAddress,
     getConstructClaimTransaction,
     getNetwork,
@@ -33,8 +39,12 @@ import {
 import type { ECKeys } from "./ecpair";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
-import type { ChainSwap, ReverseSwap, SubmarineSwap } from "./swapCreator";
-import { getRelevantAssetForSwap } from "./swapCreator";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    type SubmarineSwap,
+    getRelevantAssetForSwap,
+} from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 type ClaimableSwap = ReverseSwap | ChainSwap;

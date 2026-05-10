@@ -1,7 +1,11 @@
-import { IoKey } from "solid-icons/io";
-import { IoClose } from "solid-icons/io";
-import type { ComponentProps } from "solid-js";
-import { Show, createEffect, createSignal, splitProps } from "solid-js";
+import { IoClose, IoKey } from "solid-icons/io";
+import {
+    type ComponentProps,
+    Show,
+    createEffect,
+    createSignal,
+    splitProps,
+} from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/rescueFileInput.scss";

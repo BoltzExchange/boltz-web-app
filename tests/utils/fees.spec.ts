@@ -1,7 +1,7 @@
+import { Explorer } from "boltz-swaps/types";
 import { beforeEach, vi } from "vitest";
 
 import { config } from "../../src/config";
-import { Explorer } from "../../src/configs/base";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { getFeeEstimationsFailover } from "../../src/utils/fees";
 

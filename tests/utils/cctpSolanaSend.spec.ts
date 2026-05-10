@@ -1,43 +1,30 @@
 // @vitest-environment node
-import { cctpEmptyHookData, cctpZeroBytes32 } from "../../src/utils/cctp/evm";
-import type { CctpSendParam } from "../../src/utils/cctp/types";
-import type * as SolanaChainModule from "../../src/utils/chains/solana";
+import {
+    type CctpSendParam,
+    cctpEmptyHookData,
+    cctpZeroBytes32,
+    createSolanaCctpContract,
+} from "boltz-swaps/cctp";
+import * as solanaChain from "boltz-swaps/solana";
+import { BridgeKind, CctpTransferMode } from "boltz-swaps/types";
 
-const mockState = vi.hoisted(() => ({
-    ownerAddress: "11111111111111111111111111111112",
-    tokenAccount: "11111111111111111111111111111113",
-    connection: {
-        getLatestBlockhash: vi.fn(),
-        simulateTransaction: vi.fn(),
-        confirmTransaction: vi.fn(),
-    },
-}));
+import { config as runtimeConfig } from "../../src/config";
+import {
+    solanaMessageTransmitterV2,
+    solanaTokenMessengerMinterV2,
+} from "../../src/configs/cctp";
 
-const ownerAddress = mockState.ownerAddress;
+const ownerAddress = "11111111111111111111111111111112";
+const tokenAccount = "11111111111111111111111111111113";
 const tokenMint = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const recipient =
     "0x0000000000000000000000001234567890123456789012345678901234567890";
-const connection = mockState.connection;
 
-vi.mock("../../src/utils/chains/solana", async () => {
-    const actual = await vi.importActual<typeof SolanaChainModule>(
-        "../../src/utils/chains/solana",
-    );
-
-    return {
-        ...actual,
-        getConnectedSolanaWalletAddress: vi
-            .fn()
-            .mockResolvedValue(mockState.ownerAddress),
-        getSolanaAssociatedTokenAddress: vi
-            .fn()
-            .mockResolvedValue(mockState.tokenAccount),
-        getSolanaConnection: vi.fn().mockResolvedValue(mockState.connection),
-    };
-});
-
-const { createSolanaCctpContract } =
-    await import("../../src/utils/cctp/solana");
+const connection = {
+    getLatestBlockhash: vi.fn(),
+    simulateTransaction: vi.fn(),
+    confirmTransaction: vi.fn(),
+};
 
 const createWalletProvider = () => ({
     getAccounts: vi.fn().mockResolvedValue([{ address: ownerAddress }]),
@@ -54,8 +41,44 @@ const sendParam: CctpSendParam = {
     hookData: cctpEmptyHookData as `0x${string}`,
 };
 
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+
 describe("Solana CCTP send", () => {
+    beforeAll(() => {
+        runtimeConfig.assets = {
+            ...runtimeConfig.assets,
+            "USDC-SOL": {
+                ...runtimeConfig.assets?.["USDC-SOL"],
+                bridge: {
+                    kind: BridgeKind.Cctp,
+                    canonicalAsset: "USDC",
+                    cctp: {
+                        domain: 5,
+                        tokenMessenger: solanaTokenMessengerMinterV2,
+                        messageTransmitter: solanaMessageTransmitterV2,
+                        transferMode: CctpTransferMode.Fast,
+                    },
+                },
+            },
+        } as never;
+    });
+
+    afterAll(() => {
+        runtimeConfig.assets = originalAssets;
+    });
+
     beforeEach(() => {
+        vi.spyOn(
+            solanaChain,
+            "getConnectedSolanaWalletAddress",
+        ).mockResolvedValue(ownerAddress);
+        vi.spyOn(
+            solanaChain,
+            "getSolanaAssociatedTokenAddress",
+        ).mockResolvedValue(tokenAccount);
+        vi.spyOn(solanaChain, "getSolanaConnection").mockResolvedValue(
+            connection as never,
+        );
         connection.getLatestBlockhash.mockResolvedValue({
             blockhash: "11111111111111111111111111111111",
             lastValidBlockHeight: 123,
@@ -69,6 +92,7 @@ describe("Solana CCTP send", () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         vi.clearAllMocks();
     });
 

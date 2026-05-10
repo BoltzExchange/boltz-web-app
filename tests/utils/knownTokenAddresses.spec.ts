@@ -1,7 +1,8 @@
+import { isKnownTokenAddress } from "boltz-swaps/evm";
+
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { isKnownTokenAddress } from "../../src/utils/knownTokenAddresses";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 

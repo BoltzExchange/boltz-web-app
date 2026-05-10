@@ -1,7 +1,8 @@
 import { useSearchParams } from "@solidjs/router";
-import type { Accessor, Setter } from "solid-js";
 import {
+    type Accessor,
     For,
+    type Setter,
     createEffect,
     createMemo,
     mergeProps,

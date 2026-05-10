@@ -1,6 +1,11 @@
+import { getRpcUrls, requireRpcUrls } from "boltz-swaps/config";
+import { createAssetProvider, createProviderTransport } from "boltz-swaps/evm";
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
-import type { Accessor, JSXElement, Setter } from "solid-js";
 import {
+    type Accessor,
+    type JSXElement,
+    type Setter,
     createContext,
     createResource,
     createSignal,
@@ -29,7 +34,6 @@ import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
 import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import {
     getNetworkTransport,
     hasEvmAssets,
@@ -37,19 +41,16 @@ import {
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import type { ContractAddresses, Contracts } from "../utils/boltzClient";
-import { getContracts } from "../utils/boltzClient";
+import {
+    type ContractAddresses,
+    type Contracts,
+    getContracts,
+} from "../utils/boltzClient";
 import { prefix0x } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { isIos } from "../utils/helper";
-import {
-    createAssetProvider,
-    createProviderTransport,
-    getRpcUrls,
-    requireRpcUrls,
-} from "../utils/provider";
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import { type RescueFile } from "../utils/rescueFile";
 import { useGlobalContext } from "./Global";

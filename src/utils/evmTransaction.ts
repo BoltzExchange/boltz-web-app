@@ -1,3 +1,10 @@
+import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    erc20Abi,
+    erc20SwapAbi,
+    etherSwapAbi,
+} from "boltz-swaps/generated/evm-abis";
+import { AssetKind } from "boltz-swaps/types";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import {
@@ -17,19 +24,16 @@ import {
     sendTransaction as sendAlchemyTransaction,
     toAlchemyCall,
 } from "../alchemy/Alchemy";
-import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
+import { getKindForAsset, getTokenAddress } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
 import type {
     Erc20SwapContract,
     EtherSwapContract,
 } from "../context/contracts";
-import { erc20Abi, erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import { relayClaimTransaction } from "../rif/Signer";
-import { satsToAssetAmount } from "./rootstock";
 import { GasAbstractionType } from "./swapCreator";
 
-export const prefix0x = (val: string): Hex =>
-    (val.startsWith("0x") ? val : `0x${val}`) as Hex;
+export { prefix0x } from "boltz-swaps/evm";
 
 export type LockupEvent = {
     preimageHash: Hex;

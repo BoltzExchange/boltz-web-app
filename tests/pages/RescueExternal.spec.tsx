@@ -6,8 +6,10 @@ import { SwapType } from "../../src/consts/Enums";
 import { paginationLimit } from "../../src/consts/Pagination";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal, { RefundBtcLike } from "../../src/pages/RescueExternal";
-import type { RestorableSwap } from "../../src/utils/boltzClient";
-import { getRestorableSwaps } from "../../src/utils/boltzClient";
+import {
+    type RestorableSwap,
+    getRestorableSwaps,
+} from "../../src/utils/boltzClient";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 global.fetch = vi.fn(() =>

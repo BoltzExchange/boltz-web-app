@@ -1,10 +1,13 @@
-import type { Config } from "src/configs/base";
 import {
+    AssetKind,
     BridgeKind,
     CctpTransferMode,
     Explorer,
     NetworkTransport,
     Usdt0Kind,
+} from "boltz-swaps/types";
+import {
+    type Config,
     arbitrumChainId,
     baseConfig,
     chooseUrl,
@@ -17,7 +20,6 @@ import {
 import { arbitrumExplorerUrl } from "src/configs/explorers";
 import { arbitrumRpcUrls, rskRpcUrls } from "src/configs/rpcs";
 import { usdt0VariantAssets } from "src/configs/usdt0";
-import { AssetKind } from "src/consts/AssetKind";
 import { Network } from "src/consts/Network";
 
 const arbitrumExplorer = {

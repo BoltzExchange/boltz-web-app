@@ -1,3 +1,5 @@
+import type * as EvmModule from "boltz-swaps/evm";
+import { etherSwapAbi } from "boltz-swaps/generated/evm-abis";
 import {
     type AbiEvent,
     type Hex,
@@ -8,8 +10,6 @@ import {
 
 import { RskRescueMode } from "../../src/consts/Enums";
 import etherSwapAbiV5 from "../../src/consts/abis/v5/EtherSwap.json";
-import { etherSwapAbi } from "../../src/generated/evm-abis";
-import type * as ProviderModule from "../../src/utils/provider";
 
 const {
     mockCreateProvider,
@@ -63,10 +63,8 @@ vi.mock("../../src/config", () => ({
     },
 }));
 
-vi.mock("../../src/utils/provider", async () => {
-    const actual = await vi.importActual<typeof ProviderModule>(
-        "../../src/utils/provider",
-    );
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
     return {
         ...actual,
         createProvider: mockCreateProvider,

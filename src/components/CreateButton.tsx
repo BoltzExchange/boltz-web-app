@@ -1,9 +1,17 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { bridgeRegistry } from "boltz-swaps/bridge";
+import { isKnownTokenAddress } from "boltz-swaps/evm";
+import { SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { OcLinkexternal2 } from "solid-icons/oc";
-import type { Accessor } from "solid-js";
-import { createEffect, createMemo, createSignal, on } from "solid-js";
+import {
+    type Accessor,
+    createEffect,
+    createMemo,
+    createSignal,
+    on,
+} from "solid-js";
 
 import { config } from "../config";
 import { isTor } from "../configs/base";
@@ -18,18 +26,23 @@ import {
     isBridgeAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { InvoiceValidation, SwapPosition, SwapType } from "../consts/Enums";
+import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import type { Signer } from "../context/Web3";
-import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import {
+    type Signer,
+    customDerivationPathRdns,
+    useWeb3Signer,
+} from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import Pair, { type EncodedHop } from "../utils/Pair";
-import type { ChainPairTypeTaproot } from "../utils/boltzClient";
-import { fetchBip21Invoice, fetchBolt12Invoice } from "../utils/boltzClient";
-import { bridgeRegistry } from "../utils/bridge";
+import {
+    type ChainPairTypeTaproot,
+    fetchBip21Invoice,
+    fetchBolt12Invoice,
+} from "../utils/boltzClient";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -49,7 +62,6 @@ import {
     fetchLnurl,
     getAssetByBip21Prefix,
 } from "../utils/invoice";
-import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { estimateFeesPerGas } from "../utils/provider";

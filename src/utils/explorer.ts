@@ -1,4 +1,4 @@
-import { Explorer, NetworkTransport } from "../configs/base";
+import { Explorer, NetworkTransport } from "boltz-swaps/types";
 
 export const getExplorerId = (transport: NetworkTransport): Explorer => {
     switch (transport) {
