@@ -6,7 +6,7 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
-import type { Address } from "viem";
+import { type Address, getAddress } from "viem";
 
 import { config } from "../config";
 import { BridgeKind, CctpReceiveMode, NetworkTransport } from "../configs/base";
@@ -63,7 +63,7 @@ const SendToBridge = (props: {
     >(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [approvalTarget, setApprovalTarget] = createSignal<
-        Address | undefined
+        string | undefined
     >(undefined);
     const txSent = createMemo(() => {
         return swap()?.bridge?.txHash;
@@ -155,7 +155,7 @@ const SendToBridge = (props: {
         }: {
             trackRequiredTokenBalance?: boolean;
             needsApproval?: boolean;
-            approvalTarget?: Address;
+            approvalTarget?: string;
         } = {},
     ) => {
         const hasEnoughTokenBalance = balance >= requiredTokenAmount;
@@ -220,11 +220,14 @@ const SendToBridge = (props: {
                 msgFee,
             );
 
+        const executionContractAddress = getAddress(
+            directSendTarget.executionContract.address,
+        );
         let needsUpdatedApproval = false;
         if (needsUserApproval) {
             const allowance = await tokenContract.read.allowance([
                 connectedSigner.address,
-                directSendTarget.executionContract.address,
+                executionContractAddress,
             ]);
 
             needsUpdatedApproval = allowance < requiredTokenAmount;
@@ -243,7 +246,7 @@ const SendToBridge = (props: {
             {
                 needsApproval: needsUpdatedApproval,
                 approvalTarget: needsUserApproval
-                    ? directSendTarget.executionContract.address
+                    ? executionContractAddress
                     : undefined,
             },
         );
@@ -313,7 +316,7 @@ const SendToBridge = (props: {
         const approvalRequired =
             (await oftBridgeInstance.approvalRequired?.()) ?? false;
         let needsUpdatedApproval = false;
-        let spenderAddress: Address | undefined;
+        let spenderAddress: string | undefined;
 
         if (approvalRequired) {
             spenderAddress = (await bridgeDriver().getContract(bridgeRoute))
@@ -699,7 +702,9 @@ const SendToBridge = (props: {
                                             props.amount
                                         }
                                         setNeedsApproval={setNeedsApproval}
-                                        approvalTarget={approvalTarget()}
+                                        approvalTarget={
+                                            approvalTarget() as Address
+                                        }
                                         resetAllowanceFirst={true}
                                     />
                                 )

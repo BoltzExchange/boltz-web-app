@@ -437,6 +437,27 @@ describe("CctpBridgeDriver", () => {
         });
     });
 
+    test("getContract passes Solana source TokenMessenger through unchanged", async () => {
+        const requireSolanaCctpBridge = () => {
+            const bridge = mainnetConfig.assets!["USDC-SOL"].bridge;
+            if (bridge?.kind !== BridgeKind.Cctp) {
+                throw new Error("USDC-SOL is not configured as CCTP");
+            }
+            return bridge;
+        };
+        const solanaTokenMessenger =
+            requireSolanaCctpBridge().cctp.tokenMessenger;
+
+        expect(solanaTokenMessenger).not.toMatch(/^0x/);
+
+        await expect(
+            driver.getContract(solanaSourceRoute),
+        ).resolves.toMatchObject({
+            name: "CCTP",
+            address: solanaTokenMessenger,
+        });
+    });
+
     test("encodeRouterExecuteData encodes executeCctp with the CctpData", async () => {
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
