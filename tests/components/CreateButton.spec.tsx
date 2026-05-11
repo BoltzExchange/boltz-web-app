@@ -4,7 +4,10 @@ import { BigNumber } from "bignumber.js";
 import CreateButton, {
     getClaimAddress,
 } from "../../src/components/CreateButton";
+import { config } from "../../src/config";
 import type * as ConfigModule from "../../src/config";
+import type * as BaseConfigModule from "../../src/configs/base";
+import { isTor } from "../../src/configs/base";
 import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
@@ -23,6 +26,17 @@ import {
     signals,
 } from "../helper";
 import { pairs as testPairs } from "../pairs";
+
+vi.mock("../../src/configs/base", async () => {
+    const actual = await vi.importActual<typeof BaseConfigModule>(
+        "../../src/configs/base",
+    );
+
+    return {
+        ...actual,
+        isTor: vi.fn(() => false),
+    };
+});
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -727,6 +741,136 @@ describe("CreateButton", () => {
         });
         expect(btn.classList.contains("btn-error")).toBe(true);
         expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should show tor_unavailable label for TBTC pairs on Tor", async () => {
+        vi.mocked(isTor).mockReturnValue(true);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, TBTC, LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.disabled).toBe(false);
+            expect(btn.textContent).toBe(i18n.en.tor_unavailable);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+        expect(btn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should show tor_unavailable label for bridge-asset pairs on Tor", async () => {
+        vi.mocked(isTor).mockReturnValue(true);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.disabled).toBe(false);
+            expect(btn.textContent).toBe(i18n.en.tor_unavailable);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(true);
+    });
+
+    test("should open boltz.exchange in a new tab when tor_unavailable button is clicked", async () => {
+        vi.mocked(isTor).mockReturnValue(true);
+        const windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, TBTC, LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.textContent).toBe(i18n.en.tor_unavailable);
+        });
+
+        btn.click();
+
+        expect(windowOpenSpy).toHaveBeenCalledWith(
+            config.clearnetUrl,
+            "_blank",
+            "noopener,noreferrer",
+        );
+    });
+
+    test("should not show tor_unavailable label when not on Tor", async () => {
+        vi.mocked(isTor).mockReturnValue(false);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.textContent).not.toBe(i18n.en.tor_unavailable);
+        });
     });
 
     test("should not show a loading spinner for invalid pairs", async () => {

@@ -6,6 +6,7 @@ const config = {
     ...baseConfig,
     ...mainnetConfig,
     isPro: true,
+    clearnetUrl: "https://pro.boltz.exchange",
     torUrl: "http://boltzprool37sw3uqwj3r2wes2tcbwtaljja36zeiurj2azcmmhh47yd.onion/",
 } as Config;
 
