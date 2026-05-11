@@ -1,4 +1,3 @@
-import { OutputType } from "boltz-core";
 import log from "loglevel";
 import {
     createContext,
@@ -199,10 +198,6 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 await setSwapStorage(currentSwap);
             }
 
-            return;
-        }
-
-        if (currentSwap.version !== OutputType.Taproot) {
             return;
         }
 

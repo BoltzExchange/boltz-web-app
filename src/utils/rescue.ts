@@ -2,8 +2,6 @@ import { hex } from "@scure/base";
 import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import type { RefundDetails } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
-import type { LiquidRefundDetails } from "boltz-core/liquid";
-import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
@@ -426,56 +424,15 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     const timeoutBlockHeight =
         validTimeouts.length > 0 ? Math.max(...validTimeouts) : undefined;
 
-    let refundTransaction: Awaited<ReturnType<typeof refundTaproot>>;
-
-    if (swap.version === OutputType.Taproot) {
-        refundTransaction = await refundTaproot(
-            swap,
-            transactions,
-            privateKey,
-            output,
-            feePerVbyte,
-            type === RefundType.Cooperative,
-            timeoutBlockHeight,
-        );
-    } else {
-        // Initialize the secp256k1-zkp library for blinding
-        await secp.get();
-        const redeemScript = Buffer.from(
-            (swap as unknown as { redeemScript: string }).redeemScript,
-            "hex",
-        );
-        log.debug("redeemScript", redeemScript);
-        const details = transactions.map((lockupTx) => {
-            const swapOutput = detectSwap(redeemScript, lockupTx);
-            log.debug("swapOutput", swapOutput);
-            return {
-                ...swapOutput,
-                transactionId: txToId(lockupTx),
-                redeemScript: redeemScript,
-                privateKey: privateKey.privateKey,
-                blindingPrivateKey: parseBlindingKey(swap, true),
-            } as unknown as RefundDetails & LiquidRefundDetails;
-        });
-
-        const constructRefundTransaction = getConstructRefundTransaction(
-            swap.assetSend,
-            swap.assetSend === LBTC && output.blindingKey === undefined,
-        );
-        refundTransaction = {
-            transaction: constructRefundTransaction(
-                details,
-                output.script,
-                timeoutBlockHeight ?? 0,
-                feePerVbyte,
-                true,
-                swap.assetSend === LBTC
-                    ? (getNetwork(swap.assetSend) as LiquidNetwork)
-                    : undefined,
-                output.blindingKey,
-            ),
-        };
-    }
+    const refundTransaction = await refundTaproot(
+        swap,
+        transactions,
+        privateKey,
+        output,
+        feePerVbyte,
+        type === RefundType.Cooperative,
+        timeoutBlockHeight,
+    );
 
     return broadcastRefund(swap, refundTransaction);
 };

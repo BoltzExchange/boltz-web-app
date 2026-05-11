@@ -6,33 +6,17 @@ import { Match, Show, Switch } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
 import { formatError } from "../utils/errors";
-import { validateRefundFile } from "../utils/refundFile";
 import type { RescueFile } from "../utils/rescueFile";
 import { validateRescueFile } from "../utils/rescueFile";
 import MnemonicInput from "./MnemonicInput";
 import RescueFileInput from "./RescueFileInput";
 
-export enum RescueFileType {
-    Rescue,
-    Legacy,
-}
-
 export enum RescueFileError {
     InvalidData,
 }
 
-export type LegacyRefundData = { id: string } & Record<
-    string,
-    string | object | number | boolean
->;
-
-export type RescueFileResult = {
-    type: RescueFileType;
-    data: RescueFile | LegacyRefundData;
-};
-
 type RescueFileUploadProps = {
-    onFileValidated: (result: RescueFileResult) => void;
+    onFileValidated: (data: RescueFile) => void;
     onError: (error: RescueFileError) => void;
     onReset?: () => void;
     showMnemonicOption?: boolean;
@@ -40,27 +24,20 @@ type RescueFileUploadProps = {
 
 export const checkRefundJsonKeys = (
     json: Record<string, string | object | number>,
-): RescueFileResult => {
+): RescueFile => {
     log.debug("checking refund json");
 
-    if ("mnemonic" in json) {
-        log.info("Found rescue file");
-        return {
-            type: RescueFileType.Rescue,
-            data: validateRescueFile(json),
-        };
-    } else {
-        log.info("Found legacy refund file");
-        return {
-            type: RescueFileType.Legacy,
-            data: validateRefundFile(json),
-        };
+    if (!("mnemonic" in json)) {
+        throw new Error("not a rescue file");
     }
+
+    log.info("Found rescue file");
+    return validateRescueFile(json);
 };
 
 export const processUploadedFile = async (
     inputFile: File,
-): Promise<RescueFileResult> => {
+): Promise<RescueFile> => {
     if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
         const res = await QrScanner.scanImage(inputFile, {
             returnDetailedScanResult: true,
@@ -105,11 +82,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
 
         try {
             const result = await processUploadedFile(inputFile);
-
-            if (result.type === RescueFileType.Rescue) {
-                setRescueFile(result.data as RescueFile);
-            }
-
+            setRescueFile(result);
             props.onFileValidated(result);
         } catch (e) {
             log.error("invalid file upload", formatError(e));
@@ -121,10 +94,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
         const data = rescueFile();
         if (!data) return;
 
-        props.onFileValidated({
-            type: RescueFileType.Rescue,
-            data,
-        });
+        props.onFileValidated(data);
 
         setSearchParams({
             mode: null,
