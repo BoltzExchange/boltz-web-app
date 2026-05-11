@@ -140,6 +140,46 @@ describe("BlockExplorer", () => {
         );
     });
 
+    test.each`
+        explorer                  | baseUrl
+        ${ExplorerKind.LayerZero} | ${() => config.layerZeroExplorerUrl}
+        ${ExplorerKind.Cctp}      | ${() => config.cctpExplorerUrl}
+    `(
+        "should render the bridge status label for $explorer",
+        async ({ explorer, baseUrl }) => {
+            const txId =
+                "0x3ca4451e3008d523eec1c64e617663894e47cabd335654bd9f65724772682de8";
+
+            render(
+                () => (
+                    <BlockExplorer
+                        asset="USDT0"
+                        kind={BlockExplorerTargetKind.Tx}
+                        id={txId}
+                        explorer={explorer}
+                        typeLabel="bridge_status"
+                    />
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const button = (await screen.findByText(
+                i18n.en.check_bridge_status,
+            )) as HTMLAnchorElement;
+
+            expect(button).not.toBeUndefined();
+            expect(button.textContent).not.toContain("{{");
+
+            const expectedPath =
+                explorer === ExplorerKind.Cctp
+                    ? `messages?transactionHash=${txId}`
+                    : `tx/${txId}`;
+            expect(button.href).toEqual(`${baseUrl()}/${expectedPath}`);
+        },
+    );
+
     test("does not render a link when no explorer base URL is configured", () => {
         const { container } = render(
             () => (

@@ -1,9 +1,10 @@
 import type { Accessor } from "solid-js";
-import { Match, Show, Switch } from "solid-js";
+import { Match, Show, Switch, createMemo } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { bridgeRegistry } from "../utils/bridge";
+import { ExplorerKind } from "../utils/explorerLink";
 import type { SomeSwap } from "../utils/swapCreator";
 import {
     getPostBridgeDetail,
@@ -13,6 +14,11 @@ import {
 } from "../utils/swapCreator";
 import BlockExplorer, { BlockExplorerTargetKind } from "./BlockExplorer";
 
+const claimTxLabel = (explorer: ExplorerKind | undefined) =>
+    explorer === ExplorerKind.LayerZero || explorer === ExplorerKind.Cctp
+        ? "bridge_status"
+        : undefined;
+
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
@@ -21,6 +27,12 @@ const ChainSwapLink = (props: {
 
     const asset = () =>
         hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
+
+    const explorer = createMemo(() =>
+        bridgeRegistry.getExplorerKind(
+            getPostBridgeDetail(props.swap().bridge),
+        ),
+    );
 
     return (
         <Show
@@ -38,9 +50,10 @@ const ChainSwapLink = (props: {
                             ? props.swap().claimTx!
                             : getSwapAddress(props.swap())
                     }
-                    explorer={bridgeRegistry.getExplorerKind(
-                        getPostBridgeDetail(props.swap().bridge),
-                    )}
+                    explorer={explorer()}
+                    typeLabel={
+                        hasBeenClaimed() ? claimTxLabel(explorer()) : undefined
+                    }
                 />
             }>
             {/* Showing addresses makes no sense for EVM based chains.
@@ -144,7 +157,13 @@ const BlockExplorerLinkInner = (props: {
                                 explorer={bridgeRegistry.getExplorerKind(
                                     props.swap().bridge,
                                 )}
-                                typeLabel={"claim_tx"}
+                                typeLabel={
+                                    claimTxLabel(
+                                        bridgeRegistry.getExplorerKind(
+                                            props.swap().bridge,
+                                        ),
+                                    ) ?? "claim_tx"
+                                }
                             />
                         </Show>
                     </Match>
