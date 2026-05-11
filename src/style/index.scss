@@ -469,9 +469,9 @@ hr.spacer {
     color: var(--color-text);
 }
 @media (hover: hover) {
-    .btn-danger:hover,
-    .btn-error:hover {
-        background: var(--color-secondary-200);
+    .btn-danger:not(:disabled):hover,
+    .btn-error:not(:disabled):hover {
+        background-color: var(--color-error-500);
     }
 }
 .center,
