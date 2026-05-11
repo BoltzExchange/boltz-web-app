@@ -1,3 +1,4 @@
+import { IoChevronDown } from "solid-icons/io";
 import type { Accessor } from "solid-js";
 
 import { getAssetDisplaySymbol, getNetworkBadge } from "../consts/Assets";
@@ -32,7 +33,7 @@ const Asset = (props: { side: Side; signal: Accessor<string> }) => {
                 <div class="asset-selection">
                     <span class="icon" />
                     <span class="asset-text" />
-                    <span class="arrow-down" />
+                    <IoChevronDown class="arrow-down" aria-hidden="true" />
                 </div>
             </div>
         </button>
