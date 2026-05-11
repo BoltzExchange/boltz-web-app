@@ -148,6 +148,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
+    clearnetUrl: "https://boltz.exchange",
     supportUrl: "https://support.boltz.exchange/hc/center",
     twitterUrl: "https://twitter.com/boltzhq",
     githubUrl: "https://github.com/BoltzExchange",
