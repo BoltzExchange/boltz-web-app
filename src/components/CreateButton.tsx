@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
+import { OcLinkexternal2 } from "solid-icons/oc";
 import type { Accessor } from "solid-js";
 import { createEffect, createMemo, createSignal, on } from "solid-js";
 
@@ -970,7 +971,18 @@ const CreateButton = () => {
             !invalidPairState() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
-                getButtonLabel(buttonLabel())
+                <>
+                    {getButtonLabel(buttonLabel())}
+                    {isTorUnavailable() && (
+                        <OcLinkexternal2
+                            size={20}
+                            style={{
+                                "margin-left": "8px",
+                                "vertical-align": "middle",
+                            }}
+                        />
+                    )}
+                </>
             )}
         </button>
     );

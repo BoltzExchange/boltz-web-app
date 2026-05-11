@@ -229,7 +229,7 @@ const dict = {
         off: "off",
         invalid_pair: "Invalid pair",
         invalid_send_asset: "Invalid send asset",
-        tor_unavailable: "Currently unavailable on the Onion domain",
+        tor_unavailable: "Currently only available on the clearnet domain",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
         insufficient_balance: "Insufficient balance",
@@ -739,7 +739,7 @@ const dict = {
         off: "aus",
         invalid_pair: "Ungültiges Paar",
         invalid_send_asset: "Ungültiges Sende-Asset",
-        tor_unavailable: "Derzeit nicht verfügbar auf der Onion-Domain",
+        tor_unavailable: "Derzeit nur auf der Clearnet-Domain verfügbar",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
         insufficient_balance: "Unzureichendes Guthaben",
@@ -1258,7 +1258,7 @@ const dict = {
         off: "off",
         invalid_pair: "Par no válido",
         invalid_send_asset: "Activo de envío no válido",
-        tor_unavailable: "Actualmente no disponible en el dominio onion",
+        tor_unavailable: "Actualmente solo disponible en el dominio clearnet",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor comprueba los permisos!",
         insufficient_balance: "Saldo insuficiente",
@@ -1771,7 +1771,7 @@ const dict = {
         off: "off",
         invalid_pair: "Par inválido",
         invalid_send_asset: "Ativo de envio inválido",
-        tor_unavailable: "Atualmente indisponível no domínio onion",
+        tor_unavailable: "Atualmente disponível apenas no domínio clearnet",
         error_starting_qr_scanner:
             "Não foi possível acessar a câmera, verifique as permissões!",
         insufficient_balance: "Saldo insuficiente",
@@ -2258,7 +2258,7 @@ const dict = {
         off: "关",
         invalid_pair: "无效交换对",
         invalid_send_asset: "无效发送资产",
-        tor_unavailable: "当前在 onion 域名下不可用",
+        tor_unavailable: "当前仅在 clearnet 域名下可用",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
@@ -2743,7 +2743,7 @@ const dict = {
         off: "オフ",
         invalid_pair: "無効なペア",
         invalid_send_asset: "無効な送信アセット",
-        tor_unavailable: "現在 onion ドメインでは利用できません",
+        tor_unavailable: "現在 clearnet ドメインでのみ利用できます",
         error_starting_qr_scanner:
             "カメラにアクセスできませんでした。権限を確認してください！",
         insufficient_balance: "残高不足",
