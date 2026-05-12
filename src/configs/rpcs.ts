@@ -39,10 +39,6 @@ export const codexRpcUrls = prependEnv(
     ["https://rpc.codex.xyz"],
 );
 
-export const cornRpcUrls = prependEnv(import.meta.env.VITE_CORN_RPC_ENDPOINT, [
-    "https://mainnet.corn-rpc.com",
-]);
-
 export const ethereumRpcUrls = prependEnv(
     import.meta.env.VITE_ETHEREUM_RPC_ENDPOINT,
     [

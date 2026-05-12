@@ -9,7 +9,6 @@ import {
 import {
     berachainExplorerUrl,
     confluxExplorerUrl,
-    cornExplorerUrl,
     ethereumExplorerUrl,
     flareExplorerUrl,
     hederaExplorerUrl,
@@ -34,7 +33,6 @@ import {
 import {
     berachainRpcUrls,
     confluxRpcUrls,
-    cornRpcUrls,
     ethereumRpcUrls,
     flareRpcUrls,
     hederaRpcUrls,
@@ -62,7 +60,6 @@ import { getExplorerId } from "src/utils/explorer";
 export const usdt0EnvByAsset: Record<Usdt0VariantAsset, string | undefined> = {
     "USDT0-BERA": import.meta.env.VITE_USDT0_BERA_OFT_ETA_SECONDS,
     "USDT0-CFX": import.meta.env.VITE_USDT0_CFX_OFT_ETA_SECONDS,
-    "USDT0-CORN": import.meta.env.VITE_USDT0_CORN_OFT_ETA_SECONDS,
     "USDT0-ETH": import.meta.env.VITE_USDT0_ETH_OFT_ETA_SECONDS,
     "USDT0-FLR": import.meta.env.VITE_USDT0_FLR_OFT_ETA_SECONDS,
     "USDT0-HBAR": import.meta.env.VITE_USDT0_HBAR_OFT_ETA_SECONDS,
@@ -88,7 +85,6 @@ export const usdt0EnvByAsset: Record<Usdt0VariantAsset, string | undefined> = {
 const usdt0CanSendEnvByAsset: Record<Usdt0VariantAsset, string | undefined> = {
     "USDT0-BERA": import.meta.env.VITE_USDT0_BERA_CAN_SEND,
     "USDT0-CFX": import.meta.env.VITE_USDT0_CFX_CAN_SEND,
-    "USDT0-CORN": import.meta.env.VITE_USDT0_CORN_CAN_SEND,
     "USDT0-ETH": import.meta.env.VITE_USDT0_ETH_CAN_SEND,
     "USDT0-FLR": import.meta.env.VITE_USDT0_FLR_CAN_SEND,
     "USDT0-HBAR": import.meta.env.VITE_USDT0_HBAR_CAN_SEND,
@@ -213,17 +209,6 @@ export const usdt0Variants = [
         tokenAddress: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
         blockExplorerUrl: confluxExplorerUrl,
         rpcUrls: confluxRpcUrls,
-    },
-    {
-        asset: "USDT0-CORN",
-        canSend: false,
-        chainName: "Corn",
-        symbol: "CORN",
-        gasToken: "BTCN",
-        chainId: 21000000,
-        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-        blockExplorerUrl: cornExplorerUrl,
-        rpcUrls: cornRpcUrls,
     },
     {
         asset: "USDT0-FLR",
