@@ -1,9 +1,10 @@
-import type { Asset } from "src/configs/base";
 import {
+    type Asset,
+    AssetKind,
     BridgeKind,
     CctpTransferMode,
     NetworkTransport,
-} from "src/configs/base";
+} from "boltz-swaps/types";
 import {
     avalancheExplorerUrl,
     baseExplorerUrl,
@@ -40,7 +41,6 @@ import {
     worldChainRpcUrls,
     xdcRpcUrls,
 } from "src/configs/rpcs";
-import { AssetKind } from "src/consts/AssetKind";
 import { solanaMinGasTopUpLamports } from "src/consts/Solana";
 import { getExplorerId } from "src/utils/explorer";
 

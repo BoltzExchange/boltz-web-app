@@ -28,14 +28,15 @@ import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
-import type {
-    ChainPairTypeTaproot,
-    ChainSwapDetails,
-    RestorableSwap,
-    ReversePairTypeTaproot,
-    SwapStatus,
+import {
+    type ChainPairTypeTaproot,
+    type ChainSwapDetails,
+    type RestorableSwap,
+    type ReversePairTypeTaproot,
+    type SwapStatus,
+    getRestorableSwaps,
+    getSwapStatus,
 } from "../utils/boltzClient";
-import { getRestorableSwaps, getSwapStatus } from "../utils/boltzClient";
 import { claim } from "../utils/claim";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";

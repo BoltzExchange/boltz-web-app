@@ -1,14 +1,15 @@
 // @vitest-environment node
-import { config as runtimeConfig } from "../../src/config";
+import { CctpBridgeDriver } from "boltz-swaps/bridge";
+import { clearCache } from "boltz-swaps/cache";
+import { getCctpFee } from "boltz-swaps/cctp";
 import {
     BridgeKind,
     CctpReceiveMode,
     CctpTransferMode,
-} from "../../src/configs/base";
+} from "boltz-swaps/types";
+
+import { config as runtimeConfig } from "../../src/config";
 import { config } from "../../src/configs/mainnet";
-import { CctpBridgeDriver } from "../../src/utils/bridge/CctpBridgeDriver";
-import { clearCache } from "../../src/utils/cache";
-import { getCctpFee } from "../../src/utils/cctp/fee";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 const originalFeeApiUrl = runtimeConfig.cctpApiUrl;

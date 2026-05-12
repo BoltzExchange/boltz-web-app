@@ -1,8 +1,6 @@
+import { getCctpAttestation, getCctpForwardTxHash } from "boltz-swaps/cctp";
+
 import { config } from "../../src/config";
-import {
-    getCctpAttestation,
-    getCctpForwardTxHash,
-} from "../../src/utils/cctp/attestation";
 
 describe("cctpAttestation", () => {
     const originalFeeApiUrl = config.cctpApiUrl;

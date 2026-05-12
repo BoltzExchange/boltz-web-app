@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
+import { AssetKind } from "boltz-swaps/types";
 
 import { config } from "../config";
-import { AssetKind } from "../consts/AssetKind";
 import { getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 

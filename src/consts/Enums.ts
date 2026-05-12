@@ -43,8 +43,3 @@ export enum RskRescueMode {
     Refund = "refund",
     Claim = "resume",
 }
-
-export const enum SwapPosition {
-    Pre = "pre",
-    Post = "post",
-}

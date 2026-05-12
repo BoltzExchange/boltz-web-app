@@ -1,5 +1,7 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
+import { getRpcUrls } from "boltz-swaps/config";
+import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Show,
@@ -30,9 +32,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import {
-    AssetKind,
     LN,
     RBTC,
     getNetworkTransport,
@@ -53,7 +53,6 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import { decodeInvoice, isLnurl } from "../utils/invoice";
-import { getRpcUrls } from "../utils/provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 

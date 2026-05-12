@@ -1,10 +1,10 @@
+import { createAssetProvider } from "boltz-swaps/evm";
+import { getSolanaNativeBalance } from "boltz-swaps/solana";
+import { getTronNativeBalance } from "boltz-swaps/tron";
+import { NetworkTransport } from "boltz-swaps/types";
 import { type Address } from "viem";
 
-import { NetworkTransport } from "../../configs/base";
 import { getNetworkTransport } from "../../consts/Assets";
-import { createAssetProvider } from "../provider";
-import { getSolanaNativeBalance } from "./solana";
-import { getTronNativeBalance } from "./tron";
 
 export const getAssetNativeBalance = async (
     asset: string,

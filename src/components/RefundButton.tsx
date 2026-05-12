@@ -1,7 +1,15 @@
-import log from "loglevel";
-import type { Accessor, Setter } from "solid-js";
+import { bridgeRegistry, vFromSignature } from "boltz-swaps/bridge";
 import {
+    erc20Abi,
+    erc20SwapAbi,
+    etherSwapAbi,
+} from "boltz-swaps/generated/evm-abis";
+import { AssetKind, SwapPosition } from "boltz-swaps/types";
+import log from "loglevel";
+import {
+    type Accessor,
     Match,
+    type Setter,
     Show,
     Switch,
     createEffect,
@@ -23,15 +31,9 @@ import {
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
-import {
-    AssetKind,
-    type AssetType,
-    getKindForAsset,
-    isEvmAsset,
-} from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
-import type { deriveKeyFn } from "../context/Global";
-import { useGlobalContext } from "../context/Global";
+import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import {
@@ -41,13 +43,11 @@ import {
     resolveErc20SwapAbi,
     resolveEtherSwapAbi,
 } from "../context/contracts";
-import { erc20Abi, erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis";
 import {
     encodeDexQuote,
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
-import { bridgeRegistry } from "../utils/bridge";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
@@ -68,7 +68,6 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import { RefundType, refund } from "../utils/rescue";
-import { vFromSignature } from "../utils/signature";
 import {
     type BridgeDetail,
     type ChainSwap,

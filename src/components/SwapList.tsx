@@ -1,7 +1,6 @@
 import { A } from "@solidjs/router";
 import { BiRegularTrash } from "solid-icons/bi";
-import type { Accessor } from "solid-js";
-import { For, Show, createEffect, createSignal } from "solid-js";
+import { type Accessor, For, Show, createEffect, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 import { useGlobalContext } from "../context/Global";

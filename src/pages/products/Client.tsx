@@ -1,7 +1,9 @@
 import { BiSolidServer } from "solid-icons/bi";
 import { BsGithub } from "solid-icons/bs";
-import { FaSolidCarrot as TaprootIcon } from "solid-icons/fa";
-import { FaSolidRobot as AutoSwapIcon } from "solid-icons/fa";
+import {
+    FaSolidRobot as AutoSwapIcon,
+    FaSolidCarrot as TaprootIcon,
+} from "solid-icons/fa";
 import { IoWater as LiquidIcon } from "solid-icons/io";
 import { OcLinkexternal2 } from "solid-icons/oc";
 import { For } from "solid-js";

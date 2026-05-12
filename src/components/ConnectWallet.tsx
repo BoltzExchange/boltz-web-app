@@ -1,8 +1,10 @@
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import type { Accessor, Setter } from "solid-js";
 import {
+    type Accessor,
     For,
+    type Setter,
     Show,
     createEffect,
     createMemo,
@@ -12,7 +14,6 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { NetworkTransport } from "../configs/base";
 import {
     getNetworkTransport,
     isWalletConnectableAsset,

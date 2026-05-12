@@ -2,25 +2,21 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
+import type { BridgeDetails, BridgeRoute } from "boltz-swaps/bridge";
+import { type BridgeKind, SwapPosition } from "boltz-swaps/types";
 
-import type { BridgeKind } from "../configs/base";
-import { type AssetType } from "../consts/Assets";
-import { LN, isEvmAsset } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
 import { type EncodedHop } from "./Pair";
-import type {
-    ChainSwapCreatedResponse,
-    ReverseCreatedResponse,
-    SubmarineCreatedResponse,
-} from "./boltzClient";
 import {
+    type ChainSwapCreatedResponse,
+    type ReverseCreatedResponse,
+    type SubmarineCreatedResponse,
     createChainSwap,
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
-import type { BridgeDetails } from "./bridge/details";
-import type { BridgeRoute } from "./bridge/types";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
 export type DexDetail = {

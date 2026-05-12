@@ -1,49 +1,30 @@
 // @vitest-environment node
 import { base58, hex } from "@scure/base";
-import { encodeAbiParameters, encodeEventTopics, getAbiItem } from "viem";
-
-import { config as runtimeConfig } from "../../src/config";
+import { OftBridgeDriver } from "boltz-swaps/bridge";
 import {
+    clearOftDeployments,
+    createOftContract,
+    decodeExecutorNativeAmountExceedsCapError,
+    getOftContract,
+    getOftReceivedEventByGuid,
+    getRequiredSolanaOftNativeBalance,
+    getSolanaOftGuidFromLogs as getSolanaOftSentEventFromTransaction,
+    isExecutorNativeAmountExceedsCapError,
+    oftAbi,
+    quoteOftAmountInForAmountOut,
+    quoteOftSend,
+} from "boltz-swaps/oft";
+import * as solanaChain from "boltz-swaps/solana";
+import {
+    AssetKind,
     BridgeKind,
     CctpTransferMode,
     NetworkTransport,
-} from "../../src/configs/base";
+} from "boltz-swaps/types";
+import { encodeAbiParameters, encodeEventTopics, getAbiItem } from "viem";
+
+import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { AssetKind } from "../../src/consts/AssetKind";
-import type * as SolanaChainsModule from "../../src/utils/chains/solana";
-import { oftAbi } from "../../src/utils/oft/evm";
-
-vi.mock("../../src/utils/chains/solana", async () => {
-    const actual = await vi.importActual<typeof SolanaChainsModule>(
-        "../../src/utils/chains/solana",
-    );
-
-    return {
-        ...actual,
-        getSolanaRentExemptMinimumBalance: vi.fn(
-            actual.getSolanaRentExemptMinimumBalance,
-        ),
-        shouldCreateSolanaTokenAccount: vi.fn().mockResolvedValue(false),
-    };
-});
-
-const {
-    createOftContract,
-    decodeExecutorNativeAmountExceedsCapError,
-    getRequiredSolanaOftNativeBalance,
-    getOftReceivedEventByGuid,
-    isExecutorNativeAmountExceedsCapError,
-    quoteOftAmountInForAmountOut,
-    quoteOftSend,
-    clearOftDeployments,
-} = await import("../../src/utils/oft/oft");
-const { getOftContract } = await import("../../src/utils/oft/registry");
-const { OftBridgeDriver } =
-    await import("../../src/utils/bridge/OftBridgeDriver");
-const { getSolanaOftGuidFromLogs: getSolanaOftSentEventFromTransaction } =
-    await import("../../src/utils/oft/solana");
-const { getSolanaRentExemptMinimumBalance, shouldCreateSolanaTokenAccount } =
-    await import("../../src/utils/chains/solana");
 
 const getOftRoute = (from: string, to = from) => ({
     sourceAsset: from,
@@ -108,11 +89,17 @@ describe("oft", () => {
         runtimeConfig.network = mainnetConfig.network;
     });
 
+    beforeEach(() => {
+        vi.spyOn(solanaChain, "getSolanaRentExemptMinimumBalance");
+        vi.spyOn(
+            solanaChain,
+            "shouldCreateSolanaTokenAccount",
+        ).mockResolvedValue(false);
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
-        vi.mocked(shouldCreateSolanaTokenAccount).mockReset();
-        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(false);
         clearOftDeployments();
     });
 
@@ -265,25 +252,24 @@ describe("oft", () => {
     });
 
     test("should use the higher of the buffered Solana OFT fee or ATA rent", async () => {
-        vi.mocked(getSolanaRentExemptMinimumBalance).mockResolvedValue(
-            2_039_280n,
-        );
+        vi.mocked(
+            solanaChain.getSolanaRentExemptMinimumBalance,
+        ).mockResolvedValue(2_039_280n);
         await expect(
             getRequiredSolanaOftNativeBalance("USDT0-SOL", 1_000_000n),
         ).resolves.toBe(2_039_280n);
         await expect(
             getRequiredSolanaOftNativeBalance("USDT0-SOL", 3_000_000n),
         ).resolves.toBe(3_300_000n);
-        expect(getSolanaRentExemptMinimumBalance).toHaveBeenCalledWith(
-            "USDT0-SOL",
-            165,
-        );
+        expect(
+            solanaChain.getSolanaRentExemptMinimumBalance,
+        ).toHaveBeenCalledWith("USDT0-SOL", 165);
     });
 
     test("should expose the Solana OFT native balance requirement through the bridge driver", async () => {
-        vi.mocked(getSolanaRentExemptMinimumBalance).mockResolvedValue(
-            2_039_280n,
-        );
+        vi.mocked(
+            solanaChain.getSolanaRentExemptMinimumBalance,
+        ).mockResolvedValue(2_039_280n);
 
         const driver = new OftBridgeDriver();
         await expect(
@@ -472,7 +458,10 @@ describe("oft", () => {
 
     test("should skip token account checks for non-Solana assets", async () => {
         await expect(
-            shouldCreateSolanaTokenAccount("USDT0-ETH", validSolanaRecipient),
+            solanaChain.shouldCreateSolanaTokenAccount(
+                "USDT0-ETH",
+                validSolanaRecipient,
+            ),
         ).resolves.toBe(false);
     });
 
@@ -491,7 +480,9 @@ describe("oft", () => {
             },
         } as never;
 
-        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(true);
+        vi.mocked(solanaChain.shouldCreateSolanaTokenAccount).mockResolvedValue(
+            true,
+        );
         const rpcFetchSpy = vi
             .fn()
             .mockResolvedValue(
@@ -528,11 +519,15 @@ describe("oft", () => {
             200n,
         );
 
-        expect(shouldCreateSolanaTokenAccount).toHaveBeenCalledTimes(2);
+        expect(
+            solanaChain.shouldCreateSolanaTokenAccount,
+        ).toHaveBeenCalledTimes(2);
     });
 
     test("should include Solana ATA creation options in OFT send params", async () => {
-        vi.mocked(shouldCreateSolanaTokenAccount).mockResolvedValue(true);
+        vi.mocked(solanaChain.shouldCreateSolanaTokenAccount).mockResolvedValue(
+            true,
+        );
         const rpcFetchSpy = vi
             .fn()
             .mockResolvedValue(

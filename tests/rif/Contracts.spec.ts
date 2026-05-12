@@ -1,9 +1,9 @@
 // @vitest-environment node
+import type * as EvmModule from "boltz-swaps/evm";
 import type { PublicClient } from "viem";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { Signer } from "../../src/context/Web3";
-import type * as ProviderModule from "../../src/utils/provider";
 
 const {
     sentinelAssetReadContract,
@@ -19,15 +19,12 @@ const {
         sentinelAssetReadContract,
         sentinelAssetProvider,
         walletReadContract: vi.fn(),
-        mockCreateAssetProvider:
-            vi.fn<typeof ProviderModule.createAssetProvider>(),
+        mockCreateAssetProvider: vi.fn<typeof EvmModule.createAssetProvider>(),
     };
 });
 
-vi.mock("../../src/utils/provider", async () => {
-    const actual = await vi.importActual<typeof ProviderModule>(
-        "../../src/utils/provider",
-    );
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
     return { ...actual, createAssetProvider: mockCreateAssetProvider };
 });
 

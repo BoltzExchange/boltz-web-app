@@ -1,8 +1,11 @@
+import { isKnownTokenAddress } from "boltz-swaps/evm";
+import { isValidSolanaAddress } from "boltz-swaps/solana";
+import { isValidTronAddress } from "boltz-swaps/tron";
+import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { getAddress, isAddress } from "viem";
 
-import { NetworkTransport } from "../configs/base";
 import {
     LN,
     getNetworkTransport,
@@ -13,8 +16,6 @@ import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
-import { isValidSolanaAddress } from "../utils/chains/solana";
-import { isValidTronAddress } from "../utils/chains/tron";
 import { probeUserInput } from "../utils/compat";
 import { btcToSat } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -25,7 +26,6 @@ import {
     extractInvoice,
     isInvoice,
 } from "../utils/invoice";
-import { isKnownTokenAddress } from "../utils/knownTokenAddresses";
 
 const AddressInput = () => {
     let inputRef!: HTMLInputElement;

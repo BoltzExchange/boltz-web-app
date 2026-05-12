@@ -1,10 +1,9 @@
 // @vitest-environment node
 import { Connection } from "@solana/web3.js";
+import { type Asset, NetworkTransport } from "boltz-swaps/types";
 import { createPublicClient, http } from "viem";
 import { expect, test } from "vitest";
 
-import type { Asset } from "../../src/configs/base";
-import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 
 const rpcRequestTimeout = 10_000;

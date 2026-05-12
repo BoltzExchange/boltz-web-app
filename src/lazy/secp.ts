@@ -1,7 +1,6 @@
 import { init } from "boltz-core/liquid";
+import Loader from "boltz-swaps/lazy";
 import { confidential } from "liquidjs-lib";
-
-import Loader from "./Loader";
 
 export default new Loader("Secp256k1ZKP", async () => {
     const zkp = (await import("@vulpemventures/secp256k1-zkp")).default;

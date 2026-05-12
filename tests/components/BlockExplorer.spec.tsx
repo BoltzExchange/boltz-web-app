@@ -1,13 +1,12 @@
 import { render, screen } from "@solidjs/testing-library";
+import { ExplorerKind, NetworkTransport } from "boltz-swaps/types";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../../src/components/BlockExplorer";
 import { config } from "../../src/config";
-import { NetworkTransport } from "../../src/configs/base";
 import * as assets from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
-import { ExplorerKind } from "../../src/utils/explorerLink";
 import { contextWrapper } from "../helper";
 
 describe("BlockExplorer", () => {

@@ -1,6 +1,8 @@
-import { BridgeKind, NetworkTransport } from "../../../src/configs/base";
-import type { BridgeDriver as BaseBridgeDriver } from "../../../src/utils/bridge";
-import { BridgeDriver } from "../../../src/utils/bridge";
+import {
+    type BridgeDriver as BaseBridgeDriver,
+    BridgeDriver,
+} from "boltz-swaps/bridge";
+import { BridgeKind, NetworkTransport } from "boltz-swaps/types";
 
 const notImplemented = (name: string) => (): never => {
     throw new Error(`TestBridgeDriver.${name} not implemented`);

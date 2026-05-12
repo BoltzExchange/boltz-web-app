@@ -1,10 +1,30 @@
 import axios from "axios";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 
 import { config as runtimeConfig } from "../src/config";
 import { config as mainnetConfig } from "../src/configs/mainnet";
 
 log.setLevel("error");
+setLogger(log);
+setBoltzSwapsConfig({
+    get assets() {
+        return runtimeConfig.assets;
+    },
+    get cctpApiUrl() {
+        return runtimeConfig.cctpApiUrl;
+    },
+    get layerZeroExplorerUrl() {
+        return runtimeConfig.layerZeroExplorerUrl;
+    },
+    get cctpExplorerUrl() {
+        return runtimeConfig.cctpExplorerUrl;
+    },
+    get oftDeploymentsUrl() {
+        return runtimeConfig.oftDeploymentsUrl;
+    },
+});
 
 // Tests run against the regtest config, which intentionally omits TBTC,
 // USDT0, and USDC (they're mainnet-only assets). Inject them from the mainnet

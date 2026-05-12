@@ -12,8 +12,7 @@ import type {
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
-import type { ECKeys } from "./ecpair";
-import { ECPair } from "./ecpair";
+import { type ECKeys, ECPair } from "./ecpair";
 import { formatError } from "./errors";
 import {
     type ChainSwap,

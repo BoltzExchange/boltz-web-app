@@ -1,11 +1,16 @@
-import type { Accessor, JSX, Setter } from "solid-js";
-import { createContext, createSignal, useContext } from "solid-js";
+import {
+    type Accessor,
+    type JSX,
+    type Setter,
+    createContext,
+    createSignal,
+    useContext,
+} from "solid-js";
 
 import { type AssetType } from "../consts/Assets";
 import type { RestorableSwap } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
-import type { ECKeys } from "../utils/ecpair";
-import { ECPair } from "../utils/ecpair";
+import { type ECKeys, ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 
 export const mnemonicLength = 12;

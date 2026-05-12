@@ -1,7 +1,6 @@
+import { type LooseRouterCall, toRouterCalls } from "boltz-swaps/bridge";
 import { encodeAbiParameters, keccak256 } from "viem";
 import { describe, expect, test } from "vitest";
-
-import { type LooseRouterCall, toRouterCalls } from "../../src/utils/router";
 
 describe("toRouterCalls", () => {
     test("returns an empty array for an empty input", () => {

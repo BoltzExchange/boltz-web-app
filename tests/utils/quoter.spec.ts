@@ -1,7 +1,7 @@
+import { NetworkTransport, Usdt0Kind } from "boltz-swaps/types";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type * as ConfigModule from "../../src/config";
-import { NetworkTransport, Usdt0Kind } from "../../src/configs/base";
 import { solanaMinGasTopUpLamports } from "../../src/consts/Solana";
 import {
     gasTopUpSupported,

@@ -1,8 +1,8 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
-import type { Accessor } from "solid-js";
 import {
+    type Accessor,
     For,
     Match,
     Show,
@@ -55,8 +55,11 @@ import {
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
-import type { LogRefundData, SwapContract } from "../utils/contractLogs";
-import { scanLockupEvents } from "../utils/contractLogs";
+import {
+    type LogRefundData,
+    type SwapContract,
+    scanLockupEvents,
+} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {

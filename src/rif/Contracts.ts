@@ -1,9 +1,9 @@
+import { createAssetProvider } from "boltz-swaps/evm";
 import { getAddress, getContract, parseAbi } from "viem";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
-import { createAssetProvider } from "../utils/provider";
 
 export const BoltzSmartWalletFactoryAbi = parseAbi([
     "function nonce(address from) view returns (uint256)",

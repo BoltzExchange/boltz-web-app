@@ -1,6 +1,7 @@
 import { BTC, RBTC, TBTC } from "../../src/consts/Assets";
 import {
     Errors,
+    type RescueFile,
     derivationPath,
     deriveKey,
     deriveKeyGasAbstraction,
@@ -10,7 +11,6 @@ import {
     mnemonicToHDKey,
     validateRescueFile,
 } from "../../src/utils/rescueFile";
-import type { RescueFile } from "../../src/utils/rescueFile";
 
 describe("rescueFile", () => {
     const rescueFile: RescueFile = {

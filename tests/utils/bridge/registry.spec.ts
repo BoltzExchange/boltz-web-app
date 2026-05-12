@@ -1,46 +1,44 @@
-import type * as ConfigModule from "../../../src/config";
-import { BridgeKind } from "../../../src/configs/base";
-import { BridgeRegistry } from "../../../src/utils/bridge";
+import { BridgeRegistry } from "boltz-swaps/bridge";
+import { BridgeKind } from "boltz-swaps/types";
+
+import { config as runtimeConfig } from "../../../src/config";
 import { TestBridgeDriver } from "./testDriver";
+
+const originalAssets = runtimeConfig.assets;
 
 // Stub runtime config so `getAssetBridge` (which the registry delegates to)
 // returns the expected bridge kind for each test asset.
-vi.mock("../../../src/config", async () => {
-    const actual = await vi.importActual<typeof ConfigModule>(
-        "../../../src/config",
-    );
-    return {
-        ...actual,
-        config: {
-            ...actual.config,
-            assets: {
-                HUB: {
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                "HUB-A": {
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                "HUB-B": {
-                    type: "erc20",
-                    bridge: {
-                        kind: BridgeKind.Oft,
-                        canonicalAsset: "HUB",
-                    },
-                },
-                BTC: {
-                    type: "utxo",
-                },
+beforeAll(() => {
+    runtimeConfig.assets = {
+        HUB: {
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "HUB",
             },
         },
-    };
+        "HUB-A": {
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "HUB",
+            },
+        },
+        "HUB-B": {
+            type: "erc20",
+            bridge: {
+                kind: BridgeKind.Oft,
+                canonicalAsset: "HUB",
+            },
+        },
+        BTC: {
+            type: "utxo",
+        },
+    } as never;
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
 });
 
 describe("BridgeRegistry", () => {

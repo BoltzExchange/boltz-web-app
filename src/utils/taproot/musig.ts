@@ -1,5 +1,4 @@
-import type { Transaction as BtcTransaction } from "@scure/btc-signer";
-import { SigHash } from "@scure/btc-signer";
+import { type Transaction as BtcTransaction, SigHash } from "@scure/btc-signer";
 import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
 import { Musig, TaprootUtils, type Types } from "boltz-core";
 import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/liquid";

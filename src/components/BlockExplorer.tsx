@@ -1,7 +1,7 @@
+import type { ExplorerKind } from "boltz-swaps/types";
 import { Show } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import type { ExplorerKind } from "../utils/explorerLink";
 import { blockExplorerLink } from "../utils/explorerLink";
 import ExternalLink from "./ExternalLink";
 

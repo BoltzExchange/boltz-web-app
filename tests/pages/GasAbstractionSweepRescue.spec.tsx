@@ -1,8 +1,7 @@
 import type * as SolidRouter from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
-import type { Accessor } from "solid-js";
-import { createEffect, createSignal } from "solid-js";
+import { type Accessor, createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
 
 import { TBTC, USDC, USDT0 } from "../../src/consts/Assets";

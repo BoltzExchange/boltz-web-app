@@ -3,8 +3,7 @@ import QrScanner from "qr-scanner";
 import { Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { validateRescueFile } from "../utils/rescueFile";
-import type { RescueFile } from "../utils/rescueFile";
+import { type RescueFile, validateRescueFile } from "../utils/rescueFile";
 import LoadingSpinner from "./LoadingSpinner";
 import RescueFileInput from "./RescueFileInput";
 

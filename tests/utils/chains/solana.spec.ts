@@ -1,10 +1,6 @@
 // @vitest-environment node
-import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
-
-import { config as runtimeConfig } from "../../../src/config";
-import { config as mainnetConfig } from "../../../src/configs/mainnet";
-import lazySolana from "../../../src/lazy/solana";
-import { clearCache } from "../../../src/utils/cache";
+import { clearCache } from "boltz-swaps/cache";
+import { solana as lazySolana } from "boltz-swaps/lazy/solana";
 import {
     decodeSolanaAddress,
     encodeSolanaAtaCreationOption,
@@ -14,7 +10,11 @@ import {
     isValidSolanaAddress,
     shouldCreateSolanaTokenAccount,
     solanaAtaRentExemptLamports,
-} from "../../../src/utils/chains/solana";
+} from "boltz-swaps/solana";
+import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
+
+import { config as runtimeConfig } from "../../../src/config";
+import { config as mainnetConfig } from "../../../src/configs/mainnet";
 
 const originalAssets = structuredClone(runtimeConfig.assets);
 const originalNetwork = runtimeConfig.network;

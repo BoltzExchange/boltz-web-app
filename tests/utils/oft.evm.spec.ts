@@ -1,14 +1,15 @@
 // @vitest-environment node
+import {
+    type MsgFee,
+    type SendParam,
+    createEvmOftContract,
+    oftAbi,
+    toViemSendParam,
+} from "boltz-swaps/oft";
 import { encodeEventTopics, keccak256, toBytes } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
 import type { Signer } from "../../src/context/Web3";
-import {
-    createEvmOftContract,
-    oftAbi,
-    toViemSendParam,
-} from "../../src/utils/oft/evm";
-import type { MsgFee, SendParam } from "../../src/utils/oft/types";
 
 describe("toViemSendParam", () => {
     const validSendParam: SendParam = [

@@ -3,8 +3,15 @@ import "@fontsource/noto-mono/index.css";
 import "@fontsource/noto-sans/200.css";
 import "@fontsource/noto-sans/800.css";
 import "@fontsource/noto-sans/index.css";
-import type { RouteSectionProps } from "@solidjs/router";
-import { Navigate, Route, Router, useParams } from "@solidjs/router";
+import {
+    Navigate,
+    Route,
+    type RouteSectionProps,
+    Router,
+    useParams,
+} from "@solidjs/router";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 import { render } from "solid-js/web";
 
@@ -41,6 +48,28 @@ import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
 import "./utils/patches";
+import { gasTopUpSupported, getGasTopUpNativeAmount } from "./utils/quoter";
+
+setLogger(log);
+setBoltzSwapsConfig({
+    get assets() {
+        return config.assets;
+    },
+    get cctpApiUrl() {
+        return config.cctpApiUrl;
+    },
+    get layerZeroExplorerUrl() {
+        return config.layerZeroExplorerUrl;
+    },
+    get cctpExplorerUrl() {
+        return config.cctpExplorerUrl;
+    },
+    get oftDeploymentsUrl() {
+        return config.oftDeploymentsUrl;
+    },
+    gasTopUpSupported,
+    getGasTopUpNativeAmount,
+});
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker

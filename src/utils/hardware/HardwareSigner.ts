@@ -1,7 +1,7 @@
+import { getRpcUrls } from "boltz-swaps/config";
 import type { Address, PublicClient } from "viem";
 
 import { config } from "../../config";
-import { getRpcUrls } from "../provider";
 
 export const derivationPaths = {
     Ethereum: "44'/60'/0'/0",

@@ -1,6 +1,30 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import type { Connection } from "@solana/web3.js";
+import { type BridgeDetails, bridgeRegistry } from "boltz-swaps/bridge";
+import {
+    addressToBytes32,
+    cctpZeroBytes32,
+    decodeCctpGuid,
+    encodeCctpReceiveMessage,
+    getCctpAttestation,
+    isCctpNonceUsed,
+    parseCctpBurnMessage,
+} from "boltz-swaps/cctp";
+import { createAssetProvider, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    erc20Abi,
+    erc20SwapAbi,
+    routerAbi,
+} from "boltz-swaps/generated/evm-abis";
+import { getTronOftGuidFromTransactionInfo } from "boltz-swaps/oft";
+import { getSolanaConnection } from "boltz-swaps/solana";
+import {
+    type TronTransactionInfo,
+    getTronTransactionInfo,
+    isFailedTronTransaction,
+} from "boltz-swaps/tron";
+import { BridgeKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 import {
@@ -19,47 +43,26 @@ import {
     waitForPreparedCallTransactionHash,
 } from "../alchemy/Alchemy";
 import { config } from "../config";
-import { BridgeKind, NetworkTransport } from "../configs/base";
 import { USDC, getAssetBridge, getTokenAddress } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { createRouterContract } from "../context/contracts";
-import { erc20Abi, erc20SwapAbi, routerAbi } from "../generated/evm-abis";
 import {
     encodeDexQuote,
     getCommitmentLockupDetails,
 } from "../utils/boltzClient";
-import { type BridgeDetails, bridgeRegistry } from "../utils/bridge";
 import { calculateAmountOutMin } from "../utils/calculate";
-import { getCctpAttestation } from "../utils/cctp/attestation";
-import { decodeCctpGuid, parseCctpBurnMessage } from "../utils/cctp/events";
-import {
-    addressToBytes32,
-    cctpZeroBytes32,
-    encodeCctpReceiveMessage,
-    isCctpNonceUsed,
-} from "../utils/cctp/evm";
-import { getSolanaConnection } from "../utils/chains/solana";
-import {
-    type TronTransactionInfo,
-    getTronTransactionInfo,
-    isFailedTronTransaction,
-} from "../utils/chains/tron";
 import {
     emptyPreimageHash,
     isEmptyPreimageHash,
     postCommitmentSignatureForTransaction,
 } from "../utils/commitment";
-import { sendPopulatedTransaction } from "../utils/evmTransaction";
-import { prefix0x } from "../utils/evmTransaction";
+import { prefix0x, sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
-import { getTronOftGuidFromTransactionInfo } from "../utils/oft/tron";
-import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
-import { satsToAssetAmount } from "../utils/rootstock";
 import {
     type BridgeDetail,
     type ChainSwap,

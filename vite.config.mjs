@@ -199,6 +199,9 @@ export default defineConfig({
                     if (id.includes("/node_modules/viem/")) {
                         return "viem";
                     }
+                    if (id.includes("/@solana/web3.js/")) {
+                        return "solana-web3";
+                    }
                 },
             },
         },

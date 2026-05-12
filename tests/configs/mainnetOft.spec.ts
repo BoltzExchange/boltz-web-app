@@ -1,16 +1,16 @@
 // @vitest-environment node
 import { base58 } from "@scure/base";
+import {
+    type OftDirectSendTarget,
+    OftDirectSendTargetKind,
+    getOftContract,
+    getOftDirectSendTarget,
+} from "boltz-swaps/oft";
+import { NetworkTransport } from "boltz-swaps/types";
 import { isAddress } from "viem";
 
 import { config as runtimeConfig } from "../../src/config";
-import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
-import type { OftDirectSendTarget } from "../../src/utils/oft/directSend";
-import {
-    OftDirectSendTargetKind,
-    getOftDirectSendTarget,
-} from "../../src/utils/oft/directSend";
-import { getOftContract } from "../../src/utils/oft/registry";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 const originalNetwork = runtimeConfig.network;

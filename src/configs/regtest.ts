@@ -1,11 +1,5 @@
-import type { Config } from "src/configs/base";
-import {
-    Explorer,
-    NetworkTransport,
-    baseConfig,
-    chooseUrl,
-} from "src/configs/base";
-import { AssetKind } from "src/consts/AssetKind";
+import { AssetKind, Explorer, NetworkTransport } from "boltz-swaps/types";
+import { type Config, baseConfig, chooseUrl } from "src/configs/base";
 
 const config = {
     ...baseConfig,

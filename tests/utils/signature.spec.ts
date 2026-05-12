@@ -1,7 +1,8 @@
+import { vFromSignature } from "boltz-swaps/bridge";
 import { serializeTransaction } from "viem";
 import { describe, expect, test } from "vitest";
 
-import { vFromSignature, yParityFromV } from "../../src/utils/signature";
+import { yParityFromV } from "../../src/utils/signature";
 
 describe("vFromSignature", () => {
     test("returns Number(v) when v is set to legacy 27", () => {

@@ -1,10 +1,9 @@
 import { makePersisted } from "@solid-primitives/storage";
+import { BridgeKind, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
-import { BridgeKind } from "../configs/base";
 import { RBTC, isEvmAsset } from "../consts/Assets";
-import { SwapPosition } from "../consts/Enums";
 import {
     type BridgeDetail,
     GasAbstractionType,

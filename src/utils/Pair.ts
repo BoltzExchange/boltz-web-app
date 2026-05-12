@@ -1,11 +1,26 @@
 import BigNumber from "bignumber.js";
+import {
+    type BridgeDriver,
+    type BridgeErrorLike,
+    type BridgeNativeDropFailure,
+    type BridgeQuoteOptions,
+    type BridgeReceiveQuote,
+    type BridgeRoute,
+    bridgeRegistry,
+} from "boltz-swaps/bridge";
+import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    AssetKind,
+    BridgeKind,
+    CctpReceiveMode,
+    SwapPosition,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import { zeroAddress } from "viem";
 
 import { config } from "../config";
-import { BridgeKind, CctpReceiveMode, isTor } from "../configs/base";
+import { isTor } from "../configs/base";
 import {
-    AssetKind,
     BTC,
     LN,
     TBTC,
@@ -16,7 +31,7 @@ import {
     isBridgeAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { SwapPosition, SwapType } from "../consts/Enums";
+import { SwapType } from "../consts/Enums";
 import {
     type ChainPairTypeTaproot,
     type Pairs,
@@ -24,15 +39,6 @@ import {
     type SubmarinePairTypeTaproot,
     quoteDexAmountOut,
 } from "./boltzClient";
-import type { BridgeDriver } from "./bridge";
-import { bridgeRegistry } from "./bridge/registry";
-import type {
-    BridgeErrorLike,
-    BridgeNativeDropFailure,
-    BridgeQuoteOptions,
-    BridgeReceiveQuote,
-    BridgeRoute,
-} from "./bridge/types";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
@@ -45,7 +51,6 @@ import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
 } from "./quoter";
-import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
 
 /**
  * Whether an asset is a routed ERC20 (like USDT0) whose internal

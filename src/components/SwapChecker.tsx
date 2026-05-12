@@ -10,8 +10,7 @@ import {
     swapStatusSuccess,
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import type { SwapStatusTransaction } from "../context/Pay";
-import { usePayContext } from "../context/Pay";
+import { type SwapStatusTransaction, usePayContext } from "../context/Pay";
 import { formatError } from "../utils/errors";
 import { getApiUrl } from "../utils/helper";
 import type { SomeSwap } from "../utils/swapCreator";

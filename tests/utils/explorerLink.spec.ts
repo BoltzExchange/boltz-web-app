@@ -1,7 +1,8 @@
+import { ExplorerKind, NetworkTransport } from "boltz-swaps/types";
+
 import { config } from "../../src/config";
-import { NetworkTransport } from "../../src/configs/base";
 import * as assets from "../../src/consts/Assets";
-import { ExplorerKind, blockExplorerLink } from "../../src/utils/explorerLink";
+import { blockExplorerLink } from "../../src/utils/explorerLink";
 
 describe("explorerLink", () => {
     afterEach(() => {

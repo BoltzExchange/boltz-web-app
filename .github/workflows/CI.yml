@@ -25,6 +25,31 @@ jobs:
 
             - run: bun run tsc
 
+    package:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: packages/boltz-swaps
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+
+            - name: Install dependencies
+              run: bun ci
+              working-directory: .
+
+            - run: bun run lint
+
+            - run: bun run prettier:check
+
+            - run: bun run test
+
+            - run: bun run tsc
+
+            - run: bun run build
+
     e2e:
         timeout-minutes: 60
         runs-on: ubuntu-latest

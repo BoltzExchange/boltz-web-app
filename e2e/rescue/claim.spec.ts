@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import type { Page } from "@playwright/test";
+import { type Page, expect, test } from "@playwright/test";
 import fs from "fs";
 
 import { BTC, LBTC } from "../../src/consts/Assets";

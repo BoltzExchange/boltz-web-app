@@ -1,8 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
+import { NetworkTransport } from "boltz-swaps/types";
 
 import BackupDownloadContent from "../../src/components/BackupDownloadContent";
-import { NetworkTransport } from "../../src/configs/base";
 import { useWeb3Signer } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import { downloadRescueFile } from "../../src/utils/backup";

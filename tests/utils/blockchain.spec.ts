@@ -1,6 +1,6 @@
+import { Explorer } from "boltz-swaps/types";
 import { vi } from "vitest";
 
-import { Explorer } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { getFeeEstimations } from "../../src/utils/blockchain";

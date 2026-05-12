@@ -1,12 +1,12 @@
 import { render, waitFor } from "@solidjs/testing-library";
+import type * as EvmModule from "boltz-swaps/evm";
+import { NetworkTransport } from "boltz-swaps/types";
 import type { JSX } from "solid-js";
 import type { PublicClient } from "viem";
 
-import { NetworkTransport } from "../../src/configs/base";
 import { GlobalProvider } from "../../src/context/Global";
 import { Web3SignerProvider, useWeb3Signer } from "../../src/context/Web3";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
-import type * as ProviderModule from "../../src/utils/provider";
 import { contextWrapper } from "../helper";
 
 const { sentinelAssetProvider, mockGetContracts, mockCreateAssetProvider } =
@@ -15,8 +15,7 @@ const { sentinelAssetProvider, mockGetContracts, mockCreateAssetProvider } =
             __sentinel: "asset-rpc",
         } as unknown as PublicClient,
         mockGetContracts: vi.fn<typeof BoltzClientModule.getContracts>(),
-        mockCreateAssetProvider:
-            vi.fn<typeof ProviderModule.createAssetProvider>(),
+        mockCreateAssetProvider: vi.fn<typeof EvmModule.createAssetProvider>(),
     }));
 
 vi.mock("../../src/utils/boltzClient", async () => {
@@ -26,10 +25,8 @@ vi.mock("../../src/utils/boltzClient", async () => {
     return { ...actual, getContracts: mockGetContracts };
 });
 
-vi.mock("../../src/utils/provider", async () => {
-    const actual = await vi.importActual<typeof ProviderModule>(
-        "../../src/utils/provider",
-    );
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
     return { ...actual, createAssetProvider: mockCreateAssetProvider };
 });
 

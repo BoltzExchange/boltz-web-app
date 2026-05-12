@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { weiToSatoshi } from "boltz-swaps/evm";
 
 import Fees from "../../src/components/Fees";
 import { config as runtimeConfig } from "../../src/config";
@@ -17,7 +18,6 @@ import {
     calculateSendAmount,
 } from "../../src/utils/calculate";
 import * as fiat from "../../src/utils/fiat";
-import { weiToSatoshi } from "../../src/utils/rootstock";
 import {
     TestComponent,
     contextWrapper,

@@ -1,7 +1,6 @@
-import { type Config, Explorer, NetworkTransport } from "src/configs/base";
-import { baseConfig, chooseUrl } from "src/configs/base";
+import { AssetKind, Explorer, NetworkTransport } from "boltz-swaps/types";
+import { type Config, baseConfig, chooseUrl } from "src/configs/base";
 import { rskTestnetRpcUrls } from "src/configs/rpcs";
-import { AssetKind } from "src/consts/AssetKind";
 
 const config = {
     ...baseConfig,

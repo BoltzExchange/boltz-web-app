@@ -7,6 +7,7 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
         "jsx": "preserve",
         "jsxImportSource": "solid-js",
         "strict": true,
@@ -26,5 +27,6 @@
         "allowUnusedLabels": false,
         "skipLibCheck": true,
         "stableTypeOrdering": true
-    }
+    },
+    "exclude": ["packages", "node_modules", "dist", "ts-out"]
 }

@@ -1,5 +1,4 @@
-import bolt11 from "bolt11";
-import type { RoutingInfo } from "bolt11";
+import bolt11, { type RoutingInfo } from "bolt11";
 import log from "loglevel";
 
 const magicRoutingHintConstant = "0846c900051c0000";

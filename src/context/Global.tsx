@@ -10,13 +10,15 @@ import { BigNumber } from "bignumber.js";
 import localforage from "localforage";
 import log from "loglevel";
 import {
+    type Accessor,
+    type JSX,
+    type Setter,
     createContext,
     createEffect,
     createMemo,
     createSignal,
     useContext,
 } from "solid-js";
-import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import {
@@ -29,19 +31,16 @@ import {
 } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
-import type { DictKey } from "../i18n/i18n";
-import dict from "../i18n/i18n";
-import type { Pairs } from "../utils/boltzClient";
-import { getPairs } from "../utils/boltzClient";
-import type { ECKeys } from "../utils/ecpair";
-import { ECPair } from "../utils/ecpair";
+import dict, { type DictKey } from "../i18n/i18n";
+import { type Pairs, getPairs } from "../utils/boltzClient";
+import { type ECKeys, ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import { getBtcPriceFailover } from "../utils/fiat";
 import { getRegularReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
-import type { RescueFile } from "../utils/rescueFile";
 import {
+    type RescueFile,
     deriveKey,
     deriveKeyGasAbstraction,
     generateRescueFile,

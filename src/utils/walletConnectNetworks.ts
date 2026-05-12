@@ -1,7 +1,6 @@
 import type { AppKitNetwork } from "@reown/appkit/networks";
+import type { Asset } from "boltz-swaps/types";
 import log from "loglevel";
-
-import type { Asset } from "../configs/base";
 
 type ValidatedAsset = Asset &
     Required<Pick<Asset, "network" | "blockExplorerUrl">>;

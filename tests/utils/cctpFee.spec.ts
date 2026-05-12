@@ -1,6 +1,7 @@
+import { cctpFeeBpsDenominator, getCctpFee } from "boltz-swaps/cctp";
+import { CctpReceiveMode, CctpTransferMode } from "boltz-swaps/types";
+
 import { config } from "../../src/config";
-import { CctpReceiveMode, CctpTransferMode } from "../../src/configs/base";
-import { cctpFeeBpsDenominator, getCctpFee } from "../../src/utils/cctp/fee";
 
 const oneBps = cctpFeeBpsDenominator / 10_000n;
 

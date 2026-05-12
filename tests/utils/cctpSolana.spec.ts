@@ -6,16 +6,16 @@ import {
     isWritableRole,
 } from "@solana/kit";
 import { PublicKey } from "@solana/web3.js";
+import { addressToBytes32, cctpZeroBytes32 } from "boltz-swaps/cctp";
+import {
+    getDepositForBurnInstruction,
+    parseDepositForBurnInstruction,
+} from "boltz-swaps/generated/solana-cctp";
 
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
 } from "../../src/configs/cctp";
-import {
-    getDepositForBurnInstruction,
-    parseDepositForBurnInstruction,
-} from "../../src/generated/solana-cctp-token-messenger-minter/src/generated";
-import { addressToBytes32, cctpZeroBytes32 } from "../../src/utils/cctp/evm";
 
 const signer = (value: string) => createNoopSigner(address(value));
 const pubkey = () => PublicKey.unique().toBase58();

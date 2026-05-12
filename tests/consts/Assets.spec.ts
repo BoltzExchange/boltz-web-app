@@ -1,5 +1,6 @@
+import { Usdt0Kind } from "boltz-swaps/types";
+
 import type * as ConfigModule from "../../src/config";
-import { Usdt0Kind } from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import {
     BTC,

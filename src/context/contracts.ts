@@ -1,3 +1,10 @@
+import { createAssetProvider } from "boltz-swaps/evm";
+import {
+    erc20Abi,
+    erc20SwapAbi,
+    etherSwapAbi,
+    routerAbi,
+} from "boltz-swaps/generated/evm-abis";
 import {
     type GetContractReturnType,
     type PublicClient,
@@ -8,14 +15,7 @@ import {
 import { requireRouterAddress, requireTokenConfig } from "../consts/Assets";
 import erc20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
 import etherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
-import {
-    erc20Abi,
-    erc20SwapAbi,
-    etherSwapAbi,
-    routerAbi,
-} from "../generated/evm-abis";
 import type { ContractAddresses, Contracts } from "../utils/boltzClient";
-import { createAssetProvider } from "../utils/provider";
 import type { Signer } from "./Web3";
 
 export type SignerClient = { public: PublicClient; wallet: Signer };

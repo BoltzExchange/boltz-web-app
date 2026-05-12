@@ -1,10 +1,3 @@
-import type { Signature } from "viem";
-
-export const vFromSignature = (signature: Signature): number =>
-    signature.v !== undefined
-        ? Number(signature.v)
-        : (signature.yParity ?? 0) + 27;
-
 export const yParityFromV = (v: bigint): 0 | 1 => {
     if (v === 0n || v === 1n) {
         return Number(v) as 0 | 1;
