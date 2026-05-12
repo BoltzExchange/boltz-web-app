@@ -153,11 +153,6 @@
     @include network-primary-icon(vars.$conflux_icon);
 }
 
-[data-network="corn"] {
-    @include network-badge(vars.$corn_icon, var(--color-secondary-700));
-    @include network-primary-icon(vars.$corn_icon);
-}
-
 [data-network="ethereum"] {
     @include network-badge(vars.$ethereum_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$ethereum_icon);

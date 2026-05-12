@@ -9,7 +9,6 @@ export const baseExplorerUrl = "https://basescan.org";
 export const berachainExplorerUrl = "https://berascan.com";
 export const codexExplorerUrl = "https://explorer.codex.xyz";
 export const confluxExplorerUrl = "https://evm.confluxscan.org";
-export const cornExplorerUrl = "https://cornscan.io";
 export const ethereumExplorerUrl = "https://etherscan.io";
 export const flareExplorerUrl = "https://flarescan.com";
 export const hederaExplorerUrl = "https://hashscan.io/mainnet";

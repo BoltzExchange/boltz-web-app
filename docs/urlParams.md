@@ -30,7 +30,6 @@ are:
 - `USDT0` (Arbitrum)
 - `USDT0-BERA`
 - `USDT0-CFX`
-- `USDT0-CORN`
 - `USDT0-ETH`
 - `USDT0-FLR`
 - `USDT0-HBAR`

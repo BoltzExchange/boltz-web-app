@@ -34,21 +34,6 @@ vi.mock("../../src/config", async () => {
                         },
                     },
                 },
-                "USDT0-CORN": {
-                    ...actual.config.assets!.USDT0,
-                    network: {
-                        ...actual.config.assets!.USDT0.network,
-                        chainName: "Corn",
-                        symbol: "CORN",
-                        gasToken: "BTCN",
-                        chainId: 21000000,
-                        nativeCurrency: {
-                            name: "BTCN",
-                            symbol: "BTCN",
-                            decimals: 18,
-                        },
-                    },
-                },
                 "USDT0-STABLE": {
                     ...actual.config.assets!.USDT0,
                     network: {
@@ -98,9 +83,6 @@ describe("quoter gas top-up", () => {
 
         expect(getGasTopUpToken("USDT0-SOL")).toBe("SOL");
         expect(gasTopUpSupported("USDT0-SOL")).toBe(true);
-
-        expect(getGasTopUpToken("USDT0-CORN")).toBe("BTCN");
-        expect(gasTopUpSupported("USDT0-CORN")).toBe(false);
 
         expect(getGasTopUpToken("USDT0-STABLE")).toBe("USDT0");
         expect(gasTopUpSupported("USDT0-STABLE")).toBe(false);
