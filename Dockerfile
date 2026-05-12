@@ -5,13 +5,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends git python3 \
 
 WORKDIR /app
 
-COPY package.json bun.lock ./
-RUN bun ci --ignore-scripts
 COPY . .
+RUN bun ci --ignore-scripts
 
 ARG NETWORK=mainnet
 
-RUN bun run generate
+RUN bun --filter boltz-swaps generate
 RUN bun run $NETWORK
 RUN if [ "$NETWORK" = "pro" ]; then bun run build:pro; else bun run build:regular; fi
 
