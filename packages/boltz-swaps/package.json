@@ -124,8 +124,7 @@
         "generate:solana-cctp": "codama run solana-cctp --idl src/generated/solana-cctp-token-messenger-minter-v2-idl.json",
         "generate:fix-codama-imports": "bun run scripts/fix-codama-imports.ts",
         "generate": "bun run generate:evm-abis && bun run generate:solana-oft && bun run generate:solana-cctp && bun run generate:fix-codama-imports",
-        "postinstall": "bun run generate",
-        "prepublishOnly": "bun run build"
+        "prepublishOnly": "bun run generate && bun run build"
     },
     "dependencies": {
         "@noble/hashes": "catalog:",
