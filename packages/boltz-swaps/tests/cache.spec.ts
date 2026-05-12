@@ -1,6 +1,5 @@
+import { clearCache, getCachedValue } from "boltz-swaps/cache";
 import { afterEach, describe, expect, test, vi } from "vitest";
-
-import { clearCache, getCachedValue } from "../../src/utils/cache";
 
 const createDeferred = <T>() => {
     let resolve!: (value: T) => void;

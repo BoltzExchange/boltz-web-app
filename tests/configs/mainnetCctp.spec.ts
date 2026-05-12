@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { CctpBridgeDriver } from "boltz-swaps/bridge";
+import { clearCache } from "boltz-swaps/cache";
 import { getCctpFee } from "boltz-swaps/cctp";
 import {
     BridgeKind,
@@ -9,7 +10,6 @@ import {
 
 import { config as runtimeConfig } from "../../src/config";
 import { config } from "../../src/configs/mainnet";
-import { clearCache } from "../../src/utils/cache";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 const originalFeeApiUrl = runtimeConfig.cctpApiUrl;

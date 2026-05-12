@@ -1,4 +1,5 @@
 import { CctpBridgeDriver } from "boltz-swaps/bridge";
+import { clearCache } from "boltz-swaps/cache";
 import {
     type CctpDirectSendTarget,
     type CctpSendParam,
@@ -23,7 +24,6 @@ import { TransactionReceiptNotFoundError } from "viem";
 
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { clearCache } from "../../src/utils/cache";
 
 describe("CctpBridgeDriver", () => {
     const driver = new CctpBridgeDriver();
