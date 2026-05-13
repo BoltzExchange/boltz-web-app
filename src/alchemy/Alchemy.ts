@@ -5,6 +5,7 @@ import {
     toBeHex,
 } from "ethers";
 
+import { config } from "../config";
 import { isTor } from "../configs/base";
 import { formatError } from "../utils/errors";
 import { constructRequestOptions } from "../utils/helper";
@@ -24,7 +25,10 @@ const getAlchemyApiKey = (): string => {
     return key;
 };
 
-const alchemyUrl = () => `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
+const alchemyUrl = () => {
+    const baseUrl = `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
+    return isTor() ? `${config.corsProxyUrl}${baseUrl}` : baseUrl;
+};
 
 const getAlchemyGasPolicyId = (): string => {
     const id = import.meta.env.VITE_ALCHEMY_GAS_POLICY_ID as string | undefined;
