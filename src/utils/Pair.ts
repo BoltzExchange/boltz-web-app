@@ -19,16 +19,13 @@ import log from "loglevel";
 import { zeroAddress } from "viem";
 
 import { config } from "../config";
-import { isTor } from "../configs/base";
 import {
     BTC,
     LN,
-    TBTC,
     USDC,
     getAssetBridge,
     getCanonicalAsset,
     getRouteViaAsset,
-    isBridgeAsset,
     isEvmAsset,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -163,17 +160,6 @@ export default class Pair {
             config.assets?.[to]?.disabled === true
         ) {
             log.info(`Pair ${from} -> ${to} contains disabled asset`);
-            return;
-        }
-
-        if (
-            isTor() &&
-            (from === TBTC ||
-                to === TBTC ||
-                isBridgeAsset(from) ||
-                isBridgeAsset(to))
-        ) {
-            log.info("TBTC and bridged pairs are disabled on Tor");
             return;
         }
 

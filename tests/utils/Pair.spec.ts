@@ -3,8 +3,6 @@ import { CctpReceiveMode } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
-import type * as BaseConfigModule from "../../src/configs/base";
-import { isTor } from "../../src/configs/base";
 import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
@@ -46,17 +44,6 @@ const {
     getGasTopUpNativeAmountMock:
         vi.fn<typeof QuoterModule.getGasTopUpNativeAmount>(),
 }));
-
-vi.mock("../../src/configs/base", async () => {
-    const actual = await vi.importActual<typeof BaseConfigModule>(
-        "../../src/configs/base",
-    );
-
-    return {
-        ...actual,
-        isTor: vi.fn(() => false),
-    };
-});
 
 vi.mock("../../src/utils/boltzClient", async () => {
     const actual = await vi.importActual<typeof BoltzClientModule>(
@@ -550,48 +537,6 @@ describe("Pair", () => {
         expect(infoSpy).toHaveBeenCalledWith(
             expect.stringContaining("disabled asset"),
         );
-    });
-
-    test("should treat TBTC pairs as non-routable on Tor", () => {
-        const infoSpy = vi.spyOn(log, "info").mockImplementation(() => {});
-        vi.mocked(isTor).mockReturnValue(true);
-
-        const pair = new Pair(pairs, TBTC, LN);
-
-        expect(pair.isRoutable).toBe(false);
-        expect(pair.swapToCreate).toBeUndefined();
-        expect(infoSpy).toHaveBeenCalledWith(
-            "TBTC and bridged pairs are disabled on Tor",
-        );
-    });
-
-    test("should treat bridge-asset pairs as non-routable on Tor", () => {
-        const infoSpy = vi.spyOn(log, "info").mockImplementation(() => {});
-        vi.mocked(isTor).mockReturnValue(true);
-
-        const pair = new Pair(pairs, USDT0, LN);
-
-        expect(pair.isRoutable).toBe(false);
-        expect(pair.swapToCreate).toBeUndefined();
-        expect(infoSpy).toHaveBeenCalledWith(
-            "TBTC and bridged pairs are disabled on Tor",
-        );
-    });
-
-    test("should treat bridge variants in the receive leg as non-routable on Tor", () => {
-        vi.mocked(isTor).mockReturnValue(true);
-
-        const pair = new Pair(pairs, LN, "USDT0-POL");
-
-        expect(pair.isRoutable).toBe(false);
-        expect(pair.swapToCreate).toBeUndefined();
-    });
-
-    test("should route bridge pairs normally when not on Tor", () => {
-        vi.mocked(isTor).mockReturnValue(false);
-
-        expect(new Pair(pairs, USDT0, LN).isRoutable).toBe(true);
-        expect(new Pair(pairs, "USDT0-POL", LN).isRoutable).toBe(true);
     });
 
     test("should treat routes with a disabled intermediary asset as non-routable", () => {
