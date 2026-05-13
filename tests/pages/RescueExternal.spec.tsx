@@ -4,7 +4,7 @@ import { vi } from "vitest";
 
 import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
-import RescueExternal from "../../src/pages/RescueExternal";
+import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import {
     type RestorableSwap,
     getRestorableSwaps,
