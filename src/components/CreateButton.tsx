@@ -4,7 +4,6 @@ import { bridgeRegistry } from "boltz-swaps/bridge";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
 import { SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
-import { OcLinkexternal2 } from "solid-icons/oc";
 import {
     type Accessor,
     createEffect,
@@ -13,17 +12,13 @@ import {
     on,
 } from "solid-js";
 
-import { config } from "../config";
-import { isTor } from "../configs/base";
 import {
     BTC,
     LBTC,
     LN,
     RBTC,
-    TBTC,
     getBridgeKind,
     getCanonicalAsset,
-    isBridgeAsset,
     isEvmAsset,
 } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
@@ -90,7 +85,6 @@ const userErrorLabelKeys = new Set<DictKey>([
     "invalid_0_amount",
     "min_amount_destination",
     "max_amount_destination",
-    "tor_unavailable",
 ]);
 
 const buildBridgeDetail = (
@@ -324,15 +318,7 @@ const CreateButton = () => {
                     return;
                 }
                 if (!pair().isRoutable) {
-                    if (
-                        isTor() &&
-                        (pair().fromAsset === TBTC ||
-                            pair().toAsset === TBTC ||
-                            isBridgeAsset(pair().fromAsset) ||
-                            isBridgeAsset(pair().toAsset))
-                    ) {
-                        setButtonLabel({ key: "tor_unavailable" });
-                    } else if (!canSendAsset(pair().fromAsset)) {
+                    if (!canSendAsset(pair().fromAsset)) {
                         setButtonLabel({ key: "invalid_send_asset" });
                     } else {
                         setButtonLabel({ key: "invalid_pair" });
@@ -900,13 +886,7 @@ const CreateButton = () => {
         }
     };
 
-    const isTorUnavailable = () => buttonLabel().key === "tor_unavailable";
-
     const buttonClick = async () => {
-        if (isTorUnavailable()) {
-            window.open(config.clearnetUrl, "_blank", "noopener,noreferrer");
-            return;
-        }
         setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
@@ -961,19 +941,18 @@ const CreateButton = () => {
             data-testid="create-swap-button"
             class={buttonClass()}
             disabled={
-                !isTorUnavailable() &&
-                (!online() ||
-                    pairsLoading() ||
-                    !(valid() || validWayToFetchInvoice()) ||
-                    buttonDisable() ||
-                    loading() ||
-                    quoteLoading() ||
-                    (gasTopUpSupported(assetReceive()) &&
-                        getGasToken() === undefined) ||
-                    (onchainAddress() === "" &&
-                        invoice() === "" &&
-                        bolt12Offer() === undefined &&
-                        lnurl() === ""))
+                !online() ||
+                pairsLoading() ||
+                !(valid() || validWayToFetchInvoice()) ||
+                buttonDisable() ||
+                loading() ||
+                quoteLoading() ||
+                (gasTopUpSupported(assetReceive()) &&
+                    getGasToken() === undefined) ||
+                (onchainAddress() === "" &&
+                    invoice() === "" &&
+                    bolt12Offer() === undefined &&
+                    lnurl() === "")
             }
             onClick={buttonClick}>
             {(pairsLoading() ||
@@ -983,18 +962,7 @@ const CreateButton = () => {
             !invalidPairState() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
-                <>
-                    {getButtonLabel(buttonLabel())}
-                    {isTorUnavailable() && (
-                        <OcLinkexternal2
-                            size={20}
-                            style={{
-                                "margin-left": "8px",
-                                "vertical-align": "middle",
-                            }}
-                        />
-                    )}
-                </>
+                getButtonLabel(buttonLabel())
             )}
         </button>
     );

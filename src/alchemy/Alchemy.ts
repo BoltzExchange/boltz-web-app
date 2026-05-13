@@ -1,5 +1,6 @@
 import { type Address, type Hash, type Hex, toHex } from "viem";
 
+import { config } from "../config";
 import { isTor } from "../configs/base";
 import type { Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
@@ -21,7 +22,10 @@ const getAlchemyApiKey = (): string => {
     return key;
 };
 
-const alchemyUrl = () => `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
+const alchemyUrl = () => {
+    const baseUrl = `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
+    return isTor() ? `${config.corsProxyUrl}${baseUrl}` : baseUrl;
+};
 
 const getAlchemyGasPolicyId = (): string => {
     const id = import.meta.env.VITE_ALCHEMY_GAS_POLICY_ID as string | undefined;
