@@ -1,29 +1,13 @@
 import { render } from "@solidjs/testing-library";
-import { BigNumber } from "bignumber.js";
 
 import type * as ConfigModule from "../../src/config";
 import { SwapType } from "../../src/consts/Enums";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
-import type * as FiatModule from "../../src/utils/fiat";
 
-const { getBtcPriceFailoverMock, getPairsMock, configMock } = vi.hoisted(
-    () => ({
-        getBtcPriceFailoverMock: vi.fn<typeof FiatModule.getBtcPriceFailover>(),
-        getPairsMock: vi.fn<typeof BoltzClientModule.getPairs>(),
-        configMock: { isPro: false } as { isPro: boolean },
-    }),
-);
-
-vi.mock("../../src/utils/fiat", async () => {
-    const actual = await vi.importActual<typeof FiatModule>(
-        "../../src/utils/fiat",
-    );
-
-    return {
-        ...actual,
-        getBtcPriceFailover: getBtcPriceFailoverMock,
-    };
-});
+const { getPairsMock, configMock } = vi.hoisted(() => ({
+    getPairsMock: vi.fn<typeof BoltzClientModule.getPairs>(),
+    configMock: { isPro: false } as { isPro: boolean },
+}));
 
 vi.mock("../../src/utils/boltzClient", async () => {
     const actual = await vi.importActual<typeof BoltzClientModule>(
@@ -71,7 +55,6 @@ describe("Global context", () => {
     };
 
     beforeEach(() => {
-        getBtcPriceFailoverMock.mockReset();
         getPairsMock.mockReset();
         configMock.isPro = false;
     });
@@ -79,41 +62,6 @@ describe("Global context", () => {
     afterEach(() => {
         localStorage.clear();
         vi.restoreAllMocks();
-    });
-
-    test("fetchBtcPrice should fetch even when fiat display is disabled", async () => {
-        getBtcPriceFailoverMock.mockResolvedValue(BigNumber(123_456));
-
-        render(() => (
-            <GlobalProvider>
-                <Probe />
-            </GlobalProvider>
-        ));
-
-        globalSignals.setShowFiatAmount(false);
-
-        await globalSignals.fetchBtcPrice();
-
-        expect(getBtcPriceFailoverMock).toHaveBeenCalledTimes(1);
-        expect(globalSignals.btcPrice()?.toString()).toBe("123456");
-    });
-
-    test("fetchBtcPrice should reuse a recent successful price", async () => {
-        getBtcPriceFailoverMock
-            .mockResolvedValueOnce(BigNumber(111_111))
-            .mockResolvedValueOnce(BigNumber(222_222));
-
-        render(() => (
-            <GlobalProvider>
-                <Probe />
-            </GlobalProvider>
-        ));
-
-        await globalSignals.fetchBtcPrice();
-        await globalSignals.fetchBtcPrice();
-
-        expect(getBtcPriceFailoverMock).toHaveBeenCalledTimes(1);
-        expect(globalSignals.btcPrice()?.toString()).toBe("111111");
     });
 
     describe("pair fetching", () => {

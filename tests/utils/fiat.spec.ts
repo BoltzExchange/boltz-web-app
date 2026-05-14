@@ -11,6 +11,7 @@ import {
     getEthPriceKraken,
     getGasTokenPriceCoinGecko,
     getGasTokenPriceFailover,
+    getGasTokenPriceKraken,
     hasGasTokenPriceLookup,
     usdCentsToBaseUnits,
     usdCentsToWei,
@@ -44,6 +45,53 @@ describe("fiat", () => {
         checkResult(result);
     });
 
+    test.each([
+        ["Mempool", getBtcPriceMempool, { EUR: 95_000 }],
+        [
+            "Kraken",
+            getBtcPriceKraken,
+            { result: { XXBTZEUR: { c: ["95000.0", "1"] } } },
+        ],
+        ["Yadio", getBtcPriceYadio, { BTC: { EUR: 95_000 } }],
+    ])(
+        "should fetch BTC price in EUR from $0",
+        async (_, getBtcPrice, response) => {
+            const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+                json: vi.fn().mockResolvedValue(response),
+            } as unknown as Response);
+
+            const result = await getBtcPrice(Currency.EUR);
+            checkResult(result);
+            expect(result.toNumber()).toBe(95_000);
+            expect(fetchSpy).toHaveBeenCalledTimes(1);
+        },
+    );
+
+    test("should pass EUR pair to Kraken", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                result: { XXBTZEUR: { c: ["95000.0", "1"] } },
+            }),
+        } as unknown as Response);
+
+        await getBtcPriceKraken(Currency.EUR);
+        const url = fetchSpy.mock.calls[0][0] as string;
+        expect(url).toContain("XXBTZEUR");
+    });
+
+    test("should pass eur to CoinGecko vs_currencies", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                ethereum: { eur: 3_200 },
+            }),
+        } as unknown as Response);
+
+        const result = await getEthPriceCoinGecko(Currency.EUR);
+        const url = fetchSpy.mock.calls[0][0] as string;
+        expect(url).toContain("vs_currencies=eur");
+        expect(result.toNumber()).toBe(3_200);
+    });
+
     test("should fetch ETH price from Kraken", async () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue({
             json: vi.fn().mockResolvedValue({
@@ -53,6 +101,19 @@ describe("fiat", () => {
 
         const result = await getEthPriceKraken(Currency.USD);
         checkResult(result);
+    });
+
+    test("should pass EUR pair for ETH gas token Kraken lookup", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                result: { XETHZEUR: { c: ["3200.0", "1"] } },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceKraken("ETH", Currency.EUR);
+        const url = fetchSpy.mock.calls[0][0] as string;
+        expect(url).toContain("XETHZEUR");
+        expect(result.toNumber()).toBe(3_200);
     });
 
     test("should fetch ETH price from CoinGecko", async () => {

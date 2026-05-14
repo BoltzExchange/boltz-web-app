@@ -6,6 +6,7 @@ import {
     CreateProvider,
     useCreateContext,
 } from "../src/context/Create";
+import { FiatProvider } from "../src/context/Fiat";
 import {
     type GlobalContextType,
     GlobalProvider,
@@ -45,20 +46,22 @@ export const TestComponent = () => {
 export const contextWrapper = (props: { children: JSX.Element }) => {
     const App = () => (
         <GlobalProvider>
-            <Web3SignerProvider noFetch={true}>
-                <CreateProvider>
-                    <PayProvider>
-                        <RescueProvider>
-                            <Router>
-                                <Route
-                                    path="/"
-                                    component={() => props.children}
-                                />
-                            </Router>
-                        </RescueProvider>
-                    </PayProvider>
-                </CreateProvider>
-            </Web3SignerProvider>
+            <FiatProvider>
+                <Web3SignerProvider noFetch={true}>
+                    <CreateProvider>
+                        <PayProvider>
+                            <RescueProvider>
+                                <Router>
+                                    <Route
+                                        path="/"
+                                        component={() => props.children}
+                                    />
+                                </Router>
+                            </RescueProvider>
+                        </PayProvider>
+                    </CreateProvider>
+                </Web3SignerProvider>
+            </FiatProvider>
         </GlobalProvider>
     );
 

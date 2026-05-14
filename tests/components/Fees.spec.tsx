@@ -6,7 +6,7 @@ import Fees from "../../src/components/Fees";
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
-import { Denomination, SwapType } from "../../src/consts/Enums";
+import { Currency, Denomination, SwapType } from "../../src/consts/Enums";
 import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
@@ -629,7 +629,7 @@ describe("Fees component", () => {
 
         await waitFor(() => {
             expect(screen.getByTestId("fees-toggle").textContent).toContain(
-                "USD rate unavailable",
+                "Fiat rate unavailable",
             );
         });
         expect(screen.queryByTestId("fees-total-amount")).toBeNull();
@@ -900,6 +900,75 @@ describe("Fees component", () => {
                 .parentElement?.querySelector(".denominator-text-symbol")
                 ?.textContent,
         ).toEqual("Ξ");
+    });
+
+    test("should convert every fee component into the selected fiat currency", async () => {
+        localStorage.setItem("fiatCurrency", Currency.EUR);
+
+        vi.spyOn(fiat, "getBtcPriceFailover").mockImplementation((currency) =>
+            Promise.resolve(
+                currency === Currency.EUR
+                    ? BigNumber(92_000)
+                    : BigNumber(100_000),
+            ),
+        );
+        vi.spyOn(fiat, "getGasTokenPriceFailover").mockImplementation(
+            (_token, currency) =>
+                Promise.resolve(
+                    currency === Currency.EUR ? BigNumber(184) : BigNumber(200),
+                ),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: "USDT0-SOL",
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 300,
+            maxRoutingFee: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: "ETH",
+            bridgeTransferFeeAsset: USDT0,
+            feeOnSend: vi.fn(() => BigNumber(200)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(
+                () => 1_000_000_000_000_000n,
+            ),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("fees-total-amount").textContent).toEqual(
+                "0.67",
+            );
+        });
+        expect(screen.getByTestId("fees-toggle").textContent).toContain("EUR");
+        expect(screen.getByTestId("fees-toggle").textContent).not.toContain(
+            "USD",
+        );
     });
 
     test("should format Solana bridge messaging fees in lamports", async () => {

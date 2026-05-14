@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 
 import { isStablecoinAsset, requireTokenConfig } from "../consts/Assets";
-import { Currency } from "../consts/Enums";
+import { useFiatContext } from "../context/Fiat";
 import { useGlobalContext } from "../context/Global";
 import { convertToFiat } from "../utils/fiat";
 
@@ -20,19 +20,21 @@ const FiatAmount = (props: {
     for?: string;
     loading?: Accessor<boolean>;
 }) => {
-    const { showFiatAmount, t, btcPrice } = useGlobalContext();
+    const { t } = useGlobalContext();
+    const { showFiatAmount, btcPrice, fiatCurrency, usdToFiatRate } =
+        useFiatContext();
 
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
     createEffect(() => {
         if (isStablecoinAsset(props.asset())) {
-            setFiatAmount(
-                BigNumber(props.amount).div(
-                    BigNumber(10).pow(
-                        requireTokenConfig(props.asset()).decimals,
-                    ),
-                ),
+            const faceValueUsd = BigNumber(props.amount).div(
+                BigNumber(10).pow(requireTokenConfig(props.asset()).decimals),
             );
+            const rate = usdToFiatRate();
+            if (rate instanceof BigNumber) {
+                setFiatAmount(faceValueUsd.multipliedBy(rate));
+            }
             return;
         }
 
@@ -48,10 +50,25 @@ const FiatAmount = (props: {
             return null;
         }
 
+        if (isStablecoinAsset(props.asset())) {
+            if (usdToFiatRate() instanceof BigNumber) {
+                return (
+                    <>
+                        ≈ {fiatAmount().toFixed(2)} {fiatCurrency()}
+                    </>
+                );
+            }
+            return btcPrice() === null ? (
+                <div class="skeleton" />
+            ) : (
+                t("fiat_rate_not_available")
+            );
+        }
+
         return (
             <Switch>
                 <Match when={btcPrice() instanceof BigNumber}>
-                    ≈ {fiatAmount().toFixed(2)} {Currency.USD}
+                    ≈ {fiatAmount().toFixed(2)} {fiatCurrency()}
                 </Match>
                 <Match when={btcPrice() === null}>
                     <div class="skeleton" />

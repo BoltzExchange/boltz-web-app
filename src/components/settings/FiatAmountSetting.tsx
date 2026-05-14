@@ -1,7 +1,9 @@
+import { useFiatContext } from "../../context/Fiat";
 import { useGlobalContext } from "../../context/Global";
 
 const FiatAmountSetting = () => {
-    const { showFiatAmount, setShowFiatAmount, t } = useGlobalContext();
+    const { t } = useGlobalContext();
+    const { showFiatAmount, setShowFiatAmount } = useFiatContext();
 
     const toggleFiatAmount = (evt: MouseEvent) => {
         setShowFiatAmount(!showFiatAmount());
