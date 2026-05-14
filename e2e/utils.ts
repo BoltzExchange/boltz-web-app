@@ -135,10 +135,8 @@ export const getLiquidBlockHeight = async (): Promise<number> => {
     ).blocks as number;
 };
 
-export const setDisableCooperativeSignatures = (
-    disable: boolean,
-): Promise<string> =>
-    boltzrCli(`dev toggle-cooperative ${disable ? "--disabled" : ""}`);
+export const setDisableAllSigners = (disable: boolean): Promise<string> =>
+    boltzrCli(`signer ${disable ? "disable" : "enable"} --all`);
 
 export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
     execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);
