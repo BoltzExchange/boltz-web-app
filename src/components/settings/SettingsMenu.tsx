@@ -58,98 +58,121 @@ const Entry = (props: {
 };
 
 const SettingsMenuContent = () => {
-    const { t, settingsMenu, setSettingsMenu } = useGlobalContext();
+    const { t, setSettingsMenu } = useGlobalContext();
 
     const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "Escape" && settingsMenu()) {
+        if (event.key === "Escape") {
             setSettingsMenu(false);
         }
     };
+    const preventPageScroll = (event: WheelEvent | TouchEvent) => {
+        event.preventDefault();
+    };
+    const stopPropagation = (event: MouseEvent | WheelEvent | TouchEvent) => {
+        event.stopPropagation();
+    };
 
-    onMount(() => {
-        document.addEventListener("keydown", handleKeyDown);
-    });
-
-    onCleanup(() => {
-        document.removeEventListener("keydown", handleKeyDown);
-    });
+    onMount(() => document.addEventListener("keydown", handleKeyDown));
+    onCleanup(() => document.removeEventListener("keydown", handleKeyDown));
 
     return (
         <div
             id="settings-menu"
-            class="frame assets-select"
-            onClick={() => setSettingsMenu(false)}>
-            <div onClick={(e) => e.stopPropagation()}>
-                <h2>{t("settings")}</h2>
-                <span class="close" onClick={() => setSettingsMenu(false)}>
-                    <IoClose />
-                </span>
-                <hr class="spacer" />
-                <Section
-                    title={t("swap")}
-                    icon={<IoSwapHorizontal size={20} />}>
-                    <Entry
-                        label={"bitcoin_only"}
-                        tooltipLabel={"bitcoin_only_tooltip"}
-                        settingElement={<BitcoinOnly />}
-                    />
-                    <Entry
-                        label={"slippage"}
-                        tooltipLabel={"slippage_tooltip"}
-                        settingElement={<Slippage />}
-                    />
-                    <Entry
-                        label={"gas_topup"}
-                        tooltipLabel={"gas_topup_tooltip"}
-                        settingElement={<GasTopUp />}
-                    />
-                </Section>
-
-                <Section title={t("display")} icon={<ImDisplay size={20} />}>
-                    <Entry
-                        label={"denomination"}
-                        tooltipLabel={"denomination_tooltip"}
-                        settingElement={<Denomination />}
-                    />
-                    <Entry
-                        label={"fiat_currency"}
-                        tooltipLabel={"fiat_currency_tooltip"}
-                        settingElement={<FiatCurrencySetting />}
-                    />
-                    <Entry
-                        label={"decimal_separator"}
-                        tooltipLabel={"decimal_tooltip"}
-                        settingElement={<Separator />}
-                    />
-                </Section>
-
-                <Section title={t("security")} icon={<IoShield size={20} />}>
-                    <Entry
-                        label={"hide_wallet_address"}
-                        tooltipLabel={"hide_wallet_address_tooltip"}
-                        settingElement={<PrivacyMode />}
-                    />
-                    <Show when={!isMobile()}>
+            onClick={() => setSettingsMenu(false)}
+            on:touchmove={preventPageScroll}
+            on:wheel={preventPageScroll}>
+            <div
+                class="frame assets-select settings-menu-panel"
+                role="dialog"
+                aria-modal="true"
+                onClick={stopPropagation}
+                on:touchmove={stopPropagation}
+                on:wheel={stopPropagation}>
+                <div class="settings-menu-header">
+                    <h2>{t("settings")}</h2>
+                    <span
+                        class="close settings-menu-close"
+                        onClick={() => setSettingsMenu(false)}>
+                        <IoClose />
+                    </span>
+                </div>
+                <div
+                    class="settings-menu-scroll"
+                    on:touchmove={stopPropagation}
+                    on:wheel={stopPropagation}>
+                    <hr class="spacer" />
+                    <Section
+                        title={t("swap")}
+                        icon={<IoSwapHorizontal size={20} />}>
                         <Entry
-                            label={"zero_conf"}
-                            tooltipLabel={"zero_conf_tooltip"}
-                            settingElement={<ZeroConf />}
+                            label={"bitcoin_only"}
+                            tooltipLabel={"bitcoin_only_tooltip"}
+                            settingElement={<BitcoinOnly />}
                         />
-                    </Show>
-                    <Entry
-                        label={"rescue_key"}
-                        tooltipLabel={"download_boltz_rescue_key"}
-                        settingElement={<RescueFile />}
-                    />
-                </Section>
+                        <Entry
+                            label={"slippage"}
+                            tooltipLabel={"slippage_tooltip"}
+                            settingElement={<Slippage />}
+                        />
+                        <Entry
+                            label={"gas_topup"}
+                            tooltipLabel={"gas_topup_tooltip"}
+                            settingElement={<GasTopUp />}
+                        />
+                    </Section>
 
-                <Section title={t("support")} icon={<BsCardText size={20} />}>
-                    <Entry
-                        label={"logs"}
-                        tooltipLabel={"logs_tooltip"}
-                        settingElement={<Logs />}
-                    />
-                </Section>
+                    <Section
+                        title={t("display")}
+                        icon={<ImDisplay size={20} />}>
+                        <Entry
+                            label={"denomination"}
+                            tooltipLabel={"denomination_tooltip"}
+                            settingElement={<Denomination />}
+                        />
+                        <Entry
+                            label={"fiat_currency"}
+                            tooltipLabel={"fiat_currency_tooltip"}
+                            settingElement={<FiatCurrencySetting />}
+                        />
+                        <Entry
+                            label={"decimal_separator"}
+                            tooltipLabel={"decimal_tooltip"}
+                            settingElement={<Separator />}
+                        />
+                    </Section>
+
+                    <Section
+                        title={t("security")}
+                        icon={<IoShield size={20} />}>
+                        <Entry
+                            label={"hide_wallet_address"}
+                            tooltipLabel={"hide_wallet_address_tooltip"}
+                            settingElement={<PrivacyMode />}
+                        />
+                        <Show when={!isMobile()}>
+                            <Entry
+                                label={"zero_conf"}
+                                tooltipLabel={"zero_conf_tooltip"}
+                                settingElement={<ZeroConf />}
+                            />
+                        </Show>
+                        <Entry
+                            label={"rescue_key"}
+                            tooltipLabel={"download_boltz_rescue_key"}
+                            settingElement={<RescueFile />}
+                        />
+                    </Section>
+
+                    <Section
+                        title={t("support")}
+                        icon={<BsCardText size={20} />}>
+                        <Entry
+                            label={"logs"}
+                            tooltipLabel={"logs_tooltip"}
+                            settingElement={<Logs />}
+                        />
+                    </Section>
+                </div>
             </div>
         </div>
     );
