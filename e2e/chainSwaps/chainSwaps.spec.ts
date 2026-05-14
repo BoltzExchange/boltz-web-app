@@ -15,7 +15,7 @@ import {
     getBitcoinAddress,
     getBitcoinWalletTx,
     getLiquidAddress,
-    setDisableCooperativeSignatures,
+    setDisableAllSigners,
     verifyRescueFile,
 } from "../utils";
 
@@ -25,7 +25,7 @@ test.describe("Chain swap", () => {
     });
 
     test.afterEach(async () => {
-        await setDisableCooperativeSignatures(false);
+        await setDisableAllSigners(false);
     });
 
     test("BTC/L-BTC", async ({ page }) => {
