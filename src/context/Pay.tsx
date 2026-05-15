@@ -4,6 +4,7 @@ import {
     getReverseTransaction,
     postChainSwapDetails,
 } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -18,7 +19,6 @@ import {
 
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import { BTC, LBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import { getTransactionOutSpend } from "../utils/blockchain";
 import {

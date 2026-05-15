@@ -293,12 +293,6 @@ const HardwareDerivationPaths = (props: {
                     ...derivationPathsMainnet,
                 };
 
-            case "testnet":
-                return {
-                    ...derivationPaths,
-                    ...derivationPathsTestnet,
-                };
-
             default:
                 return {
                     ...derivationPaths,

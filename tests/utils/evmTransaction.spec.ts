@@ -1,9 +1,8 @@
+import { prefix0x } from "boltz-swaps/evm";
+
 import type * as AlchemyModule from "../../src/alchemy/Alchemy";
 import type { Signer } from "../../src/context/Web3";
-import {
-    prefix0x,
-    sendPopulatedTransaction,
-} from "../../src/utils/evmTransaction";
+import { sendPopulatedTransaction } from "../../src/utils/evmTransaction";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
 const mockAlchemySendTransaction =

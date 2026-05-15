@@ -1,11 +1,11 @@
 import { BigNumber } from "bignumber.js";
 import { getPairs } from "boltz-swaps/client";
+import { type SwapType } from "boltz-swaps/types";
 import { Show, createMemo, createResource } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC, LBTC } from "../consts/Assets";
-import { type SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";

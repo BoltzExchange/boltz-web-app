@@ -1,7 +1,7 @@
 import { isKnownTokenAddress } from "boltz-swaps/evm";
 import { isValidSolanaAddress } from "boltz-swaps/solana";
 import { isValidTronAddress } from "boltz-swaps/tron";
-import { NetworkTransport } from "boltz-swaps/types";
+import { NetworkTransport, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { getAddress, isAddress } from "viem";
@@ -12,7 +12,7 @@ import {
     isBitcoinOnlyAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { Side, SwapType } from "../consts/Enums";
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";

@@ -1,4 +1,5 @@
 import { render, waitFor } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 
 import { config as runtimeConfig } from "../../src/config";
 import type * as ConfigModule from "../../src/config";
@@ -11,7 +12,6 @@ import {
     USDC,
     USDT0,
 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
 import {
     TestComponent,

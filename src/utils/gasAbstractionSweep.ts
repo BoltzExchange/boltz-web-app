@@ -12,11 +12,6 @@ import { sendPopulatedTransaction } from "./evmTransaction";
 import type { RescueFile } from "./rescueFile";
 import { GasAbstractionType } from "./swapCreator";
 
-export {
-    type GasAbstractionSweep,
-    getGasAbstractionSweepDisplayAmount,
-} from "boltz-swaps/evm";
-
 export const gasAbstractionSweepAssets = [TBTC, USDT0, USDC] as const;
 
 export const getSweepableGasAbstractionBalances = ({

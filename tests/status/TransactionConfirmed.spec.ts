@@ -3,6 +3,7 @@ import type {
     Erc20SwapContract,
     EtherSwapContract,
 } from "boltz-swaps/evm/contracts";
+import type * as EvmTransactionLib from "boltz-swaps/evm/transaction";
 
 import type { Signer } from "../../src/context/Web3";
 import {
@@ -22,7 +23,7 @@ const {
 } = vi.hoisted(() => ({
     mockGasTopUpSupported: vi.fn<typeof QouterModule.gasTopUpSupported>(),
     mockGetSignerForGasAbstraction:
-        vi.fn<typeof EvmTransactionModule.getSignerForGasAbstraction>(),
+        vi.fn<typeof EvmTransactionLib.getSignerForGasAbstraction>(),
     mockRelayClaimTransaction: vi.fn<(...args: unknown[]) => Promise<string>>(),
     mockSendPopulatedTransaction:
         vi.fn<(...args: unknown[]) => Promise<string>>(),
@@ -51,9 +52,19 @@ vi.mock("../../src/utils/evmTransaction", async () => {
 
     return {
         ...actual,
-        getSignerForGasAbstraction: mockGetSignerForGasAbstraction,
         sendPopulatedTransaction: (...args: unknown[]) =>
             mockSendPopulatedTransaction(...args),
+    };
+});
+
+vi.mock("boltz-swaps/evm/transaction", async () => {
+    const actual = await vi.importActual<typeof EvmTransactionLib>(
+        "boltz-swaps/evm/transaction",
+    );
+
+    return {
+        ...actual,
+        getSignerForGasAbstraction: mockGetSignerForGasAbstraction,
     };
 });
 

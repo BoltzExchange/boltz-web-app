@@ -6,7 +6,11 @@ import {
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "boltz-swaps/evm/logs";
-import { AssetKind, type LogRefundData } from "boltz-swaps/types";
+import {
+    AssetKind,
+    type LogRefundData,
+    RskRescueMode,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
@@ -32,7 +36,6 @@ import {
     type blockChainsAssets,
     getKindForAsset,
 } from "../consts/Assets";
-import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";

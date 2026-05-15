@@ -1,7 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 
 import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { TestComponent, contextWrapper, payContext } from "../helper";

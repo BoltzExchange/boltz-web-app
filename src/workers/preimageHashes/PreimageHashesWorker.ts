@@ -3,8 +3,6 @@ import log from "loglevel";
 
 import type { PreimageHashMessage } from "./preimageHashes.worker";
 
-export type { PreimageEntry, PreimageMap } from "boltz-swaps/interfaces";
-
 export class PreimageHashesWorker implements PreimageDerivation {
     private worker: Worker;
     isDone = false;

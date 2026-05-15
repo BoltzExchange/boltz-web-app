@@ -1,5 +1,3 @@
-export { RskRescueMode, SwapType } from "boltz-swaps/types";
-
 export enum Denomination {
     Sat = "sat",
     Btc = "btc",

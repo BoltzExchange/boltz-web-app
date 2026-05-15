@@ -3,9 +3,9 @@ import { useLocation } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import {
     swapStatusFailed,
     swapStatusPending,

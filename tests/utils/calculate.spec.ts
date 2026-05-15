@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
+import { SwapType } from "boltz-swaps/types";
 
-import { SwapType } from "../../src/consts/Enums";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,

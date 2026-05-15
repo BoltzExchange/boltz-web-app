@@ -4,7 +4,7 @@ import { derivePda } from "boltz-swaps/solana";
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../fixtures/cctp.ts";
+} from "../../src/cctp/protocol.ts";
 
 const modules = { web3 };
 const encoder = new TextEncoder();

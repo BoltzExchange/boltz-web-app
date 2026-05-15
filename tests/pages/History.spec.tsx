@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import userEvent from "@testing-library/user-event";
+import { SwapType } from "boltz-swaps/types";
 
 import { BTC, LN } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import dict from "../../src/i18n/i18n";
 import History from "../../src/pages/History";
 import { latestStorageVersion } from "../../src/utils/migration";

@@ -12,12 +12,12 @@ import {
     getLockupTransaction,
     getPartialRefundSignature,
 } from "boltz-swaps/client";
+import { SwapType, arbitrumChainId } from "boltz-swaps/types";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { config } from "../config";
-import { arbitrumChainId } from "../configs/base";
 import {
     type AssetType,
     ETH,
@@ -26,7 +26,6 @@ import {
     type blockChainsAssets,
     refundableAssets,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import {
     swapStatusFailed,
     swapStatusFinal,

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
@@ -34,7 +35,6 @@ import {
     refundableAssets,
 } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
-import { SwapType } from "../consts/Enums";
 import {
     swapStatusFailed,
     swapStatusPending,

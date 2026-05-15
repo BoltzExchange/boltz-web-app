@@ -1,13 +1,12 @@
 import { BigNumber } from "bignumber.js";
 import type * as BoltzClientModule from "boltz-swaps/client";
 import type { Pairs, QuoteData } from "boltz-swaps/client";
-import { CctpReceiveMode } from "boltz-swaps/types";
+import { CctpReceiveMode, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
 import type * as BaseConfigModule from "../../src/configs/base";
 import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as QuoterModule from "../../src/utils/quoter";
 

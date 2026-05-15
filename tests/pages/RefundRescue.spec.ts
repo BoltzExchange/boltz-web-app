@@ -1,9 +1,9 @@
 import { OutputType } from "boltz-core";
 import type { RestorableSwap } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { describe, expect, test } from "vitest";
 
 import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import { mapSwap } from "../../src/pages/RefundRescue";
 
 const tree = {

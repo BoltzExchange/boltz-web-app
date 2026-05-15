@@ -1,12 +1,12 @@
 import type * as SolidRouter from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
+import { RskRescueMode } from "boltz-swaps/types";
 import { type Accessor, createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
 
 import type * as ContractsModule from "../../packages/boltz-swaps/src/evm/contracts.ts";
 import { TBTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { RskRescueMode } from "../../src/consts/Enums";
 import type * as RescueContextModule from "../../src/context/Rescue";
 import type * as Web3Module from "../../src/context/Web3";
 import type { Signer } from "../../src/context/Web3";

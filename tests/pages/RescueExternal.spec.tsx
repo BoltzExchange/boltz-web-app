@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
-import { SwapType } from "../../src/consts/Enums";
 import { paginationLimit } from "../../src/consts/Pagination";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal, { RefundBtcLike } from "../../src/pages/RescueExternal";

@@ -14,7 +14,7 @@ import {
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../fixtures/cctp.ts";
+} from "../../src/cctp/protocol.ts";
 
 const signer = (value: string) => createNoopSigner(address(value));
 const pubkey = () => PublicKey.unique().toBase58();

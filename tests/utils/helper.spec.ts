@@ -1,10 +1,10 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 import type { Pairs } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 
 import type * as ConfigModule from "../../src/config";
 import { BTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import { ECPair } from "../../src/utils/ecpair";
 import {
     formatAddress,

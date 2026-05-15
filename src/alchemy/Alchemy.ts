@@ -1,10 +1,10 @@
+import { prefix0x } from "boltz-swaps/evm";
 import { type Address, type Hash, type Hex, toHex } from "viem";
 
 import { config } from "../config";
 import { isTor } from "../configs/base";
 import type { Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
-import { prefix0x } from "../utils/evmTransaction";
 import { constructRequestOptions } from "../utils/helper";
 
 const alchemyHeaders = {

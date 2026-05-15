@@ -15,10 +15,10 @@ import {
     type BridgeKind,
     GasAbstractionType,
     SwapPosition,
+    SwapType,
 } from "boltz-swaps/types";
 
 import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
 import { type EncodedHop } from "./Pair";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";

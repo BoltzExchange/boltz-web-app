@@ -1,6 +1,6 @@
 {
     "name": "boltz-swaps",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "Boltz Swap SDK",
     "license": "MIT",
     "repository": {
@@ -18,6 +18,7 @@
         ".": "./src/index.ts",
         "./types": "./src/types.ts",
         "./config": "./src/config.ts",
+        "./chains": "./src/chains.ts",
         "./logger": "./src/logger.ts",
         "./interfaces": "./src/interfaces/index.ts",
         "./cache": "./src/cache.ts",
@@ -30,9 +31,11 @@
         "./evm": "./src/evm/index.ts",
         "./evm/contracts": "./src/evm/contracts.ts",
         "./evm/abis": "./src/evm/abis/index.ts",
+        "./evm/explorer": "./src/evm/explorer.ts",
         "./evm/transaction": "./src/evm/transaction.ts",
         "./evm/commitment": "./src/evm/commitment.ts",
         "./evm/logs": "./src/evm/logs.ts",
+        "./presets/mainnet": "./src/presets/mainnet.ts",
         "./solana": "./src/solana/index.ts",
         "./tron": "./src/tron/index.ts",
         "./lazy": "./src/lazy.ts",
@@ -55,6 +58,10 @@
             "./config": {
                 "types": "./dist/config.d.ts",
                 "default": "./dist/config.js"
+            },
+            "./chains": {
+                "types": "./dist/chains.d.ts",
+                "default": "./dist/chains.js"
             },
             "./logger": {
                 "types": "./dist/logger.d.ts",
@@ -104,6 +111,10 @@
                 "types": "./dist/evm/abis/index.d.ts",
                 "default": "./dist/evm/abis/index.js"
             },
+            "./evm/explorer": {
+                "types": "./dist/evm/explorer.d.ts",
+                "default": "./dist/evm/explorer.js"
+            },
             "./evm/transaction": {
                 "types": "./dist/evm/transaction.d.ts",
                 "default": "./dist/evm/transaction.js"
@@ -115,6 +126,10 @@
             "./evm/logs": {
                 "types": "./dist/evm/logs.d.ts",
                 "default": "./dist/evm/logs.js"
+            },
+            "./presets/mainnet": {
+                "types": "./dist/presets/mainnet.d.ts",
+                "default": "./dist/presets/mainnet.js"
             },
             "./solana": {
                 "types": "./dist/solana/index.d.ts",
@@ -156,7 +171,7 @@
     "scripts": {
         "build": "tsc",
         "dev": "tsc --watch",
-        "tsc": "tsc --noEmit",
+        "tsc": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && tsc --noEmit -p examples/tsconfig.json",
         "test": "vitest run",
         "prettier": "bunx prettier --cache src tests scripts *.json *.mjs",
         "prettier:write": "bun run prettier -- --write",

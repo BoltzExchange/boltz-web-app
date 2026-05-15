@@ -154,7 +154,6 @@ if (!fs.existsSync(configFile)) {
 Please run one of the following commands to generate a config file:
     - \x1b[36mnpm run mainnet\x1b[0m
     - \x1b[36mnpm run regtest\x1b[0m
-    - \x1b[36mnpm run testnet\x1b[0m
     - \x1b[36mnpm run beta\x1b[0m
     - \x1b[36mnpm run pro\x1b[0m
   

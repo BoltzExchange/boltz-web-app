@@ -76,18 +76,6 @@ import type {
     SendParam,
 } from "./types.ts";
 
-export type {
-    MsgFee,
-    OftNativeDrop,
-    OftQuoteOptions,
-    OftReceiveQuote,
-    OftReceivedEvent,
-    OftSentEvent,
-    OftTransportClient,
-    SendParam,
-} from "./types.ts";
-export { getTronTokenAllowance } from "./tron.ts";
-
 const providerCachePrefix = "oft:provider:";
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
 const type3Option = 3;

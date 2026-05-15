@@ -113,7 +113,7 @@ export enum AssetKind {
 export enum Explorer {
     Mempool = "mempool",
     Esplora = "esplora",
-    Blockscout = "blockscout",
+    EtherscanStyle = "etherscan-style",
     Solscan = "solscan",
     Tronscan = "tronscan",
 }
@@ -156,24 +156,6 @@ type CctpAssetBridge = {
 };
 
 export type AssetBridge = OftAssetBridge | CctpAssetBridge;
-
-export type Usdt0Variant = {
-    asset: string;
-    canSend: boolean;
-    disabled?: boolean;
-    chainName: string;
-    symbol: string;
-    nativeDecimals?: number;
-    minGas?: bigint;
-    gasToken?: string;
-    transport?: NetworkTransport;
-    chainId?: number;
-    oftQuotePayer?: string;
-    tokenAddress: string;
-    blockExplorerUrl: string;
-    rpcUrls: readonly string[];
-    mesh?: Usdt0Kind;
-};
 
 export type SolanaDetails = {
     blockhash: string;

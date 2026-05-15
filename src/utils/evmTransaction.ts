@@ -21,15 +21,6 @@ import {
 import type { Signer } from "../context/Web3";
 import { relayClaimTransaction } from "../rif/Signer";
 
-export { prefix0x } from "boltz-swaps/evm";
-export {
-    type ClaimResult,
-    type PopulatedEvmTransaction,
-    getLockupEvent,
-    getSignerForGasAbstraction,
-} from "boltz-swaps/evm/transaction";
-export type { LockupEvent } from "boltz-swaps/types";
-
 type SendPopulatedTransactionOptions = {
     alchemy?: SendAlchemyTransactionOptions;
 };

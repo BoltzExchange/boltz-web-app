@@ -1,15 +1,13 @@
+import { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
+import type { PopulatedEvmTransaction } from "boltz-swaps/evm/transaction";
 import { encodeFunctionData, erc20Abi, getAddress } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
 import { config } from "../../src/config";
 import { type AssetType, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import type { Signer } from "../../src/context/Web3";
-import type {
-    PopulatedEvmTransaction,
-    sendPopulatedTransaction,
-} from "../../src/utils/evmTransaction";
+import type { sendPopulatedTransaction } from "../../src/utils/evmTransaction";
 import {
-    getGasAbstractionSweepDisplayAmount,
     getSweepableGasAbstractionBalances,
     sweepGasAbstractionToken,
 } from "../../src/utils/gasAbstractionSweep";

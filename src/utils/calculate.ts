@@ -1,6 +1,5 @@
 import { BigNumber } from "bignumber.js";
-
-import { SwapType } from "../consts/Enums";
+import { SwapType } from "boltz-swaps/types";
 
 const bigCeil = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_CEIL);

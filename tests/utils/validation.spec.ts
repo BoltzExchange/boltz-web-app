@@ -1,8 +1,8 @@
 import { hex } from "@scure/base";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import { decodeAddress } from "../../src/utils/compat";
 import { ECPair } from "../../src/utils/ecpair";
 import { validateResponse } from "../../src/utils/validation";

@@ -1,8 +1,9 @@
 import { BigNumber } from "bignumber.js";
+import { SwapType } from "boltz-swaps/types";
 import { createEffect, on } from "solid-js";
 
 import { LN, isBitcoinOnlyAsset } from "../consts/Assets";
-import { Side, SwapType } from "../consts/Enums";
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import type { DictKey } from "../i18n/i18n";

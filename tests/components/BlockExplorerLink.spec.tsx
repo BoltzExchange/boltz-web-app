@@ -1,11 +1,10 @@
 import { render, screen } from "@solidjs/testing-library";
-import { SwapPosition } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
 
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
 import { BTC, LBTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import dict from "../../src/i18n/i18n";
 import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";

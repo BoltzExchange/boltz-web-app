@@ -21,6 +21,7 @@ import {
     BridgeKind,
     CctpReceiveMode,
     SwapPosition,
+    SwapType,
 } from "boltz-swaps/types";
 import log from "loglevel";
 import { zeroAddress } from "viem";
@@ -35,7 +36,6 @@ import {
     getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,

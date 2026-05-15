@@ -1,4 +1,5 @@
 import { BTC, RBTC, TBTC } from "../../src/consts/Assets";
+import { mnemonicToHDKey } from "../../src/utils/rescueDerivation";
 import {
     Errors,
     type RescueFile,
@@ -8,7 +9,6 @@ import {
     derivePreimageFromRescueKey,
     generateRescueFile,
     getXpub,
-    mnemonicToHDKey,
     validateRescueFile,
 } from "../../src/utils/rescueFile";
 

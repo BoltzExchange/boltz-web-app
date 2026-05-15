@@ -10,7 +10,7 @@ import {
     Router,
     useParams,
 } from "@solidjs/router";
-import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { createBoltzClient } from "boltz-swaps";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 import { render } from "solid-js/web";
@@ -54,34 +54,18 @@ import "./utils/patches";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "./utils/quoter";
 
 setLogger(log);
-setBoltzSwapsConfig({
-    get assets() {
-        return config.assets;
-    },
-    get cctpApiUrl() {
-        return config.cctpApiUrl;
-    },
-    get layerZeroExplorerUrl() {
-        return config.layerZeroExplorerUrl;
-    },
-    get cctpExplorerUrl() {
-        return config.cctpExplorerUrl;
-    },
-    get oftDeploymentsUrl() {
-        return config.oftDeploymentsUrl;
-    },
+export const boltz = createBoltzClient(() => ({
+    assets: config.assets,
+    cctpApiUrl: config.cctpApiUrl,
+    layerZeroExplorerUrl: config.layerZeroExplorerUrl,
+    cctpExplorerUrl: config.cctpExplorerUrl,
+    oftDeploymentsUrl: config.oftDeploymentsUrl,
     gasTopUpSupported,
     getGasTopUpNativeAmount,
-    get boltzApiUrl() {
-        return chooseUrl(config.apiUrl);
-    },
-    get referral() {
-        return getReferral();
-    },
-    get cooperativeDisabled() {
-        return config.cooperativeDisabled === true;
-    },
-});
+    boltzApiUrl: chooseUrl(config.apiUrl),
+    referral: getReferral(),
+    cooperativeDisabled: config.cooperativeDisabled === true,
+}));
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker

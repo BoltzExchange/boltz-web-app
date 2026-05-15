@@ -3,5 +3,7 @@ export * from "./directSend.ts";
 export * from "./events.ts";
 export * from "./evm.ts";
 export * from "./fee.ts";
+export * from "./protocol.ts";
 export * from "./solana.ts";
 export * from "./types.ts";
+export * from "./variants.ts";

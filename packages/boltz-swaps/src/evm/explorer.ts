@@ -1,9 +1,9 @@
-import { Explorer, NetworkTransport } from "boltz-swaps/types";
+import { Explorer, NetworkTransport } from "../types.ts";
 
 export const getExplorerId = (transport: NetworkTransport): Explorer => {
     switch (transport) {
         case NetworkTransport.Evm:
-            return Explorer.Blockscout;
+            return Explorer.EtherscanStyle;
 
         case NetworkTransport.Solana:
             return Explorer.Solscan;

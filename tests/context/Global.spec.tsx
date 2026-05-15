@@ -1,8 +1,8 @@
 import { render } from "@solidjs/testing-library";
 import type * as BoltzClientModule from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 
 import type * as ConfigModule from "../../src/config";
-import { SwapType } from "../../src/consts/Enums";
 
 const { getPairsMock, configMock } = vi.hoisted(() => ({
     getPairsMock: vi.fn<typeof BoltzClientModule.getPairs>(),

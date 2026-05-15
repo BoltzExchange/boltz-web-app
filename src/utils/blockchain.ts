@@ -1,5 +1,10 @@
 import { broadcastApiTransaction } from "boltz-swaps/client";
-import { Explorer, type ExplorerUrl, type Url } from "boltz-swaps/types";
+import {
+    Explorer,
+    type ExplorerUrl,
+    SwapType,
+    type Url,
+} from "boltz-swaps/types";
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
@@ -12,7 +17,6 @@ import {
     type blockChainsAssets,
     refundableAssets,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
 import { constructRequestOptions } from "./helper";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";

@@ -1,4 +1,4 @@
-import { getReferralHeader, requireBoltzApiUrl } from "../config.ts";
+import { getBoltzApiUrl, getReferralHeader } from "../config.ts";
 import { formatError } from "../errors.ts";
 
 // Default timeout for non-Tor requests; host can override per-call. Tor
@@ -44,7 +44,7 @@ export const fetcher = async <T = unknown>(
             };
         }
 
-        const apiUrl = requireBoltzApiUrl() + url;
+        const apiUrl = getBoltzApiUrl() + url;
         const response = await fetch(apiUrl, options || opts);
 
         if (!response.ok) {

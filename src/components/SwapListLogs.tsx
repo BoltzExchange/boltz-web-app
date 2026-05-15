@@ -1,9 +1,8 @@
 import { useNavigate } from "@solidjs/router";
-import type { LogRefundData } from "boltz-swaps/types";
+import { type LogRefundData, type RskRescueMode } from "boltz-swaps/types";
 import { type Accessor, For, Show, createMemo } from "solid-js";
 
 import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";
-import type { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import { cropString } from "../utils/helper";
