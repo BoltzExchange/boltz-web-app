@@ -2,11 +2,11 @@ import type { Umi } from "@metaplex-foundation/umi";
 import type { WalletAdapter as UmiWalletAdapter } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
-import {
-    type AccountMeta,
-    type AddressLookupTableAccount,
-    type Connection,
-    type TransactionInstruction,
+import type {
+    AccountMeta,
+    AddressLookupTableAccount,
+    Connection,
+    TransactionInstruction,
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 

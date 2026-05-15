@@ -89,12 +89,12 @@
         "vite-plugin-wasm": "^3.6.0",
         "vitepress": "^1.6.4",
         "vitepress-plugin-llms": "^1.12.2",
-        "vitest": "^4.1.5",
+        "vitest": "catalog:",
       },
     },
     "packages/boltz-swaps": {
       "name": "boltz-swaps",
-      "version": "0.0.0",
+      "version": "0.0.2",
       "dependencies": {
         "@noble/hashes": "catalog:",
         "@scure/base": "catalog:",
@@ -105,7 +105,7 @@
         "@codama/renderers-js": "^2.2.0",
         "boltz-core": "catalog:",
         "codama": "^1.6.0",
-        "vitest": "^4.1.5",
+        "vitest": "catalog:",
       },
       "peerDependencies": {
         "@layerzerolabs/lz-solana-sdk-v2": "catalog:",
@@ -154,6 +154,7 @@
     "boltz-core": "^4.0.5",
     "tronweb": "^6.3.0",
     "viem": "^2.48.8",
+    "vitest": "^4.1.5",
   },
   "packages": {
     "@0no-co/graphql.web": ["@0no-co/graphql.web@1.2.0", "", { "peerDependencies": { "graphql": "^14.0.0 || ^15.0.0 || ^16.0.0" }, "optionalPeers": ["graphql"] }, "sha512-/1iHy9TTr63gE1YcR5idjx8UREz1s0kFhydf3bBLCXyqjhkIc6igAzTOx3zPifCwFR87tsh/4Pa9cNts6d2otw=="],

@@ -22,13 +22,14 @@
             "bignumber.js": "^11.1.1",
             "boltz-core": "^4.0.5",
             "tronweb": "^6.3.0",
-            "viem": "^2.48.8"
+            "viem": "^2.48.8",
+            "vitest": "^4.1.5"
         }
     },
     "scripts": {
         "start": "bun run regtest && vite",
         "test": "bun run regtest && vitest run --dir ./tests && bun --filter boltz-swaps test",
-        "test:e2e": "bun run regtest && playwright test",
+        "test:e2e": "bun run regtest && bun --filter boltz-swaps build && playwright test",
         "playwright:install": "playwright install --with-deps chromium",
         "dev": "vite",
         "preview": "vite preview",
@@ -88,7 +89,7 @@
         "vite-plugin-wasm": "^3.6.0",
         "vitepress": "^1.6.4",
         "vitepress-plugin-llms": "^1.12.2",
-        "vitest": "^4.1.5"
+        "vitest": "catalog:"
     },
     "dependencies": {
         "@fontsource/noto-mono": "^5.2.5",
