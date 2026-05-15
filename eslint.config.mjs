@@ -45,6 +45,7 @@ export default [
                         "*.mjs",
                         "*.js",
                         "packages/*/scripts/*.ts",
+                        "packages/*/scripts/*.mjs",
                     ],
                 },
                 tsconfigRootDir: import.meta.dirname,
@@ -127,6 +128,15 @@ export default [
             "no-console": "off",
             "no-restricted-imports": "off",
             "@typescript-eslint/no-restricted-imports": "off",
+        },
+    },
+    {
+        files: ["packages/*/scripts/**/*.{mjs,ts}"],
+        languageOptions: {
+            globals: globals.node,
+        },
+        rules: {
+            "no-console": "off",
         },
     },
     {

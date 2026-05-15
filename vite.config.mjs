@@ -182,6 +182,13 @@ export default defineConfig({
         alias: {
             src: path.resolve(__dirname, "src"),
         },
+        conditions: ["source", "browser", "module", "import", "default"],
+    },
+    ssr: {
+        resolve: {
+            conditions: ["source", "node", "import", "default"],
+            externalConditions: ["source", "node", "import", "default"],
+        },
     },
     server: {
         cors: { origin: "*" },
@@ -223,7 +230,7 @@ export default defineConfig({
         pool: "forks",
         server: {
             deps: {
-                inline: [/@solidjs\/router/],
+                inline: [/@solidjs\/router/, /^boltz-swaps/],
             },
         },
     },

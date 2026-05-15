@@ -4,6 +4,7 @@
         "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
+        "customConditions": ["source"],
         "rewriteRelativeImportExtensions": true,
         "verbatimModuleSyntax": true,
         "esModuleInterop": true,
