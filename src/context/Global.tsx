@@ -6,6 +6,7 @@ import {
     translator,
 } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
+import { type Pairs, getPairs } from "boltz-swaps/client";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -31,7 +32,6 @@ import {
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
 import dict, { type DictKey } from "../i18n/i18n";
-import { type Pairs, getPairs } from "../utils/boltzClient";
 import { type ECKeys, ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import { getRegularReferral, isMobile } from "../utils/helper";

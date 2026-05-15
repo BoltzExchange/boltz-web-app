@@ -1,14 +1,4 @@
 import {
-    type BlockRange,
-    createAssetProvider,
-    createProvider,
-    defaultScanInterval,
-    generateBlockRangeBatches,
-} from "boltz-swaps/evm";
-import { erc20SwapAbi, etherSwapAbi } from "boltz-swaps/generated/evm-abis";
-import { AssetKind } from "boltz-swaps/types";
-import log from "loglevel";
-import {
     type AbiEvent,
     type Address,
     type Hash,
@@ -23,21 +13,35 @@ import {
     toHex,
 } from "viem";
 
-import { config } from "../config";
-import { arbitrumChainId } from "../configs/base";
-import { type AssetType, getKindForAsset } from "../consts/Assets";
-import { RskRescueMode } from "../consts/Enums";
 import {
-    type Erc20SwapContract,
-    type EtherSwapContract,
-    resolveErc20SwapAbi,
-    resolveEtherSwapAbi,
-} from "../context/contracts";
+    getContractDeployHeight,
+    getKindForAsset,
+    requireChainId,
+} from "../config.ts";
+import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis.ts";
+import type {
+    PreimageDerivation,
+    PreimageMap,
+} from "../interfaces/preimageMap.ts";
+import { getLogger } from "../logger.ts";
 import {
-    PreimageHashesWorker,
-    type PreimageMap,
-} from "../workers/preimageHashes/PreimageHashesWorker";
-import { prefix0x } from "./evmTransaction";
+    AssetKind,
+    type AssetType,
+    type LogRefundData,
+    RskRescueMode,
+    arbitrumChainId,
+} from "../types.ts";
+import { resolveErc20SwapAbi, resolveEtherSwapAbi } from "./abis/index.ts";
+import {
+    type BlockRange,
+    defaultScanInterval,
+    generateBlockRangeBatches,
+} from "./blockRanges.ts";
+import type { Erc20SwapContract, EtherSwapContract } from "./contracts.ts";
+import { prefix0x } from "./prefix0x.ts";
+import { createAssetProvider, createProvider } from "./provider.ts";
+
+export type { LogRefundData } from "../types.ts";
 
 export type SwapContract = EtherSwapContract | Erc20SwapContract;
 type SwapReadContract = {
@@ -58,10 +62,15 @@ export const getTimelockBlockNumber = async (
     provider: PublicClient,
     asset: AssetType,
 ): Promise<number> => {
-    const network = config.assets?.[asset as string]?.network;
+    let chainId: number | undefined;
+    try {
+        chainId = requireChainId(asset);
+    } catch {
+        chainId = undefined;
+    }
 
-    if (network?.chainId === arbitrumChainId) {
-        const rpcProvider = createAssetProvider(asset as string);
+    if (chainId === arbitrumChainId) {
+        const rpcProvider = createAssetProvider(asset);
         const block = (await rpcProvider.request({
             method: "eth_getBlockByNumber",
             params: ["latest", false],
@@ -72,21 +81,22 @@ export const getTimelockBlockNumber = async (
     return Number(await provider.getBlockNumber());
 };
 
-/**
- * For Arbitrum, log/receipt `blockNumber` is the rollup (L2) height; the block
- * header includes `l1BlockNumber` (Ethereum L1). Elsewhere returns the input.
- */
 export const getRollupL1BlockNumber = async (
     asset: AssetType,
     rollupBlockNumber: number,
 ): Promise<number> => {
-    const network = config.assets?.[asset as string]?.network;
+    let chainId: number | undefined;
+    try {
+        chainId = requireChainId(asset);
+    } catch {
+        chainId = undefined;
+    }
 
-    if (network?.chainId !== arbitrumChainId) {
+    if (chainId !== arbitrumChainId) {
         return rollupBlockNumber;
     }
 
-    const rpcProvider = createAssetProvider(asset as string);
+    const rpcProvider = createAssetProvider(asset);
     const block = (await rpcProvider.request({
         method: "eth_getBlockByNumber",
         params: [toHex(rollupBlockNumber), false],
@@ -113,20 +123,6 @@ type LockupEventArgs = {
 type LockupLog = Log<bigint, number, false, AbiEvent, true> & {
     eventName: "Lockup";
     args: LockupEventArgs;
-};
-
-export type LogRefundData = {
-    asset: AssetType;
-    blockNumber: number;
-    transactionHash: Hex;
-
-    preimageHash: Hex;
-    preimage?: Hex;
-    amount: bigint;
-    tokenAddress?: Address;
-    claimAddress: Address;
-    refundAddress: Address;
-    timelock: bigint;
 };
 
 type ScanFilter = {
@@ -165,10 +161,6 @@ type ScanContext = {
     totalBlocks: number;
 };
 
-/**
- * Reconciles pending claims against the current preimage map.
- * Returns matched claims removed from the pending list.
- */
 const reconcilePendingClaims = (
     pendingClaims: LogRefundData[],
     preimageMap: PreimageMap,
@@ -195,12 +187,6 @@ const getAllFilterAddresses = (filter: ScanFilter): string[] => {
     return addrs;
 };
 
-/**
- * Builds args to pass to viem's `getLogs` for native indexed-topic filtering.
- * When extra addresses are present (e.g. gas abstraction signer), or when
- * filtering by claimAddress on a v5 contract (claimAddress not indexed),
- * returns undefined so `matchesFilter` does the post-filtering.
- */
 const buildLockupFilterArgs = (
     version: number,
     scanConfig: ScanConfig,
@@ -242,7 +228,7 @@ const createScanContext = async (
     const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
     const provider = createProvider([providerUrl]);
     const contractAddress = contract.address;
-    const minBlock = config.assets?.[asset]?.contracts?.deployHeight ?? 0;
+    const minBlock = getContractDeployHeight(asset) ?? 0;
 
     const [latestBlock, version] = await Promise.all([
         provider.getBlockNumber().then(Number),
@@ -290,11 +276,6 @@ const createScanContext = async (
     };
 };
 
-/**
- * Fetches Lockup events for multiple block ranges in parallel using viem's
- * native indexed-topic filtering. Returns decoded events sorted by block
- * number descending (most recent first).
- */
 const fetchEventsForRanges = async (
     ranges: BlockRange[],
     provider: PublicClient,
@@ -422,15 +403,13 @@ export const getLogsFromReceipt = async (
     return data;
 };
 
-/**
- * Unified generator for scanning lockup events with configurable filtering.
- * Yields progress and events for each batch of blocks scanned.
- */
 export async function* scanLockupEvents(
     abortSignal: AbortSignal,
     contract: SwapContract,
     scanConfig: ScanConfig,
+    derivation?: PreimageDerivation,
 ): AsyncGenerator<ScanResult> {
+    const log = getLogger();
     const ctx = await createScanContext(contract, scanConfig);
     if (ctx === null) {
         return;
@@ -438,10 +417,16 @@ export async function* scanLockupEvents(
 
     const needsPreimages =
         scanConfig.action === RskRescueMode.Claim && scanConfig.mnemonic;
-    const worker = needsPreimages ? new PreimageHashesWorker() : null;
+    const worker =
+        needsPreimages && derivation !== undefined ? derivation : null;
     if (worker) {
         log.info("Starting preimage derivation in background");
-        const chainId = config.assets?.[scanConfig.asset]?.network?.chainId;
+        let chainId: number | undefined;
+        try {
+            chainId = requireChainId(scanConfig.asset);
+        } catch {
+            chainId = undefined;
+        }
         if (scanConfig.mnemonic === undefined || chainId === undefined) {
             return;
         }

@@ -1,5 +1,8 @@
-import type * as EvmModule from "boltz-swaps/evm";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { etherSwapAbiV5 } from "boltz-swaps/evm/abis";
+import { getLogsFromReceipt, scanLockupEvents } from "boltz-swaps/evm/logs";
 import { etherSwapAbi } from "boltz-swaps/generated/evm-abis";
+import { RskRescueMode } from "boltz-swaps/types";
 import {
     type AbiEvent,
     type Hex,
@@ -8,8 +11,7 @@ import {
     getAddress,
 } from "viem";
 
-import { RskRescueMode } from "../../src/consts/Enums";
-import etherSwapAbiV5 from "../../src/consts/abis/v5/EtherSwap.json";
+import type * as ProviderModule from "../../src/evm/provider.ts";
 
 const {
     mockCreateProvider,
@@ -51,29 +53,25 @@ const {
     };
 });
 
-vi.mock("../../src/config", () => ({
-    config: {
-        assets: {
-            RBTC: {
-                type: "EVM_NATIVE",
-                contracts: { deployHeight: 1 },
-                network: { chainId: 31 },
-            },
-        },
-    },
+vi.mock("../../src/evm/provider.ts", async (importActual) => ({
+    ...(await importActual<typeof ProviderModule>()),
+    createProvider: mockCreateProvider,
+    createAssetProvider: mockCreateAssetProvider,
 }));
 
-vi.mock("boltz-swaps/evm", async () => {
-    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
-    return {
-        ...actual,
-        createProvider: mockCreateProvider,
-        createAssetProvider: mockCreateAssetProvider,
-    };
+beforeAll(() => {
+    setBoltzSwapsConfig({
+        assets: {
+            RBTC: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                type: "EVM_NATIVE" as any,
+                contracts: { deployHeight: 1 },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                network: { chainId: 31 } as any,
+            },
+        },
+    });
 });
-
-const { getLogsFromReceipt, scanLockupEvents } =
-    await import("../../src/utils/contractLogs");
 
 const swapAddress = getAddress("0x1000000000000000000000000000000000000000");
 const claimAddress = getAddress("0x2000000000000000000000000000000000000000");

@@ -1,6 +1,7 @@
+import type { Pairs } from "boltz-swaps/client";
+
 import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import type { Pairs } from "./boltzClient";
 
 export const isPairValid = (
     pairs: Pairs | undefined,

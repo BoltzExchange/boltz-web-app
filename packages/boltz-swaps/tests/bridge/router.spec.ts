@@ -1,6 +1,5 @@
 import { type LooseRouterCall, toRouterCalls } from "boltz-swaps/bridge";
 import { encodeAbiParameters, keccak256 } from "viem";
-import { describe, expect, test } from "vitest";
 
 describe("toRouterCalls", () => {
     test("returns an empty array for an empty input", () => {
@@ -108,7 +107,6 @@ describe("toRouterCalls", () => {
     });
 
     test("returns the canonical key set in tuple-positional order", () => {
-        // viem looks up named tuple components by key, so missing keys throw.
         const [call] = toRouterCalls([
             {
                 target: "0x0000000000000000000000000000000000000001",

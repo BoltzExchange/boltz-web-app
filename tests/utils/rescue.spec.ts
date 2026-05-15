@@ -20,7 +20,8 @@ import type {
 } from "../../src/utils/swapCreator";
 
 const blockchainModule = await import("../../src/utils/blockchain");
-const boltzClientModule = await import("../../src/utils/boltzClient");
+const boltzClientModule =
+    await import("../../packages/boltz-swaps/src/client.ts");
 
 type RescueListResult = (SomeSwap & {
     action: RescueAction;
@@ -32,7 +33,7 @@ vi.mock("../../src/utils/blockchain", () => ({
     getSwapUTXOs: vi.fn(),
 }));
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getLockupTransaction: vi.fn(),
 }));
 

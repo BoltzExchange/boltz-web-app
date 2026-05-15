@@ -1,10 +1,10 @@
 import { satsToAssetAmount } from "boltz-swaps/evm";
-
-import type { Signer } from "../../src/context/Web3";
 import type {
     Erc20SwapContract,
     EtherSwapContract,
-} from "../../src/context/contracts";
+} from "boltz-swaps/evm/contracts";
+
+import type { Signer } from "../../src/context/Web3";
 import {
     normalizePersistedReceiveAmount,
     signErc20ClaimToRouter,

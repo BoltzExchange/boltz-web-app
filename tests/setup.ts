@@ -4,10 +4,12 @@ import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 
 import { config as runtimeConfig } from "../src/config";
+import { chooseUrl } from "../src/configs/base";
 import { config as mainnetConfig } from "../src/configs/mainnet";
 
 log.setLevel("error");
 setLogger(log);
+
 setBoltzSwapsConfig({
     get assets() {
         return runtimeConfig.assets;
@@ -23,6 +25,15 @@ setBoltzSwapsConfig({
     },
     get oftDeploymentsUrl() {
         return runtimeConfig.oftDeploymentsUrl;
+    },
+    get boltzApiUrl() {
+        return chooseUrl(runtimeConfig.apiUrl);
+    },
+    get referral() {
+        return "boltz_webapp_desktop";
+    },
+    get cooperativeDisabled() {
+        return runtimeConfig.cooperativeDisabled === true;
     },
 });
 

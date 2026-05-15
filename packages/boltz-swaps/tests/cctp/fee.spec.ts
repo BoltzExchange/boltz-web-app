@@ -1,7 +1,6 @@
 import { cctpFeeBpsDenominator, getCctpFee } from "boltz-swaps/cctp";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { CctpReceiveMode, CctpTransferMode } from "boltz-swaps/types";
-
-import { config } from "../../src/config";
 
 const oneBps = cctpFeeBpsDenominator / 10_000n;
 
@@ -20,18 +19,12 @@ const feeEntry = (
 });
 
 describe("cctpFee", () => {
-    const originalFeeApiUrl = config.cctpApiUrl;
-
     beforeEach(() => {
-        config.cctpApiUrl = "https://iris-api.circle.com";
+        setBoltzSwapsConfig({ cctpApiUrl: "https://iris-api.circle.com" });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-    });
-
-    afterAll(() => {
-        config.cctpApiUrl = originalFeeApiUrl;
     });
 
     test("should select the fast transfer fee with forwarding", async () => {

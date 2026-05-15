@@ -1,4 +1,3 @@
-// @vitest-environment node
 import {
     address,
     createNoopSigner,
@@ -15,7 +14,7 @@ import {
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../../src/configs/cctp";
+} from "../fixtures/cctp.ts";
 
 const signer = (value: string) => createNoopSigner(address(value));
 const pubkey = () => PublicKey.unique().toBase58();

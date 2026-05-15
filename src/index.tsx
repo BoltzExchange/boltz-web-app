@@ -23,6 +23,7 @@ import { SwapChecker } from "./components/SwapChecker";
 import { SwapExecutionWorker } from "./components/SwapExecutionWorker";
 import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
+import { chooseUrl } from "./configs/base";
 import { CreateProvider } from "./context/Create";
 import { FiatProvider } from "./context/Fiat";
 import { GlobalProvider } from "./context/Global";
@@ -48,6 +49,7 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
+import { getReferral } from "./utils/helper";
 import "./utils/patches";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "./utils/quoter";
 
@@ -70,6 +72,15 @@ setBoltzSwapsConfig({
     },
     gasTopUpSupported,
     getGasTopUpNativeAmount,
+    get boltzApiUrl() {
+        return chooseUrl(config.apiUrl);
+    },
+    get referral() {
+        return getReferral();
+    },
+    get cooperativeDisabled() {
+        return config.cooperativeDisabled === true;
+    },
 });
 
 if ("serviceWorker" in navigator) {

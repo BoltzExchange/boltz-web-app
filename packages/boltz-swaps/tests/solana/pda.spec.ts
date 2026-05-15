@@ -1,11 +1,10 @@
-// @vitest-environment node
 import * as web3 from "@solana/web3.js";
 import { derivePda } from "boltz-swaps/solana";
 
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../../../src/configs/cctp";
+} from "../fixtures/cctp.ts";
 
 const modules = { web3 };
 const encoder = new TextEncoder();

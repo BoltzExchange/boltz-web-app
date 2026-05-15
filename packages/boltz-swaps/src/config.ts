@@ -3,7 +3,7 @@ import {
     type AssetBridge,
     AssetKind,
     BridgeKind,
-    type NetworkTransport,
+    NetworkTransport,
     Usdt0Kind,
 } from "./types.ts";
 
@@ -20,6 +20,16 @@ export interface BoltzSwapsConfig {
     oftDeploymentsUrl?: string;
     gasTopUpSupported?: (asset: string) => boolean;
     getGasTopUpNativeAmount?: (asset: string) => Promise<bigint>;
+    // Resolved Boltz API base URL (post clearnet/onion switching). Lib's
+    // `fetcher` reads this on every call so onion mode stays dynamic.
+    boltzApiUrl?: string;
+    // Referral header value (e.g. "pro" / "boltz_webapp_mobile"). Read on
+    // every request.
+    referral?: string;
+
+    // When true, cooperative-signature Boltz endpoints throw before sending.
+    // Should only be used for testing
+    cooperativeDisabled?: boolean;
 }
 
 let active: BoltzSwapsConfig = {};
@@ -36,10 +46,95 @@ const getAssetConfig = (asset: string): Asset | undefined =>
 export const getAssetBridge = (asset: string): AssetBridge | undefined =>
     getAssetConfig(asset)?.bridge;
 
+export const getBridgeKind = (asset: string): BridgeKind | undefined =>
+    getAssetBridge(asset)?.kind;
+
+export const isBridgeAsset = (asset: string): boolean =>
+    getAssetBridge(asset) !== undefined;
+
+export const isBridgeCanonicalAsset = (asset: string): boolean =>
+    getAssetBridge(asset)?.canonicalAsset === asset;
+
+export const isBridgeVariant = (asset: string): boolean => {
+    const bridge = getAssetBridge(asset);
+    return bridge !== undefined && bridge.canonicalAsset !== asset;
+};
+
+export const getBridgeVariants = (canonical: string): string[] => {
+    const assets = getBoltzSwapsConfig().assets ?? {};
+    return Object.keys(assets).filter(
+        (asset) =>
+            asset !== canonical &&
+            assets[asset]?.bridge?.canonicalAsset === canonical,
+    );
+};
+
+export const isStablecoinAsset = (asset: string): boolean => {
+    const direct = getAssetBridge(asset);
+    if (direct !== undefined) {
+        return (
+            direct.kind === BridgeKind.Cctp || direct.kind === BridgeKind.Oft
+        );
+    }
+    const canonical = getAssetBridge(getCanonicalAsset(asset));
+    return (
+        canonical !== undefined &&
+        (canonical.kind === BridgeKind.Cctp ||
+            canonical.kind === BridgeKind.Oft)
+    );
+};
+
+// Display-friendly symbol overrides keyed on canonical asset (e.g. "L-BTC"
+// renders as "LBTC", "USDT0" renders as "USDT")
+const assetDisplaySymbols: Record<string, string> = {
+    "L-BTC": "LBTC",
+    USDT0: "USDT",
+};
+
+export const getAssetDisplaySymbol = (asset: string): string => {
+    const canonicalAsset = getCanonicalAsset(asset);
+    return assetDisplaySymbols[canonicalAsset] ?? canonicalAsset;
+};
+
 export const getNetworkTransport = (
     asset?: string,
 ): NetworkTransport | undefined =>
     asset === undefined ? undefined : getAssetConfig(asset)?.network?.transport;
+
+export const isEvmAsset = (asset: string): boolean => {
+    const assetConfig = getAssetConfig(asset);
+    if (!assetConfig) {
+        return false;
+    }
+
+    if (assetConfig.type === AssetKind.EVMNative) {
+        return true;
+    }
+
+    return (
+        assetConfig.type === AssetKind.ERC20 &&
+        assetConfig.network?.transport === NetworkTransport.Evm
+    );
+};
+
+export const isWalletConnectableAsset = (asset: string): boolean => {
+    const transport = getNetworkTransport(asset);
+    return (
+        transport === NetworkTransport.Evm ||
+        transport === NetworkTransport.Solana ||
+        transport === NetworkTransport.Tron
+    );
+};
+
+export const getEvmAssets = (): string[] => {
+    const assets = getBoltzSwapsConfig().assets;
+    if (!assets) {
+        return [];
+    }
+    return Object.keys(assets).filter(isEvmAsset);
+};
+
+export const hasEvmAssets = (): boolean => getEvmAssets().length > 0;
 
 export const getCanonicalAsset = (asset: string): string =>
     getAssetBridge(asset)?.canonicalAsset ?? asset;
@@ -155,3 +250,30 @@ export const requireRpcUrls = (asset: string): readonly string[] => {
 
     return rpcUrls;
 };
+
+export const requireChainId = (asset: string): number => {
+    const chainId = getAssetConfig(asset)?.network?.chainId;
+    if (chainId === undefined) {
+        throw new Error(`missing chainId for asset: ${asset}`);
+    }
+    return chainId;
+};
+
+export const getContractDeployHeight = (asset: string): number | undefined =>
+    getAssetConfig(asset)?.contracts?.deployHeight;
+
+export const requireBoltzApiUrl = (): string => {
+    const url = getBoltzSwapsConfig().boltzApiUrl;
+    if (url === undefined) {
+        throw new Error(
+            "boltz-swaps: boltzApiUrl is not configured; call setBoltzSwapsConfig({ boltzApiUrl }) at host boot",
+        );
+    }
+    return url;
+};
+
+export const getReferralHeader = (): string | undefined =>
+    getBoltzSwapsConfig().referral;
+
+export const isCooperativeDisabled = (): boolean =>
+    getBoltzSwapsConfig().cooperativeDisabled === true;

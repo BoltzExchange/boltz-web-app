@@ -1,11 +1,11 @@
 import { A } from "@solidjs/router";
+import type { RestorableSwap } from "boltz-swaps/client";
 import { BiRegularTrash } from "solid-icons/bi";
 import { type Accessor, For, Show, createEffect, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import type { RestorableSwap } from "../utils/boltzClient";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { desktopItemsPerPage, mobileItemsPerPage } from "./Pagination";

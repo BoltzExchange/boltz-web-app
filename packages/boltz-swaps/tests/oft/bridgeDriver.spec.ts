@@ -1,6 +1,6 @@
-// @vitest-environment node
 import { base58, hex } from "@scure/base";
 import { OftBridgeDriver } from "boltz-swaps/bridge";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import {
     clearOftDeployments,
     createOftContract,
@@ -23,8 +23,10 @@ import {
 } from "boltz-swaps/types";
 import { encodeAbiParameters, encodeEventTopics, getAbiItem } from "viem";
 
-import { config as runtimeConfig } from "../../src/config";
-import { config as mainnetConfig } from "../../src/configs/mainnet";
+import {
+    mainnetAssets,
+    mainnetBoltzSwapsConfig,
+} from "../fixtures/mainnetAssets.ts";
 
 const getOftRoute = (from: string, to = from) => ({
     sourceAsset: from,
@@ -80,13 +82,9 @@ const createFetchWithDeployments = (
         return rpcFetchSpy();
     });
 
-const originalAssets = structuredClone(runtimeConfig.assets);
-const originalNetwork = runtimeConfig.network;
-
 describe("oft", () => {
     beforeAll(() => {
-        runtimeConfig.assets = structuredClone(mainnetConfig.assets);
-        runtimeConfig.network = mainnetConfig.network;
+        setBoltzSwapsConfig(mainnetBoltzSwapsConfig);
     });
 
     beforeEach(() => {
@@ -101,11 +99,6 @@ describe("oft", () => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
         clearOftDeployments();
-    });
-
-    afterAll(() => {
-        runtimeConfig.assets = originalAssets;
-        runtimeConfig.network = originalNetwork;
     });
 
     test("should include native drop options in OFT send params", async () => {
@@ -341,32 +334,35 @@ describe("oft", () => {
     });
 
     test("should reject CCTP assets before OFT quoting", async () => {
-        runtimeConfig.assets = {
-            ...runtimeConfig.assets,
-            "CCTP-TEST": {
-                type: AssetKind.ERC20,
-                network: {
-                    transport: NetworkTransport.Evm,
-                    chainId: 1,
-                    chainName: "Ethereum",
-                    symbol: "ETH",
-                    gasToken: "ETH",
-                    rpcUrls: [],
-                },
-                bridge: {
-                    kind: BridgeKind.Cctp,
-                    canonicalAsset: "USDC",
-                    cctp: {
-                        domain: 0,
-                        tokenMessenger:
-                            "0x0000000000000000000000000000000000000001",
-                        messageTransmitter:
-                            "0x0000000000000000000000000000000000000002",
-                        transferMode: CctpTransferMode.Fast,
+        setBoltzSwapsConfig({
+            ...mainnetBoltzSwapsConfig,
+            assets: {
+                ...mainnetAssets,
+                "CCTP-TEST": {
+                    type: AssetKind.ERC20,
+                    network: {
+                        transport: NetworkTransport.Evm,
+                        chainId: 1,
+                        chainName: "Ethereum",
+                        symbol: "ETH",
+                        gasToken: "ETH",
+                        rpcUrls: [],
+                    },
+                    bridge: {
+                        kind: BridgeKind.Cctp,
+                        canonicalAsset: "USDC",
+                        cctp: {
+                            domain: 0,
+                            tokenMessenger:
+                                "0x0000000000000000000000000000000000000001",
+                            messageTransmitter:
+                                "0x0000000000000000000000000000000000000002",
+                            transferMode: CctpTransferMode.Fast,
+                        },
                     },
                 },
             },
-        };
+        });
 
         await expect(
             quoteOftAmountInForAmountOut(
@@ -466,19 +462,22 @@ describe("oft", () => {
     });
 
     test("should not cache positive Solana ATA creation checks per recipient", async () => {
-        runtimeConfig.assets = {
-            ...runtimeConfig.assets,
-            "TEST-SOL": {
-                network: {
-                    transport: NetworkTransport.Solana,
-                    rpcUrls: ["https://solana-rpc.test"],
-                    chainName: "Solana",
-                },
-                token: {
-                    address: "So11111111111111111111111111111111111111112",
-                },
+        setBoltzSwapsConfig({
+            ...mainnetBoltzSwapsConfig,
+            assets: {
+                ...mainnetAssets,
+                "TEST-SOL": {
+                    network: {
+                        transport: NetworkTransport.Solana,
+                        rpcUrls: ["https://solana-rpc.test"],
+                        chainName: "Solana",
+                    },
+                    token: {
+                        address: "So11111111111111111111111111111111111111112",
+                    },
+                } as never,
             },
-        } as never;
+        });
 
         vi.mocked(solanaChain.shouldCreateSolanaTokenAccount).mockResolvedValue(
             true,

@@ -1,3 +1,4 @@
+import { broadcastApiTransaction } from "boltz-swaps/client";
 import { Explorer, type ExplorerUrl, type Url } from "boltz-swaps/types";
 import log from "loglevel";
 
@@ -214,6 +215,25 @@ export const broadcastToExplorer = async (
     });
 
     return { id: txId };
+};
+
+export const broadcastTransaction = async (
+    asset: string,
+    txHex: string,
+): Promise<{ id: string }> => {
+    const results = await Promise.allSettled([
+        broadcastApiTransaction(asset, txHex),
+        broadcastToExplorer(asset, txHex),
+    ]);
+    const successfulResult = results.find(
+        (result) => result.status === "fulfilled",
+    );
+    if (successfulResult) {
+        return (successfulResult as PromiseFulfilledResult<{ id: string }>)
+            .value;
+    }
+
+    throw (results[0] as PromiseRejectedResult).reason;
 };
 
 export const getSwapUTXOs = async (

@@ -1,10 +1,3 @@
-import { createAssetProvider } from "boltz-swaps/evm";
-import {
-    erc20Abi,
-    erc20SwapAbi,
-    etherSwapAbi,
-    routerAbi,
-} from "boltz-swaps/generated/evm-abis";
 import {
     type GetContractReturnType,
     type PublicClient,
@@ -12,11 +5,16 @@ import {
     getContract,
 } from "viem";
 
-import { requireRouterAddress, requireTokenConfig } from "../consts/Assets";
-import erc20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
-import etherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
-import type { ContractAddresses, Contracts } from "../utils/boltzClient";
-import type { Signer } from "./Web3";
+import { requireRouterAddress, requireTokenConfig } from "../config.ts";
+import {
+    erc20Abi,
+    type erc20SwapAbi,
+    type etherSwapAbi,
+    routerAbi,
+} from "../generated/evm-abis.ts";
+import type { Signer } from "../interfaces/signer.ts";
+import type { ContractAddresses, Contracts } from "../types.ts";
+import { createAssetProvider } from "./provider.ts";
 
 export type SignerClient = { public: PublicClient; wallet: Signer };
 export type ReadOnlyClient = { public: PublicClient };
@@ -61,14 +59,6 @@ export const createRouterContract = (
         client: { public: createAssetProvider(asset), wallet: signer },
     });
 };
-
-// EtherSwap and ERC20Swap v6 added `claimAddress` to the indexed topics
-
-export const resolveEtherSwapAbi = (version: number) =>
-    (version <= 5 ? etherSwapAbiV5 : etherSwapAbi) as typeof etherSwapAbi;
-
-export const resolveErc20SwapAbi = (version: number) =>
-    (version <= 5 ? erc20SwapAbiV5 : erc20SwapAbi) as typeof erc20SwapAbi;
 
 export const resolveSwapContractVersion = (
     contracts: Contracts,

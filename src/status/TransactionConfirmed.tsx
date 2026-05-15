@@ -4,7 +4,17 @@ import {
     toRouterCalls,
     vFromSignature,
 } from "boltz-swaps/bridge";
+import {
+    type QuoteData,
+    encodeDexQuote,
+    quoteDexAmountIn,
+    quoteDexAmountOut,
+} from "boltz-swaps/client";
 import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    type Erc20SwapContract,
+    createRouterContract,
+} from "boltz-swaps/evm/contracts";
 import { routerAbi } from "boltz-swaps/generated/evm-abis";
 import { AssetKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
@@ -34,18 +44,8 @@ import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import {
-    type Erc20SwapContract,
-    createRouterContract,
-} from "../context/contracts";
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
-import {
-    type QuoteData,
-    encodeDexQuote,
-    quoteDexAmountIn,
-    quoteDexAmountOut,
-} from "../utils/boltzClient";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,

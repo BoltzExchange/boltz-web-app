@@ -1,44 +1,38 @@
 import { BridgeRegistry } from "boltz-swaps/bridge";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { BridgeKind } from "boltz-swaps/types";
 
-import { config as runtimeConfig } from "../../../src/config";
-import { TestBridgeDriver } from "./testDriver";
+import { TestBridgeDriver } from "./testDriver.ts";
 
-const originalAssets = runtimeConfig.assets;
-
-// Stub runtime config so `getAssetBridge` (which the registry delegates to)
-// returns the expected bridge kind for each test asset.
 beforeAll(() => {
-    runtimeConfig.assets = {
-        HUB: {
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "HUB",
+    setBoltzSwapsConfig({
+        assets: {
+            USDT0: {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0",
+                },
             },
-        },
-        "HUB-A": {
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "HUB",
+            "USDT0-ETH": {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0",
+                },
             },
-        },
-        "HUB-B": {
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "HUB",
+            "USDT0-POL": {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0",
+                },
             },
-        },
-        BTC: {
-            type: "utxo",
-        },
-    } as never;
-});
-
-afterAll(() => {
-    runtimeConfig.assets = originalAssets;
+            BTC: {
+                type: "utxo",
+            },
+        } as never,
+    });
 });
 
 describe("BridgeRegistry", () => {
@@ -47,8 +41,8 @@ describe("BridgeRegistry", () => {
 
     describe("getDriverForAsset", () => {
         test("returns the registered driver for a bridge-kinded asset", () => {
-            expect(registry.getDriverForAsset("HUB-A")).toBe(driver);
-            expect(registry.getDriverForAsset("HUB")).toBe(driver);
+            expect(registry.getDriverForAsset("USDT0-ETH")).toBe(driver);
+            expect(registry.getDriverForAsset("USDT0")).toBe(driver);
         });
 
         test("returns undefined for an asset without a bridge", () => {
@@ -64,7 +58,7 @@ describe("BridgeRegistry", () => {
 
     describe("requireDriverForAsset", () => {
         test("returns the driver when one is registered", () => {
-            expect(registry.requireDriverForAsset("HUB-A")).toBe(driver);
+            expect(registry.requireDriverForAsset("USDT0-ETH")).toBe(driver);
         });
 
         test("throws for an asset with no registered driver", () => {
@@ -78,8 +72,8 @@ describe("BridgeRegistry", () => {
         test("looks up by sourceAsset", () => {
             expect(
                 registry.requireDriverForRoute({
-                    sourceAsset: "HUB-A",
-                    destinationAsset: "HUB",
+                    sourceAsset: "USDT0-ETH",
+                    destinationAsset: "USDT0",
                 }),
             ).toBe(driver);
         });
@@ -88,7 +82,7 @@ describe("BridgeRegistry", () => {
             expect(() =>
                 registry.requireDriverForRoute({
                     sourceAsset: "BTC",
-                    destinationAsset: "HUB",
+                    destinationAsset: "USDT0",
                 }),
             ).toThrow();
         });
@@ -96,22 +90,22 @@ describe("BridgeRegistry", () => {
 
     describe("getPreRoute / getPostRoute", () => {
         test("getPreRoute delegates to the driver and returns a variant → canonical route", () => {
-            expect(registry.getPreRoute("HUB-A")).toEqual({
-                sourceAsset: "HUB-A",
-                destinationAsset: "HUB",
+            expect(registry.getPreRoute("USDT0-ETH")).toEqual({
+                sourceAsset: "USDT0-ETH",
+                destinationAsset: "USDT0",
             });
         });
 
         test("getPostRoute delegates to the driver and returns a canonical → variant route", () => {
-            expect(registry.getPostRoute("HUB-A")).toEqual({
-                sourceAsset: "HUB",
-                destinationAsset: "HUB-A",
+            expect(registry.getPostRoute("USDT0-ETH")).toEqual({
+                sourceAsset: "USDT0",
+                destinationAsset: "USDT0-ETH",
             });
         });
 
         test("getPreRoute and getPostRoute return undefined for the canonical asset itself", () => {
-            expect(registry.getPreRoute("HUB")).toBeUndefined();
-            expect(registry.getPostRoute("HUB")).toBeUndefined();
+            expect(registry.getPreRoute("USDT0")).toBeUndefined();
+            expect(registry.getPostRoute("USDT0")).toBeUndefined();
         });
 
         test("return undefined for assets without a bridge", () => {
@@ -133,8 +127,8 @@ describe("BridgeRegistry", () => {
 
             expect(
                 explorerRegistry.getExplorerKind({
-                    sourceAsset: "HUB-A",
-                    destinationAsset: "HUB",
+                    sourceAsset: "USDT0-ETH",
+                    destinationAsset: "USDT0",
                 }),
             ).toBe("layerZero");
         });
@@ -143,17 +137,17 @@ describe("BridgeRegistry", () => {
     describe("constructor registration", () => {
         test("registers each driver by its kind", () => {
             const empty = new BridgeRegistry();
-            expect(empty.getDriverForAsset("HUB-A")).toBeUndefined();
+            expect(empty.getDriverForAsset("USDT0-ETH")).toBeUndefined();
 
             const populated = new BridgeRegistry([driver]);
-            expect(populated.getDriverForAsset("HUB-A")).toBe(driver);
+            expect(populated.getDriverForAsset("USDT0-ETH")).toBe(driver);
         });
 
         test("a later-registered driver with the same kind replaces the earlier one", () => {
             const first = new TestBridgeDriver(BridgeKind.Oft);
             const second = new TestBridgeDriver(BridgeKind.Oft);
             const reg = new BridgeRegistry([first, second]);
-            expect(reg.getDriverForAsset("HUB-A")).toBe(second);
+            expect(reg.getDriverForAsset("USDT0-ETH")).toBe(second);
         });
     });
 });

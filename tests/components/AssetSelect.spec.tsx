@@ -29,7 +29,7 @@ import {
     setPairAssets,
 } from "./selectTestUtils";
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 

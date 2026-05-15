@@ -1,10 +1,10 @@
 import BigNumber from "bignumber.js";
+import { type Pairs, getPairs } from "boltz-swaps/client";
 import { type Accessor, type Setter, batch } from "solid-js";
 
 import { Side } from "../consts/Enums";
 import type { notifyFn, tFn } from "../context/Global";
 import Pair from "./Pair";
-import { type Pairs, getPairs } from "./boltzClient";
 import { formatError } from "./errors";
 
 export const handleCreateSwapError = async (

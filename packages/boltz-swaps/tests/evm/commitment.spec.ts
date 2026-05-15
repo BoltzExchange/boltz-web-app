@@ -1,19 +1,28 @@
-import type * as EvmModule from "boltz-swaps/evm";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import {
+    buildCommitmentRefundAuthMessage,
+    emptyPreimageHash,
+    getCommitmentRefundSignature,
+    getEvmRefundCooperativeSignature,
+    isEmptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+} from "boltz-swaps/evm/commitment";
 import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
+import { SwapType } from "boltz-swaps/types";
 import {
     type PublicClient,
     encodeAbiParameters,
     encodeEventTopics,
 } from "viem";
 
-import type * as AssetsModule from "../../src/consts/Assets";
+import type * as ClientModule from "../../src/client.ts";
+import type * as ProviderModule from "../../src/evm/provider.ts";
 
 const {
     mockPostCommitmentSignature,
     mockPostCommitmentRefundSignature,
     mockGetEipRefundSignature,
     mockCreateAssetProvider,
-    mockRequireChainId,
     sentinelAssetProvider,
 } = vi.hoisted(() => {
     const sentinelAssetProvider = {
@@ -23,45 +32,47 @@ const {
         mockPostCommitmentSignature: vi.fn(),
         mockPostCommitmentRefundSignature: vi.fn(),
         mockGetEipRefundSignature: vi.fn(),
-        mockCreateAssetProvider: vi.fn<typeof EvmModule.createAssetProvider>(),
-        mockRequireChainId: vi.fn<typeof AssetsModule.requireChainId>(),
+        mockCreateAssetProvider: vi.fn(),
         sentinelAssetProvider,
     };
 });
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../src/evm/provider.ts", async (importActual) => ({
+    ...(await importActual<typeof ProviderModule>()),
+    createAssetProvider: mockCreateAssetProvider,
+}));
+
+vi.mock("../../src/client.ts", async (importActual) => ({
+    ...(await importActual<typeof ClientModule>()),
     postCommitmentSignature: mockPostCommitmentSignature,
     postCommitmentRefundSignature: mockPostCommitmentRefundSignature,
     getEipRefundSignature: mockGetEipRefundSignature,
 }));
 
-vi.mock("boltz-swaps/evm", async () => {
-    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
-    return { ...actual, createAssetProvider: mockCreateAssetProvider };
-});
-
-vi.mock("../../src/consts/Assets", async () => {
-    const actual = await vi.importActual<typeof AssetsModule>(
-        "../../src/consts/Assets",
-    );
-    return { ...actual, requireChainId: mockRequireChainId };
-});
-
-const { SwapType } = await import("../../src/consts/Enums");
-const {
-    emptyPreimageHash,
-    isEmptyPreimageHash,
-    postCommitmentSignatureForTransaction,
-    buildCommitmentRefundAuthMessage,
-    getCommitmentRefundSignature,
-    getEvmRefundCooperativeSignature,
-} = await import("../../src/utils/commitment");
+let chainIdForAsset = 31;
 
 describe("commitment", () => {
+    beforeAll(() => {
+        setBoltzSwapsConfig({
+            // Override `assets` proxy to a stub so requireChainId(asset) returns
+            // chainIdForAsset for any commitment-asset symbol used in tests.
+            get assets() {
+                return new Proxy(
+                    {},
+                    {
+                        get: () => ({
+                            network: { chainId: chainIdForAsset },
+                        }),
+                    },
+                );
+            },
+        });
+    });
+
     beforeEach(() => {
         vi.clearAllMocks();
         mockCreateAssetProvider.mockReturnValue(sentinelAssetProvider);
-        mockRequireChainId.mockReturnValue(31);
+        chainIdForAsset = 31;
     });
 
     const buildLockupReceipt = () => ({
@@ -127,7 +138,6 @@ describe("commitment", () => {
         });
 
         expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
-        expect(mockRequireChainId).toHaveBeenCalledWith("RBTC");
         expect(
             sentinelAssetProvider.waitForTransactionReceipt,
         ).toHaveBeenCalledWith({
@@ -169,7 +179,7 @@ describe("commitment", () => {
                 typeof vi.fn
             >
         ).mockResolvedValue(receipt);
-        mockRequireChainId.mockReturnValue(30);
+        chainIdForAsset = 30;
         const signer = {
             provider: {
                 getChainId: vi.fn().mockResolvedValue(137),

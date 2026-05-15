@@ -1,5 +1,8 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
+import { type SwapContract, scanLockupEvents } from "boltz-swaps/evm/logs";
+import type { LogRefundData } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -54,12 +57,6 @@ import {
 } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
-import {
-    type LogRefundData,
-    type SwapContract,
-    scanLockupEvents,
-} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
@@ -77,6 +74,7 @@ import {
     mnemonicToHDKey,
 } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
+import { PreimageHashesWorker } from "../workers/preimageHashes/PreimageHashesWorker";
 import ErrorWasm from "./ErrorWasm";
 import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
@@ -542,18 +540,23 @@ export const RescueEvm = (props: { mode?: string }) => {
             }
         }
 
-        const generator = scanLockupEvents(signal, target.contract, {
-            asset: target.asset as AssetType,
-            providerUrl: target.providerUrl,
-            scanInterval: target.scanInterval,
-            filter: {
-                address: signerAddress,
-                extraAddresses:
-                    extraAddresses.length > 0 ? extraAddresses : undefined,
+        const generator = scanLockupEvents(
+            signal,
+            target.contract,
+            {
+                asset: target.asset as AssetType,
+                providerUrl: target.providerUrl,
+                scanInterval: target.scanInterval,
+                filter: {
+                    address: signerAddress,
+                    extraAddresses:
+                        extraAddresses.length > 0 ? extraAddresses : undefined,
+                },
+                action,
+                mnemonic,
             },
-            action,
-            mnemonic,
-        });
+            mnemonic ? new PreimageHashesWorker() : undefined,
+        );
 
         for await (const {
             events,

@@ -1,10 +1,10 @@
+import { createTokenContract } from "boltz-swaps/evm/contracts";
 import log from "loglevel";
 import type { Setter } from "solid-js";
 import type { Address } from "viem";
 
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { createTokenContract } from "../context/contracts";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 

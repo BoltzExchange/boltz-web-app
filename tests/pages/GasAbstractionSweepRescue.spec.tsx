@@ -4,12 +4,12 @@ import { userEvent } from "@testing-library/user-event";
 import { type Accessor, createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
 
+import type * as ContractsModule from "../../packages/boltz-swaps/src/evm/contracts.ts";
 import { TBTC, USDC, USDT0 } from "../../src/consts/Assets";
 import { RskRescueMode } from "../../src/consts/Enums";
 import type * as RescueContextModule from "../../src/context/Rescue";
 import type * as Web3Module from "../../src/context/Web3";
 import type { Signer } from "../../src/context/Web3";
-import type * as ContractsModule from "../../src/context/contracts";
 import type * as GasAbstractionSweepModule from "../../src/utils/gasAbstractionSweep";
 import type { RescueFile } from "../../src/utils/rescueFile";
 import { contextWrapper } from "../helper";
@@ -57,9 +57,9 @@ vi.mock("../../src/context/Web3", async () => {
     };
 });
 
-vi.mock("../../src/context/contracts", async () => {
+vi.mock("../../packages/boltz-swaps/src/evm/contracts.ts", async () => {
     const actual = await vi.importActual<typeof ContractsModule>(
-        "../../src/context/contracts",
+        "../../packages/boltz-swaps/src/evm/contracts.ts",
     );
     return {
         ...actual,

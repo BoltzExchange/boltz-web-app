@@ -23,7 +23,7 @@
         "declarationMap": true,
         "sourceMap": true,
         "incremental": true,
-        "tsBuildInfoFile": "dist/.tsbuildinfo",
+        "tsBuildInfoFile": ".tsbuildinfo",
         "outDir": "dist",
         "rootDir": "src",
         "types": []

@@ -1,20 +1,23 @@
 import { hex } from "@scure/base";
-import log from "loglevel";
 import type { Address, Hex } from "viem";
 
-import { config } from "../config";
-import { SwapType } from "../consts/Enums";
-import { broadcastToExplorer } from "./blockchain";
-import { type TransactionInterface, txToHex } from "./compat";
-import { fetcher, getReferral } from "./helper";
-import { validateInvoiceForOffer } from "./invoice";
+import { getReferralHeader, isCooperativeDisabled } from "./config.ts";
+import { fetcher } from "./http/fetcher.ts";
+import { getLogger } from "./logger.ts";
+import { type ContractAddresses, type Contracts, SwapType } from "./types.ts";
+
+export type { ContractAddresses, Contracts };
 
 const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
 const checkCooperative = () => {
-    if (config.cooperativeDisabled === true) {
+    if (isCooperativeDisabled()) {
         throw new Error(cooperativeErrorMessage);
     }
 };
+
+// The Boltz API records the referral header for analytics. For `referralId`
+// (passed in swap-creation request bodies) we reuse the same value.
+const getReferralId = (): string | undefined => getReferralHeader();
 
 type ReverseMinerFees = {
     lockup: number;
@@ -88,24 +91,6 @@ type Pairs = {
 type PartialSignature = {
     pubNonce: Uint8Array;
     signature: Uint8Array;
-};
-
-export type ContractAddresses = {
-    EtherSwap: string;
-    ERC20Swap: string;
-};
-
-type Contracts = {
-    network: {
-        chainId: number;
-        name: string;
-    };
-    swapContracts: ContractAddresses;
-    supportedContracts: Record<
-        string,
-        ContractAddresses & { features: string[] }
-    >;
-    tokens: Record<string, string>;
 };
 
 type SwapTreeLeaf = {
@@ -267,23 +252,21 @@ export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     };
 };
 
-export const fetchBolt12Invoice = async (
+// Returns the BOLT12 invoice for an offer without validating that it matches.
+// Callers must verify with their own validator (host's
+// `validateInvoiceForOffer`) since BOLT12 validation depends on Lightning
+// crypto primitives not currently in this package.
+export const fetchBolt12Invoice = (
     offer: string,
     amountSat: number,
-): Promise<{ invoice: string }> => {
-    const res = await fetcher<{ invoice: string }>(
-        "/v2/lightning/BTC/bolt12/fetch",
-        {
-            offer,
-            amount: amountSat,
-        },
-    );
-    validateInvoiceForOffer(offer, res.invoice);
-
-    return res;
-};
+): Promise<{ invoice: string }> =>
+    fetcher<{ invoice: string }>("/v2/lightning/BTC/bolt12/fetch", {
+        offer,
+        amount: amountSat,
+    });
 
 export const fetchBip21Invoice = async (invoice: string) => {
+    const log = getLogger();
     try {
         log.debug("Fetching BIP21 for invoice", invoice);
         const res = await fetcher<{ bip21: string; signature: string }>(
@@ -309,7 +292,7 @@ export const createSubmarineSwap = (
         invoice,
         refundPublicKey,
         pairHash,
-        referralId: getReferral(),
+        referralId: getReferralId(),
     });
 
 export const createReverseSwap = (
@@ -328,7 +311,7 @@ export const createReverseSwap = (
         preimageHash,
         claimPublicKey,
         claimAddress,
-        referralId: getReferral(),
+        referralId: getReferralId(),
         pairHash,
     });
 
@@ -350,7 +333,7 @@ export const createChainSwap = (
         refundPublicKey,
         claimAddress,
         pairHash,
-        referralId: getReferral(),
+        referralId: getReferralId(),
         userLockAmount,
     });
 
@@ -358,7 +341,7 @@ export const getPartialRefundSignature = async (
     id: string,
     type: SwapType,
     pubNonce: Uint8Array,
-    transaction: TransactionInterface,
+    transactionHex: string,
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
@@ -369,7 +352,7 @@ export const getPartialRefundSignature = async (
         {
             index,
             pubNonce: hex.encode(pubNonce),
-            transaction: txToHex(transaction),
+            transaction: transactionHex,
         },
     );
     return {
@@ -382,7 +365,7 @@ export const getPartialReverseClaimSignature = async (
     id: string,
     preimage: Uint8Array,
     pubNonce: Uint8Array,
-    transaction: TransactionInterface,
+    transactionHex: string,
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
@@ -392,7 +375,7 @@ export const getPartialReverseClaimSignature = async (
             index,
             preimage: hex.encode(preimage),
             pubNonce: hex.encode(pubNonce),
-            transaction: txToHex(transaction),
+            transaction: transactionHex,
         },
     );
     return {
@@ -480,32 +463,15 @@ export const postCommitmentRefundSignature = (
         logIndex,
     });
 
-export const broadcastTransaction = async (
+// API-only transaction broadcast. Host wraps this with `broadcastToExplorer`
+// fallback in `src/utils/blockchain.ts` to race the two channels.
+export const broadcastApiTransaction = (
     asset: string,
     txHex: string,
-): Promise<{
-    id: string;
-}> => {
-    const promises: Promise<{
-        id: string;
-    }>[] = [
-        fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
-            hex: txHex,
-        }),
-        broadcastToExplorer(asset, txHex),
-    ];
-
-    const results = await Promise.allSettled(promises);
-    const successfulResult = results.find(
-        (result) => result.status === "fulfilled",
-    );
-    if (successfulResult) {
-        return (successfulResult as PromiseFulfilledResult<{ id: string }>)
-            .value;
-    }
-
-    throw (results[0] as PromiseRejectedResult).reason;
-};
+): Promise<{ id: string }> =>
+    fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
+        hex: txHex,
+    });
 
 export const getLockupTransaction = async (
     id: string,
@@ -684,9 +650,8 @@ export const encodeDexQuote = (
         data,
     });
 
-export {
+export type {
     Pairs,
-    Contracts,
     CommitmentLockupDetails,
     PartialSignature,
     ChainPairTypeTaproot,

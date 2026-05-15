@@ -1,9 +1,4 @@
-export enum SwapType {
-    Submarine = "submarine",
-    Reverse = "reverse",
-    Chain = "chain",
-    Dex = "dex",
-}
+export { RskRescueMode, SwapType } from "boltz-swaps/types";
 
 export enum Denomination {
     Sat = "sat",
@@ -39,9 +34,4 @@ export enum InvoiceValidation {
 export enum Currency {
     USD = "USD",
     EUR = "EUR",
-}
-
-export enum RskRescueMode {
-    Refund = "refund",
-    Claim = "resume",
 }

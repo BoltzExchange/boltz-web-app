@@ -1,11 +1,21 @@
 {
     "name": "boltz-swaps",
     "version": "0.0.0",
-    "description": "Stablecoin swaps across EVM, Solana, and Tron.",
+    "description": "Boltz Swap SDK",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/BoltzExchange/boltz-web-app.git",
+        "directory": "packages/boltz-swaps"
+    },
+    "homepage": "https://github.com/BoltzExchange/boltz-web-app/tree/main/packages/boltz-swaps",
+    "bugs": {
+        "url": "https://github.com/BoltzExchange/boltz-web-app/issues"
+    },
     "type": "module",
     "sideEffects": false,
     "exports": {
+        ".": "./src/index.ts",
         "./types": "./src/types.ts",
         "./config": "./src/config.ts",
         "./logger": "./src/logger.ts",
@@ -13,10 +23,16 @@
         "./cache": "./src/cache.ts",
         "./errors": "./src/errors.ts",
         "./helper": "./src/helper.ts",
+        "./client": "./src/client.ts",
         "./bridge": "./src/bridge/index.ts",
         "./cctp": "./src/cctp/index.ts",
         "./oft": "./src/oft/index.ts",
         "./evm": "./src/evm/index.ts",
+        "./evm/contracts": "./src/evm/contracts.ts",
+        "./evm/abis": "./src/evm/abis/index.ts",
+        "./evm/transaction": "./src/evm/transaction.ts",
+        "./evm/commitment": "./src/evm/commitment.ts",
+        "./evm/logs": "./src/evm/logs.ts",
         "./solana": "./src/solana/index.ts",
         "./tron": "./src/tron/index.ts",
         "./lazy": "./src/lazy.ts",
@@ -28,6 +44,10 @@
     },
     "publishConfig": {
         "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
             "./types": {
                 "types": "./dist/types.d.ts",
                 "default": "./dist/types.js"
@@ -56,6 +76,10 @@
                 "types": "./dist/helper.d.ts",
                 "default": "./dist/helper.js"
             },
+            "./client": {
+                "types": "./dist/client.d.ts",
+                "default": "./dist/client.js"
+            },
             "./bridge": {
                 "types": "./dist/bridge/index.d.ts",
                 "default": "./dist/bridge/index.js"
@@ -71,6 +95,26 @@
             "./evm": {
                 "types": "./dist/evm/index.d.ts",
                 "default": "./dist/evm/index.js"
+            },
+            "./evm/contracts": {
+                "types": "./dist/evm/contracts.d.ts",
+                "default": "./dist/evm/contracts.js"
+            },
+            "./evm/abis": {
+                "types": "./dist/evm/abis/index.d.ts",
+                "default": "./dist/evm/abis/index.js"
+            },
+            "./evm/transaction": {
+                "types": "./dist/evm/transaction.d.ts",
+                "default": "./dist/evm/transaction.js"
+            },
+            "./evm/commitment": {
+                "types": "./dist/evm/commitment.d.ts",
+                "default": "./dist/evm/commitment.js"
+            },
+            "./evm/logs": {
+                "types": "./dist/evm/logs.d.ts",
+                "default": "./dist/evm/logs.js"
             },
             "./solana": {
                 "types": "./dist/solana/index.d.ts",

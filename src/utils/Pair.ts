@@ -8,6 +8,13 @@ import {
     type BridgeRoute,
     bridgeRegistry,
 } from "boltz-swaps/bridge";
+import {
+    type ChainPairTypeTaproot,
+    type Pairs,
+    type ReversePairTypeTaproot,
+    type SubmarinePairTypeTaproot,
+    quoteDexAmountOut,
+} from "boltz-swaps/client";
 import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
 import {
     AssetKind,
@@ -29,13 +36,6 @@ import {
     isEvmAsset,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import {
-    type ChainPairTypeTaproot,
-    type Pairs,
-    type ReversePairTypeTaproot,
-    type SubmarinePairTypeTaproot,
-    quoteDexAmountOut,
-} from "./boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,

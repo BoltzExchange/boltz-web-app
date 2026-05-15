@@ -1,15 +1,14 @@
-import {
-    quoteDexAmountIn,
-    quoteDexAmountOut,
-} from "../../src/utils/boltzClient";
+import { quoteDexAmountIn, quoteDexAmountOut } from "boltz-swaps/client";
+
+import type * as FetcherModule from "../src/http/fetcher.ts";
 
 const { fetcherMock } = vi.hoisted(() => ({
     fetcherMock: vi.fn(),
 }));
 
-vi.mock("../../src/utils/helper", () => ({
+vi.mock("../src/http/fetcher.ts", async (importActual) => ({
+    ...(await importActual<typeof FetcherModule>()),
     fetcher: fetcherMock,
-    getReferral: vi.fn(() => "test-referral"),
 }));
 
 describe("boltzClient DEX quotes", () => {

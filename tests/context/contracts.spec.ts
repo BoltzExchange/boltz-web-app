@@ -1,57 +1,43 @@
 // @vitest-environment node
-import type * as EvmModule from "boltz-swaps/evm";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import {
+    createRouterContract,
+    createTokenContract,
+} from "boltz-swaps/evm/contracts";
 import type { PublicClient } from "viem";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
-import type * as AssetsModule from "../../src/consts/Assets";
+import type * as ProviderModule from "../../packages/boltz-swaps/src/evm/provider.ts";
 import type { Signer } from "../../src/context/Web3";
-
-const {
-    sentinelAssetReadContract,
-    sentinelAssetProvider,
-    walletReadContract,
-    mockCreateAssetProvider,
-    mockRequireTokenConfig,
-    mockRequireRouterAddress,
-} = vi.hoisted(() => {
-    const sentinelAssetReadContract = vi.fn();
-    const sentinelAssetProvider = {
-        readContract: sentinelAssetReadContract,
-    } as unknown as PublicClient;
-    return {
-        sentinelAssetReadContract,
-        sentinelAssetProvider,
-        walletReadContract: vi.fn(),
-        mockCreateAssetProvider: vi.fn<typeof EvmModule.createAssetProvider>(),
-        mockRequireTokenConfig: vi.fn<typeof AssetsModule.requireTokenConfig>(),
-        mockRequireRouterAddress:
-            vi.fn<typeof AssetsModule.requireRouterAddress>(),
-    };
-});
-
-vi.mock("boltz-swaps/evm", async () => {
-    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
-    return { ...actual, createAssetProvider: mockCreateAssetProvider };
-});
-
-vi.mock("../../src/consts/Assets", async () => {
-    const actual = await vi.importActual<typeof AssetsModule>(
-        "../../src/consts/Assets",
-    );
-    return {
-        ...actual,
-        requireTokenConfig: mockRequireTokenConfig,
-        requireRouterAddress: mockRequireRouterAddress,
-    };
-});
-
-const { createRouterContract, createTokenContract } =
-    await import("../../src/context/contracts");
 
 const tokenAddress = "0x000000000000000000000000000000000000aaaa";
 const routerAddress = "0x000000000000000000000000000000000000bbbb";
 const owner = "0x1111111111111111111111111111111111111111";
 const spender = "0x2222222222222222222222222222222222222222";
+
+const { sentinelAssetReadContract, sentinelAssetProvider, walletReadContract } =
+    vi.hoisted(() => {
+        const sentinelAssetReadContract = vi.fn();
+        return {
+            sentinelAssetReadContract,
+            sentinelAssetProvider: {
+                readContract: sentinelAssetReadContract,
+            } as unknown as PublicClient,
+            walletReadContract: vi.fn(),
+        };
+    });
+
+const { mockCreateAssetProvider } = vi.hoisted(() => ({
+    mockCreateAssetProvider: vi.fn(),
+}));
+
+vi.mock(
+    "../../packages/boltz-swaps/src/evm/provider.ts",
+    async (importActual) => ({
+        ...(await importActual<typeof ProviderModule>()),
+        createAssetProvider: mockCreateAssetProvider,
+    }),
+);
 
 const buildSigner = (): Signer =>
     ({
@@ -59,12 +45,24 @@ const buildSigner = (): Signer =>
         provider: { readContract: walletReadContract },
     }) as unknown as Signer;
 
+beforeAll(() => {
+    // Inject a stub assets entry for USDT-RSK so the lib's requireTokenConfig
+    // and requireRouterAddress accessors resolve without depending on the
+    // host's runtime config.
+    setBoltzSwapsConfig({
+        assets: {
+            "USDT-RSK": {
+                type: "ERC20",
+                token: { address: tokenAddress, decimals: 18 },
+                contracts: { deployHeight: 0, router: routerAddress },
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any,
+    });
+});
+
 beforeEach(() => {
     mockCreateAssetProvider.mockReset().mockReturnValue(sentinelAssetProvider);
-    mockRequireTokenConfig
-        .mockReset()
-        .mockReturnValue({ address: tokenAddress, decimals: 18 });
-    mockRequireRouterAddress.mockReset().mockReturnValue(routerAddress);
     sentinelAssetReadContract.mockReset();
     walletReadContract.mockReset();
 });

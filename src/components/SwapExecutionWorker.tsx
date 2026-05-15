@@ -11,7 +11,14 @@ import {
     isCctpNonceUsed,
     parseCctpBurnMessage,
 } from "boltz-swaps/cctp";
+import { encodeDexQuote, getCommitmentLockupDetails } from "boltz-swaps/client";
 import { createAssetProvider, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    emptyPreimageHash,
+    isEmptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+} from "boltz-swaps/evm/commitment";
+import { createRouterContract } from "boltz-swaps/evm/contracts";
 import {
     erc20Abi,
     erc20SwapAbi,
@@ -49,17 +56,7 @@ import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import { createRouterContract } from "../context/contracts";
-import {
-    encodeDexQuote,
-    getCommitmentLockupDetails,
-} from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
-import {
-    emptyPreimageHash,
-    isEmptyPreimageHash,
-    postCommitmentSignatureForTransaction,
-} from "../utils/commitment";
 import { prefix0x, sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import { fetchDexQuote } from "../utils/quoter";

@@ -1,52 +1,48 @@
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { BridgeKind, SwapPosition } from "boltz-swaps/types";
 
-import { config as runtimeConfig } from "../../../src/config";
-import { TestBridgeDriver } from "./testDriver";
+import { TestBridgeDriver } from "./testDriver.ts";
 
-const originalAssets = runtimeConfig.assets;
-
-// Populate a small runtime-config fixture. `getAssetBridge` reads from here.
 beforeAll(() => {
-    runtimeConfig.assets = {
-        HUB: {
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "HUB",
+    setBoltzSwapsConfig({
+        assets: {
+            USDT0: {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0",
+                },
             },
-        },
-        "HUB-A": {
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "HUB",
+            "USDT0-ETH": {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0",
+                },
             },
-        },
-        "HUB-NO-CANONICAL-CONFIG": {
-            // Variant that points at a canonical that is not in config.
-            type: "erc20",
-            bridge: {
-                kind: BridgeKind.Oft,
-                canonicalAsset: "DOES-NOT-EXIST",
+            // Edge case: an OFT variant whose canonical isn't mapped in the
+            // registry. Naming it "-UNMAPPED" signals the intentional gap.
+            "USDT0-UNMAPPED": {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Oft,
+                    canonicalAsset: "USDT0-MISSING",
+                },
             },
-        },
-        "ALIEN-KIND": {
-            type: "erc20",
-            bridge: {
-                // Cast to simulate an asset belonging to a future
-                // bridge kind that this driver doesn't serve.
-                kind: "alien" as BridgeKind,
-                canonicalAsset: "HUB",
+            // USDC uses the CCTP bridge — the driver under test is OFT, so
+            // this exercises the "different bridge kind" path.
+            USDC: {
+                type: "erc20",
+                bridge: {
+                    kind: BridgeKind.Cctp,
+                    canonicalAsset: "USDC",
+                },
             },
-        },
-        BTC: {
-            type: "utxo",
-        },
-    } as never;
-});
-
-afterAll(() => {
-    runtimeConfig.assets = originalAssets;
+            BTC: {
+                type: "utxo",
+            },
+        } as never,
+    });
 });
 
 describe("BridgeDriver (base class)", () => {
@@ -54,12 +50,12 @@ describe("BridgeDriver (base class)", () => {
 
     describe("supportsAsset", () => {
         test("returns true when the asset's bridge.kind matches this driver", () => {
-            expect(driver.supportsAsset("HUB")).toBe(true);
-            expect(driver.supportsAsset("HUB-A")).toBe(true);
+            expect(driver.supportsAsset("USDT0")).toBe(true);
+            expect(driver.supportsAsset("USDT0-ETH")).toBe(true);
         });
 
         test("returns false for an asset belonging to a different bridge kind", () => {
-            expect(driver.supportsAsset("ALIEN-KIND")).toBe(false);
+            expect(driver.supportsAsset("USDC")).toBe(false);
         });
 
         test("returns false for a non-bridged asset", () => {
@@ -71,12 +67,12 @@ describe("BridgeDriver (base class)", () => {
     describe("getRoutePosition", () => {
         test("stamps this driver's kind and the given position onto the route", () => {
             const detail = driver.getRoutePosition(
-                { sourceAsset: "HUB-A", destinationAsset: "HUB" },
+                { sourceAsset: "USDT0-ETH", destinationAsset: "USDT0" },
                 SwapPosition.Pre,
             );
             expect(detail).toEqual({
-                sourceAsset: "HUB-A",
-                destinationAsset: "HUB",
+                sourceAsset: "USDT0-ETH",
+                destinationAsset: "USDT0",
                 kind: BridgeKind.Oft,
                 position: SwapPosition.Pre,
             });
@@ -84,7 +80,7 @@ describe("BridgeDriver (base class)", () => {
 
         test("accepts Post position", () => {
             const detail = driver.getRoutePosition(
-                { sourceAsset: "HUB", destinationAsset: "HUB-A" },
+                { sourceAsset: "USDT0", destinationAsset: "USDT0-ETH" },
                 SwapPosition.Post,
             );
             expect(detail.position).toBe(SwapPosition.Post);
@@ -93,18 +89,18 @@ describe("BridgeDriver (base class)", () => {
 
     describe("getPreRoute", () => {
         test("returns a variant → canonical route for a variant asset", () => {
-            expect(driver.getPreRoute("HUB-A")).toEqual({
-                sourceAsset: "HUB-A",
-                destinationAsset: "HUB",
+            expect(driver.getPreRoute("USDT0-ETH")).toEqual({
+                sourceAsset: "USDT0-ETH",
+                destinationAsset: "USDT0",
             });
         });
 
         test("returns undefined for the canonical asset itself", () => {
-            expect(driver.getPreRoute("HUB")).toBeUndefined();
+            expect(driver.getPreRoute("USDT0")).toBeUndefined();
         });
 
-        test("returns undefined for an asset with an alien bridge kind", () => {
-            expect(driver.getPreRoute("ALIEN-KIND")).toBeUndefined();
+        test("returns undefined for an asset with a different bridge kind", () => {
+            expect(driver.getPreRoute("USDC")).toBeUndefined();
         });
 
         test("returns undefined for a non-bridged asset", () => {
@@ -113,22 +109,20 @@ describe("BridgeDriver (base class)", () => {
         });
 
         test("returns undefined when the canonical asset is missing from config", () => {
-            expect(
-                driver.getPreRoute("HUB-NO-CANONICAL-CONFIG"),
-            ).toBeUndefined();
+            expect(driver.getPreRoute("USDT0-UNMAPPED")).toBeUndefined();
         });
     });
 
     describe("getPostRoute", () => {
         test("returns a canonical → variant route for a variant asset", () => {
-            expect(driver.getPostRoute("HUB-A")).toEqual({
-                sourceAsset: "HUB",
-                destinationAsset: "HUB-A",
+            expect(driver.getPostRoute("USDT0-ETH")).toEqual({
+                sourceAsset: "USDT0",
+                destinationAsset: "USDT0-ETH",
             });
         });
 
         test("returns undefined for the canonical asset itself", () => {
-            expect(driver.getPostRoute("HUB")).toBeUndefined();
+            expect(driver.getPostRoute("USDT0")).toBeUndefined();
         });
 
         test("returns undefined for a non-bridged asset", () => {
@@ -136,7 +130,7 @@ describe("BridgeDriver (base class)", () => {
         });
 
         test("returns undefined for an asset belonging to another bridge kind", () => {
-            expect(driver.getPostRoute("ALIEN-KIND")).toBeUndefined();
+            expect(driver.getPostRoute("USDC")).toBeUndefined();
         });
     });
 

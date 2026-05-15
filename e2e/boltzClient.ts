@@ -1,9 +1,8 @@
 import { HDKey } from "@scure/bip32";
 import { mnemonicToSeedSync } from "@scure/bip39";
 import axios from "axios";
+import type { RestorableSwap } from "boltz-swaps/client";
 import fs from "fs";
-
-import type { RestorableSwap } from "../src/utils/boltzClient";
 
 const boltzEndpoint = "http://localhost:9001";
 

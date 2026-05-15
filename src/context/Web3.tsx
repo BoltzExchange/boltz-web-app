@@ -1,5 +1,18 @@
+import {
+    type ContractAddresses,
+    type Contracts,
+    getContracts,
+} from "boltz-swaps/client";
 import { getRpcUrls, requireRpcUrls } from "boltz-swaps/config";
 import { createAssetProvider, createProviderTransport } from "boltz-swaps/evm";
+import { resolveErc20SwapAbi, resolveEtherSwapAbi } from "boltz-swaps/evm/abis";
+import {
+    type Erc20SwapContract,
+    type EtherSwapContract,
+    type ReadOnlyClient,
+    type SignerClient,
+    resolveSwapContractVersion,
+} from "boltz-swaps/evm/contracts";
 import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -41,11 +54,6 @@ import {
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import {
-    type ContractAddresses,
-    type Contracts,
-    getContracts,
-} from "../utils/boltzClient";
 import { prefix0x } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
@@ -54,15 +62,6 @@ import { isIos } from "../utils/helper";
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
 import { type RescueFile } from "../utils/rescueFile";
 import { useGlobalContext } from "./Global";
-import {
-    type Erc20SwapContract,
-    type EtherSwapContract,
-    type ReadOnlyClient,
-    type SignerClient,
-    resolveErc20SwapAbi,
-    resolveEtherSwapAbi,
-    resolveSwapContractVersion,
-} from "./contracts";
 
 declare global {
     interface WindowEventMap {

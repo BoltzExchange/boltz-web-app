@@ -1,8 +1,8 @@
+import type { RestorableSwap } from "boltz-swaps/client";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { Show } from "solid-js";
 
 import { getAssetDisplaySymbol } from "../consts/Assets";
-import type { RestorableSwap } from "../utils/boltzClient";
 import {
     type SomeSwap,
     getFinalAssetReceive,
