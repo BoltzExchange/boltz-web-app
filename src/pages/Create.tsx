@@ -78,6 +78,7 @@ const Create = () => {
         pairs,
         regularPairs,
         gasTopUp,
+        embeddedMode,
     } = useGlobalContext();
     const { fetchBtcPrice } = useFiatContext();
     const {
@@ -111,6 +112,7 @@ const Create = () => {
         onchainAddress,
         quoteLoading,
         setQuoteLoading,
+        destinationLocked,
     } = useCreateContext();
     const { connectedWallet } = useWeb3Signer();
 
@@ -708,7 +710,13 @@ const Create = () => {
                 <h2 class="frame-title" data-testid="create-swap-title">
                     {t("create_swap")}
                 </h2>
-                <Show when={config.isPro && pairs() && regularPairs()}>
+                <Show
+                    when={
+                        config.isPro &&
+                        pairs() &&
+                        regularPairs() &&
+                        !embeddedMode()
+                    }>
                     <Accordion
                         title={t("swap_opportunities_accordion")}
                         isOpen={isAccordionOpen()}
@@ -746,14 +754,16 @@ const Create = () => {
                                 <span class="amount-row-label">
                                     {t("send")}
                                 </span>
-                                <SwapLimits
-                                    minimum={minimum()}
-                                    maximum={maximum()}
-                                    minLabel={t("min")}
-                                    maxLabel={t("max")}
-                                    loading={limitActionsLoading()}
-                                    onSelectAmount={setAmount}
-                                />
+                                <Show when={!destinationLocked()}>
+                                    <SwapLimits
+                                        minimum={minimum()}
+                                        maximum={maximum()}
+                                        minLabel={t("min")}
+                                        maxLabel={t("max")}
+                                        loading={limitActionsLoading()}
+                                        onSelectAmount={setAmount}
+                                    />
+                                </Show>
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
                                         class="amount-value-skeleton"
@@ -782,7 +792,10 @@ const Create = () => {
                                     id="sendAmount"
                                     data-testid="sendAmount"
                                     autocomplete="off"
-                                    disabled={sendAmountQuoteLoading()}
+                                    disabled={
+                                        sendAmountQuoteLoading() ||
+                                        destinationLocked()
+                                    }
                                     classList={{
                                         "amount-input--quote-pending":
                                             sendAmountQuoteLoading(),
@@ -803,11 +816,14 @@ const Create = () => {
                             />
                         </div>
                     </div>
-                    <Reverse />
+                    <Show when={!destinationLocked()}>
+                        <Reverse />
+                    </Show>
                     <div>
                         <Asset
                             side={Side.Receive}
                             signal={() => pair().toAsset}
+                            disabled={destinationLocked()}
                         />
                         <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
@@ -841,7 +857,10 @@ const Create = () => {
                                     id="receiveAmount"
                                     data-testid="receiveAmount"
                                     autocomplete="off"
-                                    disabled={receiveAmountQuoteLoading()}
+                                    disabled={
+                                        receiveAmountQuoteLoading() ||
+                                        destinationLocked()
+                                    }
                                     classList={{
                                         "amount-input--quote-pending":
                                             receiveAmountQuoteLoading(),
@@ -872,8 +891,10 @@ const Create = () => {
                                 pair().toAsset !== LN)) &&
                         !isWalletConnectableAsset(pair().toAsset)
                     }>
-                    <AddressInput />
-                    <hr class="spacer" />
+                    <Show when={!destinationLocked()}>
+                        <AddressInput />
+                        <hr class="spacer" />
+                    </Show>
                 </Show>
                 <Show
                     when={
@@ -885,8 +906,10 @@ const Create = () => {
                         <WeblnButton />
                         <hr class="spacer" />
                     </Show>
-                    <InvoiceInput />
-                    <hr class="spacer" />
+                    <Show when={!destinationLocked()}>
+                        <InvoiceInput />
+                        <hr class="spacer" />
+                    </Show>
                 </Show>
                 <Show
                     when={
@@ -907,8 +930,10 @@ const Create = () => {
                             pair().toAsset !== RBTC &&
                             !connectedDestination()
                         }>
-                        <AddressInput />
-                        <hr class="spacer" />
+                        <Show when={!destinationLocked()}>
+                            <hr class="spacer" />
+                            <AddressInput />
+                        </Show>
                     </Show>
                     <ConnectWallet
                         asset={walletConnectAsset()}
@@ -921,6 +946,16 @@ const Create = () => {
                     <hr class="spacer" />
                 </Show>
                 <CreateButton />
+                <Show when={embeddedMode()}>
+                    <div class="embedded-branding">
+                        <a
+                            href="https://boltz.exchange"
+                            target="_blank"
+                            rel="noopener noreferrer">
+                            Powered by Boltz
+                        </a>
+                    </div>
+                </Show>
                 <AssetSelect />
                 <NetworkSelect />
                 <SettingsMenu />

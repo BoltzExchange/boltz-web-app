@@ -193,6 +193,89 @@ describe("signals", () => {
         expect(signals.valid()).toEqual(false);
     });
 
+    const lockedInvoiceFixture =
+        "lnbcrt1500u1p5az9mypp5jlkdaygjwdzd7m06ll348lcvl24ffhpjht8m56fv3aqxpxu804xqdqqcqpjxqyz5vqsp5sq6khl9gvcw70x76nv7vxs5gq28qheehatdtlg6lxgjky029zcws9qxpqysgq762ls0zjnv82zg9rezt5y5ywh4qskmrw42r8ulynra56qa26pru4qjfrn6mz8ek3245905fvs5v969pu3cuvnw9l4f50gwq5c7kcrxgqklqs8h";
+
+    const mockDecodeInvoice = async (sats: number) => {
+        const invoiceUtils = await import("../../src/utils/invoice");
+        return vi
+            .spyOn(invoiceUtils, "decodeInvoice")
+            .mockReturnValue({ satoshis: sats } as ReturnType<
+                typeof invoiceUtils.decodeInvoice
+            >);
+    };
+
+    test.each`
+        embedded  | description
+        ${"true"} | ${"embedded mode"}
+        ${null}   | ${"non-embedded mode"}
+    `(
+        "should set destinationLocked with lockOutput + bolt11 destination in $description",
+        async ({ embedded }: { embedded: string | null }) => {
+            const decodeSpy = await mockDecodeInvoice(150_000);
+
+            vi.spyOn(URLSearchParams.prototype, "get").mockImplementation(
+                (key) => {
+                    if (key === "destination") return lockedInvoiceFixture;
+                    if (key === "lockOutput") return "true";
+                    if (key === "embedded") return embedded;
+                    return null;
+                },
+            );
+
+            render(() => <TestComponent />, { wrapper: contextWrapper });
+
+            await waitFor(() => {
+                expect(signals.destinationLocked()).toBe(true);
+            });
+
+            expect(signals.pair().toAsset).toEqual(LN);
+            expect(signals.invoice()).toEqual(lockedInvoiceFixture);
+            expect(signals.invoiceValid()).toEqual(true);
+            expect(Number(signals.receiveAmount())).toEqual(150_000);
+
+            decodeSpy.mockRestore();
+        },
+    );
+
+    test("should not set destinationLocked when lockOutput is missing", async () => {
+        const decodeSpy = await mockDecodeInvoice(150_000);
+
+        vi.spyOn(URLSearchParams.prototype, "get").mockImplementation((key) => {
+            if (key === "destination") return lockedInvoiceFixture;
+            if (key === "embedded") return "true";
+            return null;
+        });
+
+        render(() => <TestComponent />, { wrapper: contextWrapper });
+
+        await waitFor(() => {
+            expect(signals.invoice()).toEqual(lockedInvoiceFixture);
+        });
+        expect(signals.destinationLocked()).toBe(false);
+
+        decodeSpy.mockRestore();
+    });
+
+    test("should preserve destination state when locked even if bitcoinOnly normalizes the pair", () => {
+        render(() => <TestComponent />, { wrapper: contextWrapper });
+
+        const lockedInvoice = "lnbc1lockedinvoice";
+        setPairAssets(BTC, RBTC);
+        signals.setOnchainAddress("0xdeadbeef");
+        signals.setAddressValid(true);
+        signals.setInvoice(lockedInvoice);
+        signals.setInvoiceValid(true);
+        signals.setDestinationLocked(true);
+
+        globalSignals.setBitcoinOnly(true);
+
+        expect(signals.onchainAddress()).toEqual("0xdeadbeef");
+        expect(signals.addressValid()).toEqual(true);
+        expect(signals.invoice()).toEqual(lockedInvoice);
+        expect(signals.invoiceValid()).toEqual(true);
+    });
+
     test.each`
         receiveAsset | address
         ${TBTC}      | ${runtimeConfig.assets!.TBTC.token!.address}

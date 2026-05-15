@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
+import Reverse from "../../src/components/Reverse";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
 import {
@@ -384,6 +385,91 @@ describe("AssetSelect", () => {
             expect(signals.onchainAddress()).toEqual(evmAddress);
         },
     );
+
+    test("should clear invoice when changing asset", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setInvoice("lnbc1invoice");
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Send);
+        setPairAssets(LN, BTC);
+
+        fireEvent.click(await screen.findByTestId(`select-${BTC}`));
+
+        expect(signals.invoice()).toEqual("");
+    });
+
+    test("should preserve invoice when changing asset while destination is locked", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const lockedInvoice = "lnbc1lockedinvoice";
+        signals.setInvoice(lockedInvoice);
+        signals.setDestinationLocked(true);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Send);
+        setPairAssets(LN, BTC);
+
+        fireEvent.click(await screen.findByTestId(`select-${BTC}`));
+
+        expect(signals.invoice()).toEqual(lockedInvoice);
+    });
+
+    test("locked invoice survives reverse, asset change, and network change in sequence", async () => {
+        const { container } = render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Reverse />
+                    <SelectAsset />
+                    <NetworkSelect />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const lockedInvoice = "lnbc1lockedinvoice";
+
+        setPairAssets(BTC, LN);
+        signals.setInvoice(lockedInvoice);
+        signals.setInvoiceValid(true);
+        signals.setDestinationLocked(true);
+
+        const flip = container.querySelector("#flip-assets") as HTMLElement;
+        fireEvent.click(flip);
+        expect(signals.invoice()).toEqual(lockedInvoice);
+
+        setPairAssets(BTC, LN);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Send);
+        fireEvent.click(await screen.findByTestId(`select-${LBTC}`));
+        expect(signals.invoice()).toEqual(lockedInvoice);
+
+        signals.setNetworkSelectCanonical(USDT0);
+        signals.setAssetSelection(AssetSelection.AssetNetwork);
+        signals.setAssetSelected(Side.Send);
+        setPairAssets("USDT0-ETH", LN);
+        fireEvent.click(await screen.findByTestId("select-USDT0-OP"));
+        expect(signals.invoice()).toEqual(lockedInvoice);
+
+        expect(signals.invoiceValid()).toEqual(true);
+        expect(signals.destinationLocked()).toEqual(true);
+    });
 
     test("should hide unsendable assets when selecting send asset", async () => {
         render(

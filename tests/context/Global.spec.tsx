@@ -111,4 +111,44 @@ describe("Global context", () => {
             });
         });
     });
+
+    describe("embeddedMode", () => {
+        test("defaults to false when initialEmbeddedMode is not provided", () => {
+            getPairsMock.mockResolvedValue(emptyPairs);
+
+            render(() => (
+                <GlobalProvider>
+                    <Probe />
+                </GlobalProvider>
+            ));
+
+            expect(globalSignals.embeddedMode()).toBe(false);
+        });
+
+        test("seeds from initialEmbeddedMode prop when true", () => {
+            getPairsMock.mockResolvedValue(emptyPairs);
+
+            render(() => (
+                <GlobalProvider initialEmbeddedMode={true}>
+                    <Probe />
+                </GlobalProvider>
+            ));
+
+            expect(globalSignals.embeddedMode()).toBe(true);
+        });
+
+        test("setter toggles the signal", () => {
+            getPairsMock.mockResolvedValue(emptyPairs);
+
+            render(() => (
+                <GlobalProvider>
+                    <Probe />
+                </GlobalProvider>
+            ));
+
+            expect(globalSignals.embeddedMode()).toBe(false);
+            globalSignals.setEmbeddedMode(true);
+            expect(globalSignals.embeddedMode()).toBe(true);
+        });
+    });
 });

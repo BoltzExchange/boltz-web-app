@@ -7,12 +7,18 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import "../style/asset.scss";
 
-const Asset = (props: { side: Side; signal: Accessor<string> }) => {
+const Asset = (props: {
+    side: Side;
+    signal: Accessor<string>;
+    disabled?: boolean;
+}) => {
     const { bitcoinOnly, notify, t } = useGlobalContext();
 
     const openSelect = () => {
-        if (bitcoinOnly()) {
-            notify("error", t("bitcoin_only_warning"));
+        if (props.disabled || bitcoinOnly()) {
+            if (bitcoinOnly()) {
+                notify("error", t("bitcoin_only_warning"));
+            }
             return;
         }
         setAssetSelected(props.side);
@@ -24,7 +30,10 @@ const Asset = (props: { side: Side; signal: Accessor<string> }) => {
     return (
         <button
             type="button"
-            class={`asset-wrap${bitcoinOnly() ? " no-select" : ""}`}
+            disabled={props.disabled}
+            class={`asset-wrap${
+                bitcoinOnly() || props.disabled ? " no-select" : ""
+            }`}
             onClick={openSelect}>
             <div
                 data-testid={`asset-${props.side}`}

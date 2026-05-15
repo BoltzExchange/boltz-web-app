@@ -26,7 +26,7 @@ import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
-import { isInvoice, isLnurl } from "../utils/invoice";
+import { decodeInvoice, isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 import { useGlobalContext } from "./Global";
 
@@ -161,6 +161,7 @@ const handleUrlParams = (
     setReceiveAmount: Setter<BigNumber>,
     setAddressValid: Setter<boolean>,
     setInvoiceValid: Setter<boolean>,
+    setDestinationLocked: Setter<boolean>,
     navigate: Navigator,
 ) => {
     const setAssetReceive = (asset: string) => {
@@ -220,6 +221,19 @@ const handleUrlParams = (
                 setReceiveAmount(BigNumber(receiveAmount));
             }
         }
+    } else {
+        try {
+            const sats = decodeInvoice(destination).satoshis;
+            if (sats > 0) {
+                setAmountChanged(Side.Receive);
+                setReceiveAmount(BigNumber(sats));
+                if (getUrlParam(UrlParam.LockOutput) === "true") {
+                    setDestinationLocked(true);
+                }
+            }
+        } catch {
+            // Invalid invoice; leave amount unse.
+        }
     }
 
     const params = [
@@ -228,6 +242,9 @@ const handleUrlParams = (
         UrlParam.ReceiveAsset,
         UrlParam.SendAmount,
         UrlParam.ReceiveAmount,
+        UrlParam.Embedded,
+        UrlParam.Theme,
+        UrlParam.LockOutput,
     ];
 
     if (
@@ -297,6 +314,8 @@ export type CreateContextType = {
     setBolt12Loading: Setter<boolean>;
     quoteLoading: Accessor<boolean>;
     setQuoteLoading: Setter<boolean>;
+    destinationLocked: Accessor<boolean>;
+    setDestinationLocked: Setter<boolean>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -347,8 +366,12 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     );
     const [bolt12Loading, setBolt12Loading] = createSignal(false);
     const [quoteLoading, setQuoteLoading] = createSignal(false);
+    const [destinationLocked, setDestinationLocked] = createSignal(false);
 
     const resetDestinationState = () => {
+        if (destinationLocked()) {
+            return;
+        }
         setInvoice("");
         setInvoiceValid(false);
         setInvoiceError(undefined);
@@ -458,6 +481,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         setReceiveAmount,
         setAddressValid,
         setInvoiceValid,
+        setDestinationLocked,
         navigate,
     );
 
@@ -516,6 +540,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setBolt12Loading,
                 quoteLoading,
                 setQuoteLoading,
+                destinationLocked,
+                setDestinationLocked,
             }}>
             {props.children}
         </CreateContext.Provider>

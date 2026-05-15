@@ -338,3 +338,119 @@ test.describe("URL params", () => {
         });
     });
 });
+
+test.describe("Embedded mode and theme URL params", () => {
+    const getTheme = (page: Page) =>
+        page.evaluate(() =>
+            document.documentElement.getAttribute("boltz-theme"),
+        );
+
+    test.describe("theme param (embedded)", () => {
+        for (const theme of ["default", "pro", "light"]) {
+            test(`?theme=${theme} applies in embedded mode`, async ({
+                page,
+            }) => {
+                await page.goto(`/?embedded=true&theme=${theme}`);
+                expect(await getTheme(page)).toBe(theme);
+            });
+        }
+
+        test("falls back to default when theme is invalid", async ({
+            page,
+        }) => {
+            await page.goto("/?embedded=true&theme=neon");
+            expect(await getTheme(page)).toBe("default");
+        });
+
+        test("ignores theme param when embedded is not set", async ({
+            page,
+        }) => {
+            await page.goto("/?theme=light");
+            expect(await getTheme(page)).not.toBe("light");
+        });
+    });
+
+    test.describe("embedded layout", () => {
+        test("hides nav and footer when embedded=true", async ({ page }) => {
+            await page.goto("/?embedded=true");
+
+            await expect(page.locator("#logo")).toHaveCount(0);
+            await expect(page.locator("footer")).toHaveCount(0);
+        });
+
+        test("shows nav and footer by default", async ({ page }) => {
+            await page.goto("/");
+
+            await expect(page.locator("#logo")).toBeVisible();
+            await expect(page.locator("footer")).toBeVisible();
+        });
+
+        test("renders 'Powered by Boltz' branding when embedded", async ({
+            page,
+        }) => {
+            await page.goto("/?embedded=true");
+
+            const branding = page.locator(".embedded-branding a", {
+                hasText: "Powered by Boltz",
+            });
+            await expect(branding).toBeVisible();
+            await expect(branding).toHaveAttribute(
+                "href",
+                "https://boltz.exchange",
+            );
+        });
+    });
+
+    test.describe("lockOutput", () => {
+        test("locks destination, amounts, reverse and receive asset", async ({
+            page,
+        }) => {
+            const amount = 80_000;
+            const invoice = await generateInvoiceLnd(amount);
+
+            await page.goto(
+                `/?embedded=true&destination=${invoice}&lockOutput=true`,
+            );
+
+            const receiveAmount = page.getByTestId("receiveAmount");
+            await expect(receiveAmount).toBeDisabled();
+            await expect(receiveAmount).toHaveValue(
+                formatAmount(BigNumber(amount), Denomination.Sat, ".", BTC),
+            );
+            await expect(page.getByTestId("sendAmount")).toBeDisabled();
+
+            await expect(page.locator("#flip-assets")).toHaveCount(0);
+
+            await expect(page.getByTestId("limit-min-button")).toHaveCount(0);
+            await expect(page.getByTestId("limit-max-button")).toHaveCount(0);
+
+            await expect(
+                page.getByTestId("asset-receive").locator(".."),
+            ).toBeDisabled();
+
+            await expect(page.getByTestId("invoice")).toHaveCount(0);
+        });
+
+        test("works without embedded=true", async ({ page }) => {
+            const amount = 80_000;
+            const invoice = await generateInvoiceLnd(amount);
+
+            await page.goto(`/?destination=${invoice}&lockOutput=true`);
+
+            await expect(page.getByTestId("receiveAmount")).toBeDisabled();
+            await expect(page.locator("#flip-assets")).toHaveCount(0);
+            await expect(page.getByTestId("invoice")).toHaveCount(0);
+        });
+
+        test("does not lock when lockOutput is missing", async ({ page }) => {
+            const amount = 80_000;
+            const invoice = await generateInvoiceLnd(amount);
+
+            await page.goto(`/?embedded=true&destination=${invoice}`);
+
+            await expect(page.getByTestId("invoice")).toHaveValue(invoice);
+            await expect(page.locator("#flip-assets")).toBeVisible();
+            await expect(page.getByTestId("receiveAmount")).toBeEnabled();
+        });
+    });
+});

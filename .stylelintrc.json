@@ -14,9 +14,9 @@
         "declaration-block-no-shorthand-property-overrides": true,
         "custom-property-no-missing-var-function": true,
         "custom-property-pattern": [
-            "^(color|border-radius|quote|rescue|settings)-[a-z0-9-]+$",
+            "^(color|border-radius|quote|rescue|settings|icon)-[a-z0-9-]+$",
             {
-                "message": "Token names must use a known namespace prefix (color, border-radius, quote, rescue, settings) followed by kebab-case."
+                "message": "Token names must use a known namespace prefix (color, border-radius, quote, rescue, settings, icon) followed by kebab-case."
             }
         ],
         "scale-unlimited/declaration-strict-value": [

@@ -109,6 +109,10 @@ const Modal = (props: {
                     <Show when={providerProps.provider.icon !== undefined}>
                         <img
                             class="provider-modal-icon"
+                            classList={{
+                                "is-hardware":
+                                    providerProps.provider.isHardware,
+                            }}
                             src={providerProps.provider.icon}
                             alt={`${providerProps.provider.name} icon`}
                         />
