@@ -206,32 +206,9 @@
         }
     }
 
-    .rescue-external-wallet-slot .btn::before {
-        content: "";
-        display: inline-block;
-        flex: 0 0 auto;
-        width: 16px;
-        height: 16px;
-        margin-right: 7px;
-        background-color: currentColor;
-        --rescue-wallet-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4'/><path d='M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'/><path d='M18 12a2 2 0 0 0 0 4h4v-4Z'/></svg>");
-        -webkit-mask-image: var(--rescue-wallet-icon);
-        mask-image: var(--rescue-wallet-icon);
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-position: center;
-        mask-position: center;
-        -webkit-mask-size: contain;
-        mask-size: contain;
-    }
-
     .rescue-external-wallet-slot[data-connected="true"] .btn-light {
         color: var(--rescue-success-text);
         background-color: var(--color-black-40);
-    }
-
-    .rescue-external-wallet-slot[data-connected="true"] .btn-light::before {
-        color: currentColor;
     }
 
     @media (hover: hover) {

@@ -40,7 +40,7 @@ export const MethodSelection = (props: MethodSelectionProps) => {
                         ? "true"
                         : "false"
                 }>
-                <ConnectWallet />
+                <ConnectWallet showWalletIcon />
             </div>
             <hr />
 

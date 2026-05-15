@@ -1,6 +1,6 @@
 import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
-import { IoClose } from "solid-icons/io";
+import { IoClose, IoWallet } from "solid-icons/io";
 import {
     type Accessor,
     For,
@@ -168,6 +168,7 @@ const ConnectModal = (props: {
     asset?: string;
     derivationPath?: string;
     disabled?: Accessor<boolean>;
+    showWalletIcon?: boolean;
 }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider, setWalletConnected } = useWeb3Signer();
@@ -203,6 +204,9 @@ const ConnectModal = (props: {
                         setWalletConnected(connected);
                     }
                 }}>
+                <Show when={props.showWalletIcon}>
+                    <IoWallet class="connect-wallet-icon" />
+                </Show>
                 {t("connect_wallet")}
             </button>
             <Modal
@@ -218,6 +222,7 @@ const ConnectModal = (props: {
 const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
+    showWalletIcon?: boolean;
 }) => {
     const { t, privacyMode } = useGlobalContext();
     const { clearSigner } = useWeb3Signer();
@@ -242,6 +247,9 @@ const ShowAddress = (props: {
             onMouseEnter={() => setText(t("disconnect_address"))}
             onMouseLeave={() => setText(undefined)}
             class="btn btn-light">
+            <Show when={props.showWalletIcon}>
+                <IoWallet class="connect-wallet-icon" />
+            </Show>
             {text() ||
                 (props.addressOverride
                     ? props.addressOverride() ||
@@ -310,6 +318,7 @@ const ConnectWallet = (props: {
     addressOverride?: Accessor<string | undefined>;
     syncAddress?: boolean;
     hideWhenUnavailable?: boolean;
+    showWalletIcon?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, connectedWallet } = useWeb3Signer();
@@ -439,6 +448,7 @@ const ConnectWallet = (props: {
                         asset={props.asset}
                         disabled={props.disabled}
                         derivationPath={props.derivationPath}
+                        showWalletIcon={props.showWalletIcon}
                     />
                 }>
                 <Show
@@ -447,6 +457,7 @@ const ConnectWallet = (props: {
                     <ShowAddress
                         address={address}
                         addressOverride={props.addressOverride}
+                        showWalletIcon={props.showWalletIcon}
                     />
                 </Show>
             </Show>
