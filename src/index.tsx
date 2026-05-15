@@ -24,6 +24,7 @@ import { SwapExecutionWorker } from "./components/SwapExecutionWorker";
 import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
+import { FiatProvider } from "./context/Fiat";
 import { GlobalProvider } from "./context/Global";
 import { PayProvider } from "./context/Pay";
 import { RescueProvider } from "./context/Rescue";
@@ -89,25 +90,27 @@ document.body.classList.remove("loading");
 const App = (props: RouteSectionProps) => {
     return (
         <GlobalProvider>
-            <Web3SignerProvider>
-                <WalletConnect />
-                <CreateProvider>
-                    <PayProvider>
-                        <RescueProvider>
-                            <SwapChecker />
-                            <SwapExecutionWorker />
-                            <Chatwoot />
-                            <Nav
-                                isPro={config.isPro}
-                                network={config.network}
-                            />
-                            {props.children}
-                            <Notification />
-                            <Footer />
-                        </RescueProvider>
-                    </PayProvider>
-                </CreateProvider>
-            </Web3SignerProvider>
+            <FiatProvider>
+                <Web3SignerProvider>
+                    <WalletConnect />
+                    <CreateProvider>
+                        <PayProvider>
+                            <RescueProvider>
+                                <SwapChecker />
+                                <SwapExecutionWorker />
+                                <Chatwoot />
+                                <Nav
+                                    isPro={config.isPro}
+                                    network={config.network}
+                                />
+                                {props.children}
+                                <Notification />
+                                <Footer />
+                            </RescueProvider>
+                        </PayProvider>
+                    </CreateProvider>
+                </Web3SignerProvider>
+            </FiatProvider>
         </GlobalProvider>
     );
 };

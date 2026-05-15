@@ -23,13 +23,16 @@ type KrakenTickerResponse = {
 type CoinGeckoPriceResponse = Record<string, Record<string, number>>;
 
 type PriceLookupConfig = {
-    krakenPair?: string;
+    krakenPair?: (currency: Currency) => string;
     coinGeckoId?: string;
 };
 
 const gasTokenPriceLookups: Record<string, PriceLookupConfig> = {
+    BTC: {
+        krakenPair: (currency) => `XXBTZ${currency}`,
+    },
     ETH: {
-        krakenPair: "XETHZUSD",
+        krakenPair: (currency) => `XETHZ${currency}`,
         coinGeckoId: "ethereum",
     },
     BERA: {
@@ -130,13 +133,11 @@ export const getBtcPriceYadio = async (currency: Currency) => {
     }
 };
 
-export const getBtcPriceKraken = (currency: Currency) => {
-    return getKrakenPrice("BTC", `XXBTZ${currency}`, currency);
-};
+export const getBtcPriceKraken = (currency: Currency) =>
+    getGasTokenPriceKraken("BTC", currency);
 
-export const getEthPriceKraken = (currency: Currency) => {
-    return getKrakenPrice("ETH", `XETHZ${currency}`, currency);
-};
+export const getEthPriceKraken = (currency: Currency) =>
+    getGasTokenPriceKraken("ETH", currency);
 
 const getCoinGeckoPrice = async (
     asset: string,
@@ -195,7 +196,7 @@ export const hasGasTokenPriceLookup = (symbol: string): boolean => {
 
 export const getGasTokenPriceKraken = (symbol: string, currency: Currency) => {
     const lookup = getGasTokenPriceLookup(symbol);
-    const pair = lookup?.krakenPair;
+    const pair = lookup?.krakenPair?.(currency);
 
     if (pair === undefined) {
         throw new Error(`missing Kraken price lookup for gas token ${symbol}`);

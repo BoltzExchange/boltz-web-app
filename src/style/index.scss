@@ -799,6 +799,34 @@ textarea.invalid {
         display: none;
     }
 }
+
+.select {
+    font-size: 14px;
+    padding: 0.35rem 2rem 0.35rem 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-secondary-800);
+    border: 1px solid var(--color-white-15);
+    border-radius: 999rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='none' stroke='white' stroke-opacity='0.6' stroke-width='1.5' d='M1 1l4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    &:focus-visible {
+        outline: none;
+        border-color: var(--color-primary);
+    }
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--color-secondary-600);
+        }
+    }
+    option {
+        background-color: var(--color-secondary-800);
+        color: var(--color-text);
+    }
+}
+
 @media (min-width: 489px) {
     .denomination-mobile {
         display: none;

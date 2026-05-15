@@ -6,7 +6,6 @@ import {
     translator,
 } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
-import { BigNumber } from "bignumber.js";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -35,10 +34,10 @@ import dict, { type DictKey } from "../i18n/i18n";
 import { type Pairs, getPairs } from "../utils/boltzClient";
 import { type ECKeys, ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
-import { getBtcPriceFailover } from "../utils/fiat";
 import { getRegularReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
+import { stringSerializer } from "../utils/persistence";
 import {
     type RescueFile,
     deriveKey,
@@ -99,12 +98,8 @@ export type GlobalContextType = {
     setGasTopUp: Setter<boolean>;
     zeroConf: Accessor<boolean>;
     setZeroConf: Setter<boolean>;
-    showFiatAmount: Accessor<boolean>;
-    setShowFiatAmount: Setter<boolean>;
     bitcoinOnly: Accessor<boolean>;
     setBitcoinOnly: Setter<boolean>;
-    btcPrice: Accessor<BigNumber | Error | null>;
-    fetchBtcPrice: () => Promise<void>;
     // functions
     t: tFn;
     notify: notifyFn;
@@ -145,12 +140,6 @@ export type GlobalContextType = {
     setRescueFileBackupDone: Setter<boolean>;
 };
 
-// Local storage serializer to support the values created by the deprecated "createStorageSignal"
-const stringSerializer = {
-    serialize: (value: unknown) => value as string,
-    deserialize: (value: string) => value as never,
-};
-
 const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: JSX.Element }) => {
@@ -175,11 +164,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const [webln, setWebln] = createSignal<boolean>(false);
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
-
-    const [btcPrice, setBtcPrice] = createSignal<BigNumber | Error | null>(
-        null,
-    );
-    const [lastPriceFetch, setLastPriceFetch] = createSignal<number>(0);
 
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         // eslint-disable-next-line solid/reactivity
@@ -470,24 +454,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     void detectWebLNProvider().then((state) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
-    const fetchBtcPrice = async () => {
-        try {
-            const fetchedRecently =
-                Date.now() - lastPriceFetch() < 1000 * 60 * 5; // 5 minutes
-            if (fetchedRecently && BigNumber.isBigNumber(btcPrice())) {
-                return;
-            }
-            const btcPriceFetched = await getBtcPriceFailover();
-
-            setBtcPrice(btcPriceFetched);
-            setLastPriceFetch(Date.now());
-        } catch {
-            setBtcPrice(
-                new Error("Failed to fetch BTC price from all providers"),
-            );
-        }
-    };
-
     const [privacyMode, setPrivacyMode] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
@@ -517,14 +483,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         createSignal<boolean>(true),
         {
             name: "zeroConf",
-        },
-    );
-
-    const [showFiatAmount, setShowFiatAmount] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal<boolean>(true),
-        {
-            name: "showFiatAmount",
         },
     );
 
@@ -623,12 +581,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setGasTopUp,
                 zeroConf,
                 setZeroConf,
-                showFiatAmount,
-                setShowFiatAmount,
                 bitcoinOnly,
                 setBitcoinOnly,
-                btcPrice,
-                fetchBtcPrice,
                 // functions
                 t,
                 notify,

@@ -16,8 +16,9 @@ import {
     getAssetDisplaySymbol,
     requireTokenConfig,
 } from "../consts/Assets";
-import { Currency } from "../consts/Enums";
+import type { Currency } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
+import { useFiatContext } from "../context/Fiat";
 import { useGlobalContext } from "../context/Global";
 import { BridgeMessagingFeeDisplayMode } from "../utils/Pair";
 import { formatAmount, formatDenomination } from "../utils/denomination";
@@ -30,16 +31,16 @@ import { getPair } from "../utils/helper";
 import AmountDenominator from "./AmountDenominator";
 import { RoutingFee, getFeeHighlightClass } from "./Fees";
 
-const enum FeeUsdViewStatus {
+const enum FeeFiatViewStatus {
     Loading = "loading",
     Error = "error",
     Ok = "ok",
 }
 
-type FeeUsdView =
-    | { status: FeeUsdViewStatus.Loading }
-    | { status: FeeUsdViewStatus.Error }
-    | { status: FeeUsdViewStatus.Ok; amount: BigNumber };
+type FeeFiatView =
+    | { status: FeeFiatViewStatus.Loading }
+    | { status: FeeFiatViewStatus.Error }
+    | { status: FeeFiatViewStatus.Ok; amount: BigNumber };
 
 const TokenFee = (props: { token?: string }) => {
     return (
@@ -79,14 +80,9 @@ const getBridgeMessagingFeeTokenDecimals = (
 };
 
 const FeesCollapse = () => {
-    const {
-        btcPrice,
-        fetchBtcPrice,
-        t,
-        denomination,
-        separator,
-        regularPairs,
-    } = useGlobalContext();
+    const { t, denomination, separator, regularPairs } = useGlobalContext();
+    const { btcPrice, fetchBtcPrice, fiatCurrency, usdToFiatRate } =
+        useFiatContext();
     const { pair, receiveAmount, minerFee, sendAmount, boltzFee, getGasToken } =
         useCreateContext();
 
@@ -99,24 +95,24 @@ const FeesCollapse = () => {
         );
     });
 
-    const hasBridgeMessagingFeeTokenUsdLookup = createMemo(() => {
+    const hasBridgeMessagingFeeTokenFiatLookup = createMemo(() => {
         const token = pair().bridgeMessagingFeeToken;
         return token !== undefined && hasGasTokenPriceLookup(token);
     });
 
-    const [bridgeMessagingFeeTokenUsdPrice] = createResource<
+    const [bridgeMessagingFeeTokenFiatPrice] = createResource<
         BigNumber | Error | undefined,
-        string
+        { token: string; currency: Currency }
     >(
         () => {
             const token = pair().bridgeMessagingFeeToken;
-            return token !== undefined && hasBridgeMessagingFeeTokenUsdLookup()
-                ? token
+            return token !== undefined && hasBridgeMessagingFeeTokenFiatLookup()
+                ? { token, currency: fiatCurrency() }
                 : undefined;
         },
-        async (token) => {
+        async ({ token, currency }) => {
             try {
-                return await getGasTokenPriceFailover(token, Currency.USD);
+                return await getGasTokenPriceFailover(token, currency);
             } catch (error) {
                 log.warn("Failed to get gas token price", error);
                 return error instanceof Error
@@ -171,7 +167,7 @@ const FeesCollapse = () => {
         return fee !== undefined && fee > 0n;
     });
 
-    const totalCollapsibleFeesUsdView = createMemo<FeeUsdView>(() => {
+    const totalCollapsibleFeesFiatView = createMemo<FeeFiatView>(() => {
         receiveAmount();
 
         const rate = btcPrice();
@@ -179,20 +175,20 @@ const FeesCollapse = () => {
 
         if (totalSatsFee.isGreaterThan(0)) {
             if (rate === null) {
-                return { status: FeeUsdViewStatus.Loading };
+                return { status: FeeFiatViewStatus.Loading };
             }
 
             if (rate instanceof Error) {
-                return { status: FeeUsdViewStatus.Error };
+                return { status: FeeFiatViewStatus.Error };
             }
         }
 
-        const btcFeesUsd =
+        const btcFeesFiat =
             rate instanceof BigNumber && totalSatsFee.isGreaterThan(0)
                 ? convertToFiat(totalSatsFee, rate)
                 : BigNumber(0);
 
-        let amount = btcFeesUsd;
+        let amount = btcFeesFiat;
 
         const transferFee = bridgeTransferFee();
         const transferFeeAsset = pair().bridgeTransferFeeAsset;
@@ -202,26 +198,38 @@ const FeesCollapse = () => {
             transferFeeAsset !== undefined
         ) {
             const { decimals } = requireTokenConfig(transferFeeAsset);
-            amount = amount.plus(transferFee.div(BigNumber(10).pow(decimals)));
+            const transferFeeUsd = transferFee.div(BigNumber(10).pow(decimals));
+            const usdToFiat = usdToFiatRate();
+
+            if (!(usdToFiat instanceof BigNumber)) {
+                return {
+                    status:
+                        rate === null
+                            ? FeeFiatViewStatus.Loading
+                            : FeeFiatViewStatus.Error,
+                };
+            }
+
+            amount = amount.plus(transferFeeUsd.multipliedBy(usdToFiat));
         }
 
         const messagingFee = bridgeMessagingFee();
-        const messagingFeeTokenUsdRate = bridgeMessagingFeeTokenUsdPrice();
+        const messagingFeeTokenFiatRate = bridgeMessagingFeeTokenFiatPrice();
 
         if (bridgeMessagingFeeIncluded() && hasBridgeMessagingFee()) {
-            if (messagingFeeTokenUsdRate === undefined) {
-                if (!hasBridgeMessagingFeeTokenUsdLookup()) {
-                    return { status: FeeUsdViewStatus.Error };
+            if (messagingFeeTokenFiatRate === undefined) {
+                if (!hasBridgeMessagingFeeTokenFiatLookup()) {
+                    return { status: FeeFiatViewStatus.Error };
                 }
 
-                return { status: FeeUsdViewStatus.Loading };
+                return { status: FeeFiatViewStatus.Loading };
             }
 
-            if (messagingFeeTokenUsdRate instanceof Error) {
-                return { status: FeeUsdViewStatus.Error };
+            if (messagingFeeTokenFiatRate instanceof Error) {
+                return { status: FeeFiatViewStatus.Error };
             }
             if (messagingFee === undefined) {
-                return { status: FeeUsdViewStatus.Error };
+                return { status: FeeFiatViewStatus.Error };
             }
 
             amount = amount.plus(
@@ -230,39 +238,39 @@ const FeesCollapse = () => {
                         messagingFee,
                         bridgeMessagingFeeTokenDecimals(),
                     ),
-                ).multipliedBy(messagingFeeTokenUsdRate),
+                ).multipliedBy(messagingFeeTokenFiatRate),
             );
         }
 
         return {
-            status: FeeUsdViewStatus.Ok,
+            status: FeeFiatViewStatus.Ok,
             amount,
         };
     });
 
-    const renderTotalCollapsibleFeesUsdView = () => {
-        const view = totalCollapsibleFeesUsdView();
+    const renderTotalCollapsibleFeesFiatView = () => {
+        const view = totalCollapsibleFeesFiatView();
 
         switch (view.status) {
-            case FeeUsdViewStatus.Ok:
+            case FeeFiatViewStatus.Ok:
                 return (
                     <span class="fees-toggle-value">
                         ≈&nbsp;
                         <span data-testid="fees-total-amount">
                             {view.amount.toFixed(2)}
                         </span>
-                        &nbsp;{Currency.USD}
+                        &nbsp;{fiatCurrency()}
                     </span>
                 );
 
-            case FeeUsdViewStatus.Loading:
+            case FeeFiatViewStatus.Loading:
                 return (
                     <span class="fees-toggle-value">
                         <span class="skeleton" />
                     </span>
                 );
 
-            case FeeUsdViewStatus.Error:
+            case FeeFiatViewStatus.Error:
                 return (
                     <span class="fees-toggle-value">
                         {t("fiat_rate_not_available")}
@@ -305,7 +313,7 @@ const FeesCollapse = () => {
                     </span>
                     {t("swap_fees")}:
                 </span>
-                {renderTotalCollapsibleFeesUsdView()}
+                {renderTotalCollapsibleFeesFiatView()}
             </button>
             <div
                 class="fees-details-shell"

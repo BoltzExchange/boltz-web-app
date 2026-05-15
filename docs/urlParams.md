@@ -84,3 +84,12 @@ Available values are:
 - Portuguese: `pt`
 - Chinese: `zh`
 - Japanese: `ja`
+
+## Fiat currency
+
+`fiatCurrency` sets the currency used for the fiat amount hint. The value is
+case-insensitive, overrides any previously persisted selection, and is removed
+from the URL after being applied. Available values are:
+
+- `USD`
+- `EUR`

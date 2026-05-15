@@ -40,6 +40,7 @@ import {
 } from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
+import { useFiatContext } from "../context/Fiat";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
@@ -76,10 +77,9 @@ const Create = () => {
         notify,
         pairs,
         regularPairs,
-        showFiatAmount,
-        fetchBtcPrice,
         gasTopUp,
     } = useGlobalContext();
+    const { fetchBtcPrice } = useFiatContext();
     const {
         pair,
         setPair,
@@ -748,8 +748,7 @@ const Create = () => {
                             side={Side.Send}
                             signal={() => pair().fromAsset}
                         />
-                        <div
-                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                        <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
@@ -806,8 +805,7 @@ const Create = () => {
                             side={Side.Receive}
                             signal={() => pair().toAsset}
                         />
-                        <div
-                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                        <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
                                 <Show when={receiveAmountQuoteLoading()}>
                                     <div

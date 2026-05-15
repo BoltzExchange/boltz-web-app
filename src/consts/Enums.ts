@@ -23,6 +23,7 @@ export enum UrlParam {
     ReceiveAmount = "receiveAmount",
     Lang = "lang",
     Ref = "ref",
+    FiatCurrency = "fiatCurrency",
 }
 
 export enum AssetSelection {
@@ -37,6 +38,7 @@ export enum InvoiceValidation {
 
 export enum Currency {
     USD = "USD",
+    EUR = "EUR",
 }
 
 export enum RskRescueMode {
