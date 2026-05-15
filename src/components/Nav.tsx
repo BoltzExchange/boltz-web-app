@@ -1,7 +1,7 @@
 import { A } from "@solidjs/router";
-import { BsGlobe } from "solid-icons/bs";
+import { IoLanguage } from "solid-icons/io";
 import { OcLinkexternal2 } from "solid-icons/oc";
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 
 import Warnings from "../components/Warnings";
 import { config } from "../config";
@@ -11,10 +11,29 @@ import "../style/nav.scss";
 import ExternalLink from "./ExternalLink";
 
 const Nav = (props: { network: string; isPro?: boolean }) => {
-    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let languagesRef: HTMLDivElement | undefined;
 
     const { t, setHideHero, setI18nConfigured } = useGlobalContext();
     const [hamburger, setHamburger] = createSignal(false);
+    const [languageMenu, setLanguageMenu] = createSignal(false);
+
+    const closeLanguageMenu = (event: MouseEvent) => {
+        const target = event.target;
+
+        if (target instanceof Node && languagesRef?.contains(target)) {
+            return;
+        }
+
+        setLanguageMenu(false);
+    };
+
+    onMount(() => {
+        document.addEventListener("click", closeLanguageMenu);
+    });
+
+    onCleanup(() => {
+        document.removeEventListener("click", closeLanguageMenu);
+    });
 
     return (
         <nav>
@@ -40,31 +59,33 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                 </Show>
                 <div
                     id="languages"
-                    onClick={(e) => e.currentTarget.classList.toggle("active")}
-                    onMouseEnter={() => {
-                        if (timeout) {
-                            clearTimeout(timeout);
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        timeout = setTimeout(() => {
-                            e.target.classList.remove("active");
-                        }, 300);
-                    }}>
-                    <span class="globe">
-                        <BsGlobe size={19} />
-                    </span>
-                    <div class="dropdown">
+                    ref={languagesRef}
+                    classList={{ active: languageMenu() }}>
+                    <button
+                        type="button"
+                        class="language-toggle"
+                        aria-label={t("language")}
+                        aria-haspopup="menu"
+                        aria-expanded={languageMenu()}
+                        onClick={() => setLanguageMenu((open) => !open)}>
+                        <IoLanguage size={19} />
+                    </button>
+                    <div class="dropdown" role="menu">
                         <For each={Object.keys(locales)}>
                             {(lang) => (
-                                <span
+                                <button
+                                    type="button"
                                     class="lang"
-                                    onClick={() => setI18nConfigured(lang)}>
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setI18nConfigured(lang);
+                                        setLanguageMenu(false);
+                                    }}>
                                     {
                                         locales[lang as keyof typeof locales]
                                             .language
                                     }
-                                </span>
+                                </button>
                             )}
                         </For>
                     </div>
