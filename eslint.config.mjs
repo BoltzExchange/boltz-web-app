@@ -129,4 +129,18 @@ export default [
             "@typescript-eslint/no-restricted-imports": "off",
         },
     },
+    {
+        files: ["packages/boltz-swaps/src/**/*.ts"],
+        rules: {
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector:
+                        "ExportNamedDeclaration > TSEnumDeclaration[const=true]",
+                    message:
+                        "Exporting `const enum` is not allowed in boltz-swaps; consumers compiled with isolatedModules/verbatimModuleSyntax cannot use them. Use a regular `enum` or a union of string literals instead.",
+                },
+            ],
+        },
+    },
 ];
