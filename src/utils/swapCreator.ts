@@ -3,12 +3,6 @@ import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
 import type { BridgeDetails, BridgeRoute } from "boltz-swaps/bridge";
-import { type BridgeKind, SwapPosition } from "boltz-swaps/types";
-
-import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
-import type { newKeyFn } from "../context/Global";
-import { type EncodedHop } from "./Pair";
 import {
     type ChainSwapCreatedResponse,
     type ReverseCreatedResponse,
@@ -16,8 +10,20 @@ import {
     createChainSwap,
     createReverseSwap,
     createSubmarineSwap,
-} from "./boltzClient";
+} from "boltz-swaps/client";
+import {
+    type BridgeKind,
+    GasAbstractionType,
+    SwapPosition,
+} from "boltz-swaps/types";
+
+import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import type { newKeyFn } from "../context/Global";
+import { type EncodedHop } from "./Pair";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
+
+export { GasAbstractionType };
 
 export type DexDetail = {
     hops: EncodedHop[];
@@ -37,12 +43,6 @@ export type BridgeDetail = BridgeRoute & {
     txHash?: string;
     details?: BridgeDetails;
 };
-
-export const enum GasAbstractionType {
-    None = "none",
-    RifRelay = "rifRelay",
-    Signer = "signer",
-}
 
 export type GasAbstraction = {
     lockup: GasAbstractionType;

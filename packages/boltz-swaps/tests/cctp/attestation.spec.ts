@@ -1,20 +1,13 @@
 import { getCctpAttestation, getCctpForwardTxHash } from "boltz-swaps/cctp";
-
-import { config } from "../../src/config";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 
 describe("cctpAttestation", () => {
-    const originalFeeApiUrl = config.cctpApiUrl;
-
     beforeEach(() => {
-        config.cctpApiUrl = "https://iris-api.circle.com";
+        setBoltzSwapsConfig({ cctpApiUrl: "https://iris-api.circle.com" });
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-    });
-
-    afterAll(() => {
-        config.cctpApiUrl = originalFeeApiUrl;
     });
 
     test("getCctpForwardTxHash returns the forwardTxHash when present", async () => {

@@ -1,22 +1,16 @@
-import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+} from "boltz-swaps/evm/contracts";
 import {
-    erc20Abi,
-    erc20SwapAbi,
-    etherSwapAbi,
-} from "boltz-swaps/generated/evm-abis";
-import { AssetKind } from "boltz-swaps/types";
+    type ClaimResult,
+    type PopulatedEvmTransaction,
+    claimAsset as libClaimAsset,
+} from "boltz-swaps/evm/transaction";
+import { GasAbstractionType } from "boltz-swaps/types";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import {
-    type Address,
-    type Hash,
-    type Hex,
-    type TransactionReceipt,
-    encodeFunctionData,
-    getAddress,
-    isAddressEqual,
-    parseEventLogs,
-} from "viem";
+import { type Address, type Hash } from "viem";
 
 import {
     type AlchemyCall,
@@ -24,42 +18,20 @@ import {
     sendTransaction as sendAlchemyTransaction,
     toAlchemyCall,
 } from "../alchemy/Alchemy";
-import { getKindForAsset, getTokenAddress } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
-import type {
-    Erc20SwapContract,
-    EtherSwapContract,
-} from "../context/contracts";
 import { relayClaimTransaction } from "../rif/Signer";
-import { GasAbstractionType } from "./swapCreator";
 
 export { prefix0x } from "boltz-swaps/evm";
-
-export type LockupEvent = {
-    preimageHash: Hex;
-    amount: bigint;
-    tokenAddress?: Address;
-    claimAddress: Address;
-    refundAddress: Address;
-    timelock: bigint;
-    logIndex: number;
-};
-
-type SwapAbi = typeof etherSwapAbi | typeof erc20SwapAbi;
+export {
+    type ClaimResult,
+    type PopulatedEvmTransaction,
+    getLockupEvent,
+    getSignerForGasAbstraction,
+} from "boltz-swaps/evm/transaction";
+export type { LockupEvent } from "boltz-swaps/types";
 
 type SendPopulatedTransactionOptions = {
     alchemy?: SendAlchemyTransactionOptions;
-};
-
-export type PopulatedEvmTransaction = {
-    to?: Address;
-    data?: Hex;
-    value?: bigint;
-    gas?: bigint;
-    gasPrice?: bigint;
-    maxFeePerGas?: bigint;
-    maxPriorityFeePerGas?: bigint;
-    nonce?: number;
 };
 
 const transactionHashFromResponse = (response: unknown): Hash => {
@@ -73,21 +45,6 @@ const transactionHashFromResponse = (response: unknown): Hash => {
         }
     }
     throw new Error("transaction response did not include a hash");
-};
-
-export const getSignerForGasAbstraction = (
-    gasAbstraction: GasAbstractionType,
-    signer: Signer | undefined,
-    gasAbstractionSigner: Signer,
-): Signer | undefined => {
-    switch (gasAbstraction) {
-        case GasAbstractionType.None:
-        case GasAbstractionType.RifRelay:
-            return signer;
-
-        case GasAbstractionType.Signer:
-            return gasAbstractionSigner;
-    }
 };
 
 export const sendPopulatedTransaction = async (
@@ -149,39 +106,7 @@ export const sendPopulatedTransaction = async (
     }
 };
 
-export const getLockupEvent = (
-    abi: SwapAbi,
-    receipt: Pick<TransactionReceipt, "logs">,
-    contractAddress: Address,
-): LockupEvent => {
-    const [lockupLog] = parseEventLogs({
-        abi,
-        eventName: "Lockup",
-        logs: receipt.logs,
-    }).filter((eventLog) => isAddressEqual(eventLog.address, contractAddress));
-
-    if (lockupLog === undefined) {
-        throw new Error("could not find commitment lockup event");
-    }
-
-    const { args } = lockupLog;
-    return {
-        amount: args.amount,
-        tokenAddress: "tokenAddress" in args ? args.tokenAddress : undefined,
-        claimAddress: args.claimAddress,
-        refundAddress: args.refundAddress,
-        timelock: args.timelock,
-        preimageHash: args.preimageHash,
-        logIndex: lockupLog.logIndex ?? 0,
-    };
-};
-
-export type ClaimResult = {
-    transactionHash: string;
-    receiveAmount: bigint;
-};
-
-export const claimAsset = async (
+export const claimAsset = (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
@@ -191,110 +116,23 @@ export const claimAsset = async (
     timeoutBlockHeight: number,
     destination: Address,
     signer: Accessor<Signer>,
-    getGasAbstractionSigner: Signer,
+    gasAbstractionSigner: Signer,
     etherSwap: EtherSwapContract,
     erc20Swap: Erc20SwapContract,
-): Promise<ClaimResult> => {
-    const assetAmount = satsToAssetAmount(amount, asset);
-
-    switch (gasAbstraction) {
-        case GasAbstractionType.RifRelay:
-            return {
-                transactionHash: await relayClaimTransaction(
-                    signer(),
-                    etherSwap,
-                    preimage,
-                    amount,
-                    refundAddress,
-                    timeoutBlockHeight,
-                ),
-                receiveAmount: assetAmount,
-            };
-
-        case GasAbstractionType.None:
-        case GasAbstractionType.Signer: {
-            const claimSigner = getSignerForGasAbstraction(
-                gasAbstraction,
-                signer(),
-                getGasAbstractionSigner,
-            );
-            if (claimSigner === undefined) {
-                throw new Error("missing claim signer");
-            }
-
-            const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;
-            const tx = isErc20
-                ? ({
-                      to: erc20Swap.address,
-                      data: encodeFunctionData({
-                          abi: erc20SwapAbi,
-                          functionName: "claim",
-                          args: [
-                              prefix0x(preimage),
-                              assetAmount,
-                              getAddress(getTokenAddress(asset)),
-                              getAddress(claimAddress),
-                              getAddress(refundAddress),
-                              BigInt(timeoutBlockHeight),
-                          ],
-                      }),
-                  } satisfies PopulatedEvmTransaction)
-                : ({
-                      to: etherSwap.address,
-                      data: encodeFunctionData({
-                          abi: etherSwapAbi,
-                          functionName: "claim",
-                          args: [
-                              prefix0x(preimage),
-                              assetAmount,
-                              getAddress(claimAddress),
-                              getAddress(refundAddress),
-                              BigInt(timeoutBlockHeight),
-                          ],
-                      }),
-                  } satisfies PopulatedEvmTransaction);
-
-            if (
-                gasAbstraction === GasAbstractionType.Signer &&
-                isErc20 &&
-                !isAddressEqual(claimAddress, destination)
-            ) {
-                const calls: AlchemyCall[] = [
-                    { to: tx.to, data: tx.data },
-                    {
-                        to: getTokenAddress(asset) as Address,
-                        data: encodeFunctionData({
-                            abi: erc20Abi,
-                            functionName: "transfer",
-                            args: [getAddress(destination), assetAmount],
-                        }),
-                    },
-                ];
-                return {
-                    transactionHash: await sendPopulatedTransaction(
-                        gasAbstraction,
-                        claimSigner,
-                        calls,
-                    ),
-                    receiveAmount: assetAmount,
-                };
-            }
-
-            return {
-                transactionHash: await sendPopulatedTransaction(
-                    gasAbstraction,
-                    claimSigner,
-                    tx,
-                ),
-                receiveAmount: assetAmount,
-            };
-        }
-
-        default: {
-            const exhaustiveCheck: never = gasAbstraction;
-            throw new Error(
-                `Unsupported gas abstraction type: ${String(exhaustiveCheck)}`,
-            );
-        }
-    }
-};
+): Promise<ClaimResult> =>
+    libClaimAsset(
+        gasAbstraction,
+        asset,
+        preimage,
+        amount,
+        claimAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        destination,
+        signer,
+        gasAbstractionSigner,
+        etherSwap,
+        erc20Swap,
+        sendPopulatedTransaction,
+        relayClaimTransaction,
+    );

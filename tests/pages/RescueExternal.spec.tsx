@@ -1,14 +1,11 @@
 import { render, screen, waitFor, within } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
+import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import { vi } from "vitest";
 
 import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
-import {
-    type RestorableSwap,
-    getRestorableSwaps,
-} from "../../src/utils/boltzClient";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 global.fetch = vi.fn(() =>
@@ -39,7 +36,7 @@ Object.defineProperty(global.navigator, "locks", {
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
-vi.mock("../../src/utils/boltzClient", () => {
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => {
     return {
         getLockupTransaction: vi.fn(() =>
             Promise.resolve({

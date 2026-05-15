@@ -1,4 +1,9 @@
 import BigNumber from "bignumber.js";
+import {
+    acceptChainSwapNewQuote,
+    getChainSwapNewQuote,
+    getChainSwapTransactions,
+} from "boltz-swaps/client";
 import { SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
@@ -21,11 +26,6 @@ import { usePayContext } from "../context/Pay";
 import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import Pair from "../utils/Pair";
-import {
-    acceptChainSwapNewQuote,
-    getChainSwapNewQuote,
-    getChainSwapTransactions,
-} from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
 import {
     decodeAddress,

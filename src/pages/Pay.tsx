@@ -1,4 +1,5 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
 import log from "loglevel";
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
@@ -53,7 +54,6 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapUTXOs } from "../utils/blockchain";
-import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
 import {
     clipboard,
     cropString,

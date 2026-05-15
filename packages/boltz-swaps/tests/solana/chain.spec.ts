@@ -1,5 +1,5 @@
-// @vitest-environment node
 import { clearCache } from "boltz-swaps/cache";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { solana as lazySolana } from "boltz-swaps/lazy/solana";
 import {
     decodeSolanaAddress,
@@ -11,13 +11,9 @@ import {
     shouldCreateSolanaTokenAccount,
     solanaAtaRentExemptLamports,
 } from "boltz-swaps/solana";
-import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
-import { config as runtimeConfig } from "../../../src/config";
-import { config as mainnetConfig } from "../../../src/configs/mainnet";
+import { mainnetBoltzSwapsConfig } from "../fixtures/mainnetAssets.ts";
 
-const originalAssets = structuredClone(runtimeConfig.assets);
-const originalNetwork = runtimeConfig.network;
 const knownRecipientWithUsdtAta =
     "6bGbFocpK9tzyDsZEWrQkixm6WCGsnqvYPcXpAR7Pc9t";
 const knownRecipientWithoutUsdtAta =
@@ -26,19 +22,13 @@ const mockAssociatedTokenAddress =
     "7MtyL1S2G9Tz2qtPCQEW4Gm2rjS2JdT1oP2E6dLkK8sQ";
 
 beforeAll(() => {
-    runtimeConfig.assets = structuredClone(mainnetConfig.assets);
-    runtimeConfig.network = mainnetConfig.network;
+    setBoltzSwapsConfig(mainnetBoltzSwapsConfig);
 });
 
 afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     clearCache();
-});
-
-afterAll(() => {
-    runtimeConfig.assets = originalAssets;
-    runtimeConfig.network = originalNetwork;
 });
 
 test("encodeSolanaAtaCreationOption packs the rent-exempt lamports as the second uint128", () => {

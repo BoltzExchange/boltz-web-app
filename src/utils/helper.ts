@@ -1,4 +1,10 @@
 import { hex } from "@scure/base";
+import type {
+    ChainPairTypeTaproot,
+    Pairs,
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "boltz-swaps/client";
 import { Buffer } from "buffer";
 
 import { chooseUrl, config } from "../config";
@@ -6,12 +12,6 @@ import { isTor } from "../configs/base";
 import { type AssetType, BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
-import type {
-    ChainPairTypeTaproot,
-    Pairs,
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
-} from "./boltzClient";
 import { type ECKeys, ECPair } from "./ecpair";
 import { formatError } from "./errors";
 import {

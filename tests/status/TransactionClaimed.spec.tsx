@@ -6,7 +6,7 @@ import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getReverseTransaction: vi.fn().mockResolvedValue({
         hex: "txHex",
     }),

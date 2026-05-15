@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { getPairs } from "boltz-swaps/client";
 import { weiToSatoshi } from "boltz-swaps/evm";
 
 import Fees from "../../src/components/Fees";
@@ -11,7 +12,6 @@ import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair, { BridgeMessagingFeeDisplayMode } from "../../src/utils/Pair";
-import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
@@ -29,7 +29,7 @@ import { pairs } from "../pairs";
 const mockUseWeb3Signer = vi.fn();
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 

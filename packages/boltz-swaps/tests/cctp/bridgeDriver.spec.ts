@@ -13,6 +13,7 @@ import {
     cctpZeroBytes32,
     encodeCctpGuid,
 } from "boltz-swaps/cctp";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import * as solanaChain from "boltz-swaps/solana";
 import {
     BridgeKind,
@@ -22,13 +23,10 @@ import {
 } from "boltz-swaps/types";
 import { TransactionReceiptNotFoundError } from "viem";
 
-import { config as runtimeConfig } from "../../src/config";
-import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { cctpApiUrl, mainnetAssets } from "../fixtures/mainnetAssets.ts";
 
 describe("CctpBridgeDriver", () => {
     const driver = new CctpBridgeDriver();
-    const originalAssets = structuredClone(runtimeConfig.assets ?? {});
-    const originalFeeApiUrl = runtimeConfig.cctpApiUrl;
 
     const route = {
         sourceAsset: "USDC",
@@ -54,7 +52,7 @@ describe("CctpBridgeDriver", () => {
     const solanaRecipientSetupHookData =
         "0x636374702d666f7277617264000000000000000000000000000000000000002101cf3ac201d92eadcae0cd69b431f4c0e6d96c06bdb2fa28271b00409b5f1622ca";
     const requireUsdcCctpBridge = () => {
-        const bridge = mainnetConfig.assets!.USDC.bridge;
+        const bridge = mainnetAssets.USDC.bridge;
         if (bridge?.kind !== BridgeKind.Cctp) {
             throw new Error("USDC is not configured as CCTP");
         }
@@ -62,17 +60,18 @@ describe("CctpBridgeDriver", () => {
     };
 
     beforeAll(() => {
-        runtimeConfig.assets = {
-            ...runtimeConfig.assets,
-            USDC: structuredClone(mainnetConfig.assets!.USDC),
-            "USDC-BASE": structuredClone(mainnetConfig.assets!["USDC-BASE"]),
-            "USDC-SOL": structuredClone(mainnetConfig.assets!["USDC-SOL"]),
-        };
+        setBoltzSwapsConfig({
+            assets: mainnetAssets,
+            cctpApiUrl,
+        });
     });
 
     beforeEach(() => {
         clearCache();
-        runtimeConfig.cctpApiUrl = "https://iris-api.circle.com";
+        setBoltzSwapsConfig({
+            assets: mainnetAssets,
+            cctpApiUrl,
+        });
         vi.spyOn(globalThis, "fetch").mockResolvedValue({
             ok: true,
             json: () =>
@@ -94,11 +93,6 @@ describe("CctpBridgeDriver", () => {
     afterEach(() => {
         clearCache();
         vi.restoreAllMocks();
-    });
-
-    afterAll(() => {
-        runtimeConfig.assets = originalAssets;
-        runtimeConfig.cctpApiUrl = originalFeeApiUrl;
     });
 
     test("should use the CCTP bridge explorer", () => {
@@ -437,7 +431,7 @@ describe("CctpBridgeDriver", () => {
 
     test("getContract passes Solana source TokenMessenger through unchanged", async () => {
         const requireSolanaCctpBridge = () => {
-            const bridge = mainnetConfig.assets!["USDC-SOL"].bridge;
+            const bridge = mainnetAssets["USDC-SOL"].bridge;
             if (bridge?.kind !== BridgeKind.Cctp) {
                 throw new Error("USDC-SOL is not configured as CCTP");
             }
@@ -566,7 +560,7 @@ describe("CctpBridgeDriver", () => {
             executionContract: {
                 address: requireUsdcCctpBridge().cctp.tokenMessenger,
             },
-            burnToken: mainnetConfig.assets!.USDC.token!.address,
+            burnToken: mainnetAssets.USDC.token!.address,
         });
     });
 
@@ -694,10 +688,6 @@ describe("CctpBridgeDriver", () => {
         ).rejects.toThrow("invalid CCTP hook data");
     });
 
-    // -- getSentEvent / getReceivedEventByGuid -----------------------------
-
-    // Mirrors the helper in cctpEvents.spec.ts; kept local so the driver
-    // test file is self-contained.
     const encodeBytesData = (hex: string): string => {
         const stripped = hex.startsWith("0x") ? hex.slice(2) : hex;
         const lengthBytes = stripped.length / 2;
@@ -744,8 +734,6 @@ describe("CctpBridgeDriver", () => {
             "0xmessenger",
         );
 
-        // Guid pairs source domain with the source-chain tx hash (Circle's
-        // Iris API indexes messages by that).
         expect(event.guid).toBe(`3:${sourceTxHash}`);
         expect(event.dstEid).toBe(6);
         expect(event.amountSentLD).toBe(1_000_000n);

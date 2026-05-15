@@ -1,10 +1,10 @@
 import { OutputType } from "boltz-core";
+import type { RestorableSwap } from "boltz-swaps/client";
 import { describe, expect, test } from "vitest";
 
 import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import { mapSwap } from "../../src/pages/RefundRescue";
-import type { RestorableSwap } from "../../src/utils/boltzClient";
 
 const tree = {
     claimLeaf: { output: "claim", version: 0xc0 },

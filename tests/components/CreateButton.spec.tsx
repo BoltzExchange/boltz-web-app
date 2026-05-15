@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import type { Pairs } from "boltz-swaps/client";
 
 import CreateButton, {
     getClaimAddress,
@@ -11,7 +12,6 @@ import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
-import type { Pairs } from "../../src/utils/boltzClient";
 import {
     GasAbstractionType,
     createUniformGasAbstraction,

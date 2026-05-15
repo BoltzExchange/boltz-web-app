@@ -1,8 +1,83 @@
+import type { Address, Hex } from "viem";
+
 export enum NetworkTransport {
     Evm = "evm",
     Solana = "solana",
     Tron = "tron",
 }
+
+export enum SwapType {
+    Submarine = "submarine",
+    Reverse = "reverse",
+    Chain = "chain",
+    Dex = "dex",
+}
+
+export enum RskRescueMode {
+    Refund = "refund",
+    Claim = "resume",
+}
+
+export enum GasAbstractionType {
+    None = "none",
+    RifRelay = "rifRelay",
+    Signer = "signer",
+}
+
+export const arbitrumChainId = 42161;
+
+export type AssetType =
+    | "LN"
+    | "BTC"
+    | "L-BTC"
+    | "RBTC"
+    | "TBTC"
+    | "USDT0"
+    | "USDC";
+
+export type RefundableAssetType = "BTC" | "L-BTC" | "RBTC" | "TBTC";
+
+export type ContractAddresses = {
+    EtherSwap: string;
+    ERC20Swap: string;
+};
+
+export type Contracts = {
+    network: {
+        chainId: number;
+        name: string;
+    };
+    swapContracts: ContractAddresses;
+    supportedContracts: Record<
+        string,
+        ContractAddresses & { features: string[] }
+    >;
+    tokens: Record<string, string>;
+};
+
+export type LockupEvent = {
+    preimageHash: Hex;
+    amount: bigint;
+    tokenAddress?: Address;
+    claimAddress: Address;
+    refundAddress: Address;
+    timelock: bigint;
+    logIndex: number;
+};
+
+export type LogRefundData = {
+    asset: AssetType;
+    blockNumber: number;
+    transactionHash: Hex;
+
+    preimageHash: Hex;
+    preimage?: Hex;
+    amount: bigint;
+    tokenAddress?: Address;
+    claimAddress: Address;
+    refundAddress: Address;
+    timelock: bigint;
+};
 
 export enum BridgeKind {
     Oft = "oft",

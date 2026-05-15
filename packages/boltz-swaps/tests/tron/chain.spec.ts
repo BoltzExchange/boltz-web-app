@@ -1,5 +1,5 @@
-// @vitest-environment node
 import { clearCache } from "boltz-swaps/cache";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { tron as lazyTron } from "boltz-swaps/lazy/tron";
 import {
     type TronTransactionInfo,
@@ -11,30 +11,20 @@ import {
     tronBase58ToHexAddress,
     tronHexToBase58Address,
 } from "boltz-swaps/tron";
-import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
 
-import { config as runtimeConfig } from "../../../src/config";
-import { config as mainnetConfig } from "../../../src/configs/mainnet";
+import { mainnetBoltzSwapsConfig } from "../fixtures/mainnetAssets.ts";
 
-const originalAssets = structuredClone(runtimeConfig.assets ?? {});
-const originalNetwork = runtimeConfig.network;
 const knownTronAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 const createReceipt = (result: string) =>
     ({ result }) as TronTransactionInfo["receipt"];
 
 beforeAll(() => {
-    runtimeConfig.assets = structuredClone(mainnetConfig.assets);
-    runtimeConfig.network = mainnetConfig.network;
+    setBoltzSwapsConfig(mainnetBoltzSwapsConfig);
 });
 
 afterEach(() => {
     vi.restoreAllMocks();
     clearCache();
-});
-
-afterAll(() => {
-    runtimeConfig.assets = originalAssets;
-    runtimeConfig.network = originalNetwork;
 });
 
 const stubLazyTron = ({

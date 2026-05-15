@@ -1,18 +1,19 @@
-import { createAssetProvider } from "boltz-swaps/evm";
-import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
-import log from "loglevel";
 import { type Hash, type Hex } from "viem";
 
-import { requireChainId } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
-import type { Signer } from "../context/Web3";
-import type { Erc20SwapContract } from "../context/contracts";
 import {
     getEipRefundSignature,
     postCommitmentRefundSignature,
     postCommitmentSignature,
-} from "./boltzClient";
-import { getLockupEvent, prefix0x } from "./evmTransaction";
+} from "../client.ts";
+import { requireChainId } from "../config.ts";
+import { erc20SwapAbi } from "../generated/evm-abis.ts";
+import type { Signer } from "../interfaces/signer.ts";
+import { getLogger } from "../logger.ts";
+import { SwapType } from "../types.ts";
+import type { Erc20SwapContract } from "./contracts.ts";
+import { prefix0x } from "./prefix0x.ts";
+import { createAssetProvider } from "./provider.ts";
+import { getLockupEvent } from "./transaction.ts";
 
 export const emptyPreimageHash = prefix0x("00".repeat(32));
 
@@ -34,8 +35,9 @@ type PostCommitmentSignatureParams = {
     waitTimeoutMs?: number;
 };
 
-// Backend caps maxOverpaymentPercentage at 10 (lib/api/v2/routers/CommitmentRouter.ts).
-// Send the max so the commitment post is not rejected for small over-lockups.
+// Backend caps maxOverpaymentPercentage at 10
+// (lib/api/v2/routers/CommitmentRouter.ts). Send the max so the commitment
+// post is not rejected for small over-lockups.
 const maxAllowedOverpaymentPercentage = 10;
 
 export const postCommitmentSignatureForTransaction = async ({
@@ -48,6 +50,7 @@ export const postCommitmentSignatureForTransaction = async ({
     signer,
     waitTimeoutMs = 120_000,
 }: PostCommitmentSignatureParams) => {
+    const log = getLogger();
     log.info("Waiting for commitment lockup receipt", {
         asset,
         commitmentAsset,
@@ -128,9 +131,9 @@ export const postCommitmentSignatureForTransaction = async ({
         message: {
             preimageHash: prefix0x(preimageHash),
             amount,
-            tokenAddress: tokenAddress,
-            claimAddress: claimAddress,
-            refundAddress: refundAddress,
+            tokenAddress,
+            claimAddress,
+            refundAddress,
             timelock,
         },
     });
@@ -184,6 +187,7 @@ export const getCommitmentRefundSignature = async ({
     logIndex,
     signer,
 }: GetCommitmentRefundSignatureParams): Promise<Hex> => {
+    const log = getLogger();
     const message = buildCommitmentRefundAuthMessage(
         chainSymbol,
         transactionHash,
@@ -236,6 +240,7 @@ export const getEvmRefundCooperativeSignature = async ({
     logIndex,
     signer,
 }: GetEvmRefundCooperativeSignatureParams): Promise<Hex> => {
+    const log = getLogger();
     const fetchUnlinked = () => {
         if (commitmentTxHash === undefined) {
             throw new Error("commitment lockup transaction hash is required");

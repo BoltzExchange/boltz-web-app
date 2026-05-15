@@ -1,11 +1,11 @@
 import { useNavigate } from "@solidjs/router";
+import type { LogRefundData } from "boltz-swaps/types";
 import { type Accessor, For, Show, createMemo } from "solid-js";
 
 import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";
 import type { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import type { LogRefundData } from "../utils/contractLogs";
 import { cropString } from "../utils/helper";
 
 const AssetIcon = (props: { asset: AssetType }) => (

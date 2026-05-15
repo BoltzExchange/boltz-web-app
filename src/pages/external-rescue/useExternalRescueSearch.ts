@@ -1,5 +1,11 @@
 import { useNavigate } from "@solidjs/router";
-import { createProvider } from "boltz-swaps/evm";
+import {
+    type LogRefundData,
+    type SwapContract,
+    createProvider,
+    getTimelockBlockNumber,
+    scanLockupEvents,
+} from "boltz-swaps/evm";
 import log from "loglevel";
 import {
     createEffect,
@@ -22,12 +28,6 @@ import { useGlobalContext } from "../../context/Global";
 import { useRescueContext } from "../../context/Rescue";
 import { useWeb3Signer } from "../../context/Web3";
 import type { DictKey } from "../../i18n/i18n";
-import {
-    type LogRefundData,
-    type SwapContract,
-    getTimelockBlockNumber,
-    scanLockupEvents,
-} from "../../utils/contractLogs";
 import { formatError } from "../../utils/errors";
 import {
     type GasAbstractionSweep,

@@ -1,18 +1,17 @@
-// @vitest-environment node
 import {
     type CctpSendParam,
     cctpEmptyHookData,
     cctpZeroBytes32,
     createSolanaCctpContract,
 } from "boltz-swaps/cctp";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import * as solanaChain from "boltz-swaps/solana";
 import { BridgeKind, CctpTransferMode } from "boltz-swaps/types";
 
-import { config as runtimeConfig } from "../../src/config";
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../../src/configs/cctp";
+} from "../fixtures/cctp.ts";
 
 const ownerAddress = "11111111111111111111111111111112";
 const tokenAccount = "11111111111111111111111111111113";
@@ -41,30 +40,24 @@ const sendParam: CctpSendParam = {
     hookData: cctpEmptyHookData as `0x${string}`,
 };
 
-const originalAssets = structuredClone(runtimeConfig.assets ?? {});
-
 describe("Solana CCTP send", () => {
     beforeAll(() => {
-        runtimeConfig.assets = {
-            ...runtimeConfig.assets,
-            "USDC-SOL": {
-                ...runtimeConfig.assets?.["USDC-SOL"],
-                bridge: {
-                    kind: BridgeKind.Cctp,
-                    canonicalAsset: "USDC",
-                    cctp: {
-                        domain: 5,
-                        tokenMessenger: solanaTokenMessengerMinterV2,
-                        messageTransmitter: solanaMessageTransmitterV2,
-                        transferMode: CctpTransferMode.Fast,
+        setBoltzSwapsConfig({
+            assets: {
+                "USDC-SOL": {
+                    bridge: {
+                        kind: BridgeKind.Cctp,
+                        canonicalAsset: "USDC",
+                        cctp: {
+                            domain: 5,
+                            tokenMessenger: solanaTokenMessengerMinterV2,
+                            messageTransmitter: solanaMessageTransmitterV2,
+                            transferMode: CctpTransferMode.Fast,
+                        },
                     },
                 },
-            },
-        } as never;
-    });
-
-    afterAll(() => {
-        runtimeConfig.assets = originalAssets;
+            } as never,
+        });
     });
 
     beforeEach(() => {

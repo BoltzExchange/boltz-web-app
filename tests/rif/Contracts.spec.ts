@@ -51,7 +51,7 @@ beforeEach(() => {
 
 describe("getSmartWalletFactory", () => {
     test("reads via the RBTC asset provider, not the wallet's provider", async () => {
-        // Same fix shape as `createTokenContract` in src/context/contracts.ts:
+        // Same fix shape as `createTokenContract` in boltz-swaps/evm/contracts:
         // the public client is hardcoded to the RBTC chain (RIF Relay is
         // RBTC-only) so reads can't drift if the wallet sits on a different
         // chain.

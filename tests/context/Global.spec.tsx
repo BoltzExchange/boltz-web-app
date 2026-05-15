@@ -1,17 +1,17 @@
 import { render } from "@solidjs/testing-library";
+import type * as BoltzClientModule from "boltz-swaps/client";
 
 import type * as ConfigModule from "../../src/config";
 import { SwapType } from "../../src/consts/Enums";
-import type * as BoltzClientModule from "../../src/utils/boltzClient";
 
 const { getPairsMock, configMock } = vi.hoisted(() => ({
     getPairsMock: vi.fn<typeof BoltzClientModule.getPairs>(),
     configMock: { isPro: false } as { isPro: boolean },
 }));
 
-vi.mock("../../src/utils/boltzClient", async () => {
+vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
     const actual = await vi.importActual<typeof BoltzClientModule>(
-        "../../src/utils/boltzClient",
+        "../../packages/boltz-swaps/src/client.ts",
     );
 
     return {

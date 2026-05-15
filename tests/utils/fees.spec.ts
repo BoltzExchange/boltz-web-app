@@ -8,7 +8,7 @@ import { getFeeEstimationsFailover } from "../../src/utils/fees";
 const mockGetFeeEstimationsFromBoltz = vi.fn();
 const mockGetFeeEstimationsFromBlockchain = vi.fn();
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getFeeEstimations: () => mockGetFeeEstimationsFromBoltz() as unknown,
 }));
 

@@ -6,6 +6,12 @@ import {
     SwapTreeSerializer,
     detectSwap,
 } from "boltz-core";
+import {
+    assetRescueBroadcast,
+    assetRescueSetup,
+    getLockupTransaction,
+    getPartialRefundSignature,
+} from "boltz-swaps/client";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
@@ -31,16 +37,10 @@ import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import {
     blockTimeMinutes,
+    broadcastTransaction,
     getBlockTipHeight,
     getSwapUTXOs,
 } from "./blockchain";
-import {
-    assetRescueBroadcast,
-    assetRescueSetup,
-    broadcastTransaction,
-    getLockupTransaction,
-    getPartialRefundSignature,
-} from "./boltzClient";
 import {
     type DecodedAddress,
     type TransactionInterface,
@@ -251,7 +251,7 @@ const refundTaproot = async <T extends TransactionInterface>(
                 swap.id,
                 swap.type,
                 withNonce.publicNonce,
-                refundTx,
+                txToHex(refundTx),
                 index,
             );
 

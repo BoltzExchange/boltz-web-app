@@ -1,6 +1,15 @@
 import { hex } from "@scure/base";
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
+import {
+    type ChainPairTypeTaproot,
+    type ChainSwapDetails,
+    type RestorableSwap,
+    type ReversePairTypeTaproot,
+    type SwapStatus,
+    getRestorableSwaps,
+    getSwapStatus,
+} from "boltz-swaps/client";
 import log from "loglevel";
 import {
     Match,
@@ -28,15 +37,6 @@ import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
-import {
-    type ChainPairTypeTaproot,
-    type ChainSwapDetails,
-    type RestorableSwap,
-    type ReversePairTypeTaproot,
-    type SwapStatus,
-    getRestorableSwaps,
-    getSwapStatus,
-} from "../utils/boltzClient";
 import { claim } from "../utils/claim";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";

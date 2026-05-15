@@ -2,6 +2,7 @@ import type * as SolidRouter from "@solidjs/router";
 import { useLocation } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
+import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
@@ -16,10 +17,6 @@ import {
     getSwapUTXOs,
     getTransactionOutSpend,
 } from "../../src/utils/blockchain";
-import {
-    getLockupTransaction,
-    getSwapStatus,
-} from "../../src/utils/boltzClient";
 import { claim, findSwapOutputVout } from "../../src/utils/claim";
 import {
     getCurrentBlockHeight,
@@ -56,7 +53,7 @@ vi.mock("loglevel", () => ({
     },
 }));
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getSwapStatus: vi.fn(),
     getLockupTransaction: vi.fn(),
 }));

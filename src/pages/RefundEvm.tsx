@@ -1,7 +1,12 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
-import { AssetKind } from "boltz-swaps/types";
+import { isEmptyPreimageHash } from "boltz-swaps/evm/commitment";
+import {
+    getLogsFromReceipt,
+    getTimelockBlockNumber,
+} from "boltz-swaps/evm/logs";
+import { AssetKind, type LogRefundData } from "boltz-swaps/types";
 import {
     Match,
     type Setter,
@@ -19,12 +24,6 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import { type AssetType, getKindForAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { isEmptyPreimageHash } from "../utils/commitment";
-import {
-    type LogRefundData,
-    getLogsFromReceipt,
-    getTimelockBlockNumber,
-} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";

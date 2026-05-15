@@ -1,4 +1,4 @@
-// @vitest-environment node
+import { type Signer } from "boltz-swaps/interfaces";
 import {
     type MsgFee,
     type SendParam,
@@ -7,9 +7,6 @@ import {
     toViemSendParam,
 } from "boltz-swaps/oft";
 import { encodeEventTopics, keccak256, toBytes } from "viem";
-import { describe, expect, test, vi } from "vitest";
-
-import type { Signer } from "../../src/context/Web3";
 
 describe("toViemSendParam", () => {
     const validSendParam: SendParam = [

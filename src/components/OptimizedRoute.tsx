@@ -1,5 +1,11 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import type {
+    ChainPairTypeTaproot,
+    Pairs,
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "boltz-swaps/client";
 import { BiSolidHelpCircle } from "solid-icons/bi";
 import { type Accessor, Show, createResource } from "solid-js";
 
@@ -7,12 +13,6 @@ import { LBTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import type {
-    ChainPairTypeTaproot,
-    Pairs,
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
-} from "../utils/boltzClient";
 import { calculateBoltzFeeOnSend } from "../utils/calculate";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";

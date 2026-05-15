@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 
+import * as contractsModule from "../../packages/boltz-swaps/src/evm/contracts.ts";
 import ApproveErc20 from "../../src/components/ApproveErc20";
 import * as globalContext from "../../src/context/Global";
 import * as web3Context from "../../src/context/Web3";
-import * as contractsModule from "../../src/context/contracts";
 
 vi.mock("../../src/components/ConnectWallet", () => ({
     default: () => <div data-testid="connect-wallet" />,

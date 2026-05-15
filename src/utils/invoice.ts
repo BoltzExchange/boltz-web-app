@@ -4,12 +4,12 @@ import { bech32, hex, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
+import { fetchBolt12Invoice } from "boltz-swaps/client";
 import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
 import { InvoiceValidation } from "../consts/Enums";
-import { fetchBolt12Invoice } from "./boltzClient";
 import { satToMiliSat } from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";

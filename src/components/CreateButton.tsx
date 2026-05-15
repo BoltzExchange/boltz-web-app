@@ -1,6 +1,11 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { bridgeRegistry } from "boltz-swaps/bridge";
+import {
+    type ChainPairTypeTaproot,
+    fetchBip21Invoice,
+    fetchBolt12Invoice,
+} from "boltz-swaps/client";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
 import { SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
@@ -33,11 +38,6 @@ import {
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import Pair, { type EncodedHop } from "../utils/Pair";
-import {
-    type ChainPairTypeTaproot,
-    fetchBip21Invoice,
-    fetchBolt12Invoice,
-} from "../utils/boltzClient";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {

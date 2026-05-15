@@ -1,5 +1,6 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { createTokenContract } from "boltz-swaps/evm/contracts";
 import {
     Match,
     Show,
@@ -26,7 +27,6 @@ import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import { createTokenContract } from "../context/contracts";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {

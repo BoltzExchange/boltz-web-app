@@ -1,7 +1,12 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
-import { AssetKind } from "boltz-swaps/types";
+import { isEmptyPreimageHash } from "boltz-swaps/evm/commitment";
+import {
+    getLogsFromReceipt,
+    getTimelockBlockNumber,
+} from "boltz-swaps/evm/logs";
+import { AssetKind, type LogRefundData } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
@@ -32,12 +37,6 @@ import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim } from "../rif/Signer";
-import { isEmptyPreimageHash } from "../utils/commitment";
-import {
-    type LogRefundData,
-    getLogsFromReceipt,
-    getTimelockBlockNumber,
-} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";

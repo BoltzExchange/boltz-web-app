@@ -1,4 +1,6 @@
 import BigNumber from "bignumber.js";
+import type * as BoltzClientModule from "boltz-swaps/client";
+import type { Pairs } from "boltz-swaps/client";
 import type { Setter } from "solid-js";
 import type { Mock } from "vitest";
 
@@ -6,8 +8,6 @@ import { BTC, LN } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import type { notifyFn, tFn } from "../../src/context/Global";
 import Pair from "../../src/utils/Pair";
-import type * as BoltzClientModule from "../../src/utils/boltzClient";
-import type { Pairs } from "../../src/utils/boltzClient";
 import { handleCreateSwapError } from "../../src/utils/handleCreateSwapError";
 import { pairs } from "../pairs";
 
@@ -15,9 +15,9 @@ const { getPairsMock } = vi.hoisted(() => ({
     getPairsMock: vi.fn(),
 }));
 
-vi.mock("../../src/utils/boltzClient", async () => {
+vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
     const actual = await vi.importActual<typeof BoltzClientModule>(
-        "../../src/utils/boltzClient",
+        "../../packages/boltz-swaps/src/client.ts",
     );
     return {
         ...actual,

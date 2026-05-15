@@ -36,7 +36,7 @@ afterAll(() => {
     runtimeConfig.assets = originalAssets;
 });
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 vi.mock("../../src/components/ConnectWallet", () => ({
