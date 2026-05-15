@@ -1,6 +1,7 @@
 /* @refresh skip */
 import { makePersisted } from "@solid-primitives/storage";
 import { BigNumber } from "bignumber.js";
+import log from "loglevel";
 import {
     type Accessor,
     type JSX,
@@ -12,9 +13,10 @@ import {
     useContext,
 } from "solid-js";
 
-import { Currency } from "../consts/Enums";
+import { Currency, UrlParam } from "../consts/Enums";
 import { getBtcPriceFailover } from "../utils/fiat";
 import { stringSerializer } from "../utils/persistence";
+import { getUrlParam, resetUrlParam } from "../utils/urlParams";
 
 const fetchInterval = 1000 * 60 * 5; // 5 minutes
 
@@ -45,6 +47,16 @@ const FiatProvider = (props: { children: JSX.Element }) => {
             ...stringSerializer,
         },
     );
+
+    const urlCurrency = getUrlParam(UrlParam.FiatCurrency).toUpperCase();
+    if (urlCurrency) {
+        if ((Object.values(Currency) as string[]).includes(urlCurrency)) {
+            setFiatCurrency(urlCurrency as Currency);
+        } else {
+            log.warn("Invalid fiatCurrency URL parameter:", urlCurrency);
+        }
+        resetUrlParam(UrlParam.FiatCurrency);
+    }
 
     const fetchBtcPrice = async () => {
         const currency = fiatCurrency();

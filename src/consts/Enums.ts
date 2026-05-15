@@ -23,6 +23,7 @@ export enum UrlParam {
     ReceiveAmount = "receiveAmount",
     Lang = "lang",
     Ref = "ref",
+    FiatCurrency = "fiatCurrency",
 }
 
 export enum AssetSelection {

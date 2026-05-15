@@ -35,7 +35,49 @@ describe("Fiat context", () => {
 
     afterEach(() => {
         localStorage.clear();
+        window.history.replaceState({}, "", "/");
         vi.restoreAllMocks();
+    });
+
+    test("fiatCurrency URL param overrides default and persists", () => {
+        window.history.replaceState({}, "", "/?fiatCurrency=eur");
+
+        render(() => (
+            <FiatProvider>
+                <Probe />
+            </FiatProvider>
+        ));
+
+        expect(fiatSignals.fiatCurrency()).toBe(Currency.EUR);
+        expect(localStorage.getItem("fiatCurrency")).toBe(Currency.EUR);
+        expect(window.location.search).not.toContain("fiatCurrency");
+    });
+
+    test("fiatCurrency URL param overrides persisted value", () => {
+        localStorage.setItem("fiatCurrency", Currency.USD);
+        window.history.replaceState({}, "", "/?fiatCurrency=EUR");
+
+        render(() => (
+            <FiatProvider>
+                <Probe />
+            </FiatProvider>
+        ));
+
+        expect(fiatSignals.fiatCurrency()).toBe(Currency.EUR);
+        expect(localStorage.getItem("fiatCurrency")).toBe(Currency.EUR);
+    });
+
+    test("invalid fiatCurrency URL param is ignored and stripped", () => {
+        window.history.replaceState({}, "", "/?fiatCurrency=bogus");
+
+        render(() => (
+            <FiatProvider>
+                <Probe />
+            </FiatProvider>
+        ));
+
+        expect(fiatSignals.fiatCurrency()).toBe(Currency.USD);
+        expect(window.location.search).not.toContain("fiatCurrency");
     });
 
     test("fetchBtcPrice should reuse a recent successful price", async () => {
