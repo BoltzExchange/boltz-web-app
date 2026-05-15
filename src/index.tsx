@@ -8,10 +8,12 @@ import {
     Route,
     type RouteSectionProps,
     Router,
+    useLocation,
     useParams,
 } from "@solidjs/router";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
+import { Show } from "solid-js";
 import { render } from "solid-js/web";
 
 import { configureBoltzSwaps } from "./boltzSwapsConfig";
@@ -62,31 +64,50 @@ if ("serviceWorker" in navigator) {
 }
 
 log.setLevel(config.loglevel as log.LogLevelDesc);
-document.documentElement.setAttribute(
-    "boltz-theme",
-    config.isPro ? "pro" : "default",
-);
+
+const urlParams = new URLSearchParams(window.location.search);
+const embeddedParam = urlParams.get("embedded");
+const themeParam = urlParams.get("theme");
+
+const isEmbedded = embeddedParam === "true";
+const initialTheme = isEmbedded
+    ? (themeParam ?? "default")
+    : config.isPro
+      ? "pro"
+      : "default";
+document.documentElement.setAttribute("boltz-theme", initialTheme);
 document.body.classList.remove("loading");
 
 const App = (props: RouteSectionProps) => {
+    const isEmbedded = embeddedParam === "true";
+    const location = useLocation();
+
+    const isSwapRoute = () => location.pathname.startsWith("/swap");
+
     return (
-        <GlobalProvider>
+        <GlobalProvider initialEmbeddedMode={isEmbedded}>
             <FiatProvider>
                 <Web3SignerProvider>
                     <WalletConnect />
                     <CreateProvider>
                         <PayProvider>
                             <RescueProvider>
-                                <SwapChecker />
-                                <SwapExecutionWorker />
-                                <Chatwoot />
+                            <Show when={!isEmbedded}>
                                 <Nav
                                     isPro={config.isPro}
                                     network={config.network}
                                 />
+                            </Show>
+                            <Show when={!isEmbedded || isSwapRoute()}>
                                 {props.children}
-                                <Notification />
+                            </Show>
+                            <Show when={isEmbedded && !isSwapRoute()}>
+                                <Create />
+                            </Show>
+                            <Notification />
+                            <Show when={!isEmbedded}>
                                 <Footer />
+                            </Show>
                             </RescueProvider>
                         </PayProvider>
                     </CreateProvider>

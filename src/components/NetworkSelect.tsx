@@ -44,6 +44,7 @@ const NetworkSelect = () => {
         setInvoice,
         setOnchainAddress,
         networkSelectCanonical,
+        destinationLocked,
     } = useCreateContext();
 
     const [search, setSearch] = createSignal("");
@@ -134,7 +135,9 @@ const NetworkSelect = () => {
             return;
         }
 
-        setInvoice("");
+        if (!destinationLocked()) {
+            setInvoice("");
+        }
 
         let nextPair: Pair;
 

@@ -17,6 +17,9 @@ export enum UrlParam {
     Lang = "lang",
     Ref = "ref",
     FiatCurrency = "fiatCurrency",
+    Embedded = "embedded",
+    Theme = "theme",
+    LockOutput = "lockOutput",
 }
 
 export enum AssetSelection {

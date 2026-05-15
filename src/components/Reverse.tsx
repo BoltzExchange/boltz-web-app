@@ -19,6 +19,7 @@ const Reverse = () => {
         setReceiveAmount,
         amountChanged,
         setAmountChanged,
+        destinationLocked,
     } = useCreateContext();
 
     const setDirection = () => {
@@ -36,7 +37,9 @@ const Reverse = () => {
         }
 
         setOnchainAddress("");
-        setInvoice("");
+        if (!destinationLocked()) {
+            setInvoice("");
+        }
         setPair(
             new Pair(pairs(), pair().toAsset, pair().fromAsset, regularPairs()),
         );
