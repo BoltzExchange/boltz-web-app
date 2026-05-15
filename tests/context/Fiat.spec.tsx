@@ -38,23 +38,6 @@ describe("Fiat context", () => {
         vi.restoreAllMocks();
     });
 
-    test("fetchBtcPrice should fetch even when fiat display is disabled", async () => {
-        getBtcPriceFailoverMock.mockResolvedValue(BigNumber(123_456));
-
-        render(() => (
-            <FiatProvider>
-                <Probe />
-            </FiatProvider>
-        ));
-
-        fiatSignals.setShowFiatAmount(false);
-
-        await fiatSignals.fetchBtcPrice();
-
-        expect(getBtcPriceFailoverMock).toHaveBeenCalledTimes(1);
-        expect(fiatSignals.btcPrice()?.toString()).toBe("123456");
-    });
-
     test("fetchBtcPrice should reuse a recent successful price", async () => {
         getBtcPriceFailoverMock
             .mockResolvedValueOnce(BigNumber(111_111))

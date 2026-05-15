@@ -186,8 +186,6 @@ const dict = {
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
         decimal_tooltip:
             "Choose your preferred decimal separator: dot or comma",
-        show_fiat_rate: "Show fiat rate",
-        show_fiat_rate_tooltip: "Show fiat equivalent of swap amount",
         fiat_rate_not_available: "Fiat rate unavailable",
         fiat_currency: "Fiat currency",
         fiat_currency_tooltip: "Currency used for the fiat amount hint",
@@ -697,8 +695,6 @@ const dict = {
             "Wähle deine bevorzugte Denomination: BTC oder sats",
         decimal_tooltip:
             "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Komma",
-        show_fiat_rate: "Fiat-Kurs anzeigen",
-        show_fiat_rate_tooltip: "Swap-Betrag in Fiat anzeigen",
         fiat_rate_not_available: "Fiat-Kurs nicht verfügbar",
         fiat_currency: "Fiat-Währung",
         fiat_currency_tooltip: "Für den Fiat-Hinweis verwendete Währung",
@@ -1215,9 +1211,6 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
-        show_fiat_rate: "Mostrar tasa fiat",
-        show_fiat_rate_tooltip:
-            "Mostrar el equivalente fiat del monto del intercambio",
         fiat_rate_not_available: "Tasa fiat no disponible",
         fiat_currency: "Moneda fiat",
         fiat_currency_tooltip:
@@ -1731,8 +1724,6 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Escolha a denominação preferida: BTC ou sats",
         decimal_tooltip: "Escolha o separador decimal: ponto ou vírgula",
-        show_fiat_rate: "Mostrar valor em fiat",
-        show_fiat_rate_tooltip: "Mostrar o equivalente fiat do valor da troca",
         fiat_rate_not_available: "Valor fiat indisponível",
         fiat_currency: "Moeda fiat",
         fiat_currency_tooltip: "Moeda usada para o equivalente fiat",
@@ -2222,8 +2213,6 @@ const dict = {
         decimal_separator: "小数分隔符",
         denomination_tooltip: "选择您的首选面额：BTC 或 sats",
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
-        show_fiat_rate: "显示法币汇率",
-        show_fiat_rate_tooltip: "显示兑换金额对应的法币数值",
         fiat_rate_not_available: "法币汇率不可用",
         fiat_currency: "法币货币",
         fiat_currency_tooltip: "用于显示法币数值的货币",
@@ -2706,8 +2695,6 @@ const dict = {
         denomination_tooltip: "希望する単位を選択してください：BTCもしくはSats",
         decimal_tooltip:
             "希望する小数点を選択してください：ドットもしくはコンマ",
-        show_fiat_rate: "法定通貨レートを表示",
-        show_fiat_rate_tooltip: "スワップ額の法定通貨換算値を表示",
         fiat_rate_not_available: "法定通貨レートを取得できません",
         fiat_currency: "法定通貨",
         fiat_currency_tooltip: "法定通貨換算に使用する通貨",

@@ -35,8 +35,6 @@ describe("FiatCurrencySetting", () => {
             setFiatCurrency,
             btcPrice: () => null,
             usdToFiatRate: () => null,
-            showFiatAmount: () => true,
-            setShowFiatAmount: vi.fn(),
             fetchBtcPrice: vi.fn(),
         };
 

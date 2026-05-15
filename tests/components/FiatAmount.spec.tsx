@@ -30,7 +30,6 @@ describe("FiatAmount", () => {
     });
 
     const renderStablecoinAmount = (context: Partial<FiatContextType>) => {
-        const [showFiatAmount] = createSignal(true);
         const [btcPrice] = createSignal<BigNumber | Error | null>(
             BigNumber(95_000),
         );
@@ -38,13 +37,11 @@ describe("FiatAmount", () => {
         const [usdToFiatRate] = createSignal<BigNumber | null>(null);
 
         fiatContextMock.value = {
-            showFiatAmount,
             btcPrice,
             fiatCurrency,
             usdToFiatRate,
             fetchBtcPrice: vi.fn(),
             setFiatCurrency: vi.fn(),
-            setShowFiatAmount: vi.fn(),
             ...context,
         };
 

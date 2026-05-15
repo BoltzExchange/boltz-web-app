@@ -10,7 +10,6 @@ import "../../style/settings.scss";
 import { isMobile } from "../../utils/helper";
 import BitcoinOnly from "./BitcoinOnly";
 import Denomination from "./Denomination";
-import FiatAmountSetting from "./FiatAmountSetting";
 import FiatCurrencySetting from "./FiatCurrencySetting";
 import GasTopUp from "./GasTopUp";
 import Logs from "./Logs";
@@ -111,11 +110,6 @@ const SettingsMenuContent = () => {
                         label={"denomination"}
                         tooltipLabel={"denomination_tooltip"}
                         settingElement={<Denomination />}
-                    />
-                    <Entry
-                        label={"show_fiat_rate"}
-                        tooltipLabel={"show_fiat_rate_tooltip"}
-                        settingElement={<FiatAmountSetting />}
                     />
                     <Entry
                         label={"fiat_currency"}

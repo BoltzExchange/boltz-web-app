@@ -79,7 +79,7 @@ const Create = () => {
         regularPairs,
         gasTopUp,
     } = useGlobalContext();
-    const { showFiatAmount, fetchBtcPrice } = useFiatContext();
+    const { fetchBtcPrice } = useFiatContext();
     const {
         pair,
         setPair,
@@ -748,8 +748,7 @@ const Create = () => {
                             side={Side.Send}
                             signal={() => pair().fromAsset}
                         />
-                        <div
-                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                        <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
@@ -806,8 +805,7 @@ const Create = () => {
                             side={Side.Receive}
                             signal={() => pair().toAsset}
                         />
-                        <div
-                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                        <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
                                 <Show when={receiveAmountQuoteLoading()}>
                                     <div

@@ -2,7 +2,6 @@ import { BigNumber } from "bignumber.js";
 import {
     type Accessor,
     Match,
-    Show,
     Switch,
     createEffect,
     createSignal,
@@ -21,8 +20,7 @@ const FiatAmount = (props: {
     loading?: Accessor<boolean>;
 }) => {
     const { t } = useGlobalContext();
-    const { showFiatAmount, btcPrice, fiatCurrency, usdToFiatRate } =
-        useFiatContext();
+    const { btcPrice, fiatCurrency, usdToFiatRate } = useFiatContext();
 
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
@@ -81,18 +79,16 @@ const FiatAmount = (props: {
     };
 
     return (
-        <Show when={showFiatAmount()}>
-            <Switch>
-                <Match when={props.variant === "label"}>
-                    <label for={props.for} class="input-label">
-                        {renderFiatAmount()}
-                    </label>
-                </Match>
-                <Match when={props.variant === "text"}>
-                    <p class="text-muted">{renderFiatAmount()}</p>
-                </Match>
-            </Switch>
-        </Show>
+        <Switch>
+            <Match when={props.variant === "label"}>
+                <label for={props.for} class="input-label">
+                    {renderFiatAmount()}
+                </label>
+            </Match>
+            <Match when={props.variant === "text"}>
+                <p class="text-muted">{renderFiatAmount()}</p>
+            </Match>
+        </Switch>
     );
 };
 

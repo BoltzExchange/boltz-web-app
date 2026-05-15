@@ -24,8 +24,6 @@ export type FiatContextType = {
     fetchBtcPrice: () => Promise<void>;
     fiatCurrency: Accessor<Currency>;
     setFiatCurrency: Setter<Currency>;
-    showFiatAmount: Accessor<boolean>;
-    setShowFiatAmount: Setter<boolean>;
 };
 
 const FiatContext = createContext<FiatContextType>();
@@ -45,14 +43,6 @@ const FiatProvider = (props: { children: JSX.Element }) => {
         {
             name: "fiatCurrency",
             ...stringSerializer,
-        },
-    );
-
-    const [showFiatAmount, setShowFiatAmount] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal<boolean>(true),
-        {
-            name: "showFiatAmount",
         },
     );
 
@@ -125,8 +115,6 @@ const FiatProvider = (props: { children: JSX.Element }) => {
                 fetchBtcPrice,
                 fiatCurrency,
                 setFiatCurrency,
-                showFiatAmount,
-                setShowFiatAmount,
             }}>
             {props.children}
         </FiatContext.Provider>
