@@ -7,7 +7,7 @@ import {
     fetchBolt12Invoice,
 } from "boltz-swaps/client";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
-import { SwapPosition } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -26,7 +26,7 @@ import {
     getCanonicalAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { InvoiceValidation, SwapType } from "../consts/Enums";
+import { InvoiceValidation } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";

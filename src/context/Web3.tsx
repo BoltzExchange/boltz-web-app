@@ -4,7 +4,11 @@ import {
     getContracts,
 } from "boltz-swaps/client";
 import { getRpcUrls, requireRpcUrls } from "boltz-swaps/config";
-import { createAssetProvider, createProviderTransport } from "boltz-swaps/evm";
+import {
+    createAssetProvider,
+    createProviderTransport,
+    prefix0x,
+} from "boltz-swaps/evm";
 import { resolveErc20SwapAbi, resolveEtherSwapAbi } from "boltz-swaps/evm/abis";
 import {
     type Erc20SwapContract,
@@ -54,7 +58,6 @@ import {
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { prefix0x } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
@@ -805,12 +808,6 @@ const etherSwapCodeHashes = () => {
                 "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955",
                 "0x8fda06a72295779e211ad2dc1bcf3f9904d23fa617f42fe0c5fc1e89b17c1777",
                 "0xef55e014479e0bf8231d9e3fa669a5279cf6d3b924d8db070ce2c66964477d6f",
-            ];
-
-        case "testnet":
-            return [
-                "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1",
-                "0xb8f6205d7fecc5b7a577519c7ec40af594f929d150c05bf84e1f94b7472dd783",
             ];
 
         default:

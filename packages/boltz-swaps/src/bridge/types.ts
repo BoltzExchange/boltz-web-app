@@ -29,7 +29,7 @@ import type {
 
 export type { BridgeTransaction };
 
-export type BridgeRoute = OftRoute;
+export type BridgeRoute<A extends string = string> = OftRoute<A>;
 
 export type BridgeNativeDrop = {
     amount: bigint;

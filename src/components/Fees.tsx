@@ -1,4 +1,5 @@
 import { weiToSatoshi } from "boltz-swaps/evm";
+import { SwapType } from "boltz-swaps/types";
 import {
     type Accessor,
     Show,
@@ -10,7 +11,6 @@ import {
 
 import { config } from "../config";
 import { LBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";

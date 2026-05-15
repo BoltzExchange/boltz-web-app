@@ -5,6 +5,7 @@ import {
     type RestorableSwap,
     getSwapStatus,
 } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -27,7 +28,6 @@ import {
     type RefundableAssetType,
     type blockChainsAssets,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";

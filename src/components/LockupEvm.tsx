@@ -5,11 +5,12 @@ import {
     getCommitmentLockupDetails,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
-import { satsToAssetAmount } from "boltz-swaps/evm";
+import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
 import {
     createRouterContract,
     createTokenContract,
 } from "boltz-swaps/evm/contracts";
+import { getSignerForGasAbstraction } from "boltz-swaps/evm/transaction";
 import {
     erc20SwapAbi,
     etherSwapAbi,
@@ -46,11 +47,7 @@ import {
 } from "../context/Web3";
 import type { EncodedHop } from "../utils/Pair";
 import { calculateAmountWithSlippage } from "../utils/calculate";
-import {
-    getSignerForGasAbstraction,
-    prefix0x,
-    sendPopulatedTransaction,
-} from "../utils/evmTransaction";
+import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
 import {

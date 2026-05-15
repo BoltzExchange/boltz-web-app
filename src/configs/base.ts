@@ -1,11 +1,9 @@
 import type { Asset, Url } from "boltz-swaps/types";
 import type log from "loglevel";
 
-export { arbitrumChainId } from "boltz-swaps/types";
-
 export type Config = {
     apiUrl: Url;
-    network: "mainnet" | "testnet" | "regtest";
+    network: "mainnet" | "regtest";
     isBeta?: boolean;
     isPro?: boolean;
     assets?: Record<string, Asset>;

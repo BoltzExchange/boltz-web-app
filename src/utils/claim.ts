@@ -16,12 +16,12 @@ import {
     postChainSwapDetails,
     postSubmarineClaimDetails,
 } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { type Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { type AssetType, LBTC, RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { broadcastTransaction } from "./blockchain";

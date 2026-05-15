@@ -1,7 +1,7 @@
+import { SwapType } from "boltz-swaps/types";
 import { type Mock, beforeEach, vi } from "vitest";
 
 import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import {
     swapStatusFailed,
     swapStatusFinal,

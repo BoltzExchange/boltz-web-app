@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 
 import PayOnchain from "../../src/components/PayOnchain";
 import { BTC } from "../../src/consts/Assets";
-import { Denomination, SwapType } from "../../src/consts/Enums";
+import { Denomination } from "../../src/consts/Enums";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 import { pairs } from "../pairs";
 

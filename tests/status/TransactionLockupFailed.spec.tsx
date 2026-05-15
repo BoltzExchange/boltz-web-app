@@ -1,7 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
+import { SwapType } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
-import { SwapType } from "src/consts/Enums";
 
 import { BTC, RBTC } from "../../src/consts/Assets";
 import { swapStatusFailed } from "../../src/consts/SwapStatus";

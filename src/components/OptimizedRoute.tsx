@@ -6,11 +6,11 @@ import type {
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { BiSolidHelpCircle } from "solid-icons/bi";
 import { type Accessor, Show, createResource } from "solid-js";
 
 import { LBTC, LN } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateBoltzFeeOnSend } from "../utils/calculate";

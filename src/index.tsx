@@ -10,7 +10,7 @@ import {
     Router,
     useParams,
 } from "@solidjs/router";
-import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { setBoltzSwapsConfig } from "boltz-swaps";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 import { render } from "solid-js/web";
@@ -75,15 +75,9 @@ setBoltzSwapsConfig({
     },
     gasTopUpSupported,
     getGasTopUpNativeAmount,
-    get boltzApiUrl() {
-        return chooseUrl(config.apiUrl);
-    },
-    get referral() {
-        return getReferral();
-    },
-    get cooperativeDisabled() {
-        return config.cooperativeDisabled === true;
-    },
+    boltzApiUrl: chooseUrl(config.apiUrl),
+    referral: getReferral(),
+    cooperativeDisabled: config.cooperativeDisabled === true,
 });
 
 if ("serviceWorker" in navigator) {

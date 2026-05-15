@@ -11,7 +11,7 @@ import { BridgeKind, CctpTransferMode } from "boltz-swaps/types";
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../fixtures/cctp.ts";
+} from "../../src/cctp/protocol.ts";
 
 const ownerAddress = "11111111111111111111111111111112";
 const tokenAccount = "11111111111111111111111111111113";

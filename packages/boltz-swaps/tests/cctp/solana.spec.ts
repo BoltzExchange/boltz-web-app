@@ -17,7 +17,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     solanaMessageTransmitterV2,
     solanaTokenMessengerMinterV2,
-} from "../fixtures/cctp.ts";
+} from "../../src/cctp/protocol.ts";
 
 const validAllocateBody = () => ({
     event_rent_payer: { secret: Array.from({ length: 64 }, (_, i) => i) },

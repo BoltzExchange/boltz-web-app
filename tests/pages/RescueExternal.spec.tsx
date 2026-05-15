@@ -1,9 +1,9 @@
 import { render, screen, waitFor, within } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
-import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";

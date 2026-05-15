@@ -1,6 +1,5 @@
+import { prefix0x } from "boltz-swaps/evm";
 import type { Address, Hex } from "viem";
-
-import { prefix0x } from "../evmTransaction";
 
 type Quantity = bigint | number | string | null | undefined;
 

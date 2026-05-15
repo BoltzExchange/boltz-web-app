@@ -13,7 +13,7 @@ import {
 } from "boltz-core";
 import type { ChainSwapDetails } from "boltz-swaps/client";
 import { createAssetProvider } from "boltz-swaps/evm";
-import { AssetKind } from "boltz-swaps/types";
+import { AssetKind, SwapType } from "boltz-swaps/types";
 import { type Address, keccak256 } from "viem";
 
 import {
@@ -23,7 +23,7 @@ import {
     getKindForAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { Denomination, Side, SwapType } from "../consts/Enums";
+import { Denomination, Side } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { erc20SwapCodeHashes, etherSwapCodeHashes } from "../context/Web3";
 import { decodeAddress } from "./compat";

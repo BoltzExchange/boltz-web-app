@@ -1,7 +1,7 @@
-import type { LogRefundData, SwapContract } from "boltz-swaps/evm";
+import type { SwapContract } from "boltz-swaps/evm";
+import type { LogRefundData, RskRescueMode } from "boltz-swaps/types";
 
 import type { Swap } from "../../components/SwapList";
-import type { RskRescueMode } from "../../consts/Enums";
 import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
 import type { RescueAction } from "../../utils/rescue";
 

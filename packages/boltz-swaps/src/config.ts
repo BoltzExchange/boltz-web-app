@@ -8,22 +8,22 @@ import {
 } from "./types.ts";
 
 // Runtime configuration the host application injects so lib code (CCTP/OFT
-// attestation, bridge drivers, chain helpers) can resolve asset metadata
-// without reaching back into web-app modules. The web app calls
-// `setBoltzSwapsConfig` once at boot with getters that proxy to its own
-// `config` so updates flow through automatically.
-export interface BoltzSwapsConfig {
-    assets?: Record<string, Asset>;
-    cctpApiUrl?: string;
+// attestation, bridge drivers, chain helpers) can resolve asset metadata.
+//
+// The optional `A` parameter captures the host's asset-symbol union for
+// type-safe SDK methods.
+export interface BoltzSwapsConfig<A extends string = string> {
+    assets: Record<A, Asset>;
+    cctpApiUrl: string;
     solburnUrl?: string;
-    layerZeroExplorerUrl?: string;
-    cctpExplorerUrl?: string;
-    oftDeploymentsUrl?: string;
-    gasTopUpSupported?: (asset: string) => boolean;
-    getGasTopUpNativeAmount?: (asset: string) => Promise<bigint>;
+    layerZeroExplorerUrl: string;
+    cctpExplorerUrl: string;
+    oftDeploymentsUrl: string;
+    gasTopUpSupported: (asset: string) => boolean;
+    getGasTopUpNativeAmount: (asset: string) => Promise<bigint>;
     // Resolved Boltz API base URL (post clearnet/onion switching). Lib's
     // `fetcher` reads this on every call so onion mode stays dynamic.
-    boltzApiUrl?: string;
+    boltzApiUrl: string;
     // Referral header value (e.g. "pro" / "boltz_webapp_mobile"). Read on
     // every request.
     referral?: string;
@@ -33,16 +33,98 @@ export interface BoltzSwapsConfig {
     cooperativeDisabled?: boolean;
 }
 
-let active: BoltzSwapsConfig = {};
+// Loose input shape accepted by `setBoltzSwapsConfig` / `createBoltzClient`.
+// Missing fields are filled in with `MAINNET_API_DEFAULTS` / no-op fallbacks.
+export type BoltzSwapsConfigInput<A extends string = string> = Partial<
+    BoltzSwapsConfig<A>
+>;
 
-export const setBoltzSwapsConfig = (config: BoltzSwapsConfig): void => {
-    active = config;
+// Mainnet defaults for the external service URLs that the SDK needs. Used by
+// `setBoltzSwapsConfig` when the consumer omits a field, and by the mainnet
+// preset as its default values.
+export const MAINNET_API_DEFAULTS: {
+    boltzApiUrl: string;
+    cctpApiUrl: string;
+    solburnUrl: string;
+    cctpExplorerUrl: string;
+    layerZeroExplorerUrl: string;
+    oftDeploymentsUrl: string;
+} = {
+    boltzApiUrl: "https://api.boltz.exchange",
+    cctpApiUrl: "https://iris-api.circle.com",
+    solburnUrl: "https://solburn.ccxp.space",
+    cctpExplorerUrl: "https://ccxp.space",
+    layerZeroExplorerUrl: "https://layerzeroscan.com",
+    oftDeploymentsUrl: "https://docs.usdt0.to/api/deployments",
+};
+
+const defaultGasTopUpSupported = (): boolean => false;
+const defaultGetGasTopUpNativeAmount = (): Promise<bigint> =>
+    Promise.resolve(0n);
+
+const REQUIRED_DEFAULTS: Omit<
+    BoltzSwapsConfig,
+    "assets" | "referral" | "cooperativeDisabled"
+> = {
+    ...MAINNET_API_DEFAULTS,
+    gasTopUpSupported: defaultGasTopUpSupported,
+    getGasTopUpNativeAmount: defaultGetGasTopUpNativeAmount,
+};
+
+const defaultsAssets: Record<string, Asset> = {};
+
+const requiredKeys: ReadonlyArray<keyof typeof REQUIRED_DEFAULTS> = [
+    "boltzApiUrl",
+    "cctpApiUrl",
+    "cctpExplorerUrl",
+    "layerZeroExplorerUrl",
+    "oftDeploymentsUrl",
+    "gasTopUpSupported",
+    "getGasTopUpNativeAmount",
+];
+
+// Builds a getter-proxy so dynamic inputs (e.g. the lazy proxy created by
+// `createBoltzClient`) stay dynamic — every property read re-resolves the
+// underlying input and falls back to the default if undefined.
+const mergeWithDefaults = <A extends string>(
+    input: BoltzSwapsConfigInput<A>,
+): BoltzSwapsConfig<A> => {
+    const merged = {} as BoltzSwapsConfig<A>;
+    Object.defineProperty(merged, "assets", {
+        enumerable: true,
+        get: () => input.assets ?? (defaultsAssets as Record<A, Asset>),
+    });
+    for (const key of requiredKeys) {
+        Object.defineProperty(merged, key, {
+            enumerable: true,
+            get: () => input[key] ?? REQUIRED_DEFAULTS[key],
+        });
+    }
+    for (const key of [
+        "solburnUrl",
+        "referral",
+        "cooperativeDisabled",
+    ] as const) {
+        Object.defineProperty(merged, key, {
+            enumerable: true,
+            get: () => input[key],
+        });
+    }
+    return merged;
+};
+
+let active: BoltzSwapsConfig = mergeWithDefaults({});
+
+export const setBoltzSwapsConfig = <A extends string = string>(
+    config: BoltzSwapsConfigInput<A>,
+): void => {
+    active = mergeWithDefaults(config) as BoltzSwapsConfig;
 };
 
 export const getBoltzSwapsConfig = (): BoltzSwapsConfig => active;
 
 const getAssetConfig = (asset: string): Asset | undefined =>
-    getBoltzSwapsConfig().assets?.[asset];
+    getBoltzSwapsConfig().assets[asset];
 
 export const getAssetBridge = (asset: string): AssetBridge | undefined =>
     getAssetConfig(asset)?.bridge;
@@ -62,7 +144,7 @@ export const isBridgeVariant = (asset: string): boolean => {
 };
 
 export const getBridgeVariants = (canonical: string): string[] => {
-    const assets = getBoltzSwapsConfig().assets ?? {};
+    const { assets } = getBoltzSwapsConfig();
     return Object.keys(assets).filter(
         (asset) =>
             asset !== canonical &&
@@ -127,13 +209,8 @@ export const isWalletConnectableAsset = (asset: string): boolean => {
     );
 };
 
-export const getEvmAssets = (): string[] => {
-    const assets = getBoltzSwapsConfig().assets;
-    if (!assets) {
-        return [];
-    }
-    return Object.keys(assets).filter(isEvmAsset);
-};
+export const getEvmAssets = (): string[] =>
+    Object.keys(getBoltzSwapsConfig().assets).filter(isEvmAsset);
 
 export const hasEvmAssets = (): boolean => getEvmAssets().length > 0;
 
@@ -263,15 +340,7 @@ export const requireChainId = (asset: string): number => {
 export const getContractDeployHeight = (asset: string): number | undefined =>
     getAssetConfig(asset)?.contracts?.deployHeight;
 
-export const requireBoltzApiUrl = (): string => {
-    const url = getBoltzSwapsConfig().boltzApiUrl;
-    if (url === undefined) {
-        throw new Error(
-            "boltz-swaps: boltzApiUrl is not configured; call setBoltzSwapsConfig({ boltzApiUrl }) at host boot",
-        );
-    }
-    return url;
-};
+export const getBoltzApiUrl = (): string => getBoltzSwapsConfig().boltzApiUrl;
 
 export const getReferralHeader = (): string | undefined =>
     getBoltzSwapsConfig().referral;

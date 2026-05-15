@@ -1,8 +1,8 @@
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";

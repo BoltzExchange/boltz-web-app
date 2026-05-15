@@ -1,9 +1,9 @@
 import { type Page, expect, test } from "@playwright/test";
+import { SwapType } from "boltz-swaps/types";
 import fs from "fs";
 import path from "path";
 
 import { type AssetType, BTC, LBTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import dict from "../../src/i18n/i18n";
 import {
     backupRescueFile,

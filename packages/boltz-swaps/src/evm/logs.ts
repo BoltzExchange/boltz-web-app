@@ -41,8 +41,6 @@ import type { Erc20SwapContract, EtherSwapContract } from "./contracts.ts";
 import { prefix0x } from "./prefix0x.ts";
 import { createAssetProvider, createProvider } from "./provider.ts";
 
-export type { LogRefundData } from "../types.ts";
-
 export type SwapContract = EtherSwapContract | Erc20SwapContract;
 type SwapReadContract = {
     address: Address;

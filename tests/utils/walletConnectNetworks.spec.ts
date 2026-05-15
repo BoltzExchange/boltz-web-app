@@ -26,7 +26,7 @@ const validRbtcConfig = {
     type: AssetKind.EVMNative,
     network: makeEvmNetwork(30, "Rootstock", "RBTC"),
     blockExplorerUrl: {
-        id: Explorer.Blockscout,
+        id: Explorer.EtherscanStyle,
         normal: "https://rootstock.example",
     },
 };
@@ -43,7 +43,7 @@ describe("walletConnectNetworks", () => {
                 type: AssetKind.EVMNative,
                 network: makeEvmNetwork(42161, "Arbitrum", "ETH"),
                 blockExplorerUrl: {
-                    id: Explorer.Blockscout,
+                    id: Explorer.EtherscanStyle,
                     normal: "https://arb-tbtc.example",
                 },
             },
@@ -51,7 +51,7 @@ describe("walletConnectNetworks", () => {
                 type: AssetKind.ERC20,
                 network: makeEvmNetwork(42161, "Arbitrum", "ETH"),
                 blockExplorerUrl: {
-                    id: Explorer.Blockscout,
+                    id: Explorer.EtherscanStyle,
                     normal: "https://arb-usdt0.example",
                 },
             },
@@ -91,7 +91,7 @@ describe("walletConnectNetworks", () => {
             [TBTC]: {
                 type: AssetKind.EVMNative,
                 blockExplorerUrl: {
-                    id: Explorer.Blockscout,
+                    id: Explorer.EtherscanStyle,
                     normal: "https://arb.example",
                 },
             },
@@ -115,7 +115,7 @@ describe("walletConnectNetworks", () => {
                     rpcUrls: [],
                 },
                 blockExplorerUrl: {
-                    id: Explorer.Blockscout,
+                    id: Explorer.EtherscanStyle,
                     normal: "https://arb.example",
                 },
             },

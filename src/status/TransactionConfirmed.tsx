@@ -10,13 +10,27 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
-import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    assetAmountToSats,
+    prefix0x,
+    satsToAssetAmount,
+} from "boltz-swaps/evm";
 import {
     type Erc20SwapContract,
     createRouterContract,
 } from "boltz-swaps/evm/contracts";
+import {
+    type ClaimResult,
+    type PopulatedEvmTransaction,
+    getSignerForGasAbstraction,
+} from "boltz-swaps/evm/transaction";
 import { routerAbi } from "boltz-swaps/generated/evm-abis";
-import { AssetKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
+import {
+    AssetKind,
+    NetworkTransport,
+    SwapPosition,
+    SwapType,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import {
@@ -39,7 +53,6 @@ import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import { getKindForAsset, getTokenAddress, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -52,14 +65,7 @@ import {
 } from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError, isWalletRejectionError } from "../utils/errors";
-import {
-    type ClaimResult,
-    type PopulatedEvmTransaction,
-    claimAsset,
-    getSignerForGasAbstraction,
-    prefix0x,
-    sendPopulatedTransaction,
-} from "../utils/evmTransaction";
+import { claimAsset, sendPopulatedTransaction } from "../utils/evmTransaction";
 import { retryWithBackoff } from "../utils/promise";
 import {
     type ClaimQuote,

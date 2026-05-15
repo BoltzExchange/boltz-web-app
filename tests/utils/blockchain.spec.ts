@@ -42,15 +42,17 @@ describe("blockchain", () => {
 
         test("should throw on unknown explorer type", async () => {
             mockGetFeeEstimations.mockRejectedValue(
-                new Error(`unknown explorer type: ${Explorer.Blockscout}`),
+                new Error(`unknown explorer type: ${Explorer.EtherscanStyle}`),
             );
 
             await expect(
                 getFeeEstimations({
-                    id: Explorer.Blockscout,
+                    id: Explorer.EtherscanStyle,
                     normal: "https://example",
                 }),
-            ).rejects.toThrow(`unknown explorer type: ${Explorer.Blockscout}`);
+            ).rejects.toThrow(
+                `unknown explorer type: ${Explorer.EtherscanStyle}`,
+            );
         });
     });
 });

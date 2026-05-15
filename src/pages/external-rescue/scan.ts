@@ -1,10 +1,10 @@
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import { type SwapContract, isEmptyPreimageHash } from "boltz-swaps/evm";
+import { RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { config } from "../../config";
 import { RBTC, TBTC } from "../../consts/Assets";
-import { RskRescueMode } from "../../consts/Enums";
 import { paginationLimit } from "../../consts/Pagination";
 import { formatError } from "../../utils/errors";
 import { RescueAction } from "../../utils/rescue";

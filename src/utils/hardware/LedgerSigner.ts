@@ -1,5 +1,5 @@
 import { requireRpcUrls } from "boltz-swaps/config";
-import { createProvider } from "boltz-swaps/evm";
+import { createProvider, prefix0x } from "boltz-swaps/evm";
 import log from "loglevel";
 import {
     type Address,
@@ -16,7 +16,6 @@ import {
 import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import ledgerLoader, { type Transport } from "../../lazy/ledger";
-import { prefix0x } from "../evmTransaction";
 import { estimateFeesPerGas } from "../provider";
 import { yParityFromV } from "../signature";
 import {

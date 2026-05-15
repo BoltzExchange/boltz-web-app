@@ -1,10 +1,13 @@
 export * from "./cache.ts";
+export * from "./chains.ts";
 export * from "./client.ts";
 export * from "./config.ts";
 export * from "./errors.ts";
 export * from "./helper.ts";
 export * from "./lazy.ts";
 export * from "./logger.ts";
+export * from "./route.ts";
+export * from "./sdk.ts";
 export * from "./types.ts";
 
 export * from "./interfaces/index.ts";

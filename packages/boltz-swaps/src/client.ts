@@ -215,9 +215,14 @@ export type QuoteCalldata = {
     data: Hex;
 };
 
+export enum DexQuoteDirection {
+    In = "in",
+    Out = "out",
+}
+
 const sortDexQuotes = (
     quotes: QuoteData[],
-    direction: "in" | "out",
+    direction: DexQuoteDirection,
 ): QuoteData[] =>
     [...quotes].sort((first, second) => {
         const firstAmount = BigInt(first.quote);
@@ -227,7 +232,7 @@ const sortDexQuotes = (
             return 0;
         }
 
-        if (direction === "in") {
+        if (direction === DexQuoteDirection.In) {
             return firstAmount > secondAmount ? -1 : 1;
         }
 
@@ -615,7 +620,7 @@ export const quoteDexAmountIn = async (
     params.set("amountIn", amountIn.toString());
     return sortDexQuotes(
         await fetcher(`/v2/quote/${chain}/in?${params.toString()}`),
-        "in",
+        DexQuoteDirection.In,
     );
 };
 
@@ -635,7 +640,7 @@ export const quoteDexAmountOut = async (
     params.set("amountOut", amountOut.toString());
     return sortDexQuotes(
         await fetcher(`/v2/quote/${chain}/out?${params.toString()}`),
-        "out",
+        DexQuoteDirection.Out,
     );
 };
 

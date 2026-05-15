@@ -1,7 +1,6 @@
-import { BridgeKind, SwapPosition } from "boltz-swaps/types";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import {
     type BridgeDetail,
     type SwapBase,

@@ -40,7 +40,6 @@
         "mainnet": "cp src/configs/mainnet.ts src/config.ts",
         "beta": "cp src/configs/beta.ts src/config.ts",
         "pro": "cp src/configs/pro.ts src/config.ts",
-        "testnet": "cp src/configs/testnet.ts src/config.ts",
         "regtest": "cp src/configs/regtest.ts src/config.ts",
         "postinstall": "bun run regtest && bun --filter boltz-swaps generate",
         "prettier": "bunx prettier --cache src public tests e2e docs .github packages *.ts *.mjs *.json *.html README.md",

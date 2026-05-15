@@ -1,5 +1,5 @@
 import { requireRpcUrls } from "boltz-swaps/config";
-import { createProvider } from "boltz-swaps/evm";
+import { createProvider, prefix0x } from "boltz-swaps/evm";
 import log from "loglevel";
 import {
     type EIP1193RequestFn,
@@ -18,7 +18,6 @@ import trezorLoader, {
     type SuccessWithDevice,
     type Unsuccessful,
 } from "../../lazy/trezor";
-import { prefix0x } from "../evmTransaction";
 import { estimateFeesPerGas } from "../provider";
 import { yParityFromV } from "../signature";
 import { trimPrefix } from "../strings";

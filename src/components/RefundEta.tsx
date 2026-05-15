@@ -1,7 +1,7 @@
+import { arbitrumChainId } from "boltz-swaps/types";
 import { type Accessor, Show } from "solid-js";
 
 import { config } from "../config";
-import { arbitrumChainId } from "../configs/base";
 import { ETH } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { getNetworkName } from "../utils/blockchain";

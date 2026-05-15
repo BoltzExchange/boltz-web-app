@@ -1,7 +1,7 @@
+import { SwapType } from "boltz-swaps/types";
 import { type Accessor, Show } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import type { SomeSwap } from "../utils/swapCreator";
 

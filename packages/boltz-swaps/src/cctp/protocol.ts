@@ -1,7 +1,3 @@
-// Stable CCTP V2 protocol identifiers (mainnet). These are program / contract
-// addresses defined by Circle, not Boltz deployment-specific values — so they
-// can live alongside test fixtures rather than in BoltzSwapsConfig.
-
 export const evmTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 export const evmMessageTransmitterV2 =
     "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
