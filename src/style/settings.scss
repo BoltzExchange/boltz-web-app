@@ -12,9 +12,83 @@
 }
 
 #settings-menu {
-    top: 0;
-    display: block;
+    --settings-menu-offset: clamp(1rem, 5vh, 3rem);
+
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: start center;
+    padding: var(--settings-menu-offset) 1rem;
+    overflow: hidden;
     z-index: 2147483001; // 1 above Chatwoot widget
+    overscroll-behavior: contain;
+
+    .settings-menu-panel {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        top: auto;
+        left: auto;
+        z-index: 0;
+        width: min(100%, 496px);
+        max-height: calc(
+            100vh - var(--settings-menu-offset) - var(--settings-menu-offset)
+        );
+        max-height: calc(
+            100dvh - var(--settings-menu-offset) - var(--settings-menu-offset)
+        );
+        margin: 0;
+        padding-right: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 12px var(--color-black);
+
+        &::after {
+            pointer-events: none;
+        }
+    }
+
+    .settings-menu-header {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        h2 {
+            margin: 0;
+            padding: 0 2.5rem;
+        }
+    }
+
+    .settings-menu-close {
+        top: 0;
+        right: 0;
+        margin-top: 0;
+    }
+
+    .settings-menu-scroll {
+        flex: 1 1 auto;
+        min-height: 0;
+        margin-top: 0.5rem;
+        padding-right: 0.75rem;
+        overflow-y: scroll;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--color-white-15);
+            border-radius: 4px;
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: var(--color-white-25);
+        }
+    }
 
     label {
         display: flex;
@@ -30,6 +104,32 @@
         display: flex;
     }
 }
+
+@media (max-width: 488px) {
+    #settings-menu {
+        --settings-menu-offset: 0.5rem;
+
+        padding-inline: 0.5rem;
+
+        .settings-menu-panel {
+            width: 100%;
+            padding: 18px 8px 18px 16px;
+            border: 1px solid var(--color-white-15);
+            border-radius: var(--border-radius-lg);
+        }
+
+        .settings-menu-scroll {
+            padding-right: 0.5rem;
+        }
+    }
+}
+
+@media (max-height: 560px) {
+    #settings-menu {
+        --settings-menu-offset: 0.5rem;
+    }
+}
+
 .setting {
     display: flex;
     align-items: center;
