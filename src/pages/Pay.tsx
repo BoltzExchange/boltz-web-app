@@ -66,11 +66,7 @@ import {
     hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
-import {
-    type ChainSwap,
-    type SomeSwap,
-    type SubmarineSwap,
-} from "../utils/swapCreator";
+import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();

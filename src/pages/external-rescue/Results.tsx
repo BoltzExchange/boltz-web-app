@@ -13,7 +13,7 @@ import { hiddenInformation } from "../../components/settings/PrivacyMode";
 import { getAssetDisplaySymbol } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { formatAmount, formatDenomination } from "../../utils/denomination";
-import { type GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
+import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../../utils/helper";
 import { RescueAction } from "../../utils/rescue";
 import type { SomeSwap } from "../../utils/swapCreator";

@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { getPairs } from "boltz-swaps/client";
-import { type SwapType } from "boltz-swaps/types";
+import type { SwapType } from "boltz-swaps/types";
 import { Show, createMemo, createResource } from "solid-js";
 
 import CopyButton from "../components/CopyButton";

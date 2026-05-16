@@ -6,11 +6,11 @@ import type {
     RouterContract,
     Signer,
 } from "../interfaces/index.ts";
-import {
-    type BridgeKind,
-    type ExplorerKind,
-    type NetworkTransport,
-    type SwapPosition,
+import type {
+    BridgeKind,
+    ExplorerKind,
+    NetworkTransport,
+    SwapPosition,
 } from "../types.ts";
 import type {
     BridgeContract,

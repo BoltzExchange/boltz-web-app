@@ -1,4 +1,4 @@
-import { type Pairs } from "boltz-swaps/client";
+import type { Pairs } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";

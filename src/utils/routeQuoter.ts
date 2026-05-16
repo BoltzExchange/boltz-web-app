@@ -6,7 +6,7 @@ import {
     quoteRouteAmountIn as libQuoteRouteAmountIn,
     quoteRouteAmountOut as libQuoteRouteAmountOut,
 } from "boltz-swaps";
-import { type Pairs } from "boltz-swaps/client";
+import type { Pairs } from "boltz-swaps/client";
 
 export type HostRouteQuote<A extends string = string> = {
     sendAmount: BigNumber;

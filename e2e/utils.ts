@@ -13,7 +13,7 @@ import { promisify } from "util";
 import { config } from "../src/config";
 import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
-import { type UTXO } from "../src/utils/blockchain";
+import type { UTXO } from "../src/utils/blockchain";
 import { btcToSat } from "../src/utils/denomination";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 

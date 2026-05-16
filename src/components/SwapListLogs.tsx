@@ -1,5 +1,5 @@
 import { useNavigate } from "@solidjs/router";
-import { type LogRefundData, type RskRescueMode } from "boltz-swaps/types";
+import type { LogRefundData, RskRescueMode } from "boltz-swaps/types";
 import { type Accessor, For, Show, createMemo } from "solid-js";
 
 import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";

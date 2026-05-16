@@ -98,7 +98,7 @@ export default [
         },
     },
     {
-        files: ["*/lazy/**"],
+        files: ["**/lazy/**", "**/lazy.{ts,mjs}"],
         rules: {
             "no-restricted-imports": "off",
             "@typescript-eslint/no-restricted-imports": "off",
@@ -110,6 +110,7 @@ export default [
             "no-unassigned-vars": "off",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/consistent-type-imports": "warn",
+            "@typescript-eslint/no-import-type-side-effects": "error",
 
             "@typescript-eslint/no-unsafe-call": "off",
             "@typescript-eslint/only-throw-error": "off",

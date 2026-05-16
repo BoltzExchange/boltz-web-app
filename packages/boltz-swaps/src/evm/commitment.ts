@@ -1,4 +1,4 @@
-import { type Hash, type Hex } from "viem";
+import type { Hash, Hex } from "viem";
 
 import {
     getEipRefundSignature,

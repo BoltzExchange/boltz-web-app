@@ -20,7 +20,7 @@ import {
 
 import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import type { newKeyFn } from "../context/Global";
-import { type EncodedHop } from "./Pair";
+import type { EncodedHop } from "./Pair";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
 export { GasAbstractionType };
