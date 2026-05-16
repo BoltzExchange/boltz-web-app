@@ -17,7 +17,7 @@ import {
     postSubmarineClaimDetails,
 } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
-import { type Buffer } from "buffer";
+import type { Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 

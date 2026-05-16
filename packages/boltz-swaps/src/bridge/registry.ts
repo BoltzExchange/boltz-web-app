@@ -1,5 +1,5 @@
 import { getAssetBridge } from "../config.ts";
-import { type BridgeKind, type ExplorerKind } from "../types.ts";
+import type { BridgeKind, ExplorerKind } from "../types.ts";
 import { CctpBridgeDriver } from "./CctpBridgeDriver.ts";
 import { OftBridgeDriver } from "./OftBridgeDriver.ts";
 import type { BridgeDriver } from "./driver.ts";

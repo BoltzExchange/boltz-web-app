@@ -10,7 +10,7 @@ import {
 import { GasAbstractionType } from "boltz-swaps/types";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import { type Address, type Hash } from "viem";
+import type { Address, Hash } from "viem";
 
 import {
     type AlchemyCall,

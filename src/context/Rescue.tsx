@@ -9,7 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { type AssetType } from "../consts/Assets";
+import type { AssetType } from "../consts/Assets";
 import { type ECKeys, ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 

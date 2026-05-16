@@ -63,7 +63,7 @@ import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { isIos } from "../utils/helper";
 import { evmAccountFromPrivateKey } from "../utils/rescueDerivation";
-import { type RescueFile } from "../utils/rescueFile";
+import type { RescueFile } from "../utils/rescueFile";
 import { useGlobalContext } from "./Global";
 
 declare global {

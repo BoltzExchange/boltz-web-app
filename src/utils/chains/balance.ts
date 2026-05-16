@@ -2,7 +2,7 @@ import { createAssetProvider } from "boltz-swaps/evm";
 import { getSolanaNativeBalance } from "boltz-swaps/solana";
 import { getTronNativeBalance } from "boltz-swaps/tron";
 import { NetworkTransport } from "boltz-swaps/types";
-import { type Address } from "viem";
+import type { Address } from "viem";
 
 import { getNetworkTransport } from "../../consts/Assets";
 

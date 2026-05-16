@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 
 import { getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
-import { type Denomination } from "../consts/Enums";
+import type { Denomination } from "../consts/Enums";
 import { formatAmount } from "../utils/denomination";
 import AmountDenominator from "./AmountDenominator";
 

@@ -23,10 +23,10 @@ import BlockExplorer, {
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import {
-    type AssetType,
-    type RefundableAssetType,
-    type blockChainsAssets,
+import type {
+    AssetType,
+    RefundableAssetType,
+    blockChainsAssets,
 } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";

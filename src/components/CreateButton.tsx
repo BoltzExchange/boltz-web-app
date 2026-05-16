@@ -35,7 +35,7 @@ import {
     customDerivationPathRdns,
     useWeb3Signer,
 } from "../context/Web3";
-import { type DictKey } from "../i18n/i18n";
+import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import Pair, { type EncodedHop } from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";

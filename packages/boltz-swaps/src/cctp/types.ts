@@ -1,4 +1,4 @@
-import { type Hex } from "viem";
+import type { Hex } from "viem";
 
 // Mirrors the on-chain Router.CctpData struct (see Router.sol). Used for
 // router-mediated flows (`executeCctp`, `claimERC20ExecuteCctp`, `hashCctpData`).
