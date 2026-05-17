@@ -4,7 +4,6 @@ import type {
     TransactionInstruction,
     TransactionInstructionCtorFields,
 } from "@solana/web3.js";
-import { Buffer } from "buffer";
 
 type SolanaInstructionModules = {
     solanaKit: {
@@ -39,5 +38,8 @@ export const toLegacyInstruction = (
             isSigner: modules.solanaKit.isSignerRole(account.role),
             isWritable: modules.solanaKit.isWritableRole(account.role),
         })),
-        data: Buffer.from(instruction.data),
+        // @solana/web3.js types `data` as `Buffer`, but its implementation
+        // only relies on Uint8Array semantics. Pass a plain Uint8Array so the
+        // package does not need a `buffer` polyfill at runtime.
+        data: new Uint8Array(instruction.data) as unknown as Buffer,
     });

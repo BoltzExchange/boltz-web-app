@@ -8,7 +8,6 @@ import type {
     Connection,
     TransactionInstruction,
 } from "@solana/web3.js";
-import { Buffer } from "buffer";
 
 import { getCachedValue } from "../cache.ts";
 import { getBoltzSwapsConfig } from "../config.ts";
@@ -30,6 +29,7 @@ import {
     type BridgeTransaction,
     NetworkTransport,
 } from "../types.ts";
+import { decodeBase64 } from "../util/base64.ts";
 import type { MsgFee, OftTransportClient, SendParam } from "./types.ts";
 
 type SolanaOftModules = Awaited<ReturnType<(typeof lazySolanaOft)["get"]>>;
@@ -558,11 +558,11 @@ const simulateTransactionReturn = async <T>(
         );
     }
 
-    const buffer = Buffer.from(encodedData, "base64");
+    const decoded = decodeBase64(encodedData);
 
     return "deserialize" in serializer
-        ? serializer.deserialize(buffer, 0)[0]
-        : serializer.decode(buffer);
+        ? serializer.deserialize(decoded, 0)[0]
+        : serializer.decode(decoded);
 };
 
 const quoteOft = async (context: Context, sendParam: SendParam) => {
@@ -779,10 +779,7 @@ export const getSolanaOftGuidFromLogs = (
             continue;
         }
 
-        const payload = Buffer.from(
-            logLine.slice(separatorIndex + 1),
-            "base64",
-        );
+        const payload = decodeBase64(logLine.slice(separatorIndex + 1));
         return prefix0x(hex.encode(payload.subarray(0, 32)));
     }
 

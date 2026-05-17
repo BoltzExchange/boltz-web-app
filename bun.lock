@@ -94,11 +94,10 @@
     },
     "packages/boltz-swaps": {
       "name": "boltz-swaps",
-      "version": "0.0.2",
+      "version": "0.0.4",
       "dependencies": {
         "@noble/hashes": "catalog:",
         "@scure/base": "catalog:",
-        "bignumber.js": "catalog:",
       },
       "devDependencies": {
         "@codama/nodes-from-anchor": "^1.4.1",
@@ -133,7 +132,6 @@
         "@solana/web3.js",
         "@tronweb3/tronwallet-abstract-adapter",
         "tronweb",
-        "viem",
       ],
     },
   },

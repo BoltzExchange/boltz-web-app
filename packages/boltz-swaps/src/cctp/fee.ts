@@ -1,8 +1,7 @@
-import BigNumber from "bignumber.js";
-
 import { getBoltzSwapsConfig } from "../config.ts";
 import { constructRequestOptions } from "../helper.ts";
 import { CctpReceiveMode, CctpTransferMode } from "../types.ts";
+import { parseScaledBigInt } from "../util/decimal.ts";
 
 const requestTimeoutDuration = 6_000;
 const cctpFeeScaleDigits = 9;
@@ -35,25 +34,19 @@ const cctpFinalityThresholds = {
 } as const;
 
 const parseScaledDecimal = (value: number | string): bigint => {
-    const bn = new BigNumber(value);
-    if (!bn.isFinite() || bn.isNegative()) {
+    try {
+        return parseScaledBigInt(value, cctpFeeScaleDigits);
+    } catch {
         throw new Error("invalid minimum CCTP fee");
     }
-
-    const scaled = bn.shiftedBy(cctpFeeScaleDigits);
-    if (!scaled.isInteger()) {
-        throw new Error("minimum CCTP fee exceeds supported precision");
-    }
-
-    return BigInt(scaled.toFixed(0));
 };
 
 const parseForwardFee = (value: number | string): bigint => {
-    const bn = new BigNumber(value);
-    if (!bn.isFinite() || bn.isNegative() || !bn.isInteger()) {
+    try {
+        return parseScaledBigInt(value, 0);
+    } catch {
         throw new Error("invalid CCTP forward fee");
     }
-    return BigInt(bn.toFixed(0));
 };
 
 const getCctpFeeApiUrl = (): string => {

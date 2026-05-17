@@ -173,7 +173,7 @@
         "prettier": "bunx prettier --cache src tests scripts *.json *.mjs",
         "prettier:write": "bun run prettier -- --write",
         "prettier:check": "bun run prettier -- --check",
-        "lint": "bunx eslint --max-warnings 0 --cache src scripts",
+        "lint": "eslint --max-warnings 0 --cache src scripts",
         "check": "bun run prettier:write && bun run lint -- --fix && bun run tsc",
         "generate:evm-abis": "bun run scripts/generate-evm-abis.ts",
         "generate:solana-oft": "codama run solana-oft",
@@ -184,8 +184,7 @@
     },
     "dependencies": {
         "@noble/hashes": "catalog:",
-        "@scure/base": "catalog:",
-        "bignumber.js": "catalog:"
+        "@scure/base": "catalog:"
     },
     "peerDependencies": {
         "@layerzerolabs/lz-solana-sdk-v2": "catalog:",
