@@ -152,6 +152,7 @@ export default [
                         "Exporting `const enum` is not allowed in boltz-swaps; consumers compiled with isolatedModules/verbatimModuleSyntax cannot use them. Use a regular `enum` or a union of string literals instead.",
                 },
             ],
+            "import-x/no-nodejs-modules": "error",
         },
     },
 ];
