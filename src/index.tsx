@@ -21,8 +21,6 @@ import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
-import { SwapChecker } from "./components/SwapChecker";
-import { SwapExecutionWorker } from "./components/SwapExecutionWorker";
 import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
