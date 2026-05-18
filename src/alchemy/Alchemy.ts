@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { type Address, type Hash, type Hex, toHex } from "viem";
 
 import { config } from "../config";
@@ -5,7 +6,10 @@ import { isTor } from "../configs/base";
 import type { Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
 import { prefix0x } from "../utils/evmTransaction";
-import { constructRequestOptions } from "../utils/helper";
+import {
+    constructRequestOptions,
+    defaultTimeoutDuration,
+} from "../utils/helper";
 
 const alchemyHeaders = {
     accept: "application/json",
@@ -54,6 +58,11 @@ type JsonRpcSuccessResponse<T> = {
     result: T;
 };
 
+const truncateBody = (body: string, limit = 500): string =>
+    body.length > limit
+        ? `${body.slice(0, limit)}…(${body.length} bytes)`
+        : body;
+
 const parseAlchemyResponse = <T>(
     rawBody: string,
     method: string,
@@ -62,6 +71,9 @@ const parseAlchemyResponse = <T>(
     try {
         return JSON.parse(rawBody) as JsonRpcResponse<T>;
     } catch {
+        log.error(
+            `Alchemy ${method} returned invalid JSON (HTTP ${response.status} ${response.statusText}): ${truncateBody(rawBody)}`,
+        );
         throw new Error(
             `Alchemy returned invalid JSON for ${method} (HTTP ${response.status} ${response.statusText})`,
         );
@@ -73,6 +85,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     params: unknown[],
 ): Promise<T> => {
     let response: Response;
+    const timeoutMs = isTor() ? 60_000 : defaultTimeoutDuration;
     const { opts, requestTimeout } = constructRequestOptions(
         {
             method: "POST",
@@ -84,7 +97,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
                 params,
             }),
         },
-        isTor() ? 60_000 : undefined,
+        timeoutMs,
     );
 
     try {
@@ -94,11 +107,17 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
             (error instanceof DOMException && error.name === "AbortError") ||
             opts.signal?.aborted === true;
         if (isAbortError) {
-            throw new Error(`Alchemy request timed out for ${method}`, {
-                cause: error,
-            });
+            log.error(
+                `Alchemy ${method} timed out after ${timeoutMs}ms`,
+                error,
+            );
+            throw new Error(
+                `Alchemy request timed out for ${method} after ${timeoutMs}ms`,
+                { cause: error },
+            );
         }
 
+        log.error(`Alchemy ${method} fetch failed`, error);
         throw new Error(
             `Alchemy request failed for ${method}: ${formatError(error)}`,
             { cause: error },
@@ -115,18 +134,26 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
             payload.error !== undefined
                 ? `${payload.error.code} ${payload.error.message}`
                 : rawBody;
+        log.error(
+            `Alchemy ${method} HTTP ${response.status} ${response.statusText}`,
+            payload.error ?? truncateBody(rawBody),
+        );
         throw new Error(
             `Alchemy HTTP error for ${method}: ${response.status} ${response.statusText} (${errorDetails})`,
         );
     }
 
     if (payload.error !== undefined) {
+        log.error(`Alchemy ${method} RPC error`, payload.error);
         throw new Error(
             `Alchemy RPC error for ${method}: ${payload.error.code} ${payload.error.message}`,
         );
     }
 
     if (payload.result === undefined) {
+        log.error(
+            `Alchemy ${method} response missing result: ${truncateBody(rawBody)}`,
+        );
         throw new Error(`Alchemy response for ${method} is missing result`);
     }
 
@@ -400,32 +427,59 @@ const waitForTransactionHash = async (
     maxAttempts = 60,
 ): Promise<Hash> => {
     let lastStatusError: unknown;
+    let consecutiveErrors = 0;
 
     for (let i = 0; i < maxAttempts; i++) {
         try {
             const status = await getCallsStatus(callId);
+            if (consecutiveErrors > 0) {
+                log.info(
+                    `Alchemy getCallsStatus recovered for call ${callId} after ${consecutiveErrors} consecutive failure(s)`,
+                );
+            }
+            consecutiveErrors = 0;
             lastStatusError = undefined;
 
             if (
                 status.result.receipts !== undefined &&
                 status.result.receipts.length > 0
             ) {
-                return status.result.receipts[0].transactionHash as Hash;
+                const hash = status.result.receipts[0].transactionHash;
+                log.debug(
+                    `Alchemy call ${callId} confirmed after ${i + 1} poll(s): ${hash}`,
+                );
+                return hash as Hash;
             }
         } catch (error) {
             lastStatusError = error;
+            consecutiveErrors++;
+            if (consecutiveErrors === 1 || consecutiveErrors % 10 === 0) {
+                log.warn(
+                    `Alchemy getCallsStatus failed for call ${callId} (attempt ${i + 1}/${maxAttempts}, ${consecutiveErrors} consecutive)`,
+                    error,
+                );
+            }
         }
 
         await sleep(intervalMs);
     }
 
     if (lastStatusError !== undefined) {
+        log.error(
+            `Alchemy call ${callId} status unavailable after ${maxAttempts} attempts`,
+            lastStatusError,
+        );
         throw new Error(
             `Transaction status unavailable after ${maxAttempts} attempts for call ${callId}: ${formatError(lastStatusError)}`,
         );
     }
 
-    throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);
+    log.error(
+        `Alchemy call ${callId} not confirmed after ${maxAttempts} polls (no receipts returned)`,
+    );
+    throw new Error(
+        `Transaction not confirmed after ${maxAttempts} attempts for call ${callId}`,
+    );
 };
 
 export const waitForPreparedCallTransactionHash = async (
