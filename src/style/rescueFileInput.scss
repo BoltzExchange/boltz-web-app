@@ -2,6 +2,26 @@
     position: relative;
     width: 100%;
     margin-top: 0.4375rem;
+    --rescue-success-text: color-mix(
+        in srgb,
+        var(--color-success-400) 80%,
+        var(--color-text)
+    );
+    --rescue-error-tint: color-mix(
+        in srgb,
+        var(--color-error-500) 35%,
+        transparent
+    );
+    --rescue-error-edge: color-mix(
+        in srgb,
+        var(--color-error-500) 70%,
+        transparent
+    );
+    --rescue-error-text: color-mix(
+        in srgb,
+        var(--color-error) 70%,
+        var(--color-text)
+    );
 }
 
 .rescue-file-input-control {
@@ -23,6 +43,8 @@
     border-radius: 0.625rem;
     background-color: var(--color-black-20);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
 }
 
 .rescue-file-input-area:hover,
@@ -54,6 +76,7 @@
     position: absolute;
     top: 50%;
     right: 0.5rem;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -73,4 +96,73 @@
         background-color: var(--color-primary);
         color: var(--color-secondary-700);
     }
+}
+
+// === Success / uploaded state ===
+
+.rescue-file-input[data-uploaded="true"] .rescue-file-input-area {
+    border: 0.0625rem solid var(--color-white-15);
+    background-color: var(--color-black-20);
+}
+
+.rescue-file-input[data-uploaded="true"]:hover .rescue-file-input-area,
+.rescue-file-input[data-uploaded="true"]
+    .rescue-file-input-control:focus-visible
+    + .rescue-file-input-area {
+    border-color: var(--color-white-30);
+}
+
+.rescue-file-input-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--rescue-success-text);
+    max-width: 100%;
+    min-width: 0;
+}
+
+.rescue-file-input-success .rescue-file-input-filename {
+    color: var(--rescue-success-text);
+    font-weight: 500;
+}
+
+.rescue-file-input-key-icon {
+    color: var(--rescue-success-text);
+    flex: 0 0 auto;
+}
+
+// === Error state ===
+
+.rescue-file-input[data-error="true"] .rescue-file-input-area {
+    border: 0.0625rem solid var(--rescue-error-edge);
+    background-color: var(--rescue-error-tint);
+}
+
+.rescue-file-input[data-error="true"]:hover .rescue-file-input-area,
+.rescue-file-input[data-error="true"]
+    .rescue-file-input-control:focus-visible
+    + .rescue-file-input-area {
+    border-color: var(--color-error);
+}
+
+.rescue-file-input-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--rescue-error-text);
+    max-width: 100%;
+    min-width: 0;
+}
+
+.rescue-file-input-error-message {
+    overflow: hidden;
+    color: var(--rescue-error-text);
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rescue-file-input-error-icon {
+    color: var(--rescue-error-text);
+    flex: 0 0 auto;
 }

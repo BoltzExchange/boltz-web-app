@@ -481,6 +481,15 @@ const dict = {
         invalid_rescue_key_evm:
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
+        rescue_external_select_method: "Select at least one rescue method",
+        rescue_external_subtitle:
+            "Choose one or both rescue methods to rescue a swap that is not available in this browser's swap history.",
+        rescue_external_coverage: "Rescuable with the provided rescue methods",
+        rescue_external_requires_rescue_key: "Requires rescue key",
+        rescue_external_requires_wallet: "Requires wallet",
+        rescue_external_requires_rescue_key_wallet:
+            "Requires rescue key and wallet",
+        rescue_external_resume: "Resume",
 
         evm_rescue_prompt:
             'If you sent funds into a Boltz swap on an EVM chain, use "Refund Swap"; if you were receiving funds from an EVM chain, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
@@ -1000,6 +1009,17 @@ const dict = {
         invalid_rescue_key_evm:
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
+        rescue_external_select_method:
+            "Mindestens eine Rettungsmethode auswählen",
+        rescue_external_subtitle:
+            "Wähle eine oder beide Rettungsmethoden, um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.",
+        rescue_external_coverage:
+            "Rettbar mit den bereitgestellten Rettungsmethoden",
+        rescue_external_requires_rescue_key: "Benötigt Rettungsschlüssel",
+        rescue_external_requires_wallet: "Benötigt Wallet",
+        rescue_external_requires_rescue_key_wallet:
+            "Benötigt Rettungsschlüssel und Wallet",
+        rescue_external_resume: "Fortsetzen",
         evm_rescue_prompt:
             'Wenn du Guthaben in einen Boltz-Swap auf einer EVM-Chain gesendet hast, nutze "Swap erstatten"; wenn du Guthaben von einer EVM-Chain empfangen hast, nutze "Swap fortsetzen", um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.',
         evm_rescue_refund_title: "Swap erstatten",
@@ -1097,7 +1117,7 @@ const dict = {
         onchain_address:
             "Ingrese una dirección {{ asset }} para recibir los fondos",
         onchain_address_no_asset: "Ingrese la dirección",
-        invalid_refund_file: "'Clave de rescate no válido",
+        invalid_refund_file: "Clave de rescate no válido",
         invalid_invoice:
             "Por favor, pegue una factura Lightning, BOLT12 o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
@@ -1515,6 +1535,17 @@ const dict = {
         invalid_rescue_key_evm:
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
+        rescue_external_select_method:
+            "Selecciona al menos un método de rescate",
+        rescue_external_subtitle:
+            "Elige uno o ambos métodos de rescate para rescatar un intercambio que no está disponible en el historial de este navegador.",
+        rescue_external_coverage:
+            "Rescatable con los métodos de rescate proporcionados",
+        rescue_external_requires_rescue_key: "Requiere clave de rescate",
+        rescue_external_requires_wallet: "Requiere monedero",
+        rescue_external_requires_rescue_key_wallet:
+            "Requiere clave de rescate y monedero",
+        rescue_external_resume: "Reanudar",
         evm_rescue_prompt:
             'Si enviaste fondos a un intercambio de Boltz en una cadena EVM, usa "Reembolsar intercambio"; si estabas recibiendo fondos desde una cadena EVM, usa "Reanudar intercambio" para rescatar un intercambio que no está disponible en el historial de este navegador.',
         evm_rescue_refund_title: "Reembolsar intercambio",
@@ -2025,6 +2056,17 @@ const dict = {
         invalid_rescue_key_evm:
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
+        rescue_external_select_method:
+            "Selecione pelo menos um método de resgate",
+        rescue_external_subtitle:
+            "Escolha um ou ambos os métodos de resgate para resgatar uma troca que não está disponível no histórico deste navegador.",
+        rescue_external_coverage:
+            "Resgatável com os métodos de resgate fornecidos",
+        rescue_external_requires_rescue_key: "Requer chave de resgate",
+        rescue_external_requires_wallet: "Requer carteira",
+        rescue_external_requires_rescue_key_wallet:
+            "Requer chave de resgate e carteira",
+        rescue_external_resume: "Continuar",
         evm_rescue_prompt:
             'Se você enviou fundos para uma troca da Boltz em uma rede EVM, use "Reembolsar troca"; se estava recebendo fundos de uma rede EVM, use "Continuar troca" para resgatar uma troca que não está disponível no histórico deste navegador.',
         evm_rescue_refund_title: "Reembolsar troca",
@@ -2487,6 +2529,14 @@ const dict = {
         invalid_rescue_key_evm:
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
+        rescue_external_select_method: "至少选择一种救援方式",
+        rescue_external_subtitle:
+            "选择一种或两种救援方式，来救援未显示在此浏览器交换历史中的交换。",
+        rescue_external_coverage: "可使用已提供的救援方式救援",
+        rescue_external_requires_rescue_key: "需要救援密钥",
+        rescue_external_requires_wallet: "需要钱包",
+        rescue_external_requires_rescue_key_wallet: "需要救援密钥和钱包",
+        rescue_external_resume: "继续",
         evm_rescue_prompt:
             "如果你向 EVM 链上的 Boltz 交换发送了资金，请使用“退还交换”；如果你正在从 EVM 链接收资金，请使用“继续交换”，以救援一个未在此浏览器交换历史中显示的交换。",
         evm_rescue_refund_title: "退还交换",
@@ -2992,6 +3042,16 @@ const dict = {
         invalid_rescue_key_evm:
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
+        rescue_external_select_method:
+            "少なくとも1つの復旧方法を選択してください",
+        rescue_external_subtitle:
+            "このブラウザのスワップ履歴にないスワップを復旧するため、1つまたは両方の復旧方法を選択してください。",
+        rescue_external_coverage: "提供された復旧方法で復旧可能",
+        rescue_external_requires_rescue_key: "レスキューキーが必要です",
+        rescue_external_requires_wallet: "ウォレットが必要です",
+        rescue_external_requires_rescue_key_wallet:
+            "レスキューキーとウォレットが必要です",
+        rescue_external_resume: "再開",
         evm_rescue_prompt:
             "EVM チェーン上の Boltz スワップに資金を送金した場合は「スワップを返金」を使用し、EVM チェーンから資金を受け取っていた場合は「スワップを再開」を使用して、このブラウザのスワップ履歴にないスワップを救済してください。",
         evm_rescue_refund_title: "スワップを返金",

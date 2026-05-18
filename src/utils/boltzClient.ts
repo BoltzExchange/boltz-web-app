@@ -587,13 +587,16 @@ export const getSubmarinePreimage = (id: string) =>
 export const getRestorableSwaps = (
     xpub: string,
     pagination?: { startIndex: number; limit: number },
-) =>
-    fetcher<RestorableSwap[]>(
+    signal?: AbortSignal,
+) => {
+    const options = signal === undefined ? undefined : { signal };
+    return fetcher<RestorableSwap[]>(
         `/v2/swap/restore`,
         { xpub, pagination },
-        undefined,
+        options,
         30_000,
     );
+};
 
 export const assetRescueSetup = (
     asset: string,

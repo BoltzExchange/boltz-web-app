@@ -13,8 +13,6 @@ import {
     getBitcoinAddress,
 } from "../utils";
 
-const rescueFileName = "rescue-file.json";
-
 const connectWallet = async (
     page: Page,
     walletClient: WalletClient,
@@ -126,6 +124,9 @@ const enterMnemonic = async (page: Page, mnemonic: string) => {
         mnemonic,
     );
     await firstInput.press("ControlOrMeta+v");
+    await expect(
+        page.getByRole("button", { name: dict.en.rescue, exact: true }),
+    ).toBeEnabled();
 };
 
 const clearBrowserStorage = async (page: Page) => {
@@ -137,29 +138,32 @@ const clearBrowserStorage = async (page: Page) => {
     await page.reload();
 };
 
-const navigateToRskRescue = async (page: Page, mode: "resume" | "refund") => {
+const navigateToRskRescue = async (page: Page) => {
     await page.goto("/rescue");
 
     await page
         .getByRole("button", { name: dict.en.rescue_external_swap })
         .click();
-
-    await page.getByText("EVM").click();
-
-    if (mode === "resume") {
-        await page.getByTestId("rsk-rescue-resume-button").click();
-    } else {
-        await page.getByTestId("rsk-rescue-refund-button").click();
-    }
 };
 
-const selectAndClickSwapItem = async (page: Page) => {
-    const swapListItem = page.locator(".swaplist-item").first();
-    await expect(swapListItem).toBeVisible();
+const selectAndClickSwapItem = async (
+    page: Page,
+    action: "Claim" | "Refund",
+) => {
+    const label = action === "Claim" ? dict.en.claim : dict.en.refund;
+    const swapListItem = page
+        .locator(".rescue-external-results .swaplist-item")
+        .filter({
+            has: page.getByRole("link", { name: label, exact: true }),
+        })
+        .first();
+    await expect(swapListItem).toBeVisible({ timeout: 30_000 });
     await swapListItem.click();
 };
 
 test.describe("RSK Rescue", () => {
+    test.describe.configure({ mode: "serial" });
+
     test.beforeEach(async ({ injectProvider }) => {
         checkBoltzConfPatch();
         await injectProvider();
@@ -167,16 +171,12 @@ test.describe("RSK Rescue", () => {
         await generateLiquidBlock();
     });
 
-    test.afterEach(() => {
-        if (fs.existsSync(rescueFileName)) {
-            fs.unlinkSync(rescueFileName);
-        }
-    });
-
     test("BTC -> RBTC: Claim pending swap via rescue page", async ({
         page,
         walletClient,
-    }) => {
+    }, testInfo) => {
+        const rescueFileName = testInfo.outputPath("rescue-file.json");
+        test.setTimeout(60_000);
         await page.goto("/");
 
         await selectAssets(page, "BTC", "RBTC");
@@ -195,10 +195,13 @@ test.describe("RSK Rescue", () => {
 
         await clearBrowserStorage(page);
 
-        await navigateToRskRescue(page, "resume");
+        await navigateToRskRescue(page);
         await page.getByTestId("refundUpload").setInputFiles(rescueFileName);
         await connectWallet(page, walletClient, { waitForAddress: false });
-        await selectAndClickSwapItem(page);
+        await page
+            .getByRole("button", { name: dict.en.rescue, exact: true })
+            .click();
+        await selectAndClickSwapItem(page, "Claim");
 
         const continueButton = page.getByRole("button", {
             name: dict.en.continue,
@@ -212,7 +215,9 @@ test.describe("RSK Rescue", () => {
     test("BTC -> RBTC: Claim pending swap via rescue page using mnemonic input", async ({
         page,
         walletClient,
-    }) => {
+    }, testInfo) => {
+        const rescueFileName = testInfo.outputPath("rescue-file.json");
+        test.setTimeout(60_000);
         await page.goto("/");
 
         await selectAssets(page, "BTC", "RBTC");
@@ -235,10 +240,13 @@ test.describe("RSK Rescue", () => {
 
         await clearBrowserStorage(page);
 
-        await navigateToRskRescue(page, "resume");
+        await navigateToRskRescue(page);
         await enterMnemonic(page, rescueFileContent.mnemonic);
         await connectWallet(page, walletClient, { waitForAddress: false });
-        await selectAndClickSwapItem(page);
+        await page
+            .getByRole("button", { name: dict.en.rescue, exact: true })
+            .click();
+        await selectAndClickSwapItem(page, "Claim");
 
         const continueButton = page.getByRole("button", {
             name: dict.en.continue,
@@ -252,7 +260,8 @@ test.describe("RSK Rescue", () => {
     test("RBTC -> BTC: Refund expired swap via rescue page", async ({
         page,
         walletClient,
-    }) => {
+    }, testInfo) => {
+        const rescueFileName = testInfo.outputPath("rescue-file.json");
         test.setTimeout(60_000);
         await page.goto("/");
 
@@ -275,11 +284,12 @@ test.describe("RSK Rescue", () => {
 
         await generateAnvilBlock(360);
 
-        await navigateToRskRescue(page, "refund");
+        await navigateToRskRescue(page);
         await connectWallet(page, walletClient, { waitForAddress: false });
-        const startScanningBtn = page.getByText(/start scanning/i);
-        await startScanningBtn.click();
-        await selectAndClickSwapItem(page);
+        await page
+            .getByRole("button", { name: dict.en.rescue, exact: true })
+            .click();
+        await selectAndClickSwapItem(page, "Refund");
 
         const refundButton = page.getByRole("button", {
             name: dict.en.refund,

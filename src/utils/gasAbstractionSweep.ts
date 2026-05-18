@@ -1,6 +1,6 @@
 import {
-    type GasAbstractionSweep,
     type GasAbstractionSweepTokenContract,
+    type GasAbstractionSweep as LibGasAbstractionSweep,
     getSweepableGasAbstractionBalances as libGetSweepableGasAbstractionBalances,
     sweepGasAbstractionToken as libSweepGasAbstractionToken,
 } from "boltz-swaps/evm";
@@ -12,10 +12,11 @@ import { sendPopulatedTransaction } from "./evmTransaction";
 import type { RescueFile } from "./rescueFile";
 import { GasAbstractionType } from "./swapCreator";
 
-export {
-    type GasAbstractionSweep,
-    getGasAbstractionSweepDisplayAmount,
-} from "boltz-swaps/evm";
+export { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
+
+export type GasAbstractionSweep = LibGasAbstractionSweep & {
+    asset: AssetType;
+};
 
 export const gasAbstractionSweepAssets = [TBTC, USDT0, USDC] as const;
 
@@ -40,7 +41,7 @@ export const getSweepableGasAbstractionBalances = ({
         destination,
         getSigner: (asset) => getGasAbstractionSigner(asset, rescueFile),
         createToken,
-    });
+    }) as Promise<GasAbstractionSweep[]>;
 
 export const sweepGasAbstractionToken = (
     sweep: GasAbstractionSweep,
