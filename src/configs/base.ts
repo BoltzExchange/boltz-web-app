@@ -8,6 +8,7 @@ export type Config = {
     isPro?: boolean;
     assets?: Record<string, Asset>;
     cctpApiUrl?: string;
+    solburnUrl?: string;
     torUrl?: string;
 } & typeof defaults;
 

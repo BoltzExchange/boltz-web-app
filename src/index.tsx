@@ -59,6 +59,9 @@ setBoltzSwapsConfig({
     get cctpApiUrl() {
         return config.cctpApiUrl;
     },
+    get solburnUrl() {
+        return config.solburnUrl;
+    },
     get layerZeroExplorerUrl() {
         return config.layerZeroExplorerUrl;
     },

@@ -1,8 +1,10 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
 import type { Connection, TransactionInstruction } from "@solana/web3.js";
+import log from "loglevel";
 
-import { getAssetBridge } from "../config.ts";
+import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
+import { constructRequestOptions } from "../helper.ts";
 import {
     derivePda,
     formatSolanaLogsMessage,
@@ -103,6 +105,51 @@ export const getSolanaCctpRequiredNativeBalance = async (
         solanaCctpMessageSentAccountSize,
     );
 
+export type SolburnAllocation = {
+    eventRentPayerSecret: Uint8Array;
+    messageSentEventDataSecret: Uint8Array;
+};
+
+// POSTs to solburn's /allocate to obtain ephemeral keypairs for the rent
+// payer and the MessageSentEventData account. Solburn watches the resulting
+// burn tx, fetches the Circle attestation, and 5 days later reclaims the
+// rent back to the burn tx's fee payer (= the user wallet). Returns null on
+// any failure so callers can fall back to the local-keypair path.
+export const tryFetchSolburnAllocation = async (
+    solburnUrl: string,
+): Promise<SolburnAllocation | null> => {
+    const trimmed = solburnUrl.replace(/\/+$/, "");
+    const { opts, requestTimeout } = constructRequestOptions(
+        {
+            method: "POST",
+            headers: { Accept: "application/json" },
+        },
+        10_000,
+    );
+    try {
+        const response = await fetch(`${trimmed}/allocate`, opts);
+        if (!response.ok) {
+            log.warn(`solburn /allocate failed: HTTP ${response.status}`);
+            return null;
+        }
+        const body = (await response.json()) as {
+            event_rent_payer: { secret: number[] };
+            message_sent_event_data: { secret: number[] };
+        };
+        return {
+            eventRentPayerSecret: new Uint8Array(body.event_rent_payer.secret),
+            messageSentEventDataSecret: new Uint8Array(
+                body.message_sent_event_data.secret,
+            ),
+        };
+    } catch (error) {
+        log.warn(`solburn /allocate error: ${String(error)}`);
+        return null;
+    } finally {
+        clearTimeout(requestTimeout);
+    }
+};
+
 const getContext = async (config: SolanaCctpConfig): Promise<Context> => ({
     modules: await lazySolanaCctp.get(),
     asset: config.asset,
@@ -137,6 +184,7 @@ const createDepositForBurnInstruction = async (
     context: Context,
     sendParam: CctpSendParam,
     ownerAddress: string,
+    eventRentPayerAddress: string,
     messageSentEventDataAddress: string,
 ): Promise<TransactionInstruction> => {
     if (sendParam.hookData !== cctpEmptyHookData) {
@@ -151,6 +199,9 @@ const createDepositForBurnInstruction = async (
     const owner = modules.solanaKit.createNoopSigner(
         modules.solanaKit.address(ownerAddress),
     );
+    const eventRentPayer = modules.solanaKit.createNoopSigner(
+        modules.solanaKit.address(eventRentPayerAddress),
+    );
     const messageSentEventData = modules.solanaKit.createNoopSigner(
         modules.solanaKit.address(messageSentEventDataAddress),
     );
@@ -162,7 +213,7 @@ const createDepositForBurnInstruction = async (
         modules.generated.getDepositForBurnInstruction(
             {
                 owner,
-                eventRentPayer: owner,
+                eventRentPayer,
                 senderAuthorityPda: modules.solanaKit.address(
                     derive(textEncoder.encode("sender_authority")),
                 ),
@@ -244,25 +295,71 @@ const send = async (
         );
     }
 
-    const messageSentEventData = modules.web3.Keypair.generate();
+    // Try to obtain ephemeral keypairs from solburn so the MessageSent rent
+    // can be reclaimed 5 days after the burn lands. On any failure (network,
+    // service, missing config), fall back to the legacy path: user wallet
+    // pays the rent directly via a locally-generated MessageSentEventData
+    // and the rent stays stuck on chain.
+    const { solburnUrl } = getBoltzSwapsConfig();
+    const allocation = solburnUrl
+        ? await tryFetchSolburnAllocation(solburnUrl)
+        : null;
+
+    const messageSentEventData =
+        allocation === null
+            ? modules.web3.Keypair.generate()
+            : modules.web3.Keypair.fromSecretKey(
+                  allocation.messageSentEventDataSecret,
+              );
+    const eventRentPayer =
+        allocation === null
+            ? null
+            : modules.web3.Keypair.fromSecretKey(
+                  allocation.eventRentPayerSecret,
+              );
+    const eventRentPayerAddress =
+        eventRentPayer?.publicKey.toBase58() ?? signerAddress;
+
     const instruction = await createDepositForBurnInstruction(
         context,
         sendParam,
         signerAddress,
+        eventRentPayerAddress,
         messageSentEventData.publicKey.toBase58(),
     );
-    const instructions = [
+
+    const instructions: TransactionInstruction[] = [
         modules.web3.ComputeBudgetProgram.setComputeUnitLimit({
             units: solanaCctpComputeUnitLimit,
         }),
-        instruction,
     ];
+    if (eventRentPayer !== null) {
+        // Prefund the ephemeral rent payer so it can cover the MessageSent
+        // account's rent during the burn ix.
+        const rentLamports = await getSolanaRentExemptMinimumBalance(
+            context.asset,
+            solanaCctpMessageSentAccountSize,
+        );
+        instructions.push(
+            modules.web3.SystemProgram.transfer({
+                fromPubkey: new modules.web3.PublicKey(signerAddress),
+                toPubkey: eventRentPayer.publicKey,
+                lamports: rentLamports,
+            }),
+        );
+    }
+    instructions.push(instruction);
+
     const { transaction, latestBlockhash } = await createTransaction(
         context,
         instructions,
         signerAddress,
     );
-    transaction.sign([messageSentEventData]);
+    const signers = [messageSentEventData];
+    if (eventRentPayer !== null) {
+        signers.push(eventRentPayer);
+    }
+    transaction.sign(signers);
 
     const simulation = await context.connection.simulateTransaction(
         transaction,
