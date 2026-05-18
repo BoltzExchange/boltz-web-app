@@ -117,8 +117,34 @@
         gap: 6px;
     }
     .logs-share {
+        position: relative;
+    }
+    .logs-share-content {
+        display: inline-flex;
+        align-items: center;
         gap: 0.35rem;
         font-weight: bold;
+    }
+    .logs-share[data-loading="true"] {
+        pointer-events: none;
+        background-color: var(--color-medium-gray);
+        color: var(--color-secondary-600);
+        cursor: not-allowed;
+
+        .logs-share-content {
+            visibility: hidden;
+        }
+        .spinner {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            > div {
+                background-color: #fff;
+            }
+        }
     }
 }
 
