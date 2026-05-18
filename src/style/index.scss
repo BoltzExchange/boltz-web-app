@@ -1741,15 +1741,15 @@ header {
     text-align: center;
     margin-top: 12px;
     font-size: 12px;
-    opacity: 0.6;
 
     a {
         color: var(--color-text);
         text-decoration: none;
+        opacity: 0.6;
         transition: opacity 0.2s ease;
 
         &:hover {
-            opacity: 0.8;
+            opacity: 1;
             text-decoration: underline;
         }
     }

@@ -230,14 +230,6 @@ const handleUrlParams = async (
         isInvoice(destination) &&
         !isLnurl(destination)
     ) {
-        if (
-            embedded === "true" &&
-            getUrlParam(UrlParam.LockOutput) === "true"
-        ) {
-            setDestinationLocked(true);
-        }
-
-        // Extract fixed-amount lightning invoice and pre-populate amounts
         try {
             const sats = decodeInvoice(destination).satoshis;
             if (sats > 0) {
@@ -249,9 +241,17 @@ const handleUrlParams = async (
                     minerFee(),
                 );
                 setSendAmount(sendAmt);
+                if (
+                    embedded === "true" &&
+                    getUrlParam(UrlParam.LockOutput) === "true"
+                ) {
+                    setDestinationLocked(true);
+                }
             }
         } catch {
             // Invalid invoice, ignore
+        } finally {
+            setQuoteLoading(false);
         }
     }
 

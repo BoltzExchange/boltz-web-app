@@ -30,6 +30,7 @@ const Asset = (props: {
     return (
         <button
             type="button"
+            disabled={props.disabled}
             class={`asset-wrap${
                 bitcoinOnly() || props.disabled ? " no-select" : ""
             }`}
