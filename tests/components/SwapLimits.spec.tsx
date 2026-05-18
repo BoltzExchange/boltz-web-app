@@ -1,49 +1,111 @@
-import { fireEvent, render } from "@solidjs/testing-library";
+import { fireEvent, render, screen } from "@solidjs/testing-library";
+import "@testing-library/jest-dom";
+import { describe, expect, it, vi } from "vitest";
 
 import SwapLimits from "../../src/components/SwapLimits";
-import type * as ConfigModule from "../../src/config";
-import type * as MainnetConfigModule from "../../src/configs/mainnet";
-import { Denomination } from "../../src/consts/Enums";
 
-vi.mock("../../src/config", async () => {
-    const actual =
-        await vi.importActual<typeof ConfigModule>("../../src/config");
-    const mainnet = await vi.importActual<typeof MainnetConfigModule>(
-        "../../src/configs/mainnet",
-    );
-
-    return {
-        ...actual,
-        config: mainnet.config,
-    };
-});
+const renderLimits = (
+    overrides: Partial<Parameters<typeof SwapLimits>[0]> = {},
+) => {
+    const onSelectAmount = vi.fn();
+    const result = render(() => (
+        <SwapLimits
+            minimum={1_000}
+            maximum={2_000_000}
+            minLabel="Min"
+            maxLabel="Max"
+            loading={false}
+            onSelectAmount={onSelectAmount}
+            {...overrides}
+        />
+    ));
+    return { ...result, onSelectAmount };
+};
 
 describe("SwapLimits", () => {
-    test("renders USDT icons for USDT0 assets and selects both limits", () => {
-        const onSelectAmount = vi.fn();
-        const { container } = render(() => (
-            <SwapLimits
-                asset="USDT0-SOL"
-                denomination={Denomination.Btc}
-                maximum={2_000_000}
-                maximumLabel="Max"
-                minimum={1_000_000}
-                minimumLabel="Min"
-                onSelectAmount={onSelectAmount}
-                sendLabel="Send"
-                separator="."
-            />
-        ));
+    it("renders min and max buttons with their labels", () => {
+        renderLimits();
+
+        expect(screen.getByTestId("limit-min-button")).toHaveTextContent("Min");
+        expect(screen.getByTestId("limit-max-button")).toHaveTextContent("Max");
+    });
+
+    it("does not render when not loading and both limits are zero", () => {
+        const { container } = renderLimits({ minimum: 0, maximum: 0 });
+
+        expect(container.querySelector(".amount-limits")).toBeNull();
+        expect(screen.queryByTestId("limit-min-button")).toBeNull();
+        expect(screen.queryByTestId("limit-max-button")).toBeNull();
+    });
+
+    it("renders while loading even when limits are zero", () => {
+        renderLimits({ minimum: 0, maximum: 0, loading: true });
+
+        expect(screen.getByTestId("limit-min-button")).toBeInTheDocument();
+        expect(screen.getByTestId("limit-max-button")).toBeInTheDocument();
+    });
+
+    it("calls onSelectAmount with the minimum when min is clicked", () => {
+        const { onSelectAmount } = renderLimits({ minimum: 1_234 });
+
+        fireEvent.click(screen.getByTestId("limit-min-button"));
+
+        expect(onSelectAmount).toHaveBeenCalledTimes(1);
+        expect(onSelectAmount).toHaveBeenCalledWith(1_234);
+    });
+
+    it("calls onSelectAmount with the maximum when max is clicked", () => {
+        const { onSelectAmount } = renderLimits({ maximum: 9_999 });
+
+        fireEvent.click(screen.getByTestId("limit-max-button"));
+
+        expect(onSelectAmount).toHaveBeenCalledTimes(1);
+        expect(onSelectAmount).toHaveBeenCalledWith(9_999);
+    });
+
+    it("disables both buttons and shows skeletons while loading", () => {
+        const { container, onSelectAmount } = renderLimits({ loading: true });
+
+        const minBtn = screen.getByTestId("limit-min-button");
+        const maxBtn = screen.getByTestId("limit-max-button");
+
+        expect(minBtn).toBeDisabled();
+        expect(maxBtn).toBeDisabled();
+        expect(minBtn).toHaveAttribute("aria-busy", "true");
+        expect(maxBtn).toHaveAttribute("aria-busy", "true");
+        expect(container.querySelectorAll(".skeleton")).toHaveLength(2);
+        expect(minBtn).not.toHaveTextContent("Min");
+        expect(maxBtn).not.toHaveTextContent("Max");
+
+        fireEvent.click(minBtn);
+        fireEvent.click(maxBtn);
+        expect(onSelectAmount).not.toHaveBeenCalled();
+    });
+
+    it("disables only the side whose limit is non-positive", () => {
+        const { onSelectAmount } = renderLimits({ minimum: 0, maximum: 500 });
+
+        const minBtn = screen.getByTestId("limit-min-button");
+        const maxBtn = screen.getByTestId("limit-max-button");
+
+        expect(minBtn).toBeDisabled();
+        expect(maxBtn).toBeEnabled();
+
+        fireEvent.click(minBtn);
+        expect(onSelectAmount).not.toHaveBeenCalled();
+
+        fireEvent.click(maxBtn);
+        expect(onSelectAmount).toHaveBeenCalledWith(500);
+    });
+
+    it("uses the labels as accessible names", () => {
+        renderLimits({ minLabel: "Minimum", maxLabel: "Maximum" });
 
         expect(
-            container.querySelectorAll('.denominator[data-denominator="USDT"]'),
-        ).toHaveLength(2);
-
-        const buttons = container.querySelectorAll(".btn-small");
-        fireEvent.click(buttons[0]);
-        fireEvent.click(buttons[1]);
-
-        expect(onSelectAmount).toHaveBeenNthCalledWith(1, 1_000_000);
-        expect(onSelectAmount).toHaveBeenNthCalledWith(2, 2_000_000);
+            screen.getByRole("button", { name: "Minimum" }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Maximum" }),
+        ).toBeInTheDocument();
     });
 });

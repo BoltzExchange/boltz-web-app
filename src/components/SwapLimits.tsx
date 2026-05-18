@@ -1,95 +1,58 @@
-import { BigNumber } from "bignumber.js";
-
-import { getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
-import { type Denomination } from "../consts/Enums";
-import { formatAmount } from "../utils/denomination";
-import AmountDenominator from "./AmountDenominator";
+import { Show } from "solid-js";
 
 type SwapLimitProps = {
-    amount: number;
-    asset: string;
-    denomination: Denomination;
     label: string;
-    onClick: () => void;
-    separator: string;
-    icon: Denomination | string;
-    loading?: boolean;
+    testId: string;
+    amount: number;
+    loading: boolean;
+    onClick: (amount: number) => void;
 };
 
 type SwapLimitsProps = {
-    asset: string;
-    denomination: Denomination;
-    loading?: boolean;
-    maximum: number;
-    maximumLabel: string;
     minimum: number;
-    minimumLabel: string;
+    maximum: number;
+    minLabel: string;
+    maxLabel: string;
+    loading: boolean;
     onSelectAmount: (amount: number) => void;
-    sendLabel: string;
-    separator: string;
 };
 
-const SwapLimit = (props: SwapLimitProps) => {
-    return (
-        <span class="swap-limit">
-            <span class="swap-limit-label">{props.label}</span>
-            <span class="swap-limit-amount">
-                {props.loading ? (
-                    <span
-                        class="swap-limit-value swap-limit-value-loading"
-                        aria-busy="true"
-                        aria-disabled="true">
-                        <span class="skeleton" aria-hidden="true" />
-                    </span>
-                ) : (
-                    <span
-                        onClick={() => props.onClick()}
-                        class="btn-small btn-light swap-limit-value">
-                        {formatAmount(
-                            BigNumber(props.amount),
-                            props.denomination,
-                            props.separator,
-                            props.asset,
-                        )}
-                    </span>
-                )}
-                <AmountDenominator value={props.icon} />
-            </span>
-        </span>
-    );
-};
+const SwapLimit = (props: SwapLimitProps) => (
+    <button
+        type="button"
+        class="amount-limit-link"
+        data-testid={props.testId}
+        aria-busy={props.loading}
+        aria-label={props.label}
+        disabled={props.loading || props.amount <= 0}
+        onClick={() => props.onClick(props.amount)}>
+        <Show
+            when={!props.loading}
+            fallback={<span class="skeleton" aria-hidden="true" />}>
+            {props.label}
+        </Show>
+    </button>
+);
 
-const SwapLimits = (props: SwapLimitsProps) => {
-    const denomination = () => {
-        return isBridgeAsset(props.asset)
-            ? getAssetDisplaySymbol(props.asset)
-            : props.denomination;
-    };
-
-    return (
-        <span class="swap-limits">
+const SwapLimits = (props: SwapLimitsProps) => (
+    <Show when={props.loading || props.minimum > 0 || props.maximum > 0}>
+        <div class="amount-limits">
             <SwapLimit
+                label={props.minLabel}
+                testId="limit-min-button"
                 amount={props.minimum}
-                asset={props.asset}
-                icon={denomination()}
-                denomination={props.denomination}
-                label={`${props.sendLabel} ${props.minimumLabel}:`}
-                onClick={() => props.onSelectAmount(props.minimum)}
-                separator={props.separator}
                 loading={props.loading}
+                onClick={props.onSelectAmount}
             />
             <SwapLimit
+                label={props.maxLabel}
+                testId="limit-max-button"
                 amount={props.maximum}
-                asset={props.asset}
-                icon={denomination()}
-                denomination={props.denomination}
-                label={`${props.maximumLabel}:`}
-                onClick={() => props.onSelectAmount(props.maximum)}
-                separator={props.separator}
                 loading={props.loading}
+                onClick={props.onSelectAmount}
             />
-        </span>
-    );
-};
+        </div>
+    </Show>
+);
 
 export default SwapLimits;

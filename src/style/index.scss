@@ -569,6 +569,82 @@ textarea.invalid {
     font-size: 33px;
     line-height: 1.2;
     text-align: right;
+    padding-top: 32px;
+    padding-bottom: 16px;
+}
+
+.icons > div > .asset-wrap {
+    top: calc(50% + 13px);
+}
+
+.amount-row-label {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--color-white-60);
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+}
+
+.amount-limits {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 2;
+}
+
+.amount-limit-link {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 19px;
+    padding: 0 6px;
+    margin: 0;
+    font: inherit;
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: var(--color-white-60);
+    background: transparent;
+    border: 1px solid var(--color-white-10);
+    border-radius: 999rem;
+    cursor: pointer;
+    transition:
+        color 120ms ease,
+        background 120ms ease,
+        border-color 120ms ease;
+
+    .skeleton {
+        width: 1.4rem;
+        height: 0.55rem;
+    }
+
+    &:disabled {
+        color: var(--color-white-20);
+        background: transparent;
+        border-color: var(--color-white-05);
+        cursor: not-allowed;
+    }
+
+    @media (hover: hover) {
+        &:hover:not(:disabled) {
+            color: var(--color-text);
+            background: var(--color-secondary-600);
+            border-color: var(--color-white-25);
+        }
+    }
 }
 #receiveAmount:disabled,
 #sendAmount:disabled {
@@ -1415,57 +1491,6 @@ header {
     margin-top: 2rem;
     margin-bottom: 1rem;
     color: var(--color-primary);
-}
-
-.swap-limits {
-    display: inline-flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.35rem 0.8rem;
-
-    .denominator-text {
-        margin-left: 0.5rem;
-    }
-
-    .swap-limit-value-loading {
-        display: inline-flex;
-        align-items: center;
-        padding: 0 6px;
-    }
-}
-
-.swap-limit {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
-}
-
-.swap-limit-value {
-    font-size: 0.875rem;
-    font-weight: 500;
-    font-family: inherit;
-    border: none;
-}
-
-.swap-limit-amount {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.swap-limit-amount .denominator {
-    opacity: 0.78;
-    transform: scale(1.8);
-    transform-origin: center;
-}
-
-.swap-limit-amount .denominator[data-denominator="usd"] {
-    transform: scale(1.1);
-}
-
-.swap-limit-amount .denominator[data-denominator="USDT"] {
-    transform: scale(1) translateY(1px);
 }
 
 .text-bold {

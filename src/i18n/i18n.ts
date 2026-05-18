@@ -44,8 +44,7 @@ const dict = {
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
         assets: "Multi-Layer",
         footer: "Made with 🧡 by Team Boltz",
-        create_swap: "Create Atomic Swap",
-        create_swap_subline: "Payment Includes Network and Boltz Fee",
+        create_swap: "Create Swap",
         get_gas_token_for_gas: "Get {{ gasToken }} for gas",
         new_swap: "New Swap",
         feecheck:
@@ -556,8 +555,7 @@ const dict = {
         maximum_amount: "Höchstbetrag ist {{ amount }} {{ denomination }}",
         assets: "Multi-layer",
         footer: "Mit 🧡 gemacht von Team Boltz",
-        create_swap: "Erstelle Atomic Swap",
-        create_swap_subline: "Zahlung beinhaltet Netzwerk- und Boltzgebühr",
+        create_swap: "Erstelle Swap",
         get_gas_token_for_gas: "Erhalte {{ gasToken }} für Gas",
         new_swap: "Neuer Swap",
         feecheck:
@@ -1084,9 +1082,7 @@ const dict = {
         maximum_amount: "La cantidad máxima es {{ amount }} {{ denomination }}",
         assets: "Multicapa",
         footer: "Hecho con 🧡 por el equipo de Boltz",
-        create_swap: "Crear intercambio atómico",
-        create_swap_subline:
-            "El pago incluye la comisión de red y servicio de Boltz",
+        create_swap: "Crear intercambio",
         get_gas_token_for_gas: "Obtén {{ gasToken }} para gas",
         new_swap: "Nuevo intercambio",
         feecheck:
@@ -1610,9 +1606,7 @@ const dict = {
         maximum_amount: "O valor máximo é {{ amount }} {{ denomination }}",
         assets: "Multi-Camada",
         footer: "Feito com 🧡 pela equipe da Boltz",
-        create_swap: "Criar troca atômica",
-        create_swap_subline:
-            "O pagamento inclui a taxa da rede e a taxa da Boltz",
+        create_swap: "Criar troca",
         get_gas_token_for_gas: "Obtenha {{ gasToken }} para gas",
         new_swap: "Nova troca",
         feecheck:
@@ -2131,8 +2125,7 @@ const dict = {
         maximum_amount: "最大金额为{{ amount }}{{ denomination }}",
         assets: "多层",
         footer: "Boltz团队倾情🧡制作",
-        create_swap: "创建原子交换",
-        create_swap_subline: "付款包括网络和Boltz服务费",
+        create_swap: "创建交换",
         get_gas_token_for_gas: "获取{{ gasToken }}作为 Gas 费",
         new_swap: "新的交换",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
@@ -2600,9 +2593,7 @@ const dict = {
         maximum_amount: "最大金額は{{ amount }} {{ denomination }}です",
         assets: "アセット",
         footer: "Team Boltzによる🧡で作成されました",
-        create_swap: "Atomic Swapの作成",
-        create_swap_subline:
-            "支払いにはネットワーク手数料とBoltzサービス手数料が含まれます",
+        create_swap: "Swapの作成",
         get_gas_token_for_gas: "{{ gasToken }}をガス代として取得",
         new_swap: "新しいスワップ",
         feecheck:

@@ -141,6 +141,9 @@ const Create = () => {
     const sendAmountQuoteLoading = createMemo(
         () => quoteLoading() && amountChanged() === Side.Receive,
     );
+    const limitActionsLoading = createMemo(
+        () => limitsLoading() || quoteLoading(),
+    );
 
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = getRpcUrls(pair().toAsset);
@@ -702,19 +705,6 @@ const Create = () => {
                 <h2 class="frame-title" data-testid="create-swap-title">
                     {t("create_swap")}
                 </h2>
-                {t("create_swap_subline")} <br />
-                <SwapLimits
-                    asset={pair().fromAsset}
-                    denomination={denomination()}
-                    loading={limitsLoading()}
-                    maximum={maximum()}
-                    maximumLabel={t("max")}
-                    minimum={minimum()}
-                    minimumLabel={t("min")}
-                    onSelectAmount={setAmount}
-                    sendLabel={t("send")}
-                    separator={separator()}
-                />
                 <Show when={config.isPro && pairs() && regularPairs()}>
                     <Accordion
                         title={t("swap_opportunities_accordion")}
@@ -750,6 +740,17 @@ const Create = () => {
                         />
                         <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
+                                <span class="amount-row-label">
+                                    {t("send")}
+                                </span>
+                                <SwapLimits
+                                    minimum={minimum()}
+                                    maximum={maximum()}
+                                    minLabel={t("min")}
+                                    maxLabel={t("max")}
+                                    loading={limitActionsLoading()}
+                                    onSelectAmount={setAmount}
+                                />
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
                                         class="amount-value-skeleton"
@@ -807,6 +808,9 @@ const Create = () => {
                         />
                         <div class="amount-field input-with-label">
                             <div class="amount-input-wrap">
+                                <span class="amount-row-label">
+                                    {t("receive")}
+                                </span>
                                 <Show when={receiveAmountQuoteLoading()}>
                                     <div
                                         class="amount-value-skeleton"
