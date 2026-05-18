@@ -109,26 +109,27 @@ export type RouteQuoteAmountInArgs<A extends string = string> =
         amountOut: bigint;
     };
 
-type DexPlan = {
+type ChainSwapStep = {
+    kind: RouteLegKind.ChainSwap;
+    from: string;
+    to: string;
+    pair: ChainPairTypeTaproot;
+};
+
+type DexStep = {
+    kind: RouteLegKind.Dex;
     chain: string;
     tokenIn: string;
     tokenOut: string;
 };
 
-type BridgePlan = {
+type BridgeStep = {
+    kind: RouteLegKind.Bridge;
     route: BridgeRoute;
     driver: BridgeDriver;
 };
 
-type LegPlan = {
-    chainSwap: {
-        from: string;
-        to: string;
-        pair: ChainPairTypeTaproot;
-    };
-    dex?: DexPlan;
-    bridge?: BridgePlan;
-};
+type PlanStep = ChainSwapStep | DexStep | BridgeStep;
 
 // percentage is e.g. 0.1 for 0.1%. Scale factor of 1_000_000 keeps 6
 // decimals of precision while staying in integer math.
@@ -187,9 +188,9 @@ const requireAsset = (asset: string) => {
     return config;
 };
 
-const resolveBridgePlan = (
+const resolveBridgeStep = (
     to: string,
-): { landingAsset: string; bridge?: BridgePlan } => {
+): { landingAsset: string; bridge?: BridgeStep } => {
     const bridge = getAssetBridge(to);
     const canonical = getCanonicalAsset(to);
     if (bridge === undefined || canonical === to) {
@@ -202,21 +203,30 @@ const resolveBridgePlan = (
     return {
         landingAsset: canonical,
         bridge: {
+            kind: RouteLegKind.Bridge,
             route,
             driver: bridgeRegistry.requireDriverForRoute(route),
         },
     };
 };
 
-const planLegs = (from: string, to: string, pairs: Pairs): LegPlan => {
-    const { landingAsset, bridge } = resolveBridgePlan(to);
+const planLegs = (from: string, to: string, pairs: Pairs): PlanStep[] => {
+    const { landingAsset, bridge } = resolveBridgeStep(to);
 
     const direct = pairs[SwapType.Chain]?.[from]?.[landingAsset];
     if (direct !== undefined) {
-        return {
-            chainSwap: { from, to: landingAsset, pair: direct },
-            bridge,
-        };
+        const steps: PlanStep[] = [
+            {
+                kind: RouteLegKind.ChainSwap,
+                from,
+                to: landingAsset,
+                pair: direct,
+            },
+        ];
+        if (bridge !== undefined) {
+            steps.push(bridge);
+        }
+        return steps;
     }
 
     const viaAsset = getRouteViaAsset(landingAsset);
@@ -251,33 +261,42 @@ const planLegs = (from: string, to: string, pairs: Pairs): LegPlan => {
         );
     }
 
-    return {
-        chainSwap: { from, to: viaAsset, pair: viaPair },
-        dex: {
+    const steps: PlanStep[] = [
+        {
+            kind: RouteLegKind.ChainSwap,
+            from,
+            to: viaAsset,
+            pair: viaPair,
+        },
+        {
+            kind: RouteLegKind.Dex,
             chain: viaConfig.network.symbol,
             tokenIn: viaConfig.token.address,
             tokenOut: landingConfig.token.address,
         },
-        bridge,
-    };
+    ];
+    if (bridge !== undefined) {
+        steps.push(bridge);
+    }
+    return steps;
 };
 
 const buildChainSwapLeg = (
-    plan: LegPlan["chainSwap"],
+    step: ChainSwapStep,
     sendAmount: bigint,
     receiveAmount: bigint,
 ): RouteChainSwapLeg => ({
     kind: RouteLegKind.ChainSwap,
-    from: plan.from,
-    to: plan.to,
+    from: step.from,
+    to: step.to,
     sendAmount,
     receiveAmount,
     fees: {
-        percentage: plan.pair.fees.percentage,
+        percentage: step.pair.fees.percentage,
         minerFees: {
-            server: plan.pair.fees.minerFees.server,
-            userLockup: plan.pair.fees.minerFees.user.lockup,
-            userClaim: plan.pair.fees.minerFees.user.claim,
+            server: step.pair.fees.minerFees.server,
+            userLockup: step.pair.fees.minerFees.user.lockup,
+            userClaim: step.pair.fees.minerFees.user.claim,
         },
     },
 });
@@ -324,58 +343,151 @@ const pickFirstQuote = (
     return best;
 };
 
+type StepCtx = {
+    from: string;
+    to: string;
+    options: BridgeQuoteOptions | undefined;
+};
+
+const executeStepForward = async (
+    step: PlanStep,
+    amountIn: bigint,
+    ctx: StepCtx,
+): Promise<{ leg: RouteLeg; amountOut: bigint }> => {
+    switch (step.kind) {
+        case RouteLegKind.ChainSwap: {
+            const outSats = applyChainPairReceiveAmount(amountIn, step.pair);
+            const amountOut = toAssetBaseUnits(outSats, step.to);
+            return {
+                leg: buildChainSwapLeg(step, amountIn, amountOut),
+                amountOut,
+            };
+        }
+
+        case RouteLegKind.Dex: {
+            const quotes = await quoteDexAmountIn(
+                step.chain,
+                step.tokenIn,
+                step.tokenOut,
+                amountIn,
+            );
+            const best = pickFirstQuote(
+                quotes,
+                DexQuoteDirection.In,
+                ctx.from,
+                ctx.to,
+            );
+            const amountOut = BigInt(best.quote);
+            return {
+                leg: {
+                    kind: RouteLegKind.Dex,
+                    chain: step.chain,
+                    tokenIn: step.tokenIn,
+                    tokenOut: step.tokenOut,
+                    amountIn,
+                    amountOut,
+                    quote: best,
+                },
+                amountOut,
+            };
+        }
+
+        case RouteLegKind.Bridge: {
+            const quote = await step.driver.quoteReceiveAmount(
+                step.route,
+                amountIn,
+                ctx.options,
+            );
+            return {
+                leg: buildBridgeLeg(step.route, quote),
+                amountOut: quote.amountOut,
+            };
+        }
+    }
+};
+
+const executeStepReverse = async (
+    step: PlanStep,
+    amountOut: bigint,
+    ctx: StepCtx,
+): Promise<{ leg: RouteLeg; amountIn: bigint }> => {
+    switch (step.kind) {
+        case RouteLegKind.ChainSwap: {
+            // amountOut is in chain-swap-target base units; fee math runs in sats.
+            const receiveSats = toSats(amountOut, step.to);
+            const amountIn = applyChainPairSendAmount(receiveSats, step.pair);
+            return {
+                leg: buildChainSwapLeg(step, amountIn, amountOut),
+                amountIn,
+            };
+        }
+        case RouteLegKind.Dex: {
+            const quotes = await quoteDexAmountOut(
+                step.chain,
+                step.tokenIn,
+                step.tokenOut,
+                amountOut,
+            );
+            const best = pickFirstQuote(
+                quotes,
+                DexQuoteDirection.Out,
+                ctx.from,
+                ctx.to,
+            );
+            const amountIn = BigInt(best.quote);
+            return {
+                leg: {
+                    kind: RouteLegKind.Dex,
+                    chain: step.chain,
+                    tokenIn: step.tokenIn,
+                    tokenOut: step.tokenOut,
+                    amountIn,
+                    amountOut,
+                    quote: best,
+                },
+                amountIn,
+            };
+        }
+        case RouteLegKind.Bridge: {
+            const amountIn = await step.driver.quoteAmountInForAmountOut(
+                step.route,
+                amountOut,
+                ctx.options,
+            );
+            const quote = await step.driver.quoteReceiveAmount(
+                step.route,
+                amountIn,
+                ctx.options,
+            );
+            return { leg: buildBridgeLeg(step.route, quote), amountIn };
+        }
+    }
+};
+
 export const quoteRouteAmountOut = async <A extends string = string>(
     args: RouteQuoteAmountOutArgs<A>,
 ): Promise<RouteQuote<A>> => {
     const { from, to, pairs, amountIn, quoteOptions, recipient } = args;
-    const plan = planLegs(from, to, pairs);
+    const steps = planLegs(from, to, pairs);
+    const ctx: StepCtx = {
+        from,
+        to,
+        options: mergeRecipient(quoteOptions, recipient),
+    };
 
-    const chainSwapOutSats = applyChainPairReceiveAmount(
-        amountIn,
-        plan.chainSwap.pair,
-    );
-    const chainSwapOut = toAssetBaseUnits(chainSwapOutSats, plan.chainSwap.to);
-    const chainLeg = buildChainSwapLeg(plan.chainSwap, amountIn, chainSwapOut);
-    const legs: RouteLeg[] = [chainLeg];
-    let runningAmount = chainSwapOut;
-
-    if (plan.dex !== undefined) {
-        const quotes = await quoteDexAmountIn(
-            plan.dex.chain,
-            plan.dex.tokenIn,
-            plan.dex.tokenOut,
-            runningAmount,
-        );
-        const best = pickFirstQuote(quotes, DexQuoteDirection.In, from, to);
-        const dexOut = BigInt(best.quote);
-        legs.push({
-            kind: RouteLegKind.Dex,
-            chain: plan.dex.chain,
-            tokenIn: plan.dex.tokenIn,
-            tokenOut: plan.dex.tokenOut,
-            amountIn: runningAmount,
-            amountOut: dexOut,
-            quote: best,
-        });
-        runningAmount = dexOut;
-    }
-
-    if (plan.bridge !== undefined) {
-        const options = mergeRecipient(quoteOptions, recipient);
-        const bridgeQuote = await plan.bridge.driver.quoteReceiveAmount(
-            plan.bridge.route,
-            runningAmount,
-            options,
-        );
-        legs.push(buildBridgeLeg(plan.bridge.route, bridgeQuote));
-        runningAmount = bridgeQuote.amountOut;
+    const legs: RouteLeg[] = [];
+    let amount = amountIn;
+    for (const step of steps) {
+        const result = await executeStepForward(step, amount, ctx);
+        legs.push(result.leg);
+        amount = result.amountOut;
     }
 
     return {
         from,
         to,
         sendAmount: amountIn,
-        receiveAmount: runningAmount,
+        receiveAmount: amount,
         legs,
     } as RouteQuote<A>;
 };
@@ -384,75 +496,25 @@ export const quoteRouteAmountIn = async <A extends string = string>(
     args: RouteQuoteAmountInArgs<A>,
 ): Promise<RouteQuote<A>> => {
     const { from, to, pairs, amountOut, quoteOptions, recipient } = args;
-    const plan = planLegs(from, to, pairs);
+    const steps = planLegs(from, to, pairs);
+    const ctx: StepCtx = {
+        from,
+        to,
+        options: mergeRecipient(quoteOptions, recipient),
+    };
 
-    let bridgeLeg: RouteBridgeLeg | undefined;
-    let postBridgeRequiredIn = amountOut;
-    if (plan.bridge !== undefined) {
-        const options = mergeRecipient(quoteOptions, recipient);
-        const bridgeAmountIn =
-            await plan.bridge.driver.quoteAmountInForAmountOut(
-                plan.bridge.route,
-                amountOut,
-                options,
-            );
-        const bridgeQuote = await plan.bridge.driver.quoteReceiveAmount(
-            plan.bridge.route,
-            bridgeAmountIn,
-            options,
-        );
-        bridgeLeg = buildBridgeLeg(plan.bridge.route, bridgeQuote);
-        postBridgeRequiredIn = bridgeAmountIn;
-    }
-
-    let dexLeg: RouteDexLeg | undefined;
-    let postDexRequiredIn = postBridgeRequiredIn;
-    if (plan.dex !== undefined) {
-        const quotes = await quoteDexAmountOut(
-            plan.dex.chain,
-            plan.dex.tokenIn,
-            plan.dex.tokenOut,
-            postBridgeRequiredIn,
-        );
-        const best = pickFirstQuote(quotes, DexQuoteDirection.Out, from, to);
-        const dexIn = BigInt(best.quote);
-        dexLeg = {
-            kind: RouteLegKind.Dex,
-            chain: plan.dex.chain,
-            tokenIn: plan.dex.tokenIn,
-            tokenOut: plan.dex.tokenOut,
-            amountIn: dexIn,
-            amountOut: postBridgeRequiredIn,
-            quote: best,
-        };
-        postDexRequiredIn = dexIn;
-    }
-
-    // postDexRequiredIn is in chain-swap-target base units; the chain-swap
-    // fee math runs in sats.
-    const chainSwapReceiveSats = toSats(postDexRequiredIn, plan.chainSwap.to);
-    const chainSwapSend = applyChainPairSendAmount(
-        chainSwapReceiveSats,
-        plan.chainSwap.pair,
-    );
-    const chainLeg = buildChainSwapLeg(
-        plan.chainSwap,
-        chainSwapSend,
-        postDexRequiredIn,
-    );
-
-    const legs: RouteLeg[] = [chainLeg];
-    if (dexLeg !== undefined) {
-        legs.push(dexLeg);
-    }
-    if (bridgeLeg !== undefined) {
-        legs.push(bridgeLeg);
+    const legs: RouteLeg[] = new Array(steps.length);
+    let required = amountOut;
+    for (let i = steps.length - 1; i >= 0; i--) {
+        const result = await executeStepReverse(steps[i], required, ctx);
+        legs[i] = result.leg;
+        required = result.amountIn;
     }
 
     return {
         from,
         to,
-        sendAmount: chainSwapSend,
+        sendAmount: required,
         receiveAmount: amountOut,
         legs,
     } as RouteQuote<A>;
