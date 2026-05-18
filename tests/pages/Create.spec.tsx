@@ -15,7 +15,6 @@ import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import Pair from "../../src/utils/Pair";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
-import { formatAmount } from "../../src/utils/denomination";
 import {
     TestComponent,
     contextWrapper,
@@ -650,13 +649,7 @@ describe("Create", () => {
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
 
-        const formattedAmount = formatAmount(
-            BigNumber(amount),
-            Denomination.Sat,
-            globalSignals.separator(),
-            BTC,
-        );
-        fireEvent.click(await screen.findByText(formattedAmount));
+        fireEvent.click(await screen.findByTestId(`limit-${extrema}-button`));
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(
@@ -708,14 +701,7 @@ describe("Create", () => {
             const sendAmountInput = (await screen.findByTestId(
                 "sendAmount",
             )) as HTMLInputElement;
-            const formattedMinimum = formatAmount(
-                BigNumber(signals.minimum()),
-                Denomination.Sat,
-                globalSignals.separator(),
-                BTC,
-            );
-
-            fireEvent.click(await screen.findByText(formattedMinimum));
+            fireEvent.click(screen.getByTestId("limit-min-button"));
 
             expect(signals.amountChanged()).toEqual(Side.Send);
             expect(sendAmountInput.disabled).toEqual(false);
