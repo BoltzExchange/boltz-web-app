@@ -192,6 +192,7 @@ const dict = {
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging",
+        share_with_support: "Share with support",
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
@@ -709,6 +710,7 @@ const dict = {
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging",
+        share_with_support: "Mit Support teilen",
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
@@ -1236,6 +1238,7 @@ const dict = {
         logs: "Logs",
         logs_tooltip:
             "Registros de la aplicación web como herramienta de depuración",
+        share_with_support: "Compartir con soporte",
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
@@ -1756,6 +1759,7 @@ const dict = {
         claim_fail: "Falha ao reivindicar troca: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
+        share_with_support: "Compartilhar com o suporte",
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
@@ -2255,6 +2259,7 @@ const dict = {
         claim_fail: "交换{{ id }}索赔失败！",
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试",
+        share_with_support: "分享给客服",
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
@@ -2743,6 +2748,7 @@ const dict = {
         claim_fail: "クレームのスワップに失敗しました: {{ id }}",
         logs: "ログ",
         logs_tooltip: "ウェブアプリのログ。デバグに便利です",
+        share_with_support: "サポートに共有する",
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
