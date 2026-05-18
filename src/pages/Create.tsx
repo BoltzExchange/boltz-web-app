@@ -27,6 +27,7 @@ import InvoiceInput from "../components/InvoiceInput";
 import NetworkSelect from "../components/NetworkSelect";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
+import SwapLimits from "../components/SwapLimits";
 import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -142,9 +143,6 @@ const Create = () => {
     );
     const limitActionsLoading = createMemo(
         () => limitsLoading() || quoteLoading(),
-    );
-    const showLimitActions = createMemo(
-        () => limitActionsLoading() || minimum() > 0 || maximum() > 0,
     );
 
     const gasTopUpTrigger = createMemo(() => {
@@ -745,58 +743,14 @@ const Create = () => {
                                 <span class="amount-row-label">
                                     {t("send")}
                                 </span>
-                                <Show when={showLimitActions()}>
-                                    <div class="amount-limits">
-                                        <button
-                                            type="button"
-                                            class="amount-limit-link"
-                                            data-testid="limit-min-button"
-                                            aria-busy={limitActionsLoading()}
-                                            aria-label={t("min")}
-                                            disabled={
-                                                limitActionsLoading() ||
-                                                minimum() <= 0
-                                            }
-                                            onClick={() =>
-                                                setAmount(minimum())
-                                            }>
-                                            <Show
-                                                when={!limitActionsLoading()}
-                                                fallback={
-                                                    <span
-                                                        class="skeleton"
-                                                        aria-hidden="true"
-                                                    />
-                                                }>
-                                                {t("min")}
-                                            </Show>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="amount-limit-link"
-                                            data-testid="limit-max-button"
-                                            aria-busy={limitActionsLoading()}
-                                            aria-label={t("max")}
-                                            disabled={
-                                                limitActionsLoading() ||
-                                                maximum() <= 0
-                                            }
-                                            onClick={() =>
-                                                setAmount(maximum())
-                                            }>
-                                            <Show
-                                                when={!limitActionsLoading()}
-                                                fallback={
-                                                    <span
-                                                        class="skeleton"
-                                                        aria-hidden="true"
-                                                    />
-                                                }>
-                                                {t("max")}
-                                            </Show>
-                                        </button>
-                                    </div>
-                                </Show>
+                                <SwapLimits
+                                    minimum={minimum()}
+                                    maximum={maximum()}
+                                    minLabel={t("min")}
+                                    maxLabel={t("max")}
+                                    loading={limitActionsLoading()}
+                                    onSelectAmount={setAmount}
+                                />
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
                                         class="amount-value-skeleton"
