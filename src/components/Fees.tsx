@@ -1,4 +1,3 @@
-import { BigNumber } from "bignumber.js";
 import { weiToSatoshi } from "boltz-swaps/evm";
 import {
     type Accessor,
@@ -10,16 +9,13 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC, isBridgeAsset } from "../consts/Assets";
+import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { isConfidentialAddress } from "../utils/compat";
-import { formatAmount } from "../utils/denomination";
-import { getPair } from "../utils/helper";
 import { GasAbstractionType } from "../utils/swapCreator";
-import AmountDenominator from "./AmountDenominator";
 import { getClaimAddress } from "./CreateButton";
 import FeesCollapse from "./FeesCollapse";
 import Denomination from "./settings/Denomination";
@@ -81,26 +77,14 @@ export const RoutingFee = () => {
 };
 
 const Fees = () => {
-    const {
-        t,
-        pairs,
-        fetchPairs,
-        denomination,
-        separator,
-        notify,
-        regularPairs,
-        fetchRegularPairs,
-    } = useGlobalContext();
+    const { t, pairs, fetchPairs, notify, fetchRegularPairs } =
+        useGlobalContext();
     const {
         pair,
-        sendAmount,
-        receiveAmount,
         setMaximum,
         setMinimum,
         setLimitsLoading,
-        minerFee,
         setMinerFee,
-        boltzFee,
         setBoltzFee,
         onchainAddress,
         addressValid,
@@ -108,25 +92,8 @@ const Fees = () => {
     } = useCreateContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
 
-    const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
-
-    const boltzFeeAmount = createMemo(() => {
-        if (!pair().isRoutable) {
-            return BigNumber(0);
-        }
-
-        receiveAmount();
-
-        const boltzSwapSendAmount =
-            pair().boltzSwapSendAmountFromLatestQuote(sendAmount());
-        if (boltzSwapSendAmount === undefined) {
-            return BigNumber(0);
-        }
-
-        return pair().feeOnSend(boltzSwapSendAmount);
-    });
 
     const gasAbstractionTrigger = createMemo(() => {
         return {
@@ -252,63 +219,7 @@ const Fees = () => {
                 <Denomination />
             </div>
             <div class="fees-dyn-right">
-                <Show
-                    when={
-                        !isBridgeAsset(assetSend()) &&
-                        !isBridgeAsset(assetReceive())
-                    }
-                    fallback={<FeesCollapse />}>
-                    <label>
-                        {t("network_fee")}:{" "}
-                        <span class="fee-amount">
-                            <span class="network-fee" data-testid="network-fee">
-                                {formatAmount(
-                                    BigNumber(minerFee()),
-                                    denomination(),
-                                    separator(),
-                                    BTC,
-                                    true,
-                                )}
-                            </span>
-                            <AmountDenominator value={denomination()} />
-                        </span>
-                        <br />
-                        {t("fee")} (
-                        <span
-                            class={
-                                config.isPro
-                                    ? getFeeHighlightClass(
-                                          boltzFee(),
-                                          swapType() === undefined
-                                              ? undefined
-                                              : getPair(
-                                                    regularPairs(),
-                                                    swapType()!,
-                                                    assetSend(),
-                                                    assetReceive(),
-                                                )?.fees.percentage,
-                                      )
-                                    : undefined
-                            }>
-                            {boltzFee().toString().replaceAll(".", separator())}
-                            %
-                        </span>
-                        ):{" "}
-                        <span class="fee-amount">
-                            <span class="boltz-fee" data-testid="boltz-fee">
-                                {formatAmount(
-                                    boltzFeeAmount(),
-                                    denomination(),
-                                    separator(),
-                                    BTC,
-                                    true,
-                                )}
-                            </span>
-                            <AmountDenominator value={denomination()} />
-                        </span>
-                        <RoutingFee />
-                    </label>
-                </Show>
+                <FeesCollapse />
             </div>
         </div>
     );
