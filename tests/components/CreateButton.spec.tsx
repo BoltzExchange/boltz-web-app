@@ -134,6 +134,16 @@ const usdt0Pairs: Pairs = {
     chain: {},
 };
 
+const usdt0LbtcPairs: Pairs = {
+    submarine: {},
+    reverse: {},
+    chain: {
+        [TBTC]: {
+            [LBTC]: testPairs.chain.BTC[LBTC],
+        },
+    },
+};
+
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
@@ -668,6 +678,42 @@ describe("CreateButton", () => {
             expect(btn.textContent).toBe(i18n.en.create_swap);
         });
     });
+
+    test.each(["USDT0-POL", "USDT0-SOL"])(
+        "should be enabled for zero-amount %s to LBTC",
+        async (sourceAsset) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <CreateButton />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            globalSignals.setOnline(true);
+            setPairAssetsWithPairs(usdt0LbtcPairs, sourceAsset, LBTC);
+            signals.setSendAmount(BigNumber(0));
+            signals.setReceiveAmount(BigNumber(0));
+            signals.setAmountValid(signals.pair().canZeroAmount);
+            signals.setAddressValid(true);
+            signals.setOnchainAddress(
+                "ert1qfan5dacdvedpzmweqcq0swxg7klhsh4d0qn74u",
+            );
+
+            const btn = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            await waitFor(() => {
+                expect(signals.pair().canZeroAmount).toBe(true);
+                expect(signals.valid()).toBe(true);
+                expect(btn.disabled).toBe(false);
+                expect(btn.textContent).toBe(i18n.en.create_swap);
+            });
+        },
+    );
 
     test("should reject unsendable USDT0 variants as invalid pairs", async () => {
         render(

@@ -328,7 +328,7 @@ const CreateButton = () => {
 
                 const isChainSwapWithZeroAmount = () =>
                     swapType() === SwapType.Chain &&
-                    !isEvmAsset(assetSend()) &&
+                    pair().canZeroAmount &&
                     sendAmount().isZero();
 
                 const isSubmarineSwapInvoiceValid = () =>
@@ -349,8 +349,6 @@ const CreateButton = () => {
 
                 const shouldShowAmountError = () =>
                     !amountValid() &&
-                    // Chain swaps with 0-amount that do not have RBTC as sending asset
-                    // can skip this check
                     !isChainSwapWithZeroAmount() &&
                     (isSubmarineSwapInvoiceValid() ||
                         swapType() !== SwapType.Submarine) &&

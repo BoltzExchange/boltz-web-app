@@ -1,5 +1,5 @@
 import type * as EvmModule from "boltz-swaps/evm";
-import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
+import { erc20SwapAbi, etherSwapAbi } from "boltz-swaps/generated/evm-abis";
 import {
     type PublicClient,
     encodeAbiParameters,
@@ -142,6 +142,7 @@ describe("commitment", () => {
         expect(signer.signTypedData).toHaveBeenCalledWith(
             expect.objectContaining({
                 domain: expect.objectContaining({
+                    name: "ERC20Swap",
                     chainId: 31n,
                     verifyingContract:
                         "0x1000000000000000000000000000000000000000",
@@ -196,6 +197,81 @@ describe("commitment", () => {
         const [signTypedDataArgs] = signer.signTypedData.mock.calls[0];
         expect(signTypedDataArgs.domain.chainId).toBe(30n);
         expect(signer.provider.getChainId).not.toHaveBeenCalled();
+    });
+
+    test("should parse native lockup events and post EtherSwap commitment signatures", async () => {
+        mockRequireChainId.mockReturnValue(30);
+        const receipt = {
+            logs: [
+                {
+                    address: "0x1000000000000000000000000000000000000000",
+                    data: encodeAbiParameters(
+                        [{ type: "uint256" }, { type: "uint256" }],
+                        [456n, 777n],
+                    ),
+                    topics: encodeEventTopics({
+                        abi: etherSwapAbi,
+                        eventName: "Lockup",
+                        args: {
+                            preimageHash: `0x${"22".repeat(32)}`,
+                            claimAddress:
+                                "0x3000000000000000000000000000000000000000",
+                            refundAddress:
+                                "0x4000000000000000000000000000000000000000",
+                        },
+                    }),
+                    logIndex: 4,
+                },
+            ],
+        };
+        (
+            sentinelAssetProvider.waitForTransactionReceipt as ReturnType<
+                typeof vi.fn
+            >
+        ).mockResolvedValue(receipt);
+        const signer = {
+            signTypedData: vi.fn().mockResolvedValue("0xnativeSigned"),
+        };
+        const etherSwap = {
+            address: "0x1000000000000000000000000000000000000000",
+            abi: etherSwapAbi,
+            read: {
+                version: vi.fn().mockResolvedValue("5"),
+            },
+        };
+
+        await postCommitmentSignatureForTransaction({
+            asset: "RBTC",
+            commitmentAsset: "RBTC",
+            swapId: "swap-rbtc",
+            preimageHash: "22".repeat(32),
+            commitmentTxHash: "0xcommitment",
+            etherSwap: etherSwap as never,
+            signer: signer as never,
+        });
+
+        expect(mockCreateAssetProvider).toHaveBeenCalledWith("RBTC");
+        expect(signer.signTypedData).toHaveBeenCalledWith(
+            expect.objectContaining({
+                domain: expect.objectContaining({
+                    name: "EtherSwap",
+                    chainId: 30n,
+                    verifyingContract:
+                        "0x1000000000000000000000000000000000000000",
+                }),
+                message: expect.not.objectContaining({
+                    tokenAddress: expect.anything(),
+                }),
+            }),
+        );
+        expect(mockPostCommitmentSignature).toHaveBeenCalledWith(
+            "RBTC",
+            "swap-rbtc",
+            "0xnativeSigned",
+            "0xcommitment",
+            4,
+            10,
+        );
     });
 
     describe("buildCommitmentRefundAuthMessage", () => {

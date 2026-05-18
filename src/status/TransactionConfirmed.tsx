@@ -1099,10 +1099,6 @@ const ClaimEvm = (props: {
                 receiveAmount: execution.minAmountOut,
             };
         } else {
-            const sig = signer();
-            if (sig === undefined) {
-                throw new Error("missing signer for claim");
-            }
             result = await claimAsset(
                 props.gasAbstraction,
                 props.assetReceive,
@@ -1112,7 +1108,7 @@ const ClaimEvm = (props: {
                 getAddress(props.refundAddress),
                 props.timeoutBlockHeight,
                 getAddress(props.signerAddress),
-                () => sig,
+                signer,
                 getGasAbstractionSigner(props.assetReceive),
                 getEtherSwap(props.assetReceive),
                 getErc20Swap(props.assetReceive),

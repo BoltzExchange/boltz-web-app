@@ -1,9 +1,17 @@
 import { BigNumber } from "bignumber.js";
-import { CctpReceiveMode } from "boltz-swaps/types";
+import { CctpReceiveMode, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    TBTC,
+    USDC,
+    USDT0,
+} from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
@@ -87,6 +95,36 @@ vi.mock("../../src/config", async () => {
                     token: {
                         address: "0x0000000000000000000000000000000000000137",
                         decimals: 6,
+                    },
+                },
+                "USDT0-SOL": {
+                    ...actual.config.assets!.USDT0,
+                    canSend: true,
+                    blockExplorerUrl: {
+                        id: "solscan",
+                        normal: "https://solscan.io",
+                    },
+                    network: {
+                        chainName: "Solana",
+                        symbol: "SOL",
+                        gasToken: "SOL",
+                        transport: "solana",
+                        rpcUrls: ["https://api.mainnet.solana.com"],
+                        nativeCurrency: {
+                            name: "SOL",
+                            symbol: "SOL",
+                            decimals: 9,
+                        },
+                    },
+                    bridge: {
+                        ...actual.config.assets!.USDT0.bridge,
+                        mesh: "legacy",
+                        quotePayer:
+                            "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
+                    },
+                    token: {
+                        ...actual.config.assets!.USDT0.token,
+                        address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
                     },
                 },
                 "USDT0-CFX": {
@@ -377,19 +415,20 @@ describe("Pair", () => {
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
         gasTopUpSupportedMock.mockReturnValue(true);
+        const usdt0BridgeAssets = new Set(["USDT0-POL", "USDT0-SOL"]);
         bridgeGetPreRouteMock.mockImplementation((asset: string) =>
-            asset === "USDT0-POL"
+            usdt0BridgeAssets.has(asset)
                 ? {
-                      sourceAsset: "USDT0-POL",
+                      sourceAsset: asset,
                       destinationAsset: USDT0,
                   }
                 : undefined,
         );
         bridgeGetPostRouteMock.mockImplementation((asset: string) =>
-            asset === "USDT0-POL"
+            usdt0BridgeAssets.has(asset)
                 ? {
                       sourceAsset: USDT0,
-                      destinationAsset: "USDT0-POL",
+                      destinationAsset: asset,
                   }
                 : undefined,
         );
@@ -413,7 +452,11 @@ describe("Pair", () => {
         );
         bridgeGetMessagingFeeTokenMock.mockImplementation(
             (route: { sourceAsset: string }) =>
-                route.sourceAsset === "USDT0-POL" ? "POL" : "ETH",
+                route.sourceAsset === "USDT0-SOL"
+                    ? "SOL"
+                    : route.sourceAsset === "USDT0-POL"
+                      ? "POL"
+                      : "ETH",
         );
         bridgeGetTransferFeeAssetMock.mockImplementation(
             (route: { sourceAsset: string }) => route.sourceAsset,
@@ -445,7 +488,7 @@ describe("Pair", () => {
         };
 
         bridgeGetDriverForAssetMock.mockImplementation((asset: string) =>
-            asset === "USDT0-POL" ? bridgeDriver : undefined,
+            usdt0BridgeAssets.has(asset) ? bridgeDriver : undefined,
         );
     });
 
@@ -570,6 +613,149 @@ describe("Pair", () => {
         expect(debugSpy).not.toHaveBeenCalled();
     });
 
+    test("should allow 0-amount direct ERC20 chain swaps without logging blockers", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithErc20Chain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [USDT0]: {
+                    BTC: pairs.chain.BTC.USDT0,
+                },
+            },
+        };
+        const pair = new Pair(pairsWithErc20Chain, USDT0, BTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
+    test("should allow 0-amount native EVM chain swaps without logging blockers", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithNativeEvmChain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [RBTC]: {
+                    BTC: pairs.chain.BTC.USDT0,
+                },
+            },
+        };
+        const pair = new Pair(pairsWithNativeEvmChain, RBTC, BTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
+    test("should allow 0-amount pre-bridge ERC20 chain swaps from EVM variants", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithErc20Chain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [USDT0]: {
+                    BTC: pairs.chain.BTC.USDT0,
+                },
+            },
+        };
+        const pair = new Pair(pairsWithErc20Chain, "USDT0-POL", BTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
+    test("should allow 0-amount ERC20 chain swaps with a pre-chain DEX hop", async () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithDexChain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [TBTC]: {
+                    [LBTC]: pairs.chain.BTC[LBTC],
+                },
+            },
+        };
+        const pair = new Pair(pairsWithDexChain, "USDT0-POL", LBTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+
+        const creationData = await pair.creationData(BigNumber(0), 0);
+        expect(creationData?.type).toBe(SwapType.Chain);
+        expect(creationData?.sendAmount.toNumber()).toBe(0);
+        expect(creationData?.receiveAmount.toNumber()).toBe(0);
+        expect(creationData?.hopsPosition).toBe(SwapPosition.Pre);
+        expect(
+            creationData?.hops.map(({ from, to, type }) => ({
+                from,
+                to,
+                type,
+            })),
+        ).toEqual([
+            {
+                from: USDT0,
+                to: TBTC,
+                type: SwapType.Dex,
+            },
+        ]);
+        expect(quoteDexAmountOutMock).not.toHaveBeenCalled();
+        expect(bridgeQuoteReceiveAmountMock).not.toHaveBeenCalled();
+    });
+
+    test("should allow 0-amount Solana pre-bridge chain swaps with a pre-chain DEX hop", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithDexChain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [TBTC]: {
+                    [LBTC]: pairs.chain.BTC[LBTC],
+                },
+            },
+        };
+        const pair = new Pair(pairsWithDexChain, "USDT0-SOL", LBTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
+    test("should allow 0-amount pre-bridge chain swaps when bridge destination differs from the first hop", () => {
+        bridgeGetPreRouteMock.mockImplementation((asset: string) =>
+            asset === "USDT0-POL"
+                ? {
+                      sourceAsset: "USDT0-POL",
+                      destinationAsset: "USDT0-ETH",
+                  }
+                : undefined,
+        );
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pairsWithDexChain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [TBTC]: {
+                    [LBTC]: pairs.chain.BTC[LBTC],
+                },
+            },
+        };
+        const pair = new Pair(pairsWithDexChain, "USDT0-POL", LBTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
     test("should allow 0-amount chain swaps with post-bridge routing", () => {
         const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
         const pair = new Pair(pairs, BTC, "USDT0-POL");
@@ -592,7 +778,7 @@ describe("Pair", () => {
             expect.objectContaining({
                 from: LN,
                 to: "USDT0-POL",
-                blockers: ["first hop type is reverse"],
+                blockers: ["swap type is reverse"],
                 route: [
                     {
                         from: LN,
@@ -622,6 +808,26 @@ describe("Pair", () => {
                 hasPostBridge: false,
             }),
         );
+    });
+
+    test("should not quote pre-bridge routes for 0-amount chain swap creation", async () => {
+        const pairsWithErc20Chain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [USDT0]: {
+                    BTC: pairs.chain.BTC.USDT0,
+                },
+            },
+        };
+        const pair = new Pair(pairsWithErc20Chain, "USDT0-POL", BTC);
+
+        const creationData = await pair.creationData(BigNumber(0), 0);
+
+        expect(creationData?.type).toBe(SwapType.Chain);
+        expect(creationData?.sendAmount.toNumber()).toBe(0);
+        expect(creationData?.receiveAmount.toNumber()).toBe(0);
+        expect(bridgeQuoteReceiveAmountMock).not.toHaveBeenCalled();
     });
 
     test("should keep the cached Boltz send amount for routed submarine creation", async () => {

@@ -46,6 +46,7 @@ import {
     quoteDexAmountOut,
 } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
+import { emptyPreimageHash } from "../utils/commitment";
 import {
     getSignerForGasAbstraction,
     prefix0x,
@@ -425,6 +426,7 @@ const LockupTransaction = (props: {
     approvalValue?: () => bigint;
     approvalTarget?: Address;
     hops?: EncodedHop[];
+    commitment?: boolean;
 }) => {
     const { setSwap } = usePayContext();
     const { t, slippage, getSwap, setSwapStorage } = useGlobalContext();
@@ -488,30 +490,47 @@ const LockupTransaction = (props: {
                             setSwap,
                             setSwapStorage,
                         );
-                    } else if (
-                        getKindForAsset(props.asset) === AssetKind.EVMNative
-                    ) {
-                        const contract = getEtherSwap(props.asset);
-                        const tx = {
-                            to: contract.address,
-                            data: encodeFunctionData({
-                                abi: etherSwapAbi,
-                                functionName: "lock",
-                                args: [
-                                    prefix0x(props.preimageHash),
-                                    getAddress(props.claimAddress),
-                                    BigInt(props.timeoutBlockHeight),
-                                ],
-                            }),
-                            value: props.value(),
-                        };
-                        transactionHash = await sendPopulatedTransaction(
-                            props.gasAbstraction,
-                            transactionSigner,
-                            tx,
-                        );
                     } else {
-                        if (props.gasAbstraction === GasAbstractionType.None) {
+                        const commitmentLockupDetails = props.commitment
+                            ? await getCommitmentLockupDetails(props.asset)
+                            : undefined;
+                        const preimageHash =
+                            commitmentLockupDetails === undefined
+                                ? props.preimageHash
+                                : emptyPreimageHash.slice(2);
+                        const claimAddress = getAddress(
+                            commitmentLockupDetails?.claimAddress ??
+                                props.claimAddress,
+                        );
+                        const timeoutBlockHeight =
+                            commitmentLockupDetails?.timelock ??
+                            props.timeoutBlockHeight;
+
+                        if (
+                            getKindForAsset(props.asset) === AssetKind.EVMNative
+                        ) {
+                            const contract = getEtherSwap(props.asset);
+                            const tx = {
+                                to: contract.address,
+                                data: encodeFunctionData({
+                                    abi: etherSwapAbi,
+                                    functionName: "lock",
+                                    args: [
+                                        prefix0x(preimageHash),
+                                        claimAddress,
+                                        BigInt(timeoutBlockHeight),
+                                    ],
+                                }),
+                                value: props.value(),
+                            };
+                            transactionHash = await sendPopulatedTransaction(
+                                props.gasAbstraction,
+                                transactionSigner,
+                                tx,
+                            );
+                        } else if (
+                            props.gasAbstraction === GasAbstractionType.None
+                        ) {
                             const contract = getErc20Swap(props.asset);
                             const tx = {
                                 to: contract.address,
@@ -519,13 +538,13 @@ const LockupTransaction = (props: {
                                     abi: erc20SwapAbi,
                                     functionName: "lock",
                                     args: [
-                                        prefix0x(props.preimageHash),
+                                        prefix0x(preimageHash),
                                         props.value(),
                                         getAddress(
                                             getTokenAddress(props.asset),
                                         ),
-                                        getAddress(props.claimAddress),
-                                        BigInt(props.timeoutBlockHeight),
+                                        claimAddress,
+                                        BigInt(timeoutBlockHeight),
                                     ],
                                 }),
                             };
@@ -539,9 +558,9 @@ const LockupTransaction = (props: {
                                 props.gasAbstraction,
                                 props.asset,
                                 props.value(),
-                                props.preimageHash,
-                                props.claimAddress,
-                                props.timeoutBlockHeight,
+                                preimageHash,
+                                claimAddress,
+                                timeoutBlockHeight,
                                 connectedSigner,
                                 transactionSigner,
                             );
@@ -554,7 +573,13 @@ const LockupTransaction = (props: {
                             `missing swap ${props.swapId} for lockup persistence`,
                         );
                     }
-                    currentSwap.lockupTx = transactionHash;
+                    if (props.commitment) {
+                        currentSwap.commitmentLockupTxHash = transactionHash;
+                        currentSwap.commitmentLockupCallId = undefined;
+                        currentSwap.commitmentSignatureSubmitted = false;
+                    } else {
+                        currentSwap.lockupTx = transactionHash;
+                    }
                     currentSwap.signer = connectedSigner.address;
 
                     if (
@@ -595,8 +620,7 @@ const LockupEvm = (props: {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
 
-    const value = () => satsToAssetAmount(props.amount, props.asset);
-
+    const isSendAll = () => props.amount === 0;
     const hasHopsBefore = () =>
         props.hops !== undefined && props.hops.length > 0;
 
@@ -618,6 +642,10 @@ const LockupEvm = (props: {
     const [bridgeValue, setBridgeValue] = createSignal<bigint | undefined>(
         undefined,
     );
+    const value = () =>
+        isSendAll()
+            ? requiredValue()
+            : satsToAssetAmount(props.amount, props.asset);
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
         return Number(await currentSigner.provider.getChainId());
@@ -626,6 +654,11 @@ const LockupEvm = (props: {
     createEffect(() => {
         void (async () => {
             if (props.bridge !== undefined) {
+                if (isSendAll()) {
+                    setBridgeValue(undefined);
+                    return;
+                }
+
                 if (!hasHopsBefore() || props.hops === undefined) {
                     throw new Error(
                         `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,
@@ -703,9 +736,12 @@ const LockupEvm = (props: {
                         throw new Error("missing gas price");
                     }
                     const spendable = balance - gasPrice * lockupGasUsage;
+                    const lockupValue = isSendAll() ? spendable : value();
                     log.info("EVM signer spendable balance", spendable);
                     setSignerBalance(spendable);
-                    setRequiredValue(value());
+                    setRequiredValue(
+                        isSendAll() && lockupValue <= 0n ? 1n : lockupValue,
+                    );
                     setNeedsApproval(false);
                     setApprovalTarget(undefined);
 
@@ -736,11 +772,14 @@ const LockupEvm = (props: {
 
                     log.info("ERC20 signer balance", balance);
 
-                    const needsApproval = allowance < value();
+                    const lockupValue = isSendAll() ? balance : value();
+                    const needsApproval = allowance < lockupValue;
                     log.info("ERC20 signer needs approval", needsApproval);
 
                     setSignerBalance(balance);
-                    setRequiredValue(value());
+                    setRequiredValue(
+                        isSendAll() && lockupValue === 0n ? 1n : lockupValue,
+                    );
                     setNeedsApproval(needsApproval);
                     setApprovalTarget(approvalTarget);
 
@@ -758,15 +797,23 @@ const LockupEvm = (props: {
             <Show
                 when={props.bridge === undefined}
                 fallback={
-                    <Show
-                        when={bridgeValue() !== undefined}
-                        fallback={<LoadingSpinner />}>
+                    isSendAll() ? (
                         <SendToBridge
                             bridge={props.bridge!}
                             swapId={props.swapId}
-                            amount={bridgeValue()!}
+                            sendAll={true}
                         />
-                    </Show>
+                    ) : (
+                        <Show
+                            when={bridgeValue() !== undefined}
+                            fallback={<LoadingSpinner />}>
+                            <SendToBridge
+                                bridge={props.bridge!}
+                                swapId={props.swapId}
+                                amount={bridgeValue()!}
+                            />
+                        </Show>
+                    )
                 }>
                 <Show
                     when={signerBalance() !== undefined}
@@ -803,6 +850,7 @@ const LockupEvm = (props: {
                             }
                             approvalTarget={approvalTarget()}
                             hops={hasHopsBefore() ? props.hops : undefined}
+                            commitment={hasHopsBefore() || isSendAll()}
                         />
                     </Show>
                 </Show>

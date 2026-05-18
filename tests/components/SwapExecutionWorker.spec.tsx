@@ -15,6 +15,7 @@ import { config as runtimeConfig } from "../../src/config";
 
 let currentSwap: Record<string, unknown>;
 let mockNetworkTransport = "evm";
+let mockSigner: Record<string, unknown> | undefined;
 const mockQueryFilter = vi.fn();
 const mockGetTransaction = vi.fn();
 const mockIsBlockhashValid = vi.fn();
@@ -49,6 +50,9 @@ const mockSendPopulatedTransaction = vi
 const mockPostCommitmentSignatureForTransaction = vi
     .fn<(...args: unknown[]) => Promise<void>>()
     .mockResolvedValue(undefined);
+const mockEtherSwap = {};
+const mockGetEtherSwap = vi.fn(() => mockEtherSwap);
+const mockGetErc20Swap = vi.fn(() => createMockErc20Swap());
 const createMockErc20Swap = () => {
     return {
         address: "0x8000000000000000000000000000000000000000",
@@ -184,6 +188,10 @@ afterAll(() => {
 });
 
 vi.mock("../../src/consts/Assets", () => ({
+    AssetKind: {
+        ERC20: "ERC20",
+        EVMNative: "EVM_NATIVE",
+    },
     USDC: "USDC",
     getAssetBridge: (asset: string) =>
         asset === "CCTP-SRC"
@@ -219,6 +227,8 @@ vi.mock("../../src/consts/Assets", () => ({
                   }
                 : undefined,
     getNetworkTransport: () => "evm",
+    getKindForAsset: (asset: string) =>
+        asset === "RBTC" ? "EVM_NATIVE" : "ERC20",
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -243,7 +253,8 @@ vi.mock("../../src/context/Pay", () => ({
 
 vi.mock("../../src/context/Web3", () => ({
     useWeb3Signer: () => ({
-        getErc20Swap: vi.fn(() => createMockErc20Swap()),
+        getErc20Swap: mockGetErc20Swap,
+        getEtherSwap: mockGetEtherSwap,
         getGasAbstractionSigner: vi.fn((asset: string) => ({
             address:
                 asset === "DST" || asset === "USDC"
@@ -253,7 +264,7 @@ vi.mock("../../src/context/Web3", () => ({
                 getLogs: vi.fn(),
             },
         })),
-        signer: () => undefined,
+        signer: () => mockSigner,
     }),
 }));
 
@@ -454,6 +465,9 @@ describe("SwapExecutionWorker", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockNetworkTransport = "evm";
+        mockSigner = undefined;
+        mockGetEtherSwap.mockClear();
+        mockGetErc20Swap.mockClear();
         mockGetTransaction.mockReset();
         mockIsBlockhashValid.mockReset().mockResolvedValue({
             value: true,
@@ -538,6 +552,48 @@ describe("SwapExecutionWorker", () => {
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
         });
+    });
+
+    test("should post RBTC commitment signatures with EtherSwap", async () => {
+        mockSigner = { provider: {} };
+        currentSwap = {
+            id: "swap-rbtc",
+            type: "chain",
+            status: "invoice.set",
+            assetSend: "RBTC",
+            sendAmount: 0,
+            gasAbstraction: {
+                lockup: "none",
+                claim: "none",
+            },
+            preimage: "11".repeat(32),
+            lockupDetails: {
+                timeoutBlockHeight: 144,
+                claimAddress: "0xc000000000000000000000000000000000000000",
+            },
+            commitmentLockupTxHash: "0xrbtccommitment",
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalled();
+            expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+        });
+
+        expect(mockGetEtherSwap).toHaveBeenCalledWith("RBTC");
+        expect(mockGetErc20Swap).not.toHaveBeenCalled();
+        expect(mockPostCommitmentSignatureForTransaction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                asset: "RBTC",
+                swapId: "swap-rbtc",
+                commitmentTxHash: "0xrbtccommitment",
+                etherSwap: mockEtherSwap,
+                signer: mockSigner,
+            }),
+        );
     });
 
     test("should mint manual CCTP before executing the pre-bridge lockup", async () => {

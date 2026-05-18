@@ -669,6 +669,75 @@ describe("Create", () => {
         );
     });
 
+    test("should set the maximum amount from the send amount max button", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        await waitFor(() => {
+            expect(signals.maximum()).toBeGreaterThan(0);
+            expect(signals.limitsLoading()).toBe(false);
+        });
+
+        const amount = signals.maximum();
+        fireEvent.click(await screen.findByTestId("sendAmountMax"));
+
+        await waitFor(() => {
+            expect(signals.sendAmount()).toEqual(BigNumber(amount));
+            expect(signals.receiveAmount()).toEqual(
+                calculateReceiveAmount(
+                    BigNumber(amount),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Reverse,
+                ),
+            );
+        });
+    });
+
+    test("should set zero amount from the send amount max button for RBTC send-all", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(RBTC, BTC);
+        signals.setSendAmount(BigNumber(123_000));
+        signals.setReceiveAmount(BigNumber(100_000));
+
+        await waitFor(() => {
+            expect(signals.maximum()).toBeGreaterThan(0);
+            expect(signals.limitsLoading()).toBe(false);
+            expect(signals.pair().canZeroAmount).toBe(true);
+        });
+
+        fireEvent.click(await screen.findByTestId("sendAmountMax"));
+
+        await waitFor(() => {
+            expect(signals.sendAmount()).toEqual(BigNumber(0));
+            expect(signals.amountValid()).toBe(true);
+        });
+        expect(signals.amountChanged()).toEqual(Side.Send);
+    });
+
     test("should update the loading target immediately when selecting a limit", async () => {
         vi.useFakeTimers();
 

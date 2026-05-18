@@ -70,6 +70,9 @@ const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
         ? BigNumber(amount.toString())
         : BigNumber(assetAmountToSats(amount, asset).toString());
 
+const isEvmErc20Asset = (asset: string) =>
+    isEvmAsset(asset) && config.assets?.[asset]?.type === AssetKind.ERC20;
+
 export const enum RequiredInput {
     Address,
     Invoice,
@@ -446,22 +449,27 @@ export default class Pair {
     private getCanZeroAmountBlockers = (): string[] => {
         const blockers: string[] = [];
 
-        if (this.preBridge !== undefined) {
-            blockers.push("pre-bridge routing is enabled");
-        }
-
         const firstHop = this.route[0];
         if (firstHop === undefined) {
             blockers.push("route has no first hop");
             return blockers;
         }
 
-        if (firstHop.type !== SwapType.Chain) {
-            blockers.push(`first hop type is ${firstHop.type}`);
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            blockers.push("route has no Boltz hop");
+            return blockers;
         }
 
-        if (isEvmAsset(firstHop.from)) {
-            blockers.push(`send asset ${firstHop.from} is EVM`);
+        if (boltzHop.type !== SwapType.Chain) {
+            blockers.push(`swap type is ${boltzHop.type}`);
+        }
+
+        if (
+            this.dexHopBeforeBoltz !== undefined &&
+            !isEvmErc20Asset(firstHop.from)
+        ) {
+            blockers.push(`pre-chain DEX source ${firstHop.from} is not ERC20`);
         }
 
         return blockers;
@@ -1543,13 +1551,21 @@ export default class Pair {
 
         // If the first hop is a DEX, calculate the intermediate amount
         const firstHop = this.route[0];
-        let boltzSendAmount =
-            this.boltzSwapSendAmountFromLatestQuote(sendAmount) ?? sendAmount;
-        if (boltzSendAmount === sendAmount && this.preBridge !== undefined) {
+        const isZeroAmount = sendAmount.isZero() || sendAmount.isNaN();
+        let boltzSendAmount = isZeroAmount
+            ? BigNumber(0)
+            : (this.boltzSwapSendAmountFromLatestQuote(sendAmount) ??
+              sendAmount);
+        if (
+            !isZeroAmount &&
+            boltzSendAmount === sendAmount &&
+            this.preBridge !== undefined
+        ) {
             boltzSendAmount = await this.applyPreBridgeQuote(sendAmount);
         }
 
         if (
+            !isZeroAmount &&
             firstHop.type === SwapType.Dex &&
             this.boltzSwapSendAmountFromLatestQuote(sendAmount) === undefined
         ) {
@@ -1562,11 +1578,11 @@ export default class Pair {
             );
         }
 
-        const receiveAmount = await this.calculateReceiveAmount(
-            boltzSendAmount,
-            minerFees,
-            [boltzHop],
-        );
+        const receiveAmount = isZeroAmount
+            ? BigNumber(0)
+            : await this.calculateReceiveAmount(boltzSendAmount, minerFees, [
+                  boltzHop,
+              ]);
 
         const dexHops = this.route.filter((hop) => hop.type === SwapType.Dex);
         const boltzIndex = this.route.indexOf(boltzHop);

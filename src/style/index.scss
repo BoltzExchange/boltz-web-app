@@ -592,6 +592,55 @@ textarea.invalid {
     width: 100%;
 }
 
+.amount-field input.amount-input--with-max {
+    padding-right: 4.25rem;
+}
+
+.amount-max-button {
+    position: absolute;
+    top: 50%;
+    right: 11px;
+    z-index: 6;
+    transform: translateY(-50%);
+    min-width: 2.75rem;
+    height: 1.45rem;
+    padding: 0 0.55rem;
+    border: 1px solid var(--color-white-15);
+    border-radius: 7px;
+    background: var(--color-black-40);
+    color: var(--color-white-60);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.amount-input-wrap:hover .amount-max-button:not(:disabled),
+.amount-input-wrap:focus-within .amount-max-button:not(:disabled) {
+    opacity: 1;
+}
+
+.amount-max-button:hover,
+.amount-max-button:focus-visible {
+    background: var(--color-secondary-200);
+    color: var(--color-secondary-700);
+}
+
+.amount-max-button:disabled {
+    cursor: not-allowed;
+}
+
+@media (hover: none) {
+    .amount-max-button:not(:disabled) {
+        opacity: 1;
+    }
+}
+
 .amount-value-skeleton {
     position: absolute;
     right: 11px;

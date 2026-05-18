@@ -15,11 +15,14 @@ import type * as QouterModule from "../../src/utils/quoter";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
 const {
+    mockAlchemySendTransaction,
     mockGasTopUpSupported,
     mockGetSignerForGasAbstraction,
     mockRelayClaimTransaction,
     mockSendPopulatedTransaction,
 } = vi.hoisted(() => ({
+    mockAlchemySendTransaction:
+        vi.fn<(...args: unknown[]) => Promise<string>>(),
     mockGasTopUpSupported: vi.fn<typeof QouterModule.gasTopUpSupported>(),
     mockGetSignerForGasAbstraction:
         vi.fn<typeof EvmTransactionModule.getSignerForGasAbstraction>(),
@@ -27,6 +30,16 @@ const {
     mockSendPopulatedTransaction:
         vi.fn<(...args: unknown[]) => Promise<string>>(),
 }));
+
+vi.mock("../../src/alchemy/Alchemy", async () => {
+    const actual = await vi.importActual("../../src/alchemy/Alchemy");
+
+    return {
+        ...actual,
+        sendTransaction: (...args: unknown[]) =>
+            mockAlchemySendTransaction(...args),
+    };
+});
 
 vi.mock("../../src/rif/Signer", () => ({
     relayClaimTransaction: (...args: unknown[]) =>
@@ -140,6 +153,55 @@ describe("TransactionConfirmed claimAsset", () => {
             sats,
             "0xrefund",
             123,
+        );
+    });
+
+    test("should use the gas abstraction signer without a connected wallet signer", async () => {
+        const etherSwap = {
+            address: "0x5000000000000000000000000000000000000000",
+        };
+        const gasAbstractionSigner = {
+            provider: {
+                getChainId: vi.fn().mockResolvedValue(42161),
+            },
+        };
+        const claimAddress = "0x1000000000000000000000000000000000000000";
+        const refundAddress = "0x2000000000000000000000000000000000000000";
+        const destination = "0x3000000000000000000000000000000000000000";
+
+        mockAlchemySendTransaction.mockResolvedValue("0xgasclaim");
+
+        await expect(
+            claimAsset(
+                GasAbstractionType.Signer,
+                "RBTC",
+                "11".repeat(32),
+                21,
+                claimAddress,
+                refundAddress,
+                123,
+                destination,
+                () => undefined,
+                gasAbstractionSigner as never,
+                etherSwap as never,
+                {} as Erc20SwapContract,
+            ),
+        ).resolves.toEqual({
+            transactionHash: "0xgasclaim",
+            receiveAmount: satsToAssetAmount(21, "RBTC"),
+        });
+
+        expect(mockAlchemySendTransaction).toHaveBeenCalledWith(
+            gasAbstractionSigner,
+            42161n,
+            [
+                {
+                    to: etherSwap.address,
+                    data: expect.stringMatching(/^0x/),
+                    value: undefined,
+                },
+            ],
+            undefined,
         );
     });
 

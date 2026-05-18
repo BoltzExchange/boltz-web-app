@@ -1,7 +1,11 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import type { Connection } from "@solana/web3.js";
-import { type BridgeDetails, bridgeRegistry } from "boltz-swaps/bridge";
+import {
+    type BridgeDetails,
+    type RouterCall,
+    bridgeRegistry,
+} from "boltz-swaps/bridge";
 import {
     addressToBytes32,
     cctpZeroBytes32,
@@ -24,7 +28,12 @@ import {
     getTronTransactionInfo,
     isFailedTronTransaction,
 } from "boltz-swaps/tron";
-import { BridgeKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
+import {
+    AssetKind,
+    BridgeKind,
+    NetworkTransport,
+    SwapPosition,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 import {
@@ -43,7 +52,12 @@ import {
     waitForPreparedCallTransactionHash,
 } from "../alchemy/Alchemy";
 import { config } from "../config";
-import { USDC, getAssetBridge, getTokenAddress } from "../consts/Assets";
+import {
+    USDC,
+    getAssetBridge,
+    getKindForAsset,
+    getTokenAddress,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -66,7 +80,6 @@ import { fetchDexQuote } from "../utils/quoter";
 import {
     type BridgeDetail,
     type ChainSwap,
-    type DexDetail,
     GasAbstractionType,
     type SomeSwap,
     type SubmarineSwap,
@@ -129,17 +142,18 @@ const needsPreBridgeLockup = (
     swap: SomeSwap | null | undefined,
 ): swap is SomeSwap & {
     bridge: BridgeDetail & { txHash: string };
-    dex: DexDetail;
 } =>
     swap !== undefined &&
     swap !== null &&
+    swap.type === SwapType.Chain &&
     swap.bridge?.position === SwapPosition.Pre &&
     swap.bridge.txHash !== undefined &&
     swap.commitmentLockupTxHash === undefined &&
     isPendingCommitmentStatus(swap.status) &&
-    swap.dex !== undefined &&
-    swap.dex.position === SwapPosition.Pre &&
-    swap.dex.hops.length > 0;
+    (swap.sendAmount === 0 ||
+        (swap.dex !== undefined &&
+            swap.dex.position === SwapPosition.Pre &&
+            swap.dex.hops.length > 0));
 
 const usesManualCctpReceive = (
     swap: SomeSwap | null | undefined,
@@ -208,7 +222,8 @@ const isTaskRelevant = (
 export const SwapExecutionWorker = () => {
     const { getSwap, getSwaps, setSwapStorage, slippage } = useGlobalContext();
     const { swap, setSwap } = usePayContext();
-    const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
+    const { getErc20Swap, getEtherSwap, getGasAbstractionSigner, signer } =
+        useWeb3Signer();
 
     const runningTasks = new Set<string>();
     const scheduledRetries = new Map<string, number>();
@@ -964,9 +979,26 @@ export const SwapExecutionWorker = () => {
         const commitmentLockupDetails = await getCommitmentLockupDetails(
             latestSwap.assetSend,
         );
-        const hop = latestSwap.dex.hops[0];
-        if (hop.dexDetails === undefined) {
+        const hop =
+            latestSwap.dex?.position === SwapPosition.Pre
+                ? latestSwap.dex.hops[0]
+                : undefined;
+        const dexDetails = hop?.dexDetails;
+        if (hop !== undefined && dexDetails === undefined) {
             throw new Error("missing DEX details for pre-bridge hop");
+        }
+        if (
+            hop === undefined &&
+            latestSwap.bridge.destinationAsset !== latestSwap.assetSend
+        ) {
+            log.warn(
+                "Swap execution cannot lock pre-bridge asset without a DEX hop",
+                getSwapExecutionLogContext(latestSwap.id, {
+                    destinationAsset: latestSwap.bridge.destinationAsset,
+                    commitmentAsset: latestSwap.assetSend,
+                }),
+            );
+            return;
         }
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.bridge.destinationAsset,
@@ -996,39 +1028,55 @@ export const SwapExecutionWorker = () => {
             latestSwap.sendAmount,
             latestSwap.assetSend,
         );
-        const quote = await fetchDexQuote(hop.dexDetails, receivedAmount);
-
-        log.debug(
-            "Swap execution fetched pre-bridge DEX quote",
-            getSwapExecutionLogContext(latestSwap.id, {
-                guid,
-                amountReceived: receivedAmount.toString(),
-                amountExpected: expectedAmount.toString(),
-                quotedAmountOut: quote.trade.amountOut.toString(),
-            }),
-        );
-
-        if (quote.trade.amountOut < expectedAmount) {
-            log.warn("Bridge received amount is less than expected", {
-                swapId: latestSwap.id,
-                guid,
-                amountReceived: receivedAmount.toString(),
-                amountExpected: expectedAmount.toString(),
-            });
-            return;
-        }
-
         const router = createRouterContract(
             latestSwap.assetSend,
             gasAbstractionSigner,
         );
-        const encoded = await encodeDexQuote(
-            hop.dexDetails.chain,
-            router.address,
-            receivedAmount,
-            calculateAmountOutMin(quote.trade.amountOut, slippage()),
-            quote.trade.data,
-        );
+        let routerCalls: RouterCall[] = [];
+
+        if (dexDetails !== undefined) {
+            const quote = await fetchDexQuote(dexDetails, receivedAmount);
+
+            log.debug(
+                "Swap execution fetched pre-bridge DEX quote",
+                getSwapExecutionLogContext(latestSwap.id, {
+                    guid,
+                    amountReceived: receivedAmount.toString(),
+                    amountExpected: expectedAmount.toString(),
+                    quotedAmountOut: quote.trade.amountOut.toString(),
+                }),
+            );
+
+            if (quote.trade.amountOut < expectedAmount) {
+                log.warn("Bridge received amount is less than expected", {
+                    swapId: latestSwap.id,
+                    guid,
+                    amountReceived: receivedAmount.toString(),
+                    amountExpected: expectedAmount.toString(),
+                });
+                return;
+            }
+
+            const encoded = await encodeDexQuote(
+                dexDetails.chain,
+                router.address,
+                receivedAmount,
+                calculateAmountOutMin(quote.trade.amountOut, slippage()),
+                quote.trade.data,
+            );
+            routerCalls = encoded.calls.map((call) => ({
+                target: getAddress(call.to),
+                value: BigInt(call.value),
+                callData: prefix0x(call.data),
+            }));
+        } else if (receivedAmount <= 0n) {
+            log.warn("Bridge received amount is zero", {
+                swapId: latestSwap.id,
+                guid,
+                amountReceived: receivedAmount.toString(),
+            });
+            return;
+        }
 
         const transferData = encodeFunctionData({
             abi: erc20Abi,
@@ -1055,6 +1103,7 @@ export const SwapExecutionWorker = () => {
                 destinationAsset: latestSwap.bridge.destinationAsset,
                 commitmentAsset: latestSwap.assetSend,
                 amountReceived: receivedAmount.toString(),
+                hasDexHop: hop !== undefined,
             }),
         );
         const preBridgeClaimAddress =
@@ -1073,11 +1122,7 @@ export const SwapExecutionWorker = () => {
                     getAddress(preBridgeClaimAddress),
                     getAddress(gasAbstractionSigner.address),
                     BigInt(commitmentLockupDetails.timelock),
-                    encoded.calls.map((call) => ({
-                        target: getAddress(call.to),
-                        value: BigInt(call.value),
-                        callData: prefix0x(call.data),
-                    })),
+                    routerCalls,
                 ],
             }),
         };
@@ -1276,14 +1321,18 @@ export const SwapExecutionWorker = () => {
                             storedSwap.commitmentLockupTxHash,
                     }),
                 );
+                const commitmentSwap =
+                    getKindForAsset(commitmentAsset) === AssetKind.EVMNative
+                        ? { etherSwap: getEtherSwap(commitmentAsset) }
+                        : { erc20Swap: getErc20Swap(commitmentAsset) };
                 await postCommitmentSignatureForTransaction({
                     asset: storedSwap.assetSend,
                     commitmentAsset,
                     swapId: storedSwap.id,
                     preimageHash: getSwapPreimageHash(storedSwap),
                     commitmentTxHash: storedSwap.commitmentLockupTxHash as Hash,
-                    erc20Swap: getErc20Swap(commitmentAsset),
                     signer: transactionSigner,
+                    ...commitmentSwap,
                 });
 
                 storedSwap.commitmentSignatureSubmitted = true;

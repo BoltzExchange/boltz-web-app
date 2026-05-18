@@ -1,4 +1,8 @@
-import { type BridgeTransaction, bridgeRegistry } from "boltz-swaps/bridge";
+import {
+    type BridgeMsgFee,
+    type BridgeTransaction,
+    bridgeRegistry,
+} from "boltz-swaps/bridge";
 import {
     type OftTransportClient,
     getTronTokenAllowance,
@@ -39,7 +43,8 @@ import WaitForBridge from "./WaitForBridge";
 const SendToBridge = (props: {
     bridge: BridgeDetail;
     swapId: string;
-    amount: bigint;
+    amount?: bigint;
+    sendAll?: boolean;
 }) => {
     const { setSwap, swap } = usePayContext();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -117,20 +122,34 @@ const SendToBridge = (props: {
             ? CctpReceiveMode.Manual
             : CctpReceiveMode.Forwarded;
 
-    const quoteBridgeSendState = async (recipient: string) => {
+    const fixedBridgeAmount = () => {
+        if (props.amount === undefined) {
+            throw new Error("bridge amount is required");
+        }
+
+        return props.amount;
+    };
+
+    const bridgeTokenAmount = () =>
+        requiredTokenBalance() ?? fixedBridgeAmount();
+
+    const quoteBridgeSendState = async (
+        recipient: string,
+        tokenAmountOverride?: bigint,
+    ) => {
         const bridgeRoute = props.bridge;
         const quotedBridgeInstance =
             await bridgeDriver().getQuotedContract(bridgeRoute);
-        // `props.amount` is the amount Boltz needs to arrive on the destination
-        // chain (it was computed by the pair/DEX step on the far side). Bridges
-        // that charge fees in the bridged asset (CCTP) must burn more than
-        // that so the arrival matches. OFT typically returns `amount`
-        // unchanged when there's no token-side fee.
-        const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
-            bridgeRoute,
-            props.amount,
-            { cctpReceiveMode: cctpReceiveMode() },
-        );
+        // Without a token override, `props.amount` is the amount Boltz needs
+        // to arrive on the destination chain. Send-all pre-bridges instead
+        // quote the wallet's current source token balance directly.
+        const tokenAmount =
+            tokenAmountOverride ??
+            (await bridgeDriver().quoteAmountInForAmountOut(
+                bridgeRoute,
+                fixedBridgeAmount(),
+                { cctpReceiveMode: cctpReceiveMode() },
+            ));
         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
             quotedBridgeInstance,
             bridgeRoute,
@@ -155,11 +174,9 @@ const SendToBridge = (props: {
         nativeBalance: bigint,
         requiredNativeBalance: bigint,
         {
-            trackRequiredTokenBalance = true,
             needsApproval = false,
             approvalTarget,
         }: {
-            trackRequiredTokenBalance?: boolean;
             needsApproval?: boolean;
             approvalTarget?: string;
         } = {},
@@ -182,38 +199,56 @@ const SendToBridge = (props: {
         });
 
         setSignerBalance(balance);
-        setRequiredTokenBalance(
-            trackRequiredTokenBalance ? requiredTokenAmount : undefined,
-        );
+        setRequiredTokenBalance(requiredTokenAmount);
         setHasEnoughMsgFee(hasEnoughMsgFee);
         setNeedsApproval(needsApproval);
         setApprovalTarget(approvalTarget);
     };
 
     const refreshBridgeSendState = async (connectedSigner: Signer) => {
+        const signerAddress = connectedSigner.address;
         const recipient = getBridgeRecipient();
         const tokenContract = createTokenContract(
             props.bridge.sourceAsset,
             connectedSigner,
         );
-        const { bridgeRoute, tokenAmount, sendParam, msgFee } =
-            await quoteBridgeSendState(recipient);
+        const bridgeRoute = props.bridge;
         const directSendTarget =
             await bridgeDriver().getDirectSendTarget(bridgeRoute);
         const [balance, needsUserApproval, nativeBalance] = await Promise.all([
-            bridgeDriver().getSourceTokenBalance(
-                bridgeRoute,
-                connectedSigner.address,
-            ),
+            bridgeDriver().getSourceTokenBalance(bridgeRoute, signerAddress),
             bridgeDriver().requiresDirectUserApproval(
                 directSendTarget,
                 connectedSigner,
             ),
-            bridgeDriver().getSourceNativeBalance(
-                bridgeRoute,
-                connectedSigner.address,
-            ),
+            bridgeDriver().getSourceNativeBalance(bridgeRoute, signerAddress),
         ]);
+        if (props.sendAll === true && balance === 0n) {
+            const msgFee: BridgeMsgFee = [0n, 0n];
+            syncBridgeSendBalanceState(
+                "Bridge",
+                balance,
+                1n,
+                nativeBalance,
+                0n,
+            );
+
+            return {
+                directSendTarget,
+                recipient,
+                sendParam: undefined,
+                msgFee,
+                signerAddress,
+                hasEnoughTokenBalance: false,
+                hasEnoughNativeBalanceForMsgFee: true,
+                needsUpdatedApproval: false,
+            };
+        }
+
+        const { tokenAmount, sendParam, msgFee } = await quoteBridgeSendState(
+            recipient,
+            props.sendAll === true ? balance : undefined,
+        );
 
         const requiredTokenAmount = bridgeDriver().getDirectRequiredTokenAmount(
             directSendTarget,
@@ -270,12 +305,34 @@ const SendToBridge = (props: {
     };
 
     const refreshSolanaBridgeSendState = async (walletAddress: string) => {
-        const { bridgeRoute, tokenAmount, msgFee } =
-            await quoteBridgeSendState(getBridgeRecipient());
+        const bridgeRoute = props.bridge;
         const [balance, nativeBalance] = await Promise.all([
             bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
             bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
         ]);
+        if (props.sendAll === true && balance === 0n) {
+            const msgFee: BridgeMsgFee = [0n, 0n];
+            syncBridgeSendBalanceState(
+                "Solana bridge",
+                balance,
+                1n,
+                nativeBalance,
+                0n,
+            );
+
+            return {
+                tokenAmount: 0n,
+                sendParam: undefined,
+                msgFee,
+                hasEnoughTokenBalance: false,
+                hasEnoughNativeBalanceForMsgFee: true,
+            };
+        }
+
+        const { tokenAmount, sendParam, msgFee } = await quoteBridgeSendState(
+            getBridgeRecipient(),
+            props.sendAll === true ? balance : undefined,
+        );
         const requiredNativeBalance =
             await bridgeDriver().getTransportRequiredNativeBalance(
                 bridgeRoute,
@@ -291,11 +348,12 @@ const SendToBridge = (props: {
             tokenAmount,
             nativeBalance,
             requiredNativeBalance,
-            { trackRequiredTokenBalance: false },
         );
 
         return {
-            balance,
+            tokenAmount,
+            sendParam,
+            msgFee,
             hasEnoughTokenBalance,
             hasEnoughNativeBalanceForMsgFee,
         };
@@ -303,18 +361,42 @@ const SendToBridge = (props: {
 
     const refreshTronBridgeSendState = async (walletAddress: string) => {
         const recipient = getBridgeRecipient();
-        const { bridgeRoute, msgFee } = await quoteBridgeSendState(recipient);
-        const bridgeInstance = await bridgeDriver().createContract(bridgeRoute);
+        const bridgeRoute = props.bridge;
         const [balance, nativeBalance] = await Promise.all([
             bridgeDriver().getSourceTokenBalance(bridgeRoute, walletAddress),
             bridgeDriver().getSourceNativeBalance(bridgeRoute, walletAddress),
         ]);
+        if (props.sendAll === true && balance === 0n) {
+            const msgFee: BridgeMsgFee = [0n, 0n];
+            syncBridgeSendBalanceState(
+                "Tron bridge",
+                balance,
+                1n,
+                nativeBalance,
+                0n,
+            );
+
+            return {
+                tokenAmount: 0n,
+                sendParam: undefined,
+                msgFee,
+                hasEnoughTokenBalance: false,
+                hasEnoughNativeBalanceForMsgFee: true,
+                needsUpdatedApproval: false,
+            };
+        }
+
+        const { tokenAmount, sendParam, msgFee } = await quoteBridgeSendState(
+            recipient,
+            props.sendAll === true ? balance : undefined,
+        );
+        const bridgeInstance = await bridgeDriver().createContract(bridgeRoute);
         const requiredNativeBalance =
             await bridgeDriver().getTransportRequiredNativeBalance(
                 bridgeRoute,
                 msgFee,
             );
-        const hasEnoughTokenBalance = balance >= props.amount;
+        const hasEnoughTokenBalance = balance >= tokenAmount;
         const hasEnoughNativeBalanceForMsgFee =
             nativeBalance >= requiredNativeBalance;
         // Tron bridge sends are OFT-only (CCTP has no Tron transport).
@@ -332,24 +414,25 @@ const SendToBridge = (props: {
                 walletAddress,
                 spenderAddress,
             );
-            needsUpdatedApproval = allowance < props.amount;
+            needsUpdatedApproval = allowance < tokenAmount;
         }
 
         syncBridgeSendBalanceState(
             "Tron bridge",
             balance,
-            props.amount,
+            tokenAmount,
             nativeBalance,
             requiredNativeBalance,
             {
-                trackRequiredTokenBalance: false,
                 needsApproval: needsUpdatedApproval,
                 approvalTarget: spenderAddress,
             },
         );
 
         return {
-            balance,
+            tokenAmount,
+            sendParam,
+            msgFee,
             hasEnoughTokenBalance,
             hasEnoughNativeBalanceForMsgFee,
             needsUpdatedApproval,
@@ -421,8 +504,13 @@ const SendToBridge = (props: {
         }
 
         const recipient = getBridgeRecipient();
-        const { hasEnoughTokenBalance, hasEnoughNativeBalanceForMsgFee } =
-            await refreshSolanaBridgeSendState(wallet.address);
+        const {
+            tokenAmount,
+            sendParam,
+            msgFee,
+            hasEnoughTokenBalance,
+            hasEnoughNativeBalanceForMsgFee,
+        } = await refreshSolanaBridgeSendState(wallet.address);
 
         if (!hasEnoughTokenBalance) {
             throw new Error(
@@ -435,28 +523,17 @@ const SendToBridge = (props: {
             );
         }
 
+        if (sendParam === undefined) {
+            throw new Error("Bridge send quote is not available.");
+        }
+
         log.debug(
             `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
         );
 
-        const quotedBridgeInstance = await bridgeDriver().getQuotedContract(
-            props.bridge,
-        );
-        const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
-            props.bridge,
-            props.amount,
-            { cctpReceiveMode: cctpReceiveMode() },
-        );
         const bridgeInstance = await bridgeDriver().createContract(
             props.bridge,
             WalletConnectProvider.getSolanaProvider(),
-        );
-        const { sendParam, msgFee } = await bridgeDriver().quoteSend(
-            quotedBridgeInstance,
-            props.bridge,
-            recipient,
-            tokenAmount,
-            { cctpReceiveMode: cctpReceiveMode() },
         );
 
         log.debug("Quoted bridge send", {
@@ -490,6 +567,9 @@ const SendToBridge = (props: {
 
         const recipient = getBridgeRecipient();
         const {
+            tokenAmount,
+            sendParam,
+            msgFee,
             hasEnoughTokenBalance,
             hasEnoughNativeBalanceForMsgFee,
             needsUpdatedApproval,
@@ -511,6 +591,10 @@ const SendToBridge = (props: {
             );
         }
 
+        if (sendParam === undefined) {
+            throw new Error("Bridge send quote is not available.");
+        }
+
         log.debug(
             `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
         );
@@ -519,14 +603,13 @@ const SendToBridge = (props: {
             props.bridge,
             WalletConnectProvider.getTronProvider(),
         );
-        const { sendParam, msgFee } = await quoteBridgeSendState(recipient);
 
         log.debug("Quoted bridge send", {
             swapId: props.swapId,
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: props.amount.toString(),
+            amount: tokenAmount.toString(),
             nativeFee: msgFee[0].toString(),
             lzTokenFee: msgFee[1].toString(),
         });
@@ -560,6 +643,10 @@ const SendToBridge = (props: {
             `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
         );
 
+        if (sendParam === undefined) {
+            throw new Error("Bridge send quote is not available.");
+        }
+
         if (needsUpdatedApproval) {
             throw new Error(
                 "Approval is no longer sufficient for the updated bridge quote. Please approve the new amount and try again.",
@@ -581,7 +668,7 @@ const SendToBridge = (props: {
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: props.amount.toString(),
+            amount: bridgeTokenAmount().toString(),
             nativeFee: msgFee[0].toString(),
             lzTokenFee: msgFee[1].toString(),
         });
@@ -671,10 +758,7 @@ const SendToBridge = (props: {
                     </Show>
                 }>
                 <Show
-                    when={
-                        signerBalance()! >=
-                        (requiredTokenBalance() ?? props.amount)
-                    }
+                    when={signerBalance()! >= bridgeTokenAmount()}
                     fallback={
                         <InsufficientBalance asset={props.bridge.sourceAsset} />
                     }>
@@ -703,10 +787,7 @@ const SendToBridge = (props: {
                                 ) : (
                                     <ApproveErc20
                                         asset={props.bridge.sourceAsset}
-                                        value={() =>
-                                            requiredTokenBalance() ??
-                                            props.amount
-                                        }
+                                        value={bridgeTokenAmount}
                                         setNeedsApproval={setNeedsApproval}
                                         approvalTarget={
                                             approvalTarget() as Address

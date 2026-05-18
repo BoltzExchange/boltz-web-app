@@ -141,6 +141,12 @@ const Create = () => {
     const sendAmountQuoteLoading = createMemo(
         () => quoteLoading() && amountChanged() === Side.Receive,
     );
+    const showSendMaxButton = createMemo(
+        () =>
+            !limitsLoading() &&
+            !sendAmountQuoteLoading() &&
+            (maximum() > 0 || pair().canZeroAmount),
+    );
 
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = getRpcUrls(pair().toAsset);
@@ -557,6 +563,13 @@ const Create = () => {
             sendAmountRef?.focus();
         });
     };
+    const setMaxSendAmount = () => {
+        if (!showSendMaxButton()) {
+            return;
+        }
+
+        setAmount(pair().canZeroAmount ? 0 : maximum());
+    };
 
     onMount(() => {
         sendAmountRef?.focus();
@@ -782,6 +795,8 @@ const Create = () => {
                                     classList={{
                                         "amount-input--quote-pending":
                                             sendAmountQuoteLoading(),
+                                        "amount-input--with-max":
+                                            showSendMaxButton(),
                                     }}
                                     aria-busy={sendAmountQuoteLoading()}
                                     value={sendAmountFormatted()}
@@ -789,6 +804,19 @@ const Create = () => {
                                     onKeyPress={(e) => validateInput(e)}
                                     onInput={(e) => changeSendAmount(e)}
                                 />
+                                <Show when={showSendMaxButton()}>
+                                    <button
+                                        type="button"
+                                        class="amount-max-button"
+                                        data-testid="sendAmountMax"
+                                        disabled={
+                                            sendAmountQuoteLoading() ||
+                                            limitsLoading()
+                                        }
+                                        onClick={setMaxSendAmount}>
+                                        {t("max")}
+                                    </button>
+                                </Show>
                             </div>
                             <FiatAmount
                                 asset={() => pair().fromAsset}

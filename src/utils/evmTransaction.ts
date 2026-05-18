@@ -190,7 +190,7 @@ export const claimAsset = async (
     refundAddress: Address,
     timeoutBlockHeight: number,
     destination: Address,
-    signer: Accessor<Signer>,
+    signer: Accessor<Signer | undefined>,
     getGasAbstractionSigner: Signer,
     etherSwap: EtherSwapContract,
     erc20Swap: Erc20SwapContract,
@@ -198,10 +198,15 @@ export const claimAsset = async (
     const assetAmount = satsToAssetAmount(amount, asset);
 
     switch (gasAbstraction) {
-        case GasAbstractionType.RifRelay:
+        case GasAbstractionType.RifRelay: {
+            const claimSigner = signer();
+            if (claimSigner === undefined) {
+                throw new Error("missing claim signer");
+            }
+
             return {
                 transactionHash: await relayClaimTransaction(
-                    signer(),
+                    claimSigner,
                     etherSwap,
                     preimage,
                     amount,
@@ -210,6 +215,7 @@ export const claimAsset = async (
                 ),
                 receiveAmount: assetAmount,
             };
+        }
 
         case GasAbstractionType.None:
         case GasAbstractionType.Signer: {

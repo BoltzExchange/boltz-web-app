@@ -1,12 +1,15 @@
 import { createAssetProvider } from "boltz-swaps/evm";
-import { erc20SwapAbi } from "boltz-swaps/generated/evm-abis";
+import { erc20SwapAbi, etherSwapAbi } from "boltz-swaps/generated/evm-abis";
 import log from "loglevel";
 import { type Hash, type Hex } from "viem";
 
 import { requireChainId } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { Signer } from "../context/Web3";
-import type { Erc20SwapContract } from "../context/contracts";
+import type {
+    Erc20SwapContract,
+    EtherSwapContract,
+} from "../context/contracts";
 import {
     getEipRefundSignature,
     postCommitmentRefundSignature,
@@ -29,7 +32,8 @@ type PostCommitmentSignatureParams = {
     swapId: string;
     preimageHash: string;
     commitmentTxHash: Hash;
-    erc20Swap: Erc20SwapContract;
+    etherSwap?: EtherSwapContract;
+    erc20Swap?: Erc20SwapContract;
     signer: Signer;
     waitTimeoutMs?: number;
 };
@@ -44,10 +48,19 @@ export const postCommitmentSignatureForTransaction = async ({
     swapId,
     preimageHash,
     commitmentTxHash,
+    etherSwap,
     erc20Swap,
     signer,
     waitTimeoutMs = 120_000,
 }: PostCommitmentSignatureParams) => {
+    const swapContract = etherSwap ?? erc20Swap;
+    if (swapContract === undefined) {
+        throw new Error("commitment swap contract is required");
+    }
+    const isEtherSwap = etherSwap !== undefined;
+    const swapAbi = isEtherSwap ? etherSwapAbi : erc20SwapAbi;
+    const contractAddress = swapContract.address;
+
     log.info("Waiting for commitment lockup receipt", {
         asset,
         commitmentAsset,
@@ -77,7 +90,7 @@ export const postCommitmentSignatureForTransaction = async ({
     });
 
     const chainId = BigInt(requireChainId(commitmentAsset));
-    const version = await erc20Swap.read.version();
+    const version = await swapContract.read.version();
 
     const {
         amount,
@@ -86,9 +99,9 @@ export const postCommitmentSignatureForTransaction = async ({
         refundAddress,
         timelock,
         logIndex,
-    } = getLockupEvent(erc20SwapAbi, receipt, erc20Swap.address);
+    } = getLockupEvent(swapAbi, receipt, contractAddress);
 
-    if (tokenAddress === undefined) {
+    if (!isEtherSwap && tokenAddress === undefined) {
         throw new Error("missing tokenAddress in commitment lockup event");
     }
 
@@ -96,7 +109,7 @@ export const postCommitmentSignatureForTransaction = async ({
         asset,
         swapId,
         commitmentTxHash,
-        contractAddress: erc20Swap.address,
+        contractAddress,
         chainId: chainId.toString(),
         amount: amount.toString(),
         tokenAddress,
@@ -106,40 +119,63 @@ export const postCommitmentSignatureForTransaction = async ({
         logIndex,
     });
 
-    const commitmentSignature = await signer.signTypedData({
-        account: signer.account,
-        domain: {
-            name: "ERC20Swap",
-            version: String(version),
-            verifyingContract: erc20Swap.address,
-            chainId,
-        },
-        types: {
-            Commit: [
-                { name: "preimageHash", type: "bytes32" },
-                { name: "amount", type: "uint256" },
-                { name: "tokenAddress", type: "address" },
-                { name: "claimAddress", type: "address" },
-                { name: "refundAddress", type: "address" },
-                { name: "timelock", type: "uint256" },
-            ],
-        } as const,
-        primaryType: "Commit",
-        message: {
-            preimageHash: prefix0x(preimageHash),
-            amount,
-            tokenAddress: tokenAddress,
-            claimAddress: claimAddress,
-            refundAddress: refundAddress,
-            timelock,
-        },
-    });
+    const domain = {
+        name: isEtherSwap ? "EtherSwap" : "ERC20Swap",
+        version: String(version),
+        verifyingContract: contractAddress,
+        chainId,
+    };
+    const commitmentSignature = isEtherSwap
+        ? await signer.signTypedData({
+              account: signer.account,
+              domain,
+              types: {
+                  Commit: [
+                      { name: "preimageHash", type: "bytes32" },
+                      { name: "amount", type: "uint256" },
+                      { name: "claimAddress", type: "address" },
+                      { name: "refundAddress", type: "address" },
+                      { name: "timelock", type: "uint256" },
+                  ],
+              } as const,
+              primaryType: "Commit",
+              message: {
+                  preimageHash: prefix0x(preimageHash),
+                  amount,
+                  claimAddress,
+                  refundAddress,
+                  timelock,
+              },
+          })
+        : await signer.signTypedData({
+              account: signer.account,
+              domain,
+              types: {
+                  Commit: [
+                      { name: "preimageHash", type: "bytes32" },
+                      { name: "amount", type: "uint256" },
+                      { name: "tokenAddress", type: "address" },
+                      { name: "claimAddress", type: "address" },
+                      { name: "refundAddress", type: "address" },
+                      { name: "timelock", type: "uint256" },
+                  ],
+              } as const,
+              primaryType: "Commit",
+              message: {
+                  preimageHash: prefix0x(preimageHash),
+                  amount,
+                  tokenAddress: tokenAddress!,
+                  claimAddress,
+                  refundAddress,
+                  timelock,
+              },
+          });
 
     log.debug("Signed commitment typed data", {
         asset,
         swapId,
         commitmentTxHash,
-        contractAddress: erc20Swap.address,
+        contractAddress,
     });
 
     await postCommitmentSignature(
