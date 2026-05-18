@@ -15,6 +15,7 @@ import {
 export interface BoltzSwapsConfig {
     assets?: Record<string, Asset>;
     cctpApiUrl?: string;
+    solburnUrl?: string;
     layerZeroExplorerUrl?: string;
     cctpExplorerUrl?: string;
     oftDeploymentsUrl?: string;

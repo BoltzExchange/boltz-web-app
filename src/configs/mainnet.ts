@@ -51,6 +51,7 @@ const config = {
         tor: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api",
     },
     cctpApiUrl: "https://iris-api.circle.com",
+    solburnUrl: "https://solburn.ccxp.space",
     assets: {
         BTC: {
             type: AssetKind.UTXO,
