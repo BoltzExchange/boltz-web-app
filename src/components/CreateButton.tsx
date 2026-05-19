@@ -26,7 +26,7 @@ import {
     getCanonicalAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { InvoiceValidation } from "../consts/Enums";
+import { InvoiceValidation, Side } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -37,7 +37,7 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop } from "../utils/Pair";
+import Pair, { type EncodedHop, toDexAmount } from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -65,6 +65,7 @@ import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
     type BridgeDetail,
+    type DexDetail,
     type GasAbstraction,
     GasAbstractionType,
     type SomeSwap,
@@ -91,6 +92,7 @@ const userErrorLabelKeys = new Set<DictKey>([
 const buildBridgeDetail = (
     asset: string,
     position: SwapPosition,
+    sourceAmount?: BigNumber,
 ): BridgeDetail | undefined => {
     const route =
         position === SwapPosition.Pre
@@ -105,7 +107,48 @@ const buildBridgeDetail = (
         return undefined;
     }
 
-    return driver.getRoutePosition(route, position);
+    const bridge = driver.getRoutePosition(route, position);
+    if (position !== SwapPosition.Pre || sourceAmount === undefined) {
+        return bridge;
+    }
+
+    return {
+        ...bridge,
+        sourceAmount: sourceAmount.toFixed(0),
+    };
+};
+
+const buildDexDetail = (
+    hops: EncodedHop[],
+    position: SwapPosition | undefined,
+    sendAmount: BigNumber,
+    receiveAmount: BigNumber,
+    amountChanged: Side,
+): DexDetail | undefined => {
+    if (position === undefined) {
+        return undefined;
+    }
+
+    const dex = {
+        hops,
+        position,
+        quoteAmount:
+            position === SwapPosition.Post
+                ? Number(receiveAmount)
+                : Number(sendAmount),
+    };
+
+    if (position !== SwapPosition.Pre || amountChanged !== Side.Send) {
+        return dex;
+    }
+
+    return {
+        ...dex,
+        sourceAmount: toDexAmount(
+            sendAmount.toNumber(),
+            hops[0].from,
+        ).toString(),
+    };
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
@@ -219,6 +262,7 @@ const CreateButton = () => {
         onchainAddress,
         receiveAmount,
         sendAmount,
+        amountChanged,
         amountValid,
         setInvoice,
         setInvoiceValid,
@@ -819,23 +863,22 @@ const CreateButton = () => {
             });
 
             const bridge =
-                buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
-                buildBridgeDetail(assetReceive(), SwapPosition.Post);
+                buildBridgeDetail(
+                    assetSend(),
+                    SwapPosition.Pre,
+                    amountChanged() === Side.Send ? sendAmount() : undefined,
+                ) ?? buildBridgeDetail(assetReceive(), SwapPosition.Post);
 
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
-                dex:
-                    hopsPosition !== undefined
-                        ? {
-                              hops,
-                              position: hopsPosition,
-                              quoteAmount:
-                                  hopsPosition === SwapPosition.Post
-                                      ? Number(receiveAmount())
-                                      : Number(sendAmount()),
-                          }
-                        : undefined,
+                dex: buildDexDetail(
+                    hops,
+                    hopsPosition,
+                    sendAmount(),
+                    receiveAmount(),
+                    amountChanged(),
+                ),
                 bridge,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps

@@ -59,7 +59,7 @@ const isRoutedAsset = (asset: string) =>
     config.assets?.[asset]?.bridge !== undefined;
 
 /** Convert an internal amount to EVM base units for the DEX API. */
-const toDexAmount = (amount: number, asset: string): bigint =>
+export const toDexAmount = (amount: number, asset: string): bigint =>
     isRoutedAsset(asset)
         ? BigInt(Math.round(amount))
         : satsToAssetAmount(amount, asset);

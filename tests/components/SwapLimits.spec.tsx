@@ -63,6 +63,21 @@ describe("SwapLimits", () => {
         expect(onSelectAmount).toHaveBeenCalledWith(9_999);
     });
 
+    it("can enable the max button independently from the displayed maximum", () => {
+        const onSelectMaximum = vi.fn();
+        const { onSelectAmount } = renderLimits({
+            minimum: 0,
+            maximum: 0,
+            maximumEnabled: true,
+            onSelectMaximum,
+        });
+
+        fireEvent.click(screen.getByTestId("limit-max-button"));
+
+        expect(onSelectMaximum).toHaveBeenCalledTimes(1);
+        expect(onSelectAmount).not.toHaveBeenCalled();
+    });
+
     it("disables both buttons and shows skeletons while loading", () => {
         const { container, onSelectAmount } = renderLimits({ loading: true });
 
