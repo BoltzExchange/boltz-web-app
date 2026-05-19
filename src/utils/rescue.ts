@@ -566,9 +566,15 @@ export const createRescueList = async (
                     return { ...swap, action: RescueAction.Claim };
                 }
 
+                const pendingFromUserPerspective = Object.values(
+                    swapStatusPending,
+                ).filter(
+                    (status) =>
+                        status !== swapStatusPending.TransactionClaimPending,
+                );
                 if (
                     isRefundableSwapType(swap) &&
-                    !Object.values(swapStatusPending).includes(status) &&
+                    !pendingFromUserPerspective.includes(status) &&
                     utxos.length > 0
                 ) {
                     return {
