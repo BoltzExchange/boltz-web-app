@@ -1,4 +1,8 @@
 import { BigNumber } from "bignumber.js";
+import {
+    applyChainPairReceiveAmount,
+    applyChainPairSendAmount,
+} from "boltz-swaps";
 import { SwapType } from "boltz-swaps/types";
 
 import {
@@ -253,4 +257,69 @@ describe("Calculate amounts", () => {
             ).toEqual(122222221122222222112222222211n);
         });
     });
+});
+
+describe("chain-swap fee math cross-validation (lib bigint vs host BigNumber)", () => {
+    const makeChainPair = (
+        percentage: number,
+        server: number,
+        userClaim: number,
+    ) => ({
+        hash: "h",
+        rate: 1,
+        limits: { minimal: 1, maximal: 1_000_000_000, maximalZeroConf: 0 },
+        fees: {
+            percentage,
+            minerFees: {
+                server,
+                user: { claim: userClaim, lockup: 0 },
+            },
+        },
+    });
+
+    test.each`
+        send              | percentage | server  | userClaim
+        ${100_000n}       | ${0.1}     | ${1000} | ${500}
+        ${12_345_678n}    | ${0.25}    | ${500}  | ${250}
+        ${1_000_000_000n} | ${0.5}     | ${2000} | ${1000}
+        ${50_000n}        | ${0}       | ${500}  | ${250}
+    `(
+        "forward: $send sats with $percentage% (server=$server, claim=$userClaim)",
+        ({ send, percentage, server, userClaim }) => {
+            const pair = makeChainPair(percentage, server, userClaim);
+            const libResult = applyChainPairReceiveAmount(send, pair);
+            const hostResult = BigInt(
+                calculateReceiveAmount(
+                    BigNumber(send.toString()),
+                    percentage,
+                    server + userClaim,
+                    SwapType.Chain,
+                ).toFixed(0),
+            );
+            expect(libResult).toBe(hostResult);
+        },
+    );
+
+    test.each`
+        receive        | percentage | server  | userClaim
+        ${98_400n}     | ${0.1}     | ${1000} | ${500}
+        ${12_300_000n} | ${0.25}    | ${500}  | ${250}
+        ${99_999n}     | ${0.5}     | ${2000} | ${1000}
+        ${49_250n}     | ${0}       | ${500}  | ${250}
+    `(
+        "reverse: $receive received needs ? sent (percentage=$percentage, server=$server, claim=$userClaim)",
+        ({ receive, percentage, server, userClaim }) => {
+            const pair = makeChainPair(percentage, server, userClaim);
+            const libResult = applyChainPairSendAmount(receive, pair);
+            const hostResult = BigInt(
+                calculateSendAmount(
+                    BigNumber(receive.toString()),
+                    percentage,
+                    server + userClaim,
+                    SwapType.Chain,
+                ).toFixed(0),
+            );
+            expect(libResult).toBe(hostResult);
+        },
+    );
 });

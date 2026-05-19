@@ -56,6 +56,7 @@ import {
     fetchBip353,
     fetchLnurl,
     getAssetByBip21Prefix,
+    validateInvoiceForOffer,
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
@@ -544,12 +545,12 @@ const CreateButton = () => {
             }
             log.info("Fetching invoice from bolt12 offer", offer);
             try {
-                const res = await fetchBolt12Invoice(
-                    offer,
-                    Number(receiveAmount()),
-                );
+                const invoice = (
+                    await fetchBolt12Invoice(offer, Number(receiveAmount()))
+                ).invoice;
+                validateInvoiceForOffer(offer, invoice);
                 setOriginalDestination(offer);
-                setInvoice(res.invoice);
+                setInvoice(invoice);
                 setBolt12Offer(undefined);
                 setInvoiceValid(true);
             } catch (e) {

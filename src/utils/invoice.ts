@@ -284,6 +284,7 @@ export const fetchBip353 = async (
 ): Promise<string> => {
     const offer = await resolveBip353(bip353);
     const invoice = (await fetchBolt12Invoice(offer, amountSat)).invoice;
+    validateInvoiceForOffer(offer, invoice);
     log.debug(`Resolved invoice for offer:`, invoice);
 
     return invoice;

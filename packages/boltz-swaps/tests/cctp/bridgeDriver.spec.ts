@@ -178,6 +178,23 @@ describe("CctpBridgeDriver", () => {
         ).resolves.toBe(1_000_131n);
     });
 
+    test("reverse quote covers the maxFee buffer that quoteSend applies", async () => {
+        const amountOut = 100_000_000n;
+        const amountIn = await driver.quoteAmountInForAmountOut(
+            route,
+            amountOut,
+        );
+        const contract = await driver.getQuotedContract(route);
+        const quote = await driver.quoteSend(
+            contract,
+            route,
+            "0x1234567890123456789012345678901234567890",
+            amountIn,
+        );
+        const sendParam = quote.sendParam as CctpSendParam;
+        expect(amountIn - sendParam.maxFee).toBeGreaterThanOrEqual(amountOut);
+    });
+
     test("quoteSend packs a fast-transfer CctpSendParam with permissionless caller", async () => {
         const recipient = "0x1234567890123456789012345678901234567890";
         const contract = await driver.getQuotedContract(route);
