@@ -2,6 +2,7 @@ import log from "loglevel";
 import { onMount } from "solid-js";
 
 import { config } from "./config";
+import { getChatwootToken } from "./utils/chatwoot";
 
 declare global {
     interface Window {
@@ -12,7 +13,9 @@ declare global {
             run: (config: { websiteToken: string; baseUrl: string }) => void;
         };
         $chatwoot: {
-            setCustomAttributes: (attributes: { swapId: string }) => void;
+            setCustomAttributes: (
+                attributes: Record<string, string | number | boolean>,
+            ) => void;
             toggle: (state?: "open" | "close") => void;
         };
     }
@@ -20,10 +23,10 @@ declare global {
 
 const Chatwoot = () => {
     onMount(() => {
-        const token = import.meta.env.VITE_CHATWOOT_TOKEN;
+        const token = getChatwootToken();
         const url = config.chatwootUrl;
 
-        if (token === undefined || url === undefined) {
+        if (!token || url === undefined) {
             log.warn("Chatwoot URL or token not set");
             return;
         }
