@@ -43,6 +43,7 @@ import {
 } from "../../utils/rescueDerivation";
 import { type RescueFile, getPathGasAbstraction } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
+import { PreimageHashesWorker } from "../../workers/preimageHashes/PreimageHashesWorker";
 import {
     fetchPaginatedRestorableSwaps,
     getEvmRescueAction,
@@ -529,18 +530,28 @@ export const useExternalRescueSearch = () => {
             }
         }
 
-        const generator = scanLockupEvents(signal, target.contract, {
-            asset: target.asset as AssetType,
-            providerUrl: target.providerUrl,
-            scanInterval: target.scanInterval,
-            filter: {
-                address: signerAddress,
-                extraAddresses:
-                    extraAddresses.length > 0 ? extraAddresses : undefined,
+        const preimageDerivation =
+            action === RskRescueMode.Claim && mnemonic
+                ? new PreimageHashesWorker()
+                : undefined;
+
+        const generator = scanLockupEvents(
+            signal,
+            target.contract,
+            {
+                asset: target.asset as AssetType,
+                providerUrl: target.providerUrl,
+                scanInterval: target.scanInterval,
+                filter: {
+                    address: signerAddress,
+                    extraAddresses:
+                        extraAddresses.length > 0 ? extraAddresses : undefined,
+                },
+                action,
+                mnemonic,
             },
-            action,
-            mnemonic,
-        });
+            preimageDerivation,
+        );
 
         for await (const {
             events,

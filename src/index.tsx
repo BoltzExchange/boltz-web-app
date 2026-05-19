@@ -10,11 +10,11 @@ import {
     Router,
     useParams,
 } from "@solidjs/router";
-import { setBoltzSwapsConfig } from "boltz-swaps";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 import { render } from "solid-js/web";
 
+import { configureBoltzSwaps } from "./boltzSwapsConfig";
 import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
@@ -23,7 +23,6 @@ import { SwapChecker } from "./components/SwapChecker";
 import { SwapExecutionWorker } from "./components/SwapExecutionWorker";
 import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
-import { chooseUrl } from "./configs/base";
 import { CreateProvider } from "./context/Create";
 import { FiatProvider } from "./context/Fiat";
 import { GlobalProvider } from "./context/Global";
@@ -49,36 +48,10 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
-import { getReferral } from "./utils/helper";
 import "./utils/patches";
-import { gasTopUpSupported, getGasTopUpNativeAmount } from "./utils/quoter";
 
 setLogger(log);
-setBoltzSwapsConfig({
-    get assets() {
-        return config.assets;
-    },
-    get cctpApiUrl() {
-        return config.cctpApiUrl;
-    },
-    get solburnUrl() {
-        return config.solburnUrl;
-    },
-    get layerZeroExplorerUrl() {
-        return config.layerZeroExplorerUrl;
-    },
-    get cctpExplorerUrl() {
-        return config.cctpExplorerUrl;
-    },
-    get oftDeploymentsUrl() {
-        return config.oftDeploymentsUrl;
-    },
-    gasTopUpSupported,
-    getGasTopUpNativeAmount,
-    boltzApiUrl: chooseUrl(config.apiUrl),
-    referral: getReferral(),
-    cooperativeDisabled: config.cooperativeDisabled === true,
-});
+configureBoltzSwaps();
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker

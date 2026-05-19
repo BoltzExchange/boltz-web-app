@@ -104,21 +104,26 @@ describe("createBoltzClient: config", () => {
     });
 
     test("proxy dispatches to thunk on every read (live updates)", () => {
-        const source: { boltzApiUrl: string } = {
+        const source: { boltzApiUrl: string; solburnUrl: string } = {
             boltzApiUrl: "https://initial",
+            solburnUrl: "https://solburn-initial",
         };
         createBoltzClient(() => source);
         const proxy = setBoltzSwapsConfigMock.mock.calls[0][0];
         expect(proxy.boltzApiUrl).toBe("https://initial");
+        expect(proxy.solburnUrl).toBe("https://solburn-initial");
 
         source.boltzApiUrl = "https://updated";
+        source.solburnUrl = "https://solburn-updated";
         expect(proxy.boltzApiUrl).toBe("https://updated");
+        expect(proxy.solburnUrl).toBe("https://solburn-updated");
     });
 
     test("proxy exposes every known config key", () => {
         const literal = {
             assets: { BTC: { type: "utxo" } },
             cctpApiUrl: "https://api.circle.com",
+            solburnUrl: "https://solburn",
             layerZeroExplorerUrl: "https://lz",
             cctpExplorerUrl: "https://cctp",
             oftDeploymentsUrl: "https://oft",
@@ -130,6 +135,7 @@ describe("createBoltzClient: config", () => {
         const proxy = setBoltzSwapsConfigMock.mock.calls[0][0];
         expect(proxy.assets).toEqual({ BTC: { type: "utxo" } });
         expect(proxy.cctpApiUrl).toBe("https://api.circle.com");
+        expect(proxy.solburnUrl).toBe("https://solburn");
         expect(proxy.layerZeroExplorerUrl).toBe("https://lz");
         expect(proxy.cctpExplorerUrl).toBe("https://cctp");
         expect(proxy.oftDeploymentsUrl).toBe("https://oft");

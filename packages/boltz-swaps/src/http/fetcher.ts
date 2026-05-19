@@ -22,30 +22,28 @@ export const fetcher = async <T = unknown>(
 
     try {
         const referral = getReferralHeader();
-        const baseHeaders: Record<string, string> = {};
-        if (referral !== undefined) {
-            baseHeaders.referral = referral;
+        const signal =
+            options?.signal != null
+                ? AbortSignal.any([controller.signal, options.signal])
+                : controller.signal;
+        const headers = new Headers(options?.headers);
+        if (referral !== undefined && !headers.has("referral")) {
+            headers.set("referral", referral);
+        }
+        if (params) {
+            headers.set("Content-Type", "application/json");
         }
 
-        let opts: RequestInit = {
-            headers: baseHeaders,
-            signal: controller.signal,
+        const requestOptions: RequestInit = {
+            ...options,
+            method: params ? "POST" : options?.method,
+            headers,
+            signal,
+            body: params ? JSON.stringify(params) : options?.body,
         };
 
-        if (params) {
-            opts = {
-                method: "POST",
-                headers: {
-                    ...(options ? options.headers : opts.headers),
-                    "Content-Type": "application/json",
-                },
-                signal: controller.signal,
-                body: JSON.stringify(params),
-            };
-        }
-
         const apiUrl = getBoltzApiUrl() + url;
-        const response = await fetch(apiUrl, options || opts);
+        const response = await fetch(apiUrl, requestOptions);
 
         if (!response.ok) {
             try {

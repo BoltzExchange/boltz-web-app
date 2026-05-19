@@ -224,6 +224,7 @@ export interface BoltzClient<A extends string = string> {
 const configKeys: ReadonlyArray<keyof BoltzSwapsConfig> = [
     "assets",
     "cctpApiUrl",
+    "solburnUrl",
     "layerZeroExplorerUrl",
     "cctpExplorerUrl",
     "oftDeploymentsUrl",
