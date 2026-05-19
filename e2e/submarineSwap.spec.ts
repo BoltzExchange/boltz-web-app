@@ -41,7 +41,7 @@ test.describe("Submarine swap", () => {
             "0.01001152",
         );
 
-        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        const invoiceInput = page.locator("input[data-testid='invoice']");
         const invoice = await generateInvoiceLnd(1000000);
         await invoiceInput.fill(invoice);
         const buttonCreateSwap = page.locator(
@@ -128,7 +128,7 @@ test.describe("Submarine swap", () => {
 
         const receiveAmount = "0.0009";
 
-        const inputInvoice = page.locator("textarea[data-testid='invoice']");
+        const inputInvoice = page.locator("input[data-testid='invoice']");
         const liquidAddress = await getLiquidAddress();
         const invoice = await generateInvoiceWithRoutingHint(
             liquidAddress,

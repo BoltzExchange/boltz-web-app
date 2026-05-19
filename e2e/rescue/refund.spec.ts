@@ -69,7 +69,7 @@ const setSubmarineSwap = async (page: Page, sendAsset: string) => {
         "input[data-testid='receiveAmount']",
     );
     await inputReceiveAmount.fill(receiveAmount);
-    const invoiceInput = page.locator("textarea[data-testid='invoice']");
+    const invoiceInput = page.locator("input[data-testid='invoice']");
     const invoice = await generateInvoiceLnd(1000000);
     await invoiceInput.fill(invoice);
 };

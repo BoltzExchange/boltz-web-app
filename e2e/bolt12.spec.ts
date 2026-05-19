@@ -23,7 +23,7 @@ test.describe("BOLT12", () => {
         );
         await inputReceiveAmount.fill(receiveAmount);
 
-        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        const invoiceInput = page.locator("input[data-testid='invoice']");
         await invoiceInput.fill(await getBolt12Offer());
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",

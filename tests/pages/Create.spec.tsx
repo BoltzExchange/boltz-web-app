@@ -982,7 +982,7 @@ describe("Create", () => {
         )) as HTMLButtonElement;
         const invoiceInput = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         await waitFor(() => {
             expect(createButton.textContent).toMatch(/^Minimum amount is /);
