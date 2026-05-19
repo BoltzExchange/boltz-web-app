@@ -3,6 +3,66 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.1](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.0..v2.1.1) - 2026-05-19
+
+### Bug Fixes
+
+- oft native balance check (#1431) - ([8f3f651](https://github.com/BoltzExchange/boltz-web-app/commit/8f3f6515cb9293c63b0436ba1a0015edd872404d))
+- pro referral (#1432) - ([ec15574](https://github.com/BoltzExchange/boltz-web-app/commit/ec15574882cc529af6dacaf20ad842e11a6e283b))
+- skip getAddress on CCTP source TokenMessenger (#1450) - ([490786f](https://github.com/BoltzExchange/boltz-web-app/commit/490786fc0bac93926d0c99e2f2d6aefee5907309))
+- Dockerfile builds (#1454) - ([36874a2](https://github.com/BoltzExchange/boltz-web-app/commit/36874a28e89ecd65f9cc46f30594c6f0576b1793))
+- use new signer CLI (#1458) - ([0d87828](https://github.com/BoltzExchange/boltz-web-app/commit/0d878285b147a0e5cf5708897bb6057867e9bd16))
+
+### Features
+
+- support refunding tokens on Arbitrum (#1423) - ([c376ca3](https://github.com/BoltzExchange/boltz-web-app/commit/c376ca35d377e28641213dbe5752c2104198ee5a))
+- improve file upload input (#1421) - ([742623f](https://github.com/BoltzExchange/boltz-web-app/commit/742623fcc2e25cb519f48fbf3660a253fa8b00dc))
+- handle abandoned Solana txs (#1427) - ([02acb1b](https://github.com/BoltzExchange/boltz-web-app/commit/02acb1baecf895cc9d501964b3e17694198c8fe2))
+- block sending to token addresses (#1435) - ([2aa4004](https://github.com/BoltzExchange/boltz-web-app/commit/2aa400462d37fd4fc83b068e894a6830ed38fe63))
+- various design improvements (#1436) - ([8d45515](https://github.com/BoltzExchange/boltz-web-app/commit/8d45515f120e28fdeacacdcef0ade20be1f60efe))
+- make external asset rescue conditions explicit (#1438) - ([60f1ead](https://github.com/BoltzExchange/boltz-web-app/commit/60f1ead7ee9aeb99c9e6dcf805b1968f81a36189))
+- use CORS proxy for Alchemy bundles on Tor (#1457) - ([af44f65](https://github.com/BoltzExchange/boltz-web-app/commit/af44f657bac2564add4cbff2862a249151a09ef6))
+- add Euro as fiat currency option - ([20ef59b](https://github.com/BoltzExchange/boltz-web-app/commit/20ef59bb3edfb8209e596634bbec114fd6ae8ff9))
+- add URL param for fiat currency selection - ([327ba8e](https://github.com/BoltzExchange/boltz-web-app/commit/327ba8e364c8ed01b348fd76677e74335457c5fb))
+- show fiat fee dropdown for all pairs (#1469) - ([2fb1428](https://github.com/BoltzExchange/boltz-web-app/commit/2fb14285d36360338992e96a045b16407bbea3e5))
+- implement solburn (#1472) - ([c68fb00](https://github.com/BoltzExchange/boltz-web-app/commit/c68fb009b658353c90c2f4d5666c836414d565bf))
+
+### Miscellaneous Chores
+
+- add missing env variables to .env.sample (#1417) - ([f737219](https://github.com/BoltzExchange/boltz-web-app/commit/f7372191f759846bd1fb97850db4c51ef46b4077))
+- bump dependencies (#1418) - ([67a85c4](https://github.com/BoltzExchange/boltz-web-app/commit/67a85c4f1246c9c6c63736042bf947d14c406ca0))
+- enable stablecoin swaps on Tor (#1419) - ([245545e](https://github.com/BoltzExchange/boltz-web-app/commit/245545eafcd90d0993848d105099ff57551d5ea3))
+- consistent capitalization in fee dropdown (#1428) - ([a2607fa](https://github.com/BoltzExchange/boltz-web-app/commit/a2607fa6e03f2c8e0755966da981787c56878951))
+- enable sourcemap in production builds - ([b483a37](https://github.com/BoltzExchange/boltz-web-app/commit/b483a370e46ba8b7d3027f94091409ab705e4978))
+- preserve call sites in console output - ([6e14f9d](https://github.com/BoltzExchange/boltz-web-app/commit/6e14f9d2fd406ab8929ff083795931559d9145cd))
+- bump dependencies - ([89f8a03](https://github.com/BoltzExchange/boltz-web-app/commit/89f8a03b4e6d11fe4a8bfec31bcdb93b0f2d626e))
+- enable TypeScript incremental builds - ([4b41f05](https://github.com/BoltzExchange/boltz-web-app/commit/4b41f05bc56965a5bca80ebf4d9e968b5a2c2fdf))
+- remove support for USDT0-CORN swaps (#1455) - ([415ea42](https://github.com/BoltzExchange/boltz-web-app/commit/415ea4273bea481cfcedc305e23b19f9c6cbc1c5))
+- ban const enum exports in package (#1463) - ([6d6118c](https://github.com/BoltzExchange/boltz-web-app/commit/6d6118cb62ec51401714111d7406c2b45d584497))
+- remove fiat amount toggle - ([05e4244](https://github.com/BoltzExchange/boltz-web-app/commit/05e4244a4d34ace98c977f7dcb7a706e6dfdbcb1))
+- add USDC to pairs in social preview (#1468) - ([38b768d](https://github.com/BoltzExchange/boltz-web-app/commit/38b768dafe8a417b34df0a4d056a04b64a66bf3f))
+- make Alchemy logging more verbose (#1471) - ([9288422](https://github.com/BoltzExchange/boltz-web-app/commit/9288422fafcd9af871154f17ddf9279ea3c6e9b5))
+- small UI fixes (#1474) - ([e3933d0](https://github.com/BoltzExchange/boltz-web-app/commit/e3933d0f745ea53b24eb7610f073c31cadf94a85))
+
+### Refactoring
+
+- make TypeScript strict - ([0dc9a4b](https://github.com/BoltzExchange/boltz-web-app/commit/0dc9a4b62e48c19e6f4b4d87d20d08f4def4d077))
+- switch from ethers to viem (#1430) - ([6366321](https://github.com/BoltzExchange/boltz-web-app/commit/63663215ffe8201a74786c4fd98c118697c7f603))
+- pre bridge logs chunking (#1444) - ([d1fd2cd](https://github.com/BoltzExchange/boltz-web-app/commit/d1fd2cd47dae9e66bb8f9f470d60170743e73871))
+- bridge claim tx explorer wording (#1448) - ([f6aa609](https://github.com/BoltzExchange/boltz-web-app/commit/f6aa609bea52868effd27eeff1c78c5ff9f6a160))
+- make swap list entries links (#1449) - ([cd8a499](https://github.com/BoltzExchange/boltz-web-app/commit/cd8a499c6e4e9e824dd499282d66750264bd74e5))
+- remove legacy refund files - ([dbd4988](https://github.com/BoltzExchange/boltz-web-app/commit/dbd4988cde46f638a877e201076f2dcf5c9cf56d))
+- remove legacy swap support - ([16edaae](https://github.com/BoltzExchange/boltz-web-app/commit/16edaae924c6e80ab19543d2bb6b2baed2d7aeeb))
+- surface clearnet availability on onion (#1453) - ([ffd235f](https://github.com/BoltzExchange/boltz-web-app/commit/ffd235f13506cd9c280a2329e7bf440f91a99d53))
+- design follow up (#1452) - ([04323c6](https://github.com/BoltzExchange/boltz-web-app/commit/04323c6926ab58e49bb28003e31500f7017d41ef))
+- move stablecoin swaps into package (#1451) - ([8800bac](https://github.com/BoltzExchange/boltz-web-app/commit/8800bac1f193878af5739964ae0429d7f32d2b8c))
+- language menu dropdown (#1462) - ([dcea83b](https://github.com/BoltzExchange/boltz-web-app/commit/dcea83b797ce6f2dd184bb4ddfe660accf54729b))
+- improve SettingsMenu scroll behavior (#1461) - ([8c548a2](https://github.com/BoltzExchange/boltz-web-app/commit/8c548a24aca9006b9a628ca0c6d590bffeba556c))
+- redesign external rescue (#1422) - ([a8622f0](https://github.com/BoltzExchange/boltz-web-app/commit/a8622f02370955222532e35edea163bf7112a928))
+- min/max amount design (#1467) - ([3ba4fc9](https://github.com/BoltzExchange/boltz-web-app/commit/3ba4fc9876ad723515908803ae83a0b8286cf68f))
+- replace logs copy with post to support (#1473) - ([137218d](https://github.com/BoltzExchange/boltz-web-app/commit/137218d5b83850f3a1d85a9ffd368378582019d0))
+
+---
 ## [2.1.0](https://github.com/BoltzExchange/boltz-web-app/compare/v2.0.3..v2.1.0) - 2026-04-30
 
 ### Bug Fixes
@@ -56,6 +116,7 @@ All notable changes to this project will be documented in this file. See [conven
 - address feedback - ([3d6c2a1](https://github.com/BoltzExchange/boltz-web-app/commit/3d6c2a1e7aac6b16337bfb42c19c503743320517))
 - add fallback ETH L1 RPCs (#1401) - ([9908883](https://github.com/BoltzExchange/boltz-web-app/commit/9908883e013189f430a348d377056a53d0778b99))
 - add USDC logo to landing page (#1410) - ([67720c9](https://github.com/BoltzExchange/boltz-web-app/commit/67720c9d21d7a7a9b787f914d3b3da40fd4563a5))
+- bump version to v2.1.0 (#1416) - ([43a4897](https://github.com/BoltzExchange/boltz-web-app/commit/43a48970201cd106d4fd030dbd7b2bc813265fdf))
 
 ### Refactoring
 
