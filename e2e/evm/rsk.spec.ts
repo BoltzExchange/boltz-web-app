@@ -338,7 +338,7 @@ test.describe("EVM", () => {
         });
 
         const invoice = await generateInvoiceLnd(100000);
-        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        const invoiceInput = page.locator("input[data-testid='invoice']");
         await invoiceInput.fill(invoice);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
@@ -393,7 +393,7 @@ test.describe("EVM", () => {
         const invoice = await generateInvoiceLnd(100000);
         await cancelInvoiceLnd(invoice);
 
-        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        const invoiceInput = page.locator("input[data-testid='invoice']");
         await invoiceInput.fill(invoice);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");

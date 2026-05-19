@@ -96,7 +96,7 @@ test.describe("Chain swap", () => {
 
         const receiveAmount = "0.0009";
 
-        const inputInvoice = page.locator("textarea[data-testid='invoice']");
+        const inputInvoice = page.locator("input[data-testid='invoice']");
         const liquidAddress = await getLiquidAddress();
         const invoice = await generateInvoiceWithRoutingHint(
             liquidAddress,

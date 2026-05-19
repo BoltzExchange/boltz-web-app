@@ -34,7 +34,7 @@ test.describe("History", () => {
         );
         await inputReceiveAmount.fill(receiveAmount);
 
-        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        const invoiceInput = page.locator("input[data-testid='invoice']");
         const invoice = await generateInvoiceLnd(
             btcToSat(BigNumber(receiveAmount)).toNumber(),
         );

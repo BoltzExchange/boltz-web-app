@@ -6,7 +6,7 @@ import AddressInput from "../../src/components/AddressInput";
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, LBTC, LN, TBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, TBTC } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
@@ -168,13 +168,16 @@ describe("AddressInput", () => {
     );
 
     test.each`
-        asset   | input
-        ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
-        ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
-        ${LN}   | ${"admin@bol.tz"}
+        startTo      | asset   | input
+        ${undefined} | ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
+        ${undefined} | ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
+        ${undefined} | ${LN}   | ${"admin@bol.tz"}
+        ${RBTC}      | ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
+        ${RBTC}      | ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
+        ${RBTC}      | ${LN}   | ${"admin@bol.tz"}
     `(
-        "should switch to $asset based on input $input",
-        async ({ asset, input }) => {
+        "should switch to $asset from $startTo destination based on input $input",
+        async ({ startTo, asset, input }) => {
             render(
                 () => (
                     <>
@@ -184,6 +187,10 @@ describe("AddressInput", () => {
                 ),
                 { wrapper: contextWrapper },
             );
+
+            if (startTo !== undefined) {
+                setPairAssets(BTC, startTo);
+            }
 
             const addressInput = (await screen.findByTestId(
                 "onchainAddress",

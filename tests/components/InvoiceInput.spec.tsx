@@ -132,7 +132,7 @@ describe("InvoiceInput", () => {
 
         const input = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(input, {
             target: { value: lnurl },
@@ -165,7 +165,7 @@ describe("InvoiceInput", () => {
 
         const input = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(input, {
             target: { value: lnurl },
@@ -193,7 +193,7 @@ describe("InvoiceInput", () => {
 
         const invoiceInput = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(invoiceInput, {
             target: { value: input },
@@ -227,7 +227,7 @@ describe("InvoiceInput", () => {
 
             const invoiceInput = (await screen.findByTestId(
                 "invoice",
-            )) as HTMLTextAreaElement;
+            )) as HTMLInputElement;
 
             fireEvent.input(invoiceInput, {
                 target: { value: bip21Uri },
@@ -267,7 +267,7 @@ describe("InvoiceInput", () => {
 
         const invoiceInput = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(invoiceInput, {
             target: { value: bip21Uri },
@@ -297,7 +297,7 @@ describe("InvoiceInput", () => {
 
         const invoiceInput = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(invoiceInput, {
             target: { value: bip21Uri },
@@ -331,7 +331,7 @@ describe("InvoiceInput", () => {
 
             const input = (await screen.findByTestId(
                 "invoice",
-            )) as HTMLTextAreaElement;
+            )) as HTMLInputElement;
 
             fireEvent.input(input, {
                 target: { value: "lnzeroamt1pjtest" },
@@ -361,7 +361,7 @@ describe("InvoiceInput", () => {
 
         const input = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(input, {
             target: {
@@ -410,7 +410,7 @@ describe("InvoiceInput", () => {
 
         const input = (await screen.findByTestId(
             "invoice",
-        )) as HTMLTextAreaElement;
+        )) as HTMLInputElement;
 
         fireEvent.input(input, {
             target: { value: "lnbcrt1stalequote" },

@@ -19,7 +19,7 @@ import {
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
-    let inputRef!: HTMLTextAreaElement;
+    let inputRef!: HTMLInputElement;
     let validationRequest = 0;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
@@ -43,7 +43,7 @@ const InvoiceInput = () => {
         setQuoteLoading,
     } = useCreateContext();
 
-    const clearInputError = (input: HTMLTextAreaElement) => {
+    const clearInputError = (input: HTMLInputElement) => {
         input.classList.remove("invalid");
         input.setCustomValidity("");
         setInvoiceError(undefined);
@@ -55,7 +55,7 @@ const InvoiceInput = () => {
         setLnurl("");
     };
 
-    const validate = async (input: HTMLTextAreaElement) => {
+    const validate = async (input: HTMLInputElement) => {
         const requestId = ++validationRequest;
         const getCurrentInputValue = () => input.value.trim();
         const inputValue = getCurrentInputValue();
@@ -190,12 +190,12 @@ const InvoiceInput = () => {
     );
 
     return (
-        <textarea
+        <input
             required
             ref={inputRef}
             onInput={(e) => validate(e.currentTarget)}
+            type="text"
             id="invoice"
-            class="invoice-input"
             data-testid="invoice"
             name="invoice"
             value={invoice()}

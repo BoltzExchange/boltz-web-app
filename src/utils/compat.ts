@@ -20,6 +20,9 @@ import {
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/liquid";
+import { isValidSolanaAddress } from "boltz-swaps/solana";
+import { isValidTronAddress } from "boltz-swaps/tron";
+import { NetworkTransport } from "boltz-swaps/types";
 import { Buffer } from "buffer";
 import {
     address as LiquidAddress,
@@ -29,9 +32,10 @@ import {
     confidential,
 } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import { isAddress } from "viem";
 
 import { config } from "../config";
-import { BTC, LBTC, LN } from "../consts/Assets";
+import { BTC, LBTC, LN, getNetworkTransport } from "../consts/Assets";
 import secp from "../lazy/secp";
 import {
     extractAddress,
@@ -118,24 +122,27 @@ export const isConfidentialAddress = (addr: string): boolean => {
 };
 
 const probeUserInputOption = (asset: string, input: string): boolean => {
-    switch (asset) {
-        case LN: {
-            const invoice = extractInvoice(input) ?? "";
-            return (
-                isLnurl(invoice) || isInvoice(invoice) || isBolt12Offer(invoice)
-            );
-        }
+    if (asset === LN) {
+        const invoice = extractInvoice(input) ?? "";
+        return isLnurl(invoice) || isInvoice(invoice) || isBolt12Offer(invoice);
+    }
 
-        default:
-            try {
-                const address = extractAddress(input);
+    try {
+        const address = extractAddress(input);
+        switch (getNetworkTransport(asset)) {
+            case NetworkTransport.Evm:
+                return isAddress(address);
+            case NetworkTransport.Solana:
+                return isValidSolanaAddress(address);
+            case NetworkTransport.Tron:
+                return isValidTronAddress(address);
+            default:
                 decodeAddress(asset, address);
                 return true;
-
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (e) {
-                return false;
-            }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+        return false;
     }
 };
 

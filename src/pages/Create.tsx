@@ -870,6 +870,7 @@ const Create = () => {
                         !isWalletConnectableAsset(pair().toAsset)
                     }>
                     <AddressInput />
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={
@@ -882,6 +883,7 @@ const Create = () => {
                         <hr class="spacer" />
                     </Show>
                     <InvoiceInput />
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={
@@ -889,11 +891,22 @@ const Create = () => {
                         config.assets?.[pair().toAsset]?.type === AssetKind.UTXO
                     }>
                     <QrScan />
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={[pair().fromAsset, pair().toAsset].some(
                         isWalletConnectableAsset,
                     )}>
+                    {/* We have no gas abstraction for RBTC */}
+                    <Show
+                        when={
+                            isWalletConnectableAsset(pair().toAsset) &&
+                            pair().toAsset !== RBTC &&
+                            !connectedDestination()
+                        }>
+                        <AddressInput />
+                        <hr class="spacer" />
+                    </Show>
                     <ConnectWallet
                         asset={walletConnectAsset()}
                         syncAddress={isWalletConnectableAsset(pair().toAsset)}
@@ -902,16 +915,6 @@ const Create = () => {
                         }
                         disabled={() => !pair().isRoutable}
                     />
-                    {/* We have no gas abstraction for RBTC */}
-                    <Show
-                        when={
-                            isWalletConnectableAsset(pair().toAsset) &&
-                            pair().toAsset !== RBTC &&
-                            !connectedDestination()
-                        }>
-                        <hr class="spacer" />
-                        <AddressInput />
-                    </Show>
                     <hr class="spacer" />
                 </Show>
                 <CreateButton />

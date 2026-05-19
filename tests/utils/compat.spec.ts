@@ -1,12 +1,28 @@
 import { Networks } from "boltz-core";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import {
     getNetwork,
     isConfidentialAddress,
     probeUserInput,
 } from "../../src/utils/compat";
+
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        ...runtimeConfig.assets,
+        "USDC-SOL": structuredClone(mainnetConfig.assets!["USDC-SOL"]),
+        "USDT0-TRON": structuredClone(mainnetConfig.assets!["USDT0-TRON"]),
+    };
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
+});
 
 describe("parse network correctly", () => {
     test.each`
@@ -40,6 +56,33 @@ describe("parse network correctly", () => {
             expect(probeUserInput(expectedAsset, input)).toEqual(asset);
         }
     });
+
+    test.each`
+        asset           | input
+        ${RBTC}         | ${"0xd8da6bf26964af9d7eed9e03e53415d37aa96045"}
+        ${"USDC-SOL"}   | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
+        ${"USDT0-TRON"} | ${"TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"}
+    `(
+        "should probe user input for $asset address $input",
+        ({ asset, input }) => {
+            expect(probeUserInput(asset, input)).toEqual(asset);
+            for (const otherAsset of [BTC, LBTC, LN, ""]) {
+                expect(probeUserInput(otherAsset, input)).toEqual(null);
+            }
+        },
+    );
+
+    test.each`
+        asset           | input
+        ${RBTC}         | ${"bcrt1q6agtc4dnjvly869zcgad6u6q2caccvpx83n8ad"}
+        ${"USDC-SOL"}   | ${"bcrt1q6agtc4dnjvly869zcgad6u6q2caccvpx83n8ad"}
+        ${"USDT0-TRON"} | ${"bcrt1q6agtc4dnjvly869zcgad6u6q2caccvpx83n8ad"}
+    `(
+        "should auto-detect BTC when $asset destination receives BTC address",
+        ({ asset, input }) => {
+            expect(probeUserInput(asset, input)).toEqual(BTC);
+        },
+    );
 
     test.each`
         addr                                                                                                       | expected
