@@ -39,7 +39,7 @@
     justify-content: center;
     min-height: 2.625rem;
     padding: 0.375rem 2.75rem;
-    border: 0.0625rem dashed var(--color-white-30);
+    border: 0.0625rem solid var(--color-white-15);
     border-radius: 0.625rem;
     background-color: var(--color-black-20);
     cursor: pointer;
@@ -47,9 +47,12 @@
     overflow: hidden;
 }
 
-.rescue-file-input-area:hover,
+.rescue-file-input-area:hover {
+    border-color: var(--color-primary-60);
+}
+
 .rescue-file-input-control:focus-visible + .rescue-file-input-area {
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-60);
 }
 
 .rescue-file-input-area[aria-disabled="true"] {
