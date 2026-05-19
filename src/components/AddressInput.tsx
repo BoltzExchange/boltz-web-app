@@ -82,12 +82,10 @@ const AddressInput = () => {
             };
 
             if (isEvmAsset(assetName)) {
-                if (!isAddress(address)) {
-                    throw new Error();
+                if (isAddress(address)) {
+                    acceptAddress(getAddress(address));
+                    return;
                 }
-
-                acceptAddress(getAddress(address));
-                return;
             }
 
             const transport = getNetworkTransport(assetName);
