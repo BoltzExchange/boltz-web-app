@@ -541,10 +541,10 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
+        void args.msgFee;
+        void args.refundAddress;
         return await (args.contract as SolanaCctpTransportClient).send(
             args.sendParam as CctpSendParam,
-            args.msgFee,
-            args.refundAddress,
         );
     };
 

@@ -15,7 +15,7 @@ import {
 export interface BoltzSwapsConfig<A extends string = string> {
     assets: Record<A, Asset>;
     cctpApiUrl: string;
-    solburnUrl?: string;
+    solburnUrl: string;
     layerZeroExplorerUrl: string;
     cctpExplorerUrl: string;
     oftDeploymentsUrl: string;
@@ -76,6 +76,7 @@ const defaultsAssets: Record<string, Asset> = {};
 const requiredKeys: ReadonlyArray<keyof typeof REQUIRED_DEFAULTS> = [
     "boltzApiUrl",
     "cctpApiUrl",
+    "solburnUrl",
     "cctpExplorerUrl",
     "layerZeroExplorerUrl",
     "oftDeploymentsUrl",
@@ -100,11 +101,7 @@ const mergeWithDefaults = <A extends string>(
             get: () => input[key] ?? REQUIRED_DEFAULTS[key],
         });
     }
-    for (const key of [
-        "solburnUrl",
-        "referral",
-        "cooperativeDisabled",
-    ] as const) {
+    for (const key of ["referral", "cooperativeDisabled"] as const) {
         Object.defineProperty(merged, key, {
             enumerable: true,
             get: () => input[key],

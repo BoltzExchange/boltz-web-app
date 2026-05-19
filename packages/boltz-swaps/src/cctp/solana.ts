@@ -33,11 +33,7 @@ export type SolanaCctpConfig = {
 
 export type SolanaCctpTransportClient = {
     transport: NetworkTransport.Solana;
-    send: (
-        sendParam: CctpSendParam,
-        msgFee: [bigint, bigint],
-        refundAddress: string,
-    ) => Promise<BridgeTransaction>;
+    send: (sendParam: CctpSendParam) => Promise<BridgeTransaction>;
 };
 
 type Context = {
