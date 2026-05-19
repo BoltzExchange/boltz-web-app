@@ -63,7 +63,7 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined;
     let sendAmountRef: HTMLInputElement | undefined;
 
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
 
     const {
@@ -667,8 +667,11 @@ const Create = () => {
 
                     return new Pair(current.pairs, fromAsset, toAsset);
                 });
+                setSearchParams(
+                    { sendAsset: null, receiveAsset: null },
+                    { replace: true },
+                );
             },
-            { defer: true },
         ),
     );
 
