@@ -1,16 +1,13 @@
-import type {
-    Erc20SwapContract,
-    EtherSwapContract,
-} from "boltz-swaps/evm/contracts";
 import {
     type ClaimResult,
+    type ClaimAssetParams as LibClaimAssetParams,
     type PopulatedEvmTransaction,
     claimAsset as libClaimAsset,
 } from "boltz-swaps/evm/transaction";
 import { GasAbstractionType } from "boltz-swaps/types";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import type { Address, Hash } from "viem";
+import type { Hash } from "viem";
 
 import {
     type AlchemyCall,
@@ -23,6 +20,13 @@ import { relayClaimTransaction } from "../rif/Signer";
 
 type SendPopulatedTransactionOptions = {
     alchemy?: SendAlchemyTransactionOptions;
+};
+
+export type ClaimAssetParams = Omit<
+    LibClaimAssetParams,
+    "getSigner" | "sendTransaction" | "relayClaimTransaction"
+> & {
+    signer: Accessor<Signer>;
 };
 
 const transactionHashFromResponse = (response: unknown): Hash => {
@@ -97,33 +101,13 @@ export const sendPopulatedTransaction = async (
     }
 };
 
-export const claimAsset = (
-    gasAbstraction: GasAbstractionType,
-    asset: string,
-    preimage: string,
-    amount: number | bigint,
-    claimAddress: Address,
-    refundAddress: Address,
-    timeoutBlockHeight: number,
-    destination: Address,
-    signer: Accessor<Signer>,
-    gasAbstractionSigner: Signer,
-    etherSwap: EtherSwapContract,
-    erc20Swap: Erc20SwapContract,
-): Promise<ClaimResult> =>
-    libClaimAsset(
-        gasAbstraction,
-        asset,
-        preimage,
-        amount,
-        claimAddress,
-        refundAddress,
-        timeoutBlockHeight,
-        destination,
-        signer,
-        gasAbstractionSigner,
-        etherSwap,
-        erc20Swap,
-        sendPopulatedTransaction,
+export const claimAsset = ({
+    signer,
+    ...params
+}: ClaimAssetParams): Promise<ClaimResult> =>
+    libClaimAsset({
+        ...params,
+        getSigner: signer,
+        sendTransaction: sendPopulatedTransaction,
         relayClaimTransaction,
-    );
+    });

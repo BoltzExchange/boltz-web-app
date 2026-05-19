@@ -84,20 +84,20 @@ describe("TransactionConfirmed claimAsset", () => {
         mockRelayClaimTransaction.mockResolvedValue("0xrelay");
 
         await expect(
-            claimAsset(
-                GasAbstractionType.RifRelay,
-                "RBTC",
-                "preimage",
-                21,
-                "0xclaim",
-                "0xrefund",
-                123,
-                "0xdestination",
-                signerAccessor as never,
+            claimAsset({
+                gasAbstraction: GasAbstractionType.RifRelay,
+                asset: "RBTC",
+                preimage: "preimage",
+                amount: 21,
+                claimAddress: "0xclaim",
+                refundAddress: "0xrefund",
+                timeoutBlockHeight: 123,
+                destination: "0xdestination",
+                signer: signerAccessor as never,
                 gasAbstractionSigner,
                 etherSwap,
                 erc20Swap,
-            ),
+            }),
         ).resolves.toEqual({
             transactionHash: "0xrelay",
             receiveAmount: satsToAssetAmount(21, "RBTC"),
@@ -125,20 +125,20 @@ describe("TransactionConfirmed claimAsset", () => {
         const sats = 9_000_000_000_001n;
 
         await expect(
-            claimAsset(
-                GasAbstractionType.RifRelay,
-                "RBTC",
-                "preimage",
-                sats,
-                "0xclaim",
-                "0xrefund",
-                123,
-                "0xdestination",
-                signerAccessor as never,
+            claimAsset({
+                gasAbstraction: GasAbstractionType.RifRelay,
+                asset: "RBTC",
+                preimage: "preimage",
+                amount: sats,
+                claimAddress: "0xclaim",
+                refundAddress: "0xrefund",
+                timeoutBlockHeight: 123,
+                destination: "0xdestination",
+                signer: signerAccessor as never,
                 gasAbstractionSigner,
                 etherSwap,
                 erc20Swap,
-            ),
+            }),
         ).resolves.toEqual({
             transactionHash: "0xrelay",
             receiveAmount: satsToAssetAmount(sats, "RBTC"),
@@ -237,20 +237,20 @@ describe("TransactionConfirmed claimAsset", () => {
         const gasAbstractionSigner = {} as Signer;
 
         await expect(
-            claimAsset(
-                GasAbstractionType.None,
-                "USDT0",
-                "11".repeat(32),
-                21,
-                "0x1000000000000000000000000000000000000000",
-                "0x2000000000000000000000000000000000000000",
-                123,
-                "0x3000000000000000000000000000000000000000",
-                signerAccessor as never,
+            claimAsset({
+                gasAbstraction: GasAbstractionType.None,
+                asset: "USDT0",
+                preimage: "11".repeat(32),
+                amount: 21,
+                claimAddress: "0x1000000000000000000000000000000000000000",
+                refundAddress: "0x2000000000000000000000000000000000000000",
+                timeoutBlockHeight: 123,
+                destination: "0x3000000000000000000000000000000000000000",
+                signer: signerAccessor as never,
                 gasAbstractionSigner,
-                {} as EtherSwapContract,
-                erc20Swap as never,
-            ),
+                etherSwap: {} as EtherSwapContract,
+                erc20Swap: erc20Swap as never,
+            }),
         ).resolves.toEqual({
             transactionHash: "0xdirect",
             receiveAmount: satsToAssetAmount(21, "USDT0"),

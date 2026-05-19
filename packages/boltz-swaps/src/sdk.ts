@@ -1,4 +1,4 @@
-import type { Address, Hex, Signature, TransactionRequest } from "viem";
+import type { Hex, Signature, TransactionRequest } from "viem";
 
 import {
     type BridgeDriver,
@@ -44,13 +44,13 @@ import {
 } from "./evm/commitment.ts";
 import type { Erc20SwapContract, EtherSwapContract } from "./evm/contracts.ts";
 import {
+    type ClaimAssetParams,
     type ClaimResult,
     type PopulatedEvmTransaction,
     type RelayClaimTransactionFn,
     type SendTransactionFn,
     claimAsset,
 } from "./evm/transaction.ts";
-import type { Signer } from "./interfaces/signer.ts";
 import {
     type RouteQuote,
     type RouteQuoteAmountInArgs,
@@ -58,7 +58,7 @@ import {
     quoteRouteAmountIn,
     quoteRouteAmountOut,
 } from "./route.ts";
-import type { Asset, GasAbstractionType } from "./types.ts";
+import type { Asset } from "./types.ts";
 
 export type BoltzClientConfig<A extends string = string> =
     | BoltzSwapsConfigInput<A>
@@ -150,21 +150,11 @@ export type RefundAuthMessageArgs = {
     logIndex?: number;
 };
 
-export type ClaimEvmArgs<A extends string = string> = {
-    gasAbstraction: GasAbstractionType;
+export type ClaimEvmArgs<A extends string = string> = Omit<
+    ClaimAssetParams,
+    "asset"
+> & {
     asset: A;
-    preimage: string;
-    amount: number | bigint;
-    claimAddress: Address;
-    refundAddress: Address;
-    timeoutBlockHeight: number;
-    destination: Address;
-    getSigner: () => Signer;
-    gasAbstractionSigner: Signer;
-    etherSwap: EtherSwapContract;
-    erc20Swap: Erc20SwapContract;
-    sendTransaction: SendTransactionFn;
-    relayClaimTransaction?: RelayClaimTransactionFn;
 };
 
 export interface BoltzClient<A extends string = string> {
@@ -335,38 +325,7 @@ export const createBoltzClient = <A extends string = string>(
                 details: getChainSwapClaimDetails,
                 submit: (id, { preimage, signature, toSign }) =>
                     postChainSwapDetails(id, preimage, signature, toSign),
-                executeEvm: ({
-                    gasAbstraction,
-                    asset,
-                    preimage,
-                    amount,
-                    claimAddress,
-                    refundAddress,
-                    timeoutBlockHeight,
-                    destination,
-                    getSigner,
-                    gasAbstractionSigner,
-                    etherSwap,
-                    erc20Swap,
-                    sendTransaction,
-                    relayClaimTransaction,
-                }) =>
-                    claimAsset(
-                        gasAbstraction,
-                        asset,
-                        preimage,
-                        amount,
-                        claimAddress,
-                        refundAddress,
-                        timeoutBlockHeight,
-                        destination,
-                        getSigner,
-                        gasAbstractionSigner,
-                        etherSwap,
-                        erc20Swap,
-                        sendTransaction,
-                        relayClaimTransaction,
-                    ),
+                executeEvm: (args) => claimAsset(args),
                 executeBridgeRouterClaim: (args) =>
                     bridgeRegistry
                         .requireDriverForRoute(args.route)

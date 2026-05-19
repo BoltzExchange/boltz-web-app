@@ -1,4 +1,5 @@
 import {
+    type ClaimEvmArgs,
     type PopulateRouterClaimBridgeArgs,
     type QuoteData,
     createBoltzClient,
@@ -452,7 +453,7 @@ describe("createBoltzClient: swap.claim", () => {
         );
     });
 
-    test("executeEvm delegates to claimAsset with positional args", async () => {
+    test("executeEvm delegates to claimAsset with the claim args", async () => {
         claimAssetMock.mockResolvedValue({
             transactionHash: "0xhash",
             receiveAmount: 100n,
@@ -463,7 +464,7 @@ describe("createBoltzClient: swap.claim", () => {
         const erc20Swap = { address: "0xr" } as never;
         const gasAbstractionSigner = { id: "abs" } as never;
 
-        await makeClient().swap.claim.executeEvm({
+        const args: ClaimEvmArgs = {
             gasAbstraction: "none" as never,
             asset: "USDC-BASE",
             preimage: "0xpreimage",
@@ -477,24 +478,11 @@ describe("createBoltzClient: swap.claim", () => {
             etherSwap,
             erc20Swap,
             sendTransaction,
-        });
+        };
 
-        expect(claimAssetMock).toHaveBeenCalledWith(
-            "none",
-            "USDC-BASE",
-            "0xpreimage",
-            100n,
-            "0xclaim",
-            "0xrefund",
-            999,
-            "0xdest",
-            getSigner,
-            gasAbstractionSigner,
-            etherSwap,
-            erc20Swap,
-            sendTransaction,
-            undefined,
-        );
+        await makeClient().swap.claim.executeEvm(args);
+
+        expect(claimAssetMock).toHaveBeenCalledWith(args);
     });
 
     test("executeBridgeRouterClaim delegates to driver", async () => {

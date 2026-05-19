@@ -46,6 +46,23 @@ export type RelayClaimTransactionFn = (
     timeoutBlockHeight: number,
 ) => Promise<string>;
 
+export type ClaimAssetParams = {
+    gasAbstraction: GasAbstractionType;
+    asset: string;
+    preimage: string;
+    amount: number | bigint;
+    claimAddress: Address;
+    refundAddress: Address;
+    timeoutBlockHeight: number;
+    destination: Address;
+    getSigner: () => Signer;
+    gasAbstractionSigner: Signer;
+    etherSwap: EtherSwapContract;
+    erc20Swap: Erc20SwapContract;
+    sendTransaction: SendTransactionFn;
+    relayClaimTransaction?: RelayClaimTransactionFn;
+};
+
 export const getSignerForGasAbstraction = (
     gasAbstraction: GasAbstractionType,
     signer: Signer | undefined,
@@ -93,22 +110,22 @@ export type ClaimResult = {
     receiveAmount: bigint;
 };
 
-export const claimAsset = async (
-    gasAbstraction: GasAbstractionType,
-    asset: string,
-    preimage: string,
-    amount: number | bigint,
-    claimAddress: Address,
-    refundAddress: Address,
-    timeoutBlockHeight: number,
-    destination: Address,
-    getSigner: () => Signer,
-    gasAbstractionSigner: Signer,
-    etherSwap: EtherSwapContract,
-    erc20Swap: Erc20SwapContract,
-    sendTransaction: SendTransactionFn,
-    relayClaimTransaction?: RelayClaimTransactionFn,
-): Promise<ClaimResult> => {
+export const claimAsset = async ({
+    gasAbstraction,
+    asset,
+    preimage,
+    amount,
+    claimAddress,
+    refundAddress,
+    timeoutBlockHeight,
+    destination,
+    getSigner,
+    gasAbstractionSigner,
+    etherSwap,
+    erc20Swap,
+    sendTransaction,
+    relayClaimTransaction,
+}: ClaimAssetParams): Promise<ClaimResult> => {
     const assetAmount = satsToAssetAmount(amount, asset);
 
     switch (gasAbstraction) {

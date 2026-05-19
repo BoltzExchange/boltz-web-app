@@ -2,13 +2,11 @@ import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solan
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Abi, PublicClient } from "viem";
 
+import type { BridgeRoute } from "../bridge/route.ts";
 import type { Signer } from "../interfaces/signer.ts";
 import type { BridgeTransaction, NetworkTransport } from "../types.ts";
 
-export type OftRoute<A extends string = string> = {
-    sourceAsset: A;
-    destinationAsset: A;
-};
+export type OftRoute<A extends string = string> = BridgeRoute<A>;
 
 export type SendParam = [
     number,

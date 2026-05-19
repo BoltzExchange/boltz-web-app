@@ -1109,20 +1109,22 @@ const ClaimEvm = (props: {
             if (sig === undefined) {
                 throw new Error("missing signer for claim");
             }
-            result = await claimAsset(
-                props.gasAbstraction,
-                props.assetReceive,
-                props.preimage,
-                props.amount,
-                getAddress(props.claimAddress),
-                getAddress(props.refundAddress),
-                props.timeoutBlockHeight,
-                getAddress(props.signerAddress),
-                () => sig,
-                getGasAbstractionSigner(props.assetReceive),
-                getEtherSwap(props.assetReceive),
-                getErc20Swap(props.assetReceive),
-            );
+            result = await claimAsset({
+                gasAbstraction: props.gasAbstraction,
+                asset: props.assetReceive,
+                preimage: props.preimage,
+                amount: props.amount,
+                claimAddress: getAddress(props.claimAddress),
+                refundAddress: getAddress(props.refundAddress),
+                timeoutBlockHeight: props.timeoutBlockHeight,
+                destination: getAddress(props.signerAddress),
+                signer: () => sig,
+                gasAbstractionSigner: getGasAbstractionSigner(
+                    props.assetReceive,
+                ),
+                etherSwap: getEtherSwap(props.assetReceive),
+                erc20Swap: getErc20Swap(props.assetReceive),
+            });
         }
 
         const { transactionHash, receiveAmount } = result;

@@ -184,20 +184,23 @@ const ClaimState = (props: {
                 throw new Error("missing signer for claim");
             }
 
-            const { transactionHash } = await claimAsset(
+            const { transactionHash } = await claimAsset({
                 gasAbstraction,
                 asset,
-                currentPreimage.toString("hex"),
-                assetAmountToSats(amount, asset),
+                preimage: currentPreimage.toString("hex"),
+                amount: assetAmountToSats(amount, asset),
                 claimAddress,
                 refundAddress,
-                Number(timelock),
-                sig.address,
-                () => sig,
-                getGasAbstractionSigner(asset, rescueFile()),
-                getEtherSwap(asset),
-                getErc20Swap(asset),
-            );
+                timeoutBlockHeight: Number(timelock),
+                destination: sig.address,
+                signer: () => sig,
+                gasAbstractionSigner: getGasAbstractionSigner(
+                    asset,
+                    rescueFile(),
+                ),
+                etherSwap: getEtherSwap(asset),
+                erc20Swap: getErc20Swap(asset),
+            });
 
             props.setClaimTxId(transactionHash);
         } catch (error) {
