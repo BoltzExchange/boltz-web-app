@@ -362,6 +362,22 @@ describe("rescue", () => {
             expect(result[0].timedOut).toBe(true);
         });
 
+        test("should allow refunding claim-pending swaps with extra UTXOs", async () => {
+            const swaps = [
+                createMockSubmarineSwap({
+                    status: swapStatusPending.TransactionClaimPending,
+                    timeoutBlockHeight: 1200,
+                    assetSend: BTC,
+                }),
+            ];
+
+            mockGetSwapUTXOs.mockResolvedValue([{ hex: "mock-tx" }]);
+
+            const result = await createRescueList(swaps, zeroConf);
+            expect(result).toHaveLength(1);
+            expect(result[0].action).toBe(RescueAction.Refund);
+        });
+
         test("should not show RBTC as Refundable", async () => {
             const swaps = [
                 createMockSubmarineSwap({
@@ -387,15 +403,25 @@ describe("rescue", () => {
                 action: RescueAction.Successful,
                 createSwap: createMockSubmarineSwap,
             },
-            ...Object.values(swapStatusPending).map((status) => ({
-                status,
-                action: RescueAction.Pending,
-                createSwap: createMockSubmarineSwap,
-            })),
+            ...Object.values(swapStatusPending)
+                .filter(
+                    (status) =>
+                        status !== swapStatusPending.TransactionClaimPending,
+                )
+                .map((status) => ({
+                    status,
+                    action: RescueAction.Pending,
+                    createSwap: createMockSubmarineSwap,
+                })),
             {
                 status: swapStatusPending.TransactionConfirmed,
                 action: RescueAction.Claim,
                 createSwap: createMockReverseSwap,
+            },
+            {
+                status: swapStatusPending.TransactionClaimPending,
+                action: RescueAction.Refund,
+                createSwap: createMockSubmarineSwap,
             },
             {
                 status: swapStatusFailed.TransactionFailed,
