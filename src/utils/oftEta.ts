@@ -1,10 +1,7 @@
+import { type Usdt0VariantAsset, usdt0Variants } from "boltz-swaps/oft";
 import log from "loglevel";
 
-import {
-    type Usdt0VariantAsset,
-    usdt0EnvByAsset,
-    usdt0Variants,
-} from "../configs/usdt0";
+import { usdt0EnvByAsset } from "../configs/usdt0";
 
 const envOftEtaSeconds = (asset: Usdt0VariantAsset): number | undefined => {
     const envValue = usdt0EnvByAsset[asset];

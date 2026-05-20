@@ -1,3 +1,5 @@
+import type { RestorableSwap } from "boltz-swaps/client";
+import type { LogRefundData } from "boltz-swaps/types";
 import {
     type Accessor,
     type JSX,
@@ -7,9 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { type AssetType } from "../consts/Assets";
-import type { RestorableSwap } from "../utils/boltzClient";
-import type { LogRefundData } from "../utils/contractLogs";
+import type { AssetType } from "../consts/Assets";
 import { type ECKeys, ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 

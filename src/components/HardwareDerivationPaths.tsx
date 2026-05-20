@@ -24,7 +24,6 @@ import {
     type HardwareSigner,
     derivationPaths,
     derivationPathsMainnet,
-    derivationPathsTestnet,
 } from "../utils/hardware/HardwareSigner";
 import { cropString } from "../utils/helper";
 import LoadingSpinner from "./LoadingSpinner";
@@ -285,28 +284,10 @@ const HardwareDerivationPaths = (props: {
     const [loading, setLoading] = createSignal<boolean>(false);
     const [basePath, setBasePath] = createSignal<string | undefined>();
 
-    const paths = createMemo(() => {
-        switch (config.network) {
-            case "mainnet":
-                return {
-                    ...derivationPaths,
-                    ...derivationPathsMainnet,
-                };
-
-            case "testnet":
-                return {
-                    ...derivationPaths,
-                    ...derivationPathsTestnet,
-                };
-
-            default:
-                return {
-                    ...derivationPaths,
-                    ...derivationPathsMainnet,
-                    ...derivationPathsTestnet,
-                };
-        }
-    });
+    const paths = {
+        ...derivationPaths,
+        ...derivationPathsMainnet,
+    };
 
     const close = () => {
         props.setShow(false);
@@ -337,7 +318,7 @@ const HardwareDerivationPaths = (props: {
                             />
                         }>
                         <For
-                            each={Object.entries(paths()).sort(([a], [b]) =>
+                            each={Object.entries(paths).sort(([a], [b]) =>
                                 a.toLowerCase().localeCompare(b.toLowerCase()),
                             )}>
                             {([name, path]) => (

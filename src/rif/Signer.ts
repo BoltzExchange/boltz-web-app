@@ -1,4 +1,5 @@
-import { satoshiToWei } from "boltz-swaps/evm";
+import { prefix0x, satoshiToWei } from "boltz-swaps/evm";
+import type { EtherSwapContract } from "boltz-swaps/evm/contracts";
 import { etherSwapAbi } from "boltz-swaps/generated/evm-abis";
 import log from "loglevel";
 import {
@@ -9,8 +10,6 @@ import {
 } from "viem";
 
 import type { Signer } from "../context/Web3";
-import type { EtherSwapContract } from "../context/contracts";
-import { prefix0x } from "../utils/evmTransaction";
 import { estimateFeesPerGas } from "../utils/provider";
 import {
     getForwarder,

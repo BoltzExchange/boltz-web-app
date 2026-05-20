@@ -1,10 +1,10 @@
+import { quoteDexAmountIn, quoteDexAmountOut } from "boltz-swaps/client";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import { zeroAddress } from "viem";
 
 import { config } from "../config";
 import { getNetworkTransport } from "../consts/Assets";
-import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
 import {
     getGasTokenPriceFailover,
     hasGasTokenPriceLookup,

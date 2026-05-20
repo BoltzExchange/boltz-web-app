@@ -1,5 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
+import { getNodeStats } from "boltz-swaps/client";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
 
@@ -17,7 +18,6 @@ import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { getNodeStats } from "../utils/boltzClient";
 import {
     formatAmountDenomination,
     formatDenomination,

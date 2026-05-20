@@ -45,6 +45,7 @@ export default [
                         "*.mjs",
                         "*.js",
                         "packages/*/scripts/*.ts",
+                        "packages/*/scripts/*.mjs",
                     ],
                 },
                 tsconfigRootDir: import.meta.dirname,
@@ -97,7 +98,7 @@ export default [
         },
     },
     {
-        files: ["*/lazy/**"],
+        files: ["**/lazy/**", "**/lazy.{ts,mjs}"],
         rules: {
             "no-restricted-imports": "off",
             "@typescript-eslint/no-restricted-imports": "off",
@@ -109,6 +110,7 @@ export default [
             "no-unassigned-vars": "off",
             "@typescript-eslint/no-floating-promises": "error",
             "@typescript-eslint/consistent-type-imports": "warn",
+            "@typescript-eslint/no-import-type-side-effects": "error",
 
             "@typescript-eslint/no-unsafe-call": "off",
             "@typescript-eslint/only-throw-error": "off",
@@ -130,6 +132,15 @@ export default [
         },
     },
     {
+        files: ["packages/*/scripts/**/*.{mjs,ts}"],
+        languageOptions: {
+            globals: globals.node,
+        },
+        rules: {
+            "no-console": "off",
+        },
+    },
+    {
         files: ["packages/boltz-swaps/src/**/*.ts"],
         rules: {
             "no-restricted-syntax": [
@@ -141,6 +152,7 @@ export default [
                         "Exporting `const enum` is not allowed in boltz-swaps; consumers compiled with isolatedModules/verbatimModuleSyntax cannot use them. Use a regular `enum` or a union of string literals instead.",
                 },
             ],
+            "import-x/no-nodejs-modules": "error",
         },
     },
 ];

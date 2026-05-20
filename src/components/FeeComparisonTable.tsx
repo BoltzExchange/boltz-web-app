@@ -1,10 +1,10 @@
+import type { Pairs } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
 import { LN, getAssetDisplaySymbol, isBitcoinOnlyPair } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { type Pairs } from "../utils/boltzClient";
 import ExternalLink from "./ExternalLink";
 import { getFeeHighlightClass } from "./Fees";
 import LoadingSpinner from "./LoadingSpinner";

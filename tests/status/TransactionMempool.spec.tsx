@@ -1,8 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
 
 import { BTC, RBTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import TransactionMempool from "../../src/status/TransactionMempool";
 import type { SomeSwap } from "../../src/utils/swapCreator";

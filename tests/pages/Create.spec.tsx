@@ -6,11 +6,12 @@ import {
     within,
 } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { SwapType } from "boltz-swaps/types";
 
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
-import { Denomination, Side, SwapType } from "../../src/consts/Enums";
+import { Denomination, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import Pair from "../../src/utils/Pair";
@@ -36,7 +37,7 @@ afterAll(() => {
     runtimeConfig.assets = originalAssets;
 });
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 vi.mock("../../src/components/ConnectWallet", () => ({

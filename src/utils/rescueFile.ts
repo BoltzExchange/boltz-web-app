@@ -6,8 +6,6 @@ import { config } from "../config";
 import { type AssetType, isEvmAsset } from "../consts/Assets";
 import { derivePreimage, evmPath, mnemonicToHDKey } from "./rescueDerivation";
 
-export { evmPath, mnemonicToHDKey } from "./rescueDerivation";
-
 export enum Errors {
     InvalidFile = "invalid file",
     NotAllElementsHaveAnId = "not all elements have an id",

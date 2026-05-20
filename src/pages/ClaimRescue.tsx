@@ -1,6 +1,16 @@
 import { hex } from "@scure/base";
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
+import {
+    type ChainPairTypeTaproot,
+    type ChainSwapDetails,
+    type RestorableSwap,
+    type ReversePairTypeTaproot,
+    type SwapStatus,
+    getRestorableSwaps,
+    getSwapStatus,
+} from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
@@ -24,19 +34,9 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type AssetType, LN } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
-import {
-    type ChainPairTypeTaproot,
-    type ChainSwapDetails,
-    type RestorableSwap,
-    type ReversePairTypeTaproot,
-    type SwapStatus,
-    getRestorableSwaps,
-    getSwapStatus,
-} from "../utils/boltzClient";
 import { claim } from "../utils/claim";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";

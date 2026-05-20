@@ -39,7 +39,7 @@ const config = {
         RBTC: {
             type: AssetKind.EVMNative,
             blockExplorerUrl: {
-                id: Explorer.Blockscout,
+                id: Explorer.EtherscanStyle,
                 normal: "http://localhost:5100",
             },
             network: {

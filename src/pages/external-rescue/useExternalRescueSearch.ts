@@ -1,5 +1,11 @@
 import { useNavigate } from "@solidjs/router";
-import { createProvider } from "boltz-swaps/evm";
+import {
+    type SwapContract,
+    createProvider,
+    getTimelockBlockNumber,
+    scanLockupEvents,
+} from "boltz-swaps/evm";
+import { type LogRefundData, RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     createEffect,
@@ -17,17 +23,10 @@ import type {
 } from "../../components/RescueFileUpload";
 import { config } from "../../config";
 import { type AssetType, TBTC } from "../../consts/Assets";
-import { RskRescueMode } from "../../consts/Enums";
 import { useGlobalContext } from "../../context/Global";
 import { useRescueContext } from "../../context/Rescue";
 import { useWeb3Signer } from "../../context/Web3";
 import type { DictKey } from "../../i18n/i18n";
-import {
-    type LogRefundData,
-    type SwapContract,
-    getTimelockBlockNumber,
-    scanLockupEvents,
-} from "../../utils/contractLogs";
 import { formatError } from "../../utils/errors";
 import {
     type GasAbstractionSweep,
@@ -38,13 +37,13 @@ import {
     RescueNoAction,
     createRescueList,
 } from "../../utils/rescue";
-import { evmAccountFromPrivateKey } from "../../utils/rescueDerivation";
 import {
-    type RescueFile,
-    getPathGasAbstraction,
+    evmAccountFromPrivateKey,
     mnemonicToHDKey,
-} from "../../utils/rescueFile";
+} from "../../utils/rescueDerivation";
+import { type RescueFile, getPathGasAbstraction } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
+import { PreimageHashesWorker } from "../../workers/preimageHashes/PreimageHashesWorker";
 import {
     fetchPaginatedRestorableSwaps,
     getEvmRescueAction,
@@ -531,18 +530,28 @@ export const useExternalRescueSearch = () => {
             }
         }
 
-        const generator = scanLockupEvents(signal, target.contract, {
-            asset: target.asset as AssetType,
-            providerUrl: target.providerUrl,
-            scanInterval: target.scanInterval,
-            filter: {
-                address: signerAddress,
-                extraAddresses:
-                    extraAddresses.length > 0 ? extraAddresses : undefined,
+        const preimageDerivation =
+            action === RskRescueMode.Claim && mnemonic
+                ? new PreimageHashesWorker()
+                : undefined;
+
+        const generator = scanLockupEvents(
+            signal,
+            target.contract,
+            {
+                asset: target.asset as AssetType,
+                providerUrl: target.providerUrl,
+                scanInterval: target.scanInterval,
+                filter: {
+                    address: signerAddress,
+                    extraAddresses:
+                        extraAddresses.length > 0 ? extraAddresses : undefined,
+                },
+                action,
+                mnemonic,
             },
-            action,
-            mnemonic,
-        });
+            preimageDerivation,
+        );
 
         for await (const {
             events,

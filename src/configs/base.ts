@@ -3,7 +3,7 @@ import type log from "loglevel";
 
 export type Config = {
     apiUrl: Url;
-    network: "mainnet" | "testnet" | "regtest";
+    network: "mainnet" | "regtest";
     isBeta?: boolean;
     isPro?: boolean;
     assets?: Record<string, Asset>;
@@ -11,8 +11,6 @@ export type Config = {
     solburnUrl?: string;
     torUrl?: string;
 } & typeof defaults;
-
-export const arbitrumChainId = 42161;
 
 const defaults = {
     // Disables API endpoints that create cooperative signatures for claim

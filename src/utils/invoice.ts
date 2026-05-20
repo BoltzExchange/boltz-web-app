@@ -4,12 +4,12 @@ import { bech32, hex, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
+import { fetchBolt12Invoice } from "boltz-swaps/client";
 import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
 import { InvoiceValidation } from "../consts/Enums";
-import { fetchBolt12Invoice } from "./boltzClient";
 import { satToMiliSat } from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
@@ -284,6 +284,7 @@ export const fetchBip353 = async (
 ): Promise<string> => {
     const offer = await resolveBip353(bip353);
     const invoice = (await fetchBolt12Invoice(offer, amountSat)).invoice;
+    validateInvoiceForOffer(offer, invoice);
     log.debug(`Resolved invoice for offer:`, invoice);
 
     return invoice;
@@ -445,7 +446,7 @@ export const isBolt12Offer = (offer: string): boolean => {
 export const validateInvoiceForOffer = (
     offer: string,
     invoice: string,
-): boolean => {
+): void => {
     const possibleSigners: Uint8Array[] = [];
     const decodedOffer = Bolt12.decodeOffer(offer);
     const { fields, records } = decodeBolt12Invoice(invoice);
@@ -468,7 +469,7 @@ export const validateInvoiceForOffer = (
         fields.invoice_node_id === undefined ||
         fields.signature === undefined
     ) {
-        throw "invalid invoice signature";
+        throw new Error("invalid invoice signature");
     }
 
     const normalizedInvoiceNodeId = normalizeBolt12NodeId(
@@ -483,16 +484,16 @@ export const validateInvoiceForOffer = (
             fields.signature,
         )
     ) {
-        throw "invalid invoice signature";
+        throw new Error("invalid invoice signature");
     }
 
     for (const signer of possibleSigners) {
         if (equalBytes(signer, normalizedInvoiceNodeId)) {
-            return true;
+            return;
         }
     }
 
-    throw "invoice does not belong to offer";
+    throw new Error("invoice does not belong to offer");
 };
 
 export const checkInvoicePreimage = (

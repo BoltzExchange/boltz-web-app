@@ -1,13 +1,13 @@
 import { BigNumber } from "bignumber.js";
-import { CctpReceiveMode } from "boltz-swaps/types";
+import type * as BoltzClientModule from "boltz-swaps/client";
+import type { Pairs, QuoteData } from "boltz-swaps/client";
+import { CctpReceiveMode, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
+import type * as BaseConfigModule from "../../src/configs/base";
 import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
-import type * as BoltzClientModule from "../../src/utils/boltzClient";
-import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
 import type * as QuoterModule from "../../src/utils/quoter";
 
 const {
@@ -45,9 +45,20 @@ const {
         vi.fn<typeof QuoterModule.getGasTopUpNativeAmount>(),
 }));
 
-vi.mock("../../src/utils/boltzClient", async () => {
+vi.mock("../../src/configs/base", async () => {
+    const actual = await vi.importActual<typeof BaseConfigModule>(
+        "../../src/configs/base",
+    );
+
+    return {
+        ...actual,
+        isTor: vi.fn(() => false),
+    };
+});
+
+vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
     const actual = await vi.importActual<typeof BoltzClientModule>(
-        "../../src/utils/boltzClient",
+        "../../packages/boltz-swaps/src/client.ts",
     );
 
     return {

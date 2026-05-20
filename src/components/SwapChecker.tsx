@@ -1,9 +1,9 @@
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 
 import { config } from "../config";
-import { SwapType } from "../consts/Enums";
 import {
     swapStatusFinal,
     swapStatusPending,

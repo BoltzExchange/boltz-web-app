@@ -11,7 +11,18 @@ import {
     isCctpNonceUsed,
     parseCctpBurnMessage,
 } from "boltz-swaps/cctp";
-import { createAssetProvider, satsToAssetAmount } from "boltz-swaps/evm";
+import { encodeDexQuote, getCommitmentLockupDetails } from "boltz-swaps/client";
+import {
+    createAssetProvider,
+    prefix0x,
+    satsToAssetAmount,
+} from "boltz-swaps/evm";
+import {
+    emptyPreimageHash,
+    isEmptyPreimageHash,
+    postCommitmentSignatureForTransaction,
+} from "boltz-swaps/evm/commitment";
+import { createRouterContract } from "boltz-swaps/evm/contracts";
 import {
     erc20Abi,
     erc20SwapAbi,
@@ -24,7 +35,12 @@ import {
     getTronTransactionInfo,
     isFailedTronTransaction,
 } from "boltz-swaps/tron";
-import { BridgeKind, NetworkTransport, SwapPosition } from "boltz-swaps/types";
+import {
+    BridgeKind,
+    NetworkTransport,
+    SwapPosition,
+    SwapType,
+} from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 import {
@@ -44,23 +60,12 @@ import {
 } from "../alchemy/Alchemy";
 import { config } from "../config";
 import { USDC, getAssetBridge, getTokenAddress } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import { createRouterContract } from "../context/contracts";
-import {
-    encodeDexQuote,
-    getCommitmentLockupDetails,
-} from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
-import {
-    emptyPreimageHash,
-    isEmptyPreimageHash,
-    postCommitmentSignatureForTransaction,
-} from "../utils/commitment";
-import { prefix0x, sendPopulatedTransaction } from "../utils/evmTransaction";
+import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import { fetchDexQuote } from "../utils/quoter";
 import {

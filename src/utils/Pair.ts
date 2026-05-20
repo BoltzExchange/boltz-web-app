@@ -8,12 +8,20 @@ import {
     type BridgeRoute,
     bridgeRegistry,
 } from "boltz-swaps/bridge";
+import {
+    type ChainPairTypeTaproot,
+    type Pairs,
+    type ReversePairTypeTaproot,
+    type SubmarinePairTypeTaproot,
+    quoteDexAmountOut,
+} from "boltz-swaps/client";
 import { assetAmountToSats, satsToAssetAmount } from "boltz-swaps/evm";
 import {
     AssetKind,
     BridgeKind,
     CctpReceiveMode,
     SwapPosition,
+    SwapType,
 } from "boltz-swaps/types";
 import log from "loglevel";
 import { zeroAddress } from "viem";
@@ -28,14 +36,6 @@ import {
     getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
-import {
-    type ChainPairTypeTaproot,
-    type Pairs,
-    type ReversePairTypeTaproot,
-    type SubmarinePairTypeTaproot,
-    quoteDexAmountOut,
-} from "./boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,

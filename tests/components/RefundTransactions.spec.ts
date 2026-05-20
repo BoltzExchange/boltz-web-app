@@ -15,7 +15,7 @@ vi.mock("../../src/utils/evmTransaction", () => ({
         value.startsWith("0x") ? value : `0x${value}`,
 }));
 
-vi.mock("../../src/utils/contractLogs", () => ({
+vi.mock("../../packages/boltz-swaps/src/evm/logs.ts", () => ({
     getTimelockBlockNumber: () => mockGetTimelockBlockNumber(),
 }));
 

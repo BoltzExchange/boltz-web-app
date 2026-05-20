@@ -1,5 +1,8 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
+import { createTokenContract } from "boltz-swaps/evm/contracts";
+import { RskRescueMode } from "boltz-swaps/types";
 import {
     Match,
     Show,
@@ -22,16 +25,13 @@ import {
     getAssetDisplaySymbol,
     getAssetNetwork,
 } from "../consts/Assets";
-import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import { createTokenContract } from "../context/contracts";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
     gasAbstractionSweepAssets,
-    getGasAbstractionSweepDisplayAmount,
     sweepGasAbstractionToken,
 } from "../utils/gasAbstractionSweep";
 import { cropString } from "../utils/helper";

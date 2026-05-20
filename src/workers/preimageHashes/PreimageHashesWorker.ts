@@ -1,11 +1,9 @@
+import type { PreimageDerivation, PreimageMap } from "boltz-swaps/interfaces";
 import log from "loglevel";
 
 import type { PreimageHashMessage } from "./preimageHashes.worker";
 
-export type PreimageEntry = { preimage: string; index: number };
-export type PreimageMap = Map<string, PreimageEntry>;
-
-export class PreimageHashesWorker {
+export class PreimageHashesWorker implements PreimageDerivation {
     private worker: Worker;
     isDone = false;
     private batchResolver: (() => void) | undefined;

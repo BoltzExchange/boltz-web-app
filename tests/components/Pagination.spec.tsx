@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
 
 import Pagination from "../../src/components/Pagination";
 import { BTC } from "../../src/consts/Assets";
-import { SwapType } from "../../src/consts/Enums";
 import type { SubmarineSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper } from "../helper";
 

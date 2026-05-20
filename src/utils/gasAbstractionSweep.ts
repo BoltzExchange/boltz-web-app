@@ -12,8 +12,6 @@ import { sendPopulatedTransaction } from "./evmTransaction";
 import type { RescueFile } from "./rescueFile";
 import { GasAbstractionType } from "./swapCreator";
 
-export { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
-
 export type GasAbstractionSweep = LibGasAbstractionSweep & {
     asset: AssetType;
 };

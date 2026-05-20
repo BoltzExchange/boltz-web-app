@@ -2,17 +2,33 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
+import type * as ClientModule from "boltz-swaps/client";
 import { vi } from "vitest";
 
 import {
     decodeInvoice,
     extractAddress,
     extractInvoice,
+    fetchBip353,
     isBip21,
     isInvoice,
     isLnurl,
     validateInvoiceForOffer,
 } from "../../src/utils/invoice";
+
+const { fetchBolt12InvoiceMock, lookupMock } = vi.hoisted(() => ({
+    fetchBolt12InvoiceMock: vi.fn(),
+    lookupMock: vi.fn(),
+}));
+
+vi.mock("boltz-swaps/client", async (importActual) => ({
+    ...(await importActual<typeof ClientModule>()),
+    fetchBolt12Invoice: fetchBolt12InvoiceMock,
+}));
+
+vi.mock("../../src/utils/dnssec/dohLookup", () => ({
+    lookup: lookupMock,
+}));
 
 describe("invoice", () => {
     test.each`
@@ -101,6 +117,7 @@ describe("invoice", () => {
 
         beforeEach(() => {
             vi.clearAllMocks();
+            fetchBolt12InvoiceMock.mockReset();
         });
 
         test.each`
@@ -205,7 +222,9 @@ describe("invoice", () => {
                 .spyOn(Bolt12, "verifySignature")
                 .mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
             expect(verifySignature).toHaveBeenCalledWith(
                 "invoice",
                 new Uint8Array(32).fill(3),
@@ -241,7 +260,9 @@ describe("invoice", () => {
             );
             vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
         });
 
         test("should accept x-only keys without conversion", () => {
@@ -269,7 +290,9 @@ describe("invoice", () => {
                 .spyOn(Bolt12, "verifySignature")
                 .mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
             expect(verifySignature).toHaveBeenCalledWith(
                 "invoice",
                 new Uint8Array(32).fill(3),
@@ -385,6 +408,93 @@ describe("invoice", () => {
             expect(() =>
                 validateInvoiceForOffer("lno1mock", "lni1mock"),
             ).toThrow("invoice does not belong to offer");
+        });
+
+        test("fetchBip353 returns the invoice when it matches the resolved offer", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [
+                    {
+                        type: "txt",
+                        contents: "bitcoin:?lno=lno1mock",
+                    },
+                ],
+            });
+            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
+                hrp: "lno",
+                offer_id: new Uint8Array(32).fill(4),
+                has_paths: false,
+                issuer_id: hex.encode(compressedPubkey),
+                records: [],
+            });
+            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
+                hrp: "lni",
+                data: new Uint8Array(),
+            });
+            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
+            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
+                invoice_node_id: compressedPubkey,
+                signature: new Uint8Array(64).fill(2),
+                records: [],
+            });
+            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
+                new Uint8Array(32).fill(3),
+            );
+            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
+            fetchBolt12InvoiceMock.mockResolvedValue({ invoice: "lni1mock" });
+
+            await expect(fetchBip353("user@example.com", 123)).resolves.toBe(
+                "lni1mock",
+            );
+            expect(fetchBolt12InvoiceMock).toHaveBeenCalledWith(
+                "lno1mock",
+                123,
+            );
+        });
+
+        test("fetchBip353 rejects an invoice whose signer does not match the resolved offer", async () => {
+            const otherKey = secp256k1.getPublicKey(
+                new Uint8Array(32).fill(2),
+                true,
+            );
+
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [
+                    {
+                        type: "txt",
+                        contents: "bitcoin:?lno=lno1mock",
+                    },
+                ],
+            });
+            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
+                hrp: "lno",
+                offer_id: new Uint8Array(32).fill(4),
+                has_paths: false,
+                issuer_id: hex.encode(compressedPubkey),
+                records: [],
+            });
+            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
+                hrp: "lni",
+                data: new Uint8Array(),
+            });
+            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
+            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
+                invoice_node_id: otherKey,
+                signature: new Uint8Array(64).fill(2),
+                records: [],
+            });
+            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
+                new Uint8Array(32).fill(3),
+            );
+            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
+            fetchBolt12InvoiceMock.mockResolvedValue({ invoice: "lni1mock" });
+
+            await expect(fetchBip353("user@example.com", 123)).rejects.toThrow(
+                "invoice does not belong to offer",
+            );
         });
     });
 });

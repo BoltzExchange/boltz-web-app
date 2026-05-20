@@ -1,9 +1,8 @@
 import { bridgeRegistry } from "boltz-swaps/bridge";
-import { ExplorerKind } from "boltz-swaps/types";
+import { ExplorerKind, SwapType } from "boltz-swaps/types";
 import { type Accessor, Match, Show, Switch, createMemo } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import {
     type SomeSwap,
     getPostBridgeDetail,

@@ -1,4 +1,4 @@
-import type { Pairs } from "../src/utils/boltzClient";
+import type { Pairs } from "boltz-swaps/client";
 
 export const pairs: Pairs = {
     submarine: {

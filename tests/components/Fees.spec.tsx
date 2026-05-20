@@ -1,17 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { getPairs } from "boltz-swaps/client";
 import { weiToSatoshi } from "boltz-swaps/evm";
+import { SwapType } from "boltz-swaps/types";
 
 import Fees from "../../src/components/Fees";
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
-import { Currency, Denomination, SwapType } from "../../src/consts/Enums";
+import { Currency, Denomination } from "../../src/consts/Enums";
 import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair, { BridgeMessagingFeeDisplayMode } from "../../src/utils/Pair";
-import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
@@ -29,7 +30,7 @@ import { pairs } from "../pairs";
 const mockUseWeb3Signer = vi.fn();
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 

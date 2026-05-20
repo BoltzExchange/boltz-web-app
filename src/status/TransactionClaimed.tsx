@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { SwapPosition } from "boltz-swaps/types";
+import { getSubmarinePreimage } from "boltz-swaps/client";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { Show, createEffect, createResource, createSignal } from "solid-js";
 
@@ -8,10 +9,8 @@ import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import { isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";

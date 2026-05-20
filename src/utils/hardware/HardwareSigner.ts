@@ -11,10 +11,6 @@ export const derivationPathsMainnet = {
     Rootstock: "44'/137'/0'/0",
 };
 
-export const derivationPathsTestnet = {
-    ["Rootstock Testnet"]: "44'/37310'/0'/0",
-};
-
 export const getDefaultNetworkAsset = (): string => {
     const asset = Object.entries(config.assets ?? {}).find(
         ([asset]) => (getRpcUrls(asset)?.length ?? 0) > 0,

@@ -1,5 +1,16 @@
 import type { RouterCall } from "boltz-swaps/bridge";
-import { satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    type QuoteData,
+    encodeDexQuote,
+    getCommitmentLockupDetails,
+    quoteDexAmountOut,
+} from "boltz-swaps/client";
+import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
+import {
+    createRouterContract,
+    createTokenContract,
+} from "boltz-swaps/evm/contracts";
+import { getSignerForGasAbstraction } from "boltz-swaps/evm/transaction";
 import {
     erc20SwapAbi,
     etherSwapAbi,
@@ -34,23 +45,9 @@ import {
     customDerivationPathRdns,
     useWeb3Signer,
 } from "../context/Web3";
-import {
-    createRouterContract,
-    createTokenContract,
-} from "../context/contracts";
 import type { EncodedHop } from "../utils/Pair";
-import {
-    type QuoteData,
-    encodeDexQuote,
-    getCommitmentLockupDetails,
-    quoteDexAmountOut,
-} from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
-import {
-    getSignerForGasAbstraction,
-    prefix0x,
-    sendPopulatedTransaction,
-} from "../utils/evmTransaction";
+import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
 import {

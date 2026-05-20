@@ -14,7 +14,6 @@ import type {
     OftLimit,
     OftReceipt,
     OftReceivedEvent,
-    OftRoute,
     OftSentEvent,
     OftTransportClient,
     OftTransportRunner,
@@ -26,10 +25,10 @@ import type {
     CctpTransferMode,
     NetworkTransport,
 } from "../types.ts";
+import type { BridgeRoute } from "./route.ts";
 
 export type { BridgeTransaction };
-
-export type BridgeRoute = OftRoute;
+export type { BridgeRoute };
 
 export type BridgeNativeDrop = {
     amount: bigint;

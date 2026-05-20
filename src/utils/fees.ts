@@ -1,10 +1,10 @@
+import { getFeeEstimations } from "boltz-swaps/client";
 import { Explorer } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC } from "../consts/Assets";
 import { getFeeEstimations as getFeeEstimationsFromExplorer } from "./blockchain";
-import { getFeeEstimations } from "./boltzClient";
 import { formatError } from "./errors";
 
 // HTLCs are time sensitive, so we need to add a floor to the fee estimations

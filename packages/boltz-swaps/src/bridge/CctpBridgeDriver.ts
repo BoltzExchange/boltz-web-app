@@ -173,15 +173,18 @@ export class CctpBridgeDriver extends BridgeDriver {
         }
 
         const fee = await this.getFee(route, options);
-        const netDenominator = cctpFeeBpsDenominator - fee.bpsUnits;
+        const bufferedBpsUnits = this.addBps(fee.bpsUnits, cctpMaxFeeBufferBps);
+        const bufferedForwardFee = this.addBps(
+            fee.forwardFee,
+            cctpMaxFeeBufferBps,
+        );
+        const netDenominator = cctpFeeBpsDenominator - bufferedBpsUnits;
         if (netDenominator <= 0n) {
             throw new Error("invalid CCTP fee configuration");
         }
 
-        // Need: amountIn - protocolFee(amountIn) - forwardFee >= amountOut,
-        // where protocolFee(amountIn) = amountIn * bpsUnits / denominator.
         return this.ceilDiv(
-            (amountOut + fee.forwardFee) * cctpFeeBpsDenominator,
+            (amountOut + bufferedForwardFee) * cctpFeeBpsDenominator,
             netDenominator,
         );
     };
@@ -541,10 +544,10 @@ export class CctpBridgeDriver extends BridgeDriver {
             );
         }
 
+        void args.msgFee;
+        void args.refundAddress;
         return await (args.contract as SolanaCctpTransportClient).send(
             args.sendParam as CctpSendParam,
-            args.msgFee,
-            args.refundAddress,
         );
     };
 

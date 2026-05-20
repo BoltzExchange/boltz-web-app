@@ -180,7 +180,7 @@ const makeWalletProvider = () =>
 
 const assets: Record<string, Asset> = {
     [h.ASSET]: {
-        type: AssetKind.Token,
+        type: AssetKind.ERC20,
         network: {
             chainName: "Solana",
             symbol: "SOL",
@@ -240,7 +240,9 @@ describe("createSolanaCctpContract send()", () => {
         fetchSpy.mockReset();
     });
 
-    test("no solburnUrl: compute-budget + burn ix only, user pays rent, single signer", async () => {
+    test("empty solburnUrl: compute-budget + burn ix only, user pays rent, single signer", async () => {
+        setBoltzSwapsConfig({ assets, solburnUrl: "" });
+
         const contract = createSolanaCctpContract({
             asset: h.ASSET,
             tokenMint: h.TOKEN_MINT,

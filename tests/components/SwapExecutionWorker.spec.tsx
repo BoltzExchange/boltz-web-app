@@ -257,14 +257,14 @@ vi.mock("../../src/context/Web3", () => ({
     }),
 }));
 
-vi.mock("../../src/context/contracts", () => ({
+vi.mock("../../packages/boltz-swaps/src/evm/contracts.ts", () => ({
     createRouterContract: () => ({
         address: "0x7000000000000000000000000000000000000000",
         abi: routerAbi,
     }),
 }));
 
-vi.mock("../../src/utils/boltzClient", () => ({
+vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
     encodeDexQuote: vi.fn().mockResolvedValue({
         calls: [
             {
@@ -298,7 +298,7 @@ vi.mock("boltz-swaps/tron", () => ({
     isFailedTronTransaction,
 }));
 
-vi.mock("../../src/utils/commitment", () => ({
+vi.mock("../../packages/boltz-swaps/src/evm/commitment.ts", () => ({
     emptyPreimageHash: `0x${"00".repeat(32)}`,
     isEmptyPreimageHash: (preimageHash?: string) =>
         preimageHash?.replace(/^0x/i, "").toLowerCase() === "00".repeat(32),

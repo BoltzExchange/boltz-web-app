@@ -1,3 +1,4 @@
 src/generated/*
 !src/generated/*-idl.json
 !src/generated/README.md
+.tsbuildinfo

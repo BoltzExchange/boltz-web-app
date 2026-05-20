@@ -1,4 +1,5 @@
 import { type BridgeTransaction, bridgeRegistry } from "boltz-swaps/bridge";
+import { createTokenContract } from "boltz-swaps/evm/contracts";
 import {
     type OftTransportClient,
     getTronTokenAllowance,
@@ -24,7 +25,6 @@ import { USDC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import { createTokenContract } from "../context/contracts";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { BridgeDetail } from "../utils/swapCreator";

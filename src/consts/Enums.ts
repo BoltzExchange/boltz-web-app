@@ -1,10 +1,3 @@
-export enum SwapType {
-    Submarine = "submarine",
-    Reverse = "reverse",
-    Chain = "chain",
-    Dex = "dex",
-}
-
 export enum Denomination {
     Sat = "sat",
     Btc = "btc",
@@ -39,9 +32,4 @@ export enum InvoiceValidation {
 export enum Currency {
     USD = "USD",
     EUR = "EUR",
-}
-
-export enum RskRescueMode {
-    Refund = "refund",
-    Claim = "resume",
 }

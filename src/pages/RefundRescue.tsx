@@ -1,5 +1,11 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
+import {
+    type ChainSwapDetails,
+    type RestorableSwap,
+    getSwapStatus,
+} from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -17,20 +23,14 @@ import BlockExplorer, {
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import {
-    type AssetType,
-    type RefundableAssetType,
-    type blockChainsAssets,
+import type {
+    AssetType,
+    RefundableAssetType,
+    blockChainsAssets,
 } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import {
-    type ChainSwapDetails,
-    type RestorableSwap,
-    getSwapStatus,
-} from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import {
     getCurrentBlockHeight,

@@ -1,8 +1,8 @@
+import { prefix0x } from "boltz-swaps/evm";
 import { ExplorerKind, NetworkTransport } from "boltz-swaps/types";
 
 import { chooseUrl, config } from "../config";
 import { getNetworkTransport } from "../consts/Assets";
-import { prefix0x } from "./evmTransaction";
 
 const getExplorerBaseUrl = (
     asset: string,

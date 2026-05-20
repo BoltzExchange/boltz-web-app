@@ -9,22 +9,22 @@ import {
     detectSwap,
 } from "boltz-core";
 import type { LiquidClaimDetails } from "boltz-core/liquid";
-import { type Buffer } from "buffer";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
-import log from "loglevel";
-
-import { type AssetType, LBTC, RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
-import type { deriveKeyFn } from "../context/Global";
-import secp from "../lazy/secp";
 import {
-    broadcastTransaction,
     getChainSwapClaimDetails,
     getPartialReverseClaimSignature,
     getSubmarineClaimDetails,
     postChainSwapDetails,
     postSubmarineClaimDetails,
-} from "./boltzClient";
+} from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
+import type { Buffer } from "buffer";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import log from "loglevel";
+
+import { type AssetType, LBTC, RBTC } from "../consts/Assets";
+import type { deriveKeyFn } from "../context/Global";
+import secp from "../lazy/secp";
+import { broadcastTransaction } from "./blockchain";
 import {
     type TransactionInterface,
     decodeAddress,
@@ -209,7 +209,7 @@ const claimReverseSwap = async (
             swap.id,
             preimage,
             withNonce.publicNonce,
-            claimTx,
+            txToHex(claimTx),
             0,
         );
 

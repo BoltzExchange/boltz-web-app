@@ -10,11 +10,11 @@ import {
     Router,
     useParams,
 } from "@solidjs/router";
-import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
 import { render } from "solid-js/web";
 
+import { configureBoltzSwaps } from "./boltzSwapsConfig";
 import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
@@ -49,31 +49,9 @@ import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
 import "./utils/patches";
-import { gasTopUpSupported, getGasTopUpNativeAmount } from "./utils/quoter";
 
 setLogger(log);
-setBoltzSwapsConfig({
-    get assets() {
-        return config.assets;
-    },
-    get cctpApiUrl() {
-        return config.cctpApiUrl;
-    },
-    get solburnUrl() {
-        return config.solburnUrl;
-    },
-    get layerZeroExplorerUrl() {
-        return config.layerZeroExplorerUrl;
-    },
-    get cctpExplorerUrl() {
-        return config.cctpExplorerUrl;
-    },
-    get oftDeploymentsUrl() {
-        return config.oftDeploymentsUrl;
-    },
-    gasTopUpSupported,
-    getGasTopUpNativeAmount,
-});
+configureBoltzSwaps();
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker
