@@ -906,7 +906,7 @@ const Create = () => {
                     </Show>
                     <div classList={{ hidden: destinationLocked() }}>
                         <InvoiceInput />
-                    <hr class="spacer" />
+                        <hr class="spacer" />
                     </div>
                 </Show>
                 <Show
