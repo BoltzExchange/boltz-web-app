@@ -8,6 +8,7 @@ import {
     TBTC,
     USDC,
     USDT0,
+    WBTC,
     getAssetDisplaySymbol,
 } from "../../consts/Assets";
 import type { tFn } from "../../context/Global";
@@ -30,6 +31,13 @@ export const recoveryOptions: RecoveryOption[] = [
     {
         asset: TBTC,
         className: "asset-TBTC",
+        network: "arbitrum",
+        actions: [RescueAction.Refund, RescueAction.Claim],
+        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
+    },
+    {
+        asset: WBTC,
+        className: "asset-WBTC",
         network: "arbitrum",
         actions: [RescueAction.Refund, RescueAction.Claim],
         methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],

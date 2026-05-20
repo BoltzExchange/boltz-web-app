@@ -82,6 +82,13 @@
 }
 .swaplist-asset span[data-asset="TBTC"] {
     background-image: vars.$tbtc_icon;
+    background-size: 80%;
+    background-position: center;
+}
+.swaplist-asset span[data-asset="WBTC"] {
+    background-image: vars.$wbtc_icon;
+    background-size: 80%;
+    background-position: center;
 }
 .swaplist-asset span[data-asset="USDT"] {
     background-image: vars.$usdt0_icon;

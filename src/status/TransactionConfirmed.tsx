@@ -109,6 +109,17 @@ export const normalizePersistedReceiveAmount = (
     return amount.toString();
 };
 
+export const getClaimAssetForRoute = (
+    assetReceive: string,
+    dex?: DexDetail,
+): string => {
+    if (dex?.position !== SwapPosition.Post) {
+        return assetReceive;
+    }
+
+    return dex.hops[0]?.from ?? assetReceive;
+};
+
 const withAutoClaimLock = async <T,>(
     swapId: string,
     fn: () => Promise<T>,
@@ -152,7 +163,7 @@ const getPostBridgeQuoteOptions = async (
 
 const getAcceptedQuoteAmount = async (
     amount: number,
-    assetReceive: string,
+    claimAsset: string,
     hop: EncodedHop,
     quote: ClaimQuote,
     destination: string,
@@ -168,7 +179,7 @@ const getAcceptedQuoteAmount = async (
         throw new Error("claim hop is missing DEX details");
     }
 
-    const claimAmount = satsToAssetAmount(amount, assetReceive);
+    const claimAmount = satsToAssetAmount(amount, claimAsset);
     const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridge);
     const bridgeQuoteOptions = await getPostBridgeQuoteOptions(
         bridge,
@@ -787,6 +798,8 @@ const AutoClaimHops = (props: {
             parsePersistedQuoteAmount(props.dex.quoteAmount),
             slippage(),
         );
+    const claimAsset = () =>
+        getClaimAssetForRoute(props.assetReceive, props.dex);
     const isOutsideSlippage = (quoteAmount: bigint) =>
         quoteAmount < quoteThreshold();
 
@@ -822,7 +835,7 @@ const AutoClaimHops = (props: {
             const claimSigner = getSignerForGasAbstraction(
                 props.gasAbstraction,
                 signer(),
-                getGasAbstractionSigner(props.assetReceive),
+                getGasAbstractionSigner(claimAsset()),
             );
             if (claimSigner === undefined) {
                 log.warn(
@@ -848,14 +861,14 @@ const AutoClaimHops = (props: {
                     claimHops(
                         props.dex.hops,
                         props.gasAbstraction,
-                        props.assetReceive,
+                        claimAsset(),
                         props.preimage,
                         props.amount,
                         props.refundAddress!,
                         props.timeoutBlockHeight,
                         props.signerAddress!,
                         () => claimSigner,
-                        getErc20Swap(props.assetReceive),
+                        getErc20Swap(claimAsset()),
                         slippage(),
                         quote.quote,
                         props.getGasToken === true,
@@ -896,18 +909,18 @@ const AutoClaimHops = (props: {
                     const hop = getSingleClaimHop(props.dex.hops);
                     const amountIn = satsToAssetAmount(
                         props.amount,
-                        props.assetReceive,
+                        claimAsset(),
                     );
                     const useDexGasToken =
                         props.bridge === undefined &&
                         props.getGasToken === true &&
-                        gasTopUpSupported(props.assetReceive);
+                        gasTopUpSupported(claimAsset());
                     const quote = await fetchDexQuote(
                         hop.dexDetails,
                         amountIn,
                         useDexGasToken,
                         useDexGasToken
-                            ? await getGasTopUpNativeAmount(props.assetReceive)
+                            ? await getGasTopUpNativeAmount(claimAsset())
                             : undefined,
                     );
                     if (props.signerAddress === undefined) {
@@ -915,7 +928,7 @@ const AutoClaimHops = (props: {
                     }
                     const quoteAmount = await getAcceptedQuoteAmount(
                         props.amount,
-                        props.assetReceive,
+                        claimAsset(),
                         hop,
                         quote,
                         props.signerAddress,

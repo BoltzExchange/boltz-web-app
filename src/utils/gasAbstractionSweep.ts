@@ -6,7 +6,7 @@ import {
 } from "boltz-swaps/evm";
 import type { Address } from "viem";
 
-import { type AssetType, TBTC, USDC, USDT0 } from "../consts/Assets";
+import { type AssetType, TBTC, USDC, USDT0, WBTC } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
 import { sendPopulatedTransaction } from "./evmTransaction";
 import type { RescueFile } from "./rescueFile";
@@ -16,7 +16,7 @@ export type GasAbstractionSweep = LibGasAbstractionSweep & {
     asset: AssetType;
 };
 
-export const gasAbstractionSweepAssets = [TBTC, USDT0, USDC] as const;
+export const gasAbstractionSweepAssets = [TBTC, WBTC, USDT0, USDC] as const;
 
 export const getSweepableGasAbstractionBalances = ({
     assets = gasAbstractionSweepAssets,

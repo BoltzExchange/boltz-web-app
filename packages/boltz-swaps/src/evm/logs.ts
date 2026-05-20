@@ -16,6 +16,7 @@ import {
 import {
     getContractDeployHeight,
     getKindForAsset,
+    getTokenAddress,
     requireChainId,
 } from "../config.ts";
 import { erc20SwapAbi, etherSwapAbi } from "../generated/evm-abis.ts";
@@ -147,6 +148,7 @@ type ScanResult = {
 type ScanContext = {
     asset: AssetType;
     isErc20: boolean;
+    tokenAddress?: Address;
     providerUrl: string;
     contractAddress: Address;
     latestBlock: number;
@@ -227,6 +229,9 @@ const createScanContext = async (
     const provider = createProvider([providerUrl]);
     const contractAddress = contract.address;
     const minBlock = getContractDeployHeight(asset) ?? 0;
+    const tokenAddress = isErc20
+        ? getAddress(getTokenAddress(asset))
+        : undefined;
 
     const [latestBlock, version] = await Promise.all([
         provider.getBlockNumber().then(Number),
@@ -261,6 +266,7 @@ const createScanContext = async (
     return {
         asset,
         isErc20,
+        tokenAddress,
         abi,
         args,
         providerUrl,
@@ -466,6 +472,15 @@ export async function* scanLockupEvents(
 
         for (const event of events) {
             const data = lockupLogToRefundData(ctx.asset, event);
+            if (
+                ctx.isErc20 &&
+                (data.tokenAddress === undefined ||
+                    ctx.tokenAddress === undefined ||
+                    !isAddressEqual(data.tokenAddress, ctx.tokenAddress))
+            ) {
+                continue;
+            }
+
             const match = matchesFilter(data, scanConfig.filter);
 
             if (match === null || match !== scanConfig.action) {

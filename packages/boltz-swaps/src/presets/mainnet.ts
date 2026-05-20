@@ -30,6 +30,7 @@ export type CoreMainnetAsset =
     | "L-BTC"
     | "RBTC"
     | "TBTC"
+    | "WBTC"
     | "USDT0"
     | "USDC";
 
@@ -85,6 +86,10 @@ const buildCoreAssets = (
     const arbRpcUrls = overrides.rpcUrls?.ARB ?? chains.ARB.defaultRpcUrls;
     const rbtcRpcUrls = overrides.rpcUrls?.RBTC ?? chains.RBTC.defaultRpcUrls;
     const arbitrumNetwork = buildArbitrumNetwork(arbRpcUrls);
+    const arbitrumErc20SwapContracts = {
+        deployHeight: 435848678,
+        router: "0x182589d2A10384e12EE8C1Fe350F4dfba36C7b73",
+    };
 
     return {
         BTC: {
@@ -162,10 +167,18 @@ const buildCoreAssets = (
                 address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
                 decimals: 18,
             },
-            contracts: {
-                deployHeight: 435848678,
-                router: "0x182589d2A10384e12EE8C1Fe350F4dfba36C7b73",
+            contracts: arbitrumErc20SwapContracts,
+        },
+        WBTC: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+                decimals: 8,
+                routeVia: "TBTC",
             },
+            contracts: arbitrumErc20SwapContracts,
         },
         USDT0: {
             type: AssetKind.ERC20,

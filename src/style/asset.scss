@@ -96,6 +96,17 @@
     }
 }
 
+.asset-WBTC {
+    .icon {
+        background-image: vars.$wbtc_icon;
+        background-size: 80%;
+        background-position: center;
+    }
+    .asset-text:before {
+        content: "WBTC";
+    }
+}
+
 .asset-USDT {
     .icon {
         background-image: vars.$usdt0_icon;

@@ -10,6 +10,7 @@ import {
     TBTC,
     USDC,
     USDT0,
+    WBTC,
     getAssetDisplaySymbol,
     getBridgeMesh,
     getBridgeVariants,
@@ -41,6 +42,7 @@ describe("Assets", () => {
             ${LBTC}         | ${LBTC}
             ${LN}           | ${LN}
             ${RBTC}         | ${RBTC}
+            ${WBTC}         | ${WBTC}
             ${USDT0}        | ${USDT0}
             ${USDC}         | ${USDC}
             ${"USDT0-ETH"}  | ${USDT0}
@@ -59,6 +61,7 @@ describe("Assets", () => {
             ${LBTC}         | ${"LBTC"}
             ${LN}           | ${"LN"}
             ${RBTC}         | ${"RBTC"}
+            ${WBTC}         | ${"WBTC"}
             ${USDT0}        | ${"USDT"}
             ${USDC}         | ${"USDC"}
             ${"USDT0-ETH"}  | ${"USDT"}
@@ -146,6 +149,7 @@ describe("Assets", () => {
             ${"USDT0-POL"}    | ${"TBTC"}
             ${BTC}            | ${undefined}
             ${TBTC}           | ${undefined}
+            ${WBTC}           | ${"TBTC"}
             ${"not-an-asset"} | ${undefined}
         `("$input -> $expected", ({ input, expected }) => {
             expect(getRouteViaAsset(input)).toBe(expected);
@@ -157,6 +161,7 @@ describe("Assets", () => {
 
         test("resolves the canonical asset's routeVia hop router", () => {
             expect(getRouterAddress(USDT0)).toBe(tbtcRouter);
+            expect(getRouterAddress(WBTC)).toBe(tbtcRouter);
         });
 
         test("inherits the canonical router path for bridge variants", () => {
@@ -199,6 +204,7 @@ describe("Assets", () => {
             input          | expected
             ${BTC}         | ${false}
             ${RBTC}        | ${false}
+            ${WBTC}        | ${false}
             ${USDT0}       | ${true}
             ${"USDT0-ETH"} | ${true}
             ${"USDT0-POL"} | ${true}

@@ -6,7 +6,15 @@ import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
 import type * as BaseConfigModule from "../../src/configs/base";
-import { BTC, LBTC, LN, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    TBTC,
+    USDC,
+    USDT0,
+    WBTC,
+} from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as QuoterModule from "../../src/utils/quoter";
 
@@ -147,6 +155,15 @@ vi.mock("../../src/config", async () => {
                     token: {
                         ...actual.config.assets!.TBTC.token,
                         address: "0x0000000000000000000000000000000000008888",
+                    },
+                },
+                WBTC: {
+                    ...actual.config.assets!.TBTC,
+                    canSend: true,
+                    token: {
+                        address: "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+                        decimals: 8,
+                        routeVia: "TBTC",
                     },
                 },
                 "ROUTED-DIS": {
@@ -309,6 +326,21 @@ const pairs: Pairs = {
     },
     reverse: {
         BTC: {
+            [TBTC]: {
+                hash: "ln-tbtc-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        claim: 0,
+                        lockup: 0,
+                    },
+                },
+            },
             USDT0: {
                 hash: "ln-usdt0-pair-hash",
                 rate: 1,
@@ -347,8 +379,48 @@ const pairs: Pairs = {
                     },
                 },
             },
+            [TBTC]: {
+                hash: "btc-tbtc-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        server: 0,
+                        user: {
+                            claim: 0,
+                            lockup: 0,
+                        },
+                    },
+                },
+            },
             USDT0: {
                 hash: "btc-usdt0-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        server: 0,
+                        user: {
+                            claim: 0,
+                            lockup: 0,
+                        },
+                    },
+                },
+            },
+        },
+        [TBTC]: {
+            BTC: {
+                hash: "tbtc-btc-pair-hash",
                 rate: 1,
                 limits: {
                     maximal: 1_000_000,
@@ -526,6 +598,31 @@ describe("Pair", () => {
             from: LN,
             to: TBTC,
         });
+    });
+
+    test("should route WBTC receives through a post-swap TBTC DEX hop", () => {
+        for (const from of [BTC, LN]) {
+            const pair = new Pair(pairs, from, WBTC, pairs);
+
+            expect(pair.isRoutable).toBe(true);
+            expect(pair.swapToCreate).toMatchObject({
+                from,
+                to: TBTC,
+            });
+            expect(pair.requiredInput).toBe(RequiredInput.Web3);
+        }
+    });
+
+    test("should route WBTC sends through a pre-swap TBTC DEX hop", () => {
+        for (const to of [BTC, LN]) {
+            const pair = new Pair(pairs, WBTC, to, pairs);
+
+            expect(pair.isRoutable).toBe(true);
+            expect(pair.swapToCreate).toMatchObject({
+                from: TBTC,
+                to,
+            });
+        }
     });
 
     test("should treat disabled `from` asset as non-routable", () => {

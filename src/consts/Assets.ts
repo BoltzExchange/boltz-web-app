@@ -13,6 +13,7 @@ export const BTC = "BTC";
 export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
+export const WBTC = "WBTC";
 export const USDT0 = "USDT0";
 export const USDC = "USDC";
 export const ETH = "ETH";
@@ -23,6 +24,7 @@ export type AssetType =
     | typeof LBTC
     | typeof RBTC
     | typeof TBTC
+    | typeof WBTC
     | typeof USDT0
     | typeof USDC;
 
@@ -38,7 +40,16 @@ export type blockChainsAssets =
     | typeof RBTC
     | typeof ETH;
 
-const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0, USDC];
+const assetDisplayOrder: string[] = [
+    LN,
+    BTC,
+    LBTC,
+    RBTC,
+    TBTC,
+    WBTC,
+    USDT0,
+    USDC,
+];
 
 export const assets: string[] = [
     ...assetDisplayOrder.filter(
@@ -53,7 +64,7 @@ export const refundableAssets = [BTC, LBTC, RBTC, TBTC];
 
 export const btcChains = [BTC, LBTC];
 
-export const evmChains = [RBTC, TBTC, USDT0, USDC];
+export const evmChains = [RBTC, TBTC, WBTC, USDT0, USDC];
 
 const networkBadgeAliases: Record<string, string> = {
     "Arbitrum One": "arbitrum",

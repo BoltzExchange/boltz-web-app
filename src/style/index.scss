@@ -1122,7 +1122,7 @@ textarea.invalid {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 20vh;
+    padding-top: clamp(48px, 8vh, 96px);
 }
 
 .asset-select-modal {
@@ -1226,7 +1226,7 @@ textarea.invalid {
 .asset-select-list {
     overflow-y: auto;
     padding: 10px;
-    max-height: min(60vh, 480px);
+    max-height: 70vh;
 
     &::-webkit-scrollbar {
         width: 6px;

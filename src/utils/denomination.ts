@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 import { AssetKind } from "boltz-swaps/types";
 
 import { config } from "../config";
-import { getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
+import { WBTC, getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
@@ -20,13 +20,14 @@ export const getValidationRegex = (maximum: number): RegExp => {
 export const getDecimals = (asset: string) => {
     const assetConfig = config.assets?.[asset];
 
-    const isRoutedErc20 =
+    const usesTokenUnits =
+        asset !== WBTC &&
         assetConfig?.type === AssetKind.ERC20 &&
         (assetConfig?.token?.routeVia !== undefined || isBridgeAsset(asset));
 
     return {
-        isErc20: isRoutedErc20,
-        decimals: isRoutedErc20
+        isErc20: usesTokenUnits,
+        decimals: usesTokenUnits
             ? (assetConfig?.token?.decimals ?? satDecimals)
             : satDecimals,
     };

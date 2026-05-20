@@ -2,7 +2,7 @@ import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import { createSignal } from "solid-js";
 
-import { USDT0 } from "../../src/consts/Assets";
+import { USDT0, WBTC } from "../../src/consts/Assets";
 import { Currency } from "../../src/consts/Enums";
 import type { FiatContextType } from "../../src/context/Fiat";
 
@@ -29,7 +29,11 @@ describe("FiatAmount", () => {
         fiatContextMock.value = undefined;
     });
 
-    const renderStablecoinAmount = (context: Partial<FiatContextType>) => {
+    const renderAmount = (
+        asset: string,
+        amount: number,
+        context: Partial<FiatContextType>,
+    ) => {
         const [btcPrice] = createSignal<BigNumber | Error | null>(
             BigNumber(95_000),
         );
@@ -46,13 +50,12 @@ describe("FiatAmount", () => {
         };
 
         render(() => (
-            <FiatAmount
-                asset={() => USDT0}
-                amount={100_000_000}
-                variant="text"
-            />
+            <FiatAmount asset={() => asset} amount={amount} variant="text" />
         ));
     };
+
+    const renderStablecoinAmount = (context: Partial<FiatContextType>) =>
+        renderAmount(USDT0, 100_000_000, context);
 
     test("should not label USD stablecoin face values as EUR without a conversion rate", () => {
         renderStablecoinAmount({});
@@ -67,5 +70,11 @@ describe("FiatAmount", () => {
         renderStablecoinAmount({ usdToFiatRate });
 
         expect(screen.getByText(/92\.00 EUR/)).toBeInTheDocument();
+    });
+
+    test("should treat WBTC amounts as sats for fiat conversion", () => {
+        renderAmount(WBTC, 100_000_000, {});
+
+        expect(screen.getByText(/95000\.00 EUR/)).toBeInTheDocument();
     });
 });

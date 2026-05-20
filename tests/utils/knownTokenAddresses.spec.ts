@@ -2,7 +2,7 @@ import { isKnownTokenAddress } from "boltz-swaps/evm";
 
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import { BTC, RBTC, TBTC, USDC, USDT0, WBTC } from "../../src/consts/Assets";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
@@ -23,6 +23,7 @@ describe("known token addresses", () => {
     test.each`
         asset           | tokenAddress
         ${TBTC}         | ${"0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40"}
+        ${WBTC}         | ${"0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f"}
         ${USDC}         | ${"0xAF88D065E77C8CC2239327C5EDB3A432268E5831"}
         ${USDT0}        | ${"0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9"}
         ${"USDC-SOL"}   | ${"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"}
