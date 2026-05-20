@@ -26,7 +26,7 @@ are:
 - `BTC`
 - `L-BTC`
 - `RBTC`
-- `TBTC`
+- `TBTC` (Arbitrum)
 - `WBTC` (Arbitrum)
 - `USDT0` (Arbitrum)
 - `USDT0-BERA`

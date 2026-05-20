@@ -166,13 +166,16 @@ export const getEvmScanTargets = (
         !skipArbitrum &&
         arbEndpoint &&
         arbitrumRescueAssets.some(
-            (asset) => config.assets?.[asset]?.contracts?.deployHeight,
+            (asset) =>
+                config.assets?.[asset]?.contracts?.deployHeight !== undefined,
         )
     ) {
         targets.push(
             ...arbitrumRescueAssets
                 .filter(
-                    (asset) => config.assets?.[asset]?.contracts?.deployHeight,
+                    (asset) =>
+                        config.assets?.[asset]?.contracts?.deployHeight !==
+                        undefined,
                 )
                 .map((asset) => ({
                     asset,
