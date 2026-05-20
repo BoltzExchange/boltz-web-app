@@ -38,10 +38,17 @@ const MnemonicVerifyContent = (props: MnemonicVerifyContentProps) => {
     });
 
     const generateFakeWord = () => {
-        return wordlist.filter(
-            (word) =>
-                mnemonicGroups()[displayedGroup()]?.verificationWord !== word,
-        )[Math.floor(Math.random() * (wordlist.length - groupSize - 1))];
+        const groupWords =
+            rescueFile()
+                ?.mnemonic.split(" ")
+                .slice(
+                    displayedGroup() * groupSize,
+                    displayedGroup() * groupSize + groupSize,
+                ) ?? [];
+        const candidates = wordlist.filter(
+            (word) => !groupWords.includes(word),
+        );
+        return candidates[Math.floor(Math.random() * candidates.length)];
     };
 
     const isVerificationWord = (index: number) => {

@@ -79,6 +79,34 @@ describe("MnemonicVerifyContent", () => {
         expect(incorrectButtonTexts.length).toEqual(3);
     });
 
+    it("should not pick a fake button that matches any word in the displayed group", async () => {
+        const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <MnemonicVerifyContent onIncorrect={onIncorrect} />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+            const mnemonic =
+                "abandon ability able about above absent absorb abstract absurd abuse access accident";
+            globalSignals.setRescueFile({ mnemonic });
+
+            const buttonTexts = await getButtonTexts();
+            const groupWords = mnemonic.split(" ").slice(0, 4);
+
+            expect(buttonTexts[0]).toBe("abandon");
+            for (let i = 1; i < buttonTexts.length; i++) {
+                expect(groupWords).not.toContain(buttonTexts[i]);
+            }
+        } finally {
+            randomSpy.mockRestore();
+        }
+    });
+
     it("should set rescueFileBackupDone when all words are correct", async () => {
         render(
             () => (
