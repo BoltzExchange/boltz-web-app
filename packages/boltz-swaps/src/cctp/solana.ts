@@ -1,10 +1,10 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
 import type { Connection, TransactionInstruction } from "@solana/web3.js";
-import log from "loglevel";
 
 import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
 import { constructRequestOptions } from "../helper.ts";
+import { getLogger } from "../logger.ts";
 import {
     derivePda,
     formatSolanaLogsMessage,
@@ -125,7 +125,9 @@ export const tryFetchSolburnAllocation = async (
     try {
         const response = await fetch(`${trimmed}/allocate`, opts);
         if (!response.ok) {
-            log.warn(`solburn /allocate failed: HTTP ${response.status}`);
+            getLogger().warn(
+                `solburn /allocate failed: HTTP ${response.status}`,
+            );
             return null;
         }
         const body = (await response.json()) as {
@@ -139,7 +141,7 @@ export const tryFetchSolburnAllocation = async (
             ),
         };
     } catch (error) {
-        log.warn(`solburn /allocate error: ${String(error)}`);
+        getLogger().warn(`solburn /allocate error: ${String(error)}`);
         return null;
     } finally {
         clearTimeout(requestTimeout);

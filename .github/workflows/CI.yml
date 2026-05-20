@@ -52,6 +52,8 @@ jobs:
 
             - run: bun run check:lazy
 
+            - run: bun run check:package
+
     e2e:
         timeout-minutes: 60
         runs-on: ubuntu-latest
