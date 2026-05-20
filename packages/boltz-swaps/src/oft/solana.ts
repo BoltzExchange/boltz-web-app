@@ -1,17 +1,22 @@
 import type { Umi } from "@metaplex-foundation/umi";
 import type { WalletAdapter as UmiWalletAdapter } from "@metaplex-foundation/umi-signer-wallet-adapters";
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
-import { hex } from "@scure/base";
+import { base58, hex } from "@scure/base";
 import type {
     AccountMeta,
     AddressLookupTableAccount,
     Connection,
+    SendOptions,
+    Transaction,
     TransactionInstruction,
+    VersionedTransaction,
 } from "@solana/web3.js";
 
+import type { PendingSolanaOftBridgeSend } from "../bridge/pendingSend.ts";
+import { PendingBridgeSendKind } from "../bridge/types.ts";
 import { getCachedValue } from "../cache.ts";
 import { getBoltzSwapsConfig } from "../config.ts";
-import { formatError } from "../errors.ts";
+import { formatError, isWalletRejectionError } from "../errors.ts";
 import { prefix0x } from "../evm/prefix0x.ts";
 import { getLogger } from "../logger.ts";
 import {
@@ -30,7 +35,12 @@ import {
     NetworkTransport,
 } from "../types.ts";
 import { decodeBase64 } from "../util/base64.ts";
-import type { MsgFee, OftTransportClient, SendParam } from "./types.ts";
+import type {
+    MsgFee,
+    OftTransportClient,
+    PendingBridgeSendCallbacks,
+    SendParam,
+} from "./types.ts";
 
 type SolanaOftModules = Awaited<ReturnType<(typeof lazySolanaOft)["get"]>>;
 
@@ -511,6 +521,24 @@ const createTransaction = async (
     };
 };
 
+const getSignedTransactionSignature = (
+    signedTransaction: Transaction | VersionedTransaction,
+): string => {
+    const signature = signedTransaction.signatures[0];
+    const bytes =
+        signature instanceof Uint8Array ? signature : signature?.signature;
+    // Solana initialises signature slots to 64 zero bytes; a wallet that
+    // returns the transaction unsigned would leave them that way.
+    if (
+        bytes === undefined ||
+        bytes === null ||
+        bytes.every((byte) => byte === 0)
+    ) {
+        throw new Error("Solana wallet did not return a transaction signature");
+    }
+    return base58.encode(bytes);
+};
+
 const simulateTransactionReturn = async <T>(
     context: Context,
     instructions: TransactionInstruction[],
@@ -685,6 +713,7 @@ const sendLegacyMesh = async (
     context: Context,
     sendParam: SendParam,
     msgFee: MsgFee,
+    pendingSendCallbacks?: PendingBridgeSendCallbacks,
 ): Promise<BridgeTransaction> => {
     const { modules } = context;
     const signerAddress = context.walletAdapter?.publicKey?.toBase58();
@@ -735,16 +764,107 @@ const sendLegacyMesh = async (
         );
     }
 
-    try {
+    const sendOptions: SendOptions = {
+        skipPreflight: true,
+        preflightCommitment: "confirmed",
+    };
+    const sendWithWallet = async (): Promise<BridgeTransaction> => {
         const signature = await walletProvider.signAndSendTransaction(
             transaction,
-            {
-                skipPreflight: true,
-                preflightCommitment: "confirmed",
-            },
+            sendOptions,
         );
         return {
             hash: signature,
+            details: {
+                solana: {
+                    blockhash: latestBlockhash.blockhash,
+                },
+            },
+        };
+    };
+
+    const signTransaction =
+        walletProvider.signTransaction?.bind(walletProvider);
+    if (signTransaction === undefined) {
+        getLogger().warn("Falling back to wallet-managed Solana OFT send", {
+            sourceAsset: asset,
+            sender: signerAddress,
+            reason: "Connected Solana wallet does not support signing transactions without broadcasting",
+        });
+        return await sendWithWallet();
+    }
+
+    try {
+        let signature: string;
+        let serializedSignedTransaction: Uint8Array;
+        try {
+            const signedTransaction = await signTransaction(transaction);
+            signature = getSignedTransactionSignature(signedTransaction);
+            serializedSignedTransaction = signedTransaction.serialize();
+        } catch (error) {
+            if (isWalletRejectionError(error)) {
+                throw error;
+            }
+
+            getLogger().warn("Falling back to wallet-managed Solana OFT send", {
+                sourceAsset: asset,
+                sender: signerAddress,
+                reason: formatError(error),
+            });
+            return await sendWithWallet();
+        }
+
+        const pendingSend: PendingSolanaOftBridgeSend = {
+            kind: PendingBridgeSendKind.SolanaOft,
+            sourceAsset: asset,
+            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            signature,
+        };
+        getLogger().info("Signed pending Solana OFT send", {
+            sourceAsset: asset,
+            sender: signerAddress,
+            signature,
+        });
+
+        const rawTransaction = Buffer.from(serializedSignedTransaction);
+        const encodedTransaction = rawTransaction.toString("base64");
+
+        getLogger().info("Broadcasting pending Solana OFT send...", {
+            sourceAsset: asset,
+            sender: signerAddress,
+            encodedTransaction,
+        });
+        const broadcastSignature =
+            await context.connection.sendEncodedTransaction(
+                encodedTransaction,
+                sendOptions,
+            );
+        await pendingSendCallbacks?.persist(pendingSend);
+
+        // The RPC derives the signature from the bytes we sent so it should
+        // always match the one we computed locally; re-persist if it ever
+        // doesn't so recovery looks for the right one.
+        if (broadcastSignature !== signature) {
+            getLogger().warn(
+                "Solana RPC returned a different broadcast signature",
+                {
+                    expected: signature,
+                    broadcastSignature,
+                },
+            );
+            await pendingSendCallbacks?.persist({
+                ...pendingSend,
+                signature: broadcastSignature,
+            });
+        }
+        getLogger().info("Broadcast pending Solana OFT send", {
+            sourceAsset: asset,
+            sender: signerAddress,
+            signature: broadcastSignature,
+        });
+
+        return {
+            hash: broadcastSignature,
             details: {
                 solana: {
                     blockhash: latestBlockhash.blockhash,
@@ -819,12 +939,13 @@ export const createSolanaOftContract = (
             await quoteOft(await contextPromise, sendParam),
         quoteSend: async (sendParam, payInLzToken) =>
             await quoteSend(await contextPromise, sendParam, payInLzToken),
-        send: async (sendParam, msgFee) =>
+        send: async (sendParam, msgFee, _refundAddress, overrides) =>
             await sendLegacyMesh(
                 contextConfig.asset,
                 await contextPromise,
                 sendParam,
                 msgFee,
+                overrides?.pendingSendCallbacks,
             ),
     };
 };

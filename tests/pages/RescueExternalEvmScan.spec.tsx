@@ -91,6 +91,7 @@ describe("RescueExternal EVM scan", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.stubEnv("VITE_RSK_LOG_SCAN_ENDPOINT", "http://localhost:8545");
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "");
         mockGetRestorableSwaps.mockResolvedValue([]);
         mockGetSweepableGasAbstractionBalances.mockResolvedValue([]);
     });

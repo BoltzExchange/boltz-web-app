@@ -7,7 +7,7 @@ import { config as runtimeConfig } from "../src/config";
 import { chooseUrl } from "../src/configs/base";
 import { config as mainnetConfig } from "../src/configs/mainnet";
 
-log.setLevel("error");
+log.setLevel("silent");
 setLogger(log);
 
 setBoltzSwapsConfig({

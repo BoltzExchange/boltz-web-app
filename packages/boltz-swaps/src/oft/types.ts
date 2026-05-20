@@ -2,6 +2,7 @@ import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solan
 import type { TronConnector } from "@reown/appkit-utils/tron";
 import type { Abi, PublicClient } from "viem";
 
+import type { PendingBridgeSend } from "../bridge/pendingSend.ts";
 import type { BridgeRoute } from "../bridge/route.ts";
 import type { Signer } from "../interfaces/signer.ts";
 import type { BridgeTransaction, NetworkTransport } from "../types.ts";
@@ -34,6 +35,15 @@ export type OftQuoteOptions = {
 export type OftLimit = [bigint, bigint];
 export type OftFeeDetail = [bigint, string];
 export type OftReceipt = [bigint, bigint];
+
+export type PendingBridgeSendCallbacks = {
+    persist: (pending: PendingBridgeSend) => Promise<void>;
+};
+
+export type OftSendOverrides = {
+    value?: bigint;
+    pendingSendCallbacks?: PendingBridgeSendCallbacks;
+};
 
 export type OftReceiveQuote = {
     amountIn: bigint;
@@ -79,9 +89,7 @@ export type OftTransportClient = {
         sendParam: SendParam,
         msgFee: MsgFee,
         refundAddress: string,
-        overrides?: {
-            value?: bigint;
-        },
+        overrides?: OftSendOverrides,
     ) => Promise<BridgeTransaction>;
     approvalRequired?: () => Promise<boolean>;
 };

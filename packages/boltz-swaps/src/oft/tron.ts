@@ -11,9 +11,12 @@ import {
     maxUint256,
 } from "viem";
 
+import type { PendingTronOftBridgeSend } from "../bridge/pendingSend.ts";
+import { PendingBridgeSendKind } from "../bridge/types.ts";
 import { getTokenAddress } from "../config.ts";
 import { prefix0x } from "../evm/prefix0x.ts";
 import { erc20Abi } from "../generated/evm-abis.ts";
+import { getLogger } from "../logger.ts";
 import {
     type TronSignedTransaction,
     type TronTransactionInfo,
@@ -31,7 +34,9 @@ import type {
     OftFeeDetail,
     OftLimit,
     OftReceipt,
+    OftSendOverrides,
     OftSentEvent,
+    PendingBridgeSendCallbacks,
     SendParam,
 } from "./types.ts";
 
@@ -111,6 +116,14 @@ const normalizeTronSignedTransaction = (
         return response.result;
     }
     return response;
+};
+
+const getTronTransactionHash = (transaction: TronSignedTransaction): string => {
+    const txId = transaction.txID;
+    if (typeof txId !== "string" || txId === "") {
+        throw new Error("Tron transaction does not include a transaction ID");
+    }
+    return txId;
 };
 
 const signTronTransaction = async (
@@ -356,10 +369,7 @@ const submitSignedTronTransaction = async (
     client: TronWebClient,
     signedTransaction: TronSignedTransaction,
 ): Promise<BridgeTransaction> => {
-    const transactionHash = signedTransaction.txID;
-    if (transactionHash === undefined || transactionHash === "") {
-        throw new Error("Tron wallet did not return a transaction ID");
-    }
+    const transactionHash = getTronTransactionHash(signedTransaction);
 
     const broadcast = await client.trx.sendRawTransaction(signedTransaction);
     if (broadcast.result !== true) {
@@ -554,6 +564,7 @@ const sendTronOft = async (params: {
     sendParam: SendParam;
     msgFee: MsgFee;
     refundAddress: string;
+    pendingSendCallbacks?: PendingBridgeSendCallbacks;
 }): Promise<BridgeTransaction> => {
     const { client, transaction } = await buildTronSmartContractTransaction({
         sourceAsset: params.sourceAsset,
@@ -572,14 +583,34 @@ const sendTronOft = async (params: {
         errorContext: "Tron OFT send transaction",
         callValue: params.msgFee[0],
     });
-
     const signedTransaction = await signTronTransaction(
         params.walletProvider as WalletConnectTronConnector,
         params.refundAddress,
         transaction,
     );
+    const transactionHash = getTronTransactionHash(signedTransaction);
 
-    return await submitSignedTronTransaction(client, signedTransaction);
+    const log = getLogger();
+    log.info("Broadcasting pending Tron OFT send...", {
+        sourceAsset: params.sourceAsset,
+        sender: params.refundAddress,
+        txHash: transactionHash,
+    });
+    const sentTransaction = await submitSignedTronTransaction(
+        client,
+        signedTransaction,
+    );
+
+    const txToPersist: PendingTronOftBridgeSend = {
+        kind: PendingBridgeSendKind.TronOft,
+        createdAt: Date.now(),
+        sourceAsset: params.sourceAsset,
+        txHash: sentTransaction.hash,
+    };
+    await params.pendingSendCallbacks?.persist(txToPersist);
+    log.info("Persisted pending Tron OFT send", txToPersist);
+
+    return sentTransaction;
 };
 
 export const createTronOftContract = (params: CreateTronOftContractParams) => ({
@@ -594,6 +625,7 @@ export const createTronOftContract = (params: CreateTronOftContractParams) => ({
         sendParam: SendParam,
         msgFee: MsgFee,
         refundAddress: string,
+        overrides?: OftSendOverrides,
     ): Promise<BridgeTransaction> => {
         if (params.walletProvider === undefined) {
             throw new Error(
@@ -608,6 +640,7 @@ export const createTronOftContract = (params: CreateTronOftContractParams) => ({
             sendParam,
             msgFee,
             refundAddress,
+            pendingSendCallbacks: overrides?.pendingSendCallbacks,
         });
     },
 });

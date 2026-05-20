@@ -89,6 +89,8 @@ vi.mock("boltz-swaps/config", async (importActual) => ({
 vi.mock("../../src/oft/evm.ts", () => ({
     createEvmOftContract: (...args: unknown[]) =>
         mockCreateEvmOftContract(...args),
+    oftAbi: [],
+    tempoOftWrapperAbi: [],
     toViemSendParam: (sendParam: unknown[]) => sendParam,
 }));
 

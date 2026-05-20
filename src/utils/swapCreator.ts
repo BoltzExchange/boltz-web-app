@@ -2,7 +2,11 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
-import type { BridgeDetails, BridgeRoute } from "boltz-swaps/bridge";
+import type {
+    BridgeDetails,
+    BridgeRoute,
+    PendingBridgeSend,
+} from "boltz-swaps/bridge";
 import {
     type ChainSwapCreatedResponse,
     type ReverseCreatedResponse,
@@ -42,6 +46,11 @@ export type BridgeDetail = BridgeRoute & {
     position: SwapPosition;
     txHash?: string;
     details?: BridgeDetails;
+    pendingSend?: PendingBridgeSend;
+};
+
+export type PendingBridgeSendCallbacks = {
+    persist: (pending: PendingBridgeSend) => Promise<void>;
 };
 
 export type GasAbstraction = {

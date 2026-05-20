@@ -105,4 +105,24 @@ describe("WaitForBridge", () => {
             vi.mocked(waitForOftTransactionConfirmationTimestamp),
         ).toHaveBeenCalledTimes(1);
     });
+
+    test("shows the in-progress copy without a transaction hash", () => {
+        render(() => (
+            <WaitForBridge
+                bridge={{
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Pre,
+                    sourceAsset: "USDT0-ETH",
+                    destinationAsset: "USDT0",
+                }}
+            />
+        ));
+
+        expect(
+            screen.getByText(mockTranslations.oft_transfer_in_progress),
+        ).toBeInTheDocument();
+        expect(
+            waitForOftTransactionConfirmationTimestamp,
+        ).not.toHaveBeenCalled();
+    });
 });
