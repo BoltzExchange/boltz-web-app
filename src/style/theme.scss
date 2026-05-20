@@ -127,6 +127,8 @@ $boltz_icon: url(/boltz-icon.svg);
         var(--color-link-hover) 80%,
         transparent
     );
+
+    --color-text-glow: color-mix(in srgb, var(--color-text) 35%, transparent);
 }
 
 :root[boltz-theme="pro"] {
@@ -136,6 +138,7 @@ $boltz_icon: url(/boltz-icon.svg);
         var(--color-primary) 60%,
         transparent
     );
+    --color-primary-lighter: #e8a268;
     --color-primary-glow: color-mix(
         in srgb,
         var(--color-primary) 80%,

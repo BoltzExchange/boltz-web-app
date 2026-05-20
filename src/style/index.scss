@@ -5,11 +5,11 @@
 
 * {
     box-sizing: border-box;
-    font-family: "Noto Sans", sans;
+    font-family: "Noto Sans", sans-serif;
 }
 
 .monospace {
-    font-family: "Noto Mono", sans;
+    font-family: "Noto Mono", monospace;
 }
 
 body {
@@ -632,7 +632,7 @@ textarea.invalid {
     }
 
     &:disabled {
-        color: var(--color-white-20);
+        color: var(--color-white-15);
         background: transparent;
         border-color: var(--color-white-05);
         cursor: not-allowed;
@@ -1395,7 +1395,7 @@ textarea.invalid {
 }
 
 .break-word {
-    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .copy-box {

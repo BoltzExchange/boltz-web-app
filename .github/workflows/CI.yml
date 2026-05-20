@@ -19,6 +19,8 @@ jobs:
 
             - run: bun run lint
 
+            - run: bun run lint:style
+
             - run: bun run prettier:check
 
             - run: bun run test
