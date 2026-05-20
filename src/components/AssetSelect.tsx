@@ -16,11 +16,7 @@ import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
-import {
-    findEnabledIndex,
-    handleListKeyDown,
-    scrollToFocused,
-} from "../utils/assetSearch";
+import { findEnabledIndex, handleListKeyDown } from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
@@ -44,7 +40,6 @@ const SelectAsset = () => {
     } = useCreateContext();
 
     const [focusedIndex, setFocusedIndex] = createSignal(0);
-    let listRef!: HTMLDivElement;
 
     const assets = createMemo(() =>
         orderedAssets.filter(
@@ -70,8 +65,6 @@ const SelectAsset = () => {
             );
         }
     });
-
-    createEffect(() => scrollToFocused(listRef, focusedIndex()));
 
     const selectFocused = () => handleAssetClick(assets()[focusedIndex()]);
     const close = () => {
@@ -152,7 +145,7 @@ const SelectAsset = () => {
             when={assetSelection() === AssetSelection.Asset && !bitcoinOnly()}>
             <div class="asset-select-overlay" onClick={close}>
                 <div
-                    class="asset-select-modal"
+                    class="asset-select-modal asset-select-modal--assets"
                     ref={(el) => setTimeout(() => el.focus())}
                     tabIndex={-1}
                     onKeyDown={handleKeyDown}
@@ -174,7 +167,7 @@ const SelectAsset = () => {
                             <IoClose />
                         </button>
                     </div>
-                    <div class="asset-select-list" ref={listRef}>
+                    <div class="asset-select-list asset-select-list--two-column">
                         <For each={assets()}>
                             {(asset, i) => (
                                 <button
