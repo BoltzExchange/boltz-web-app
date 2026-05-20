@@ -928,8 +928,10 @@ const Create = () => {
                             pair().toAsset !== RBTC &&
                             !connectedDestination()
                         }>
-                        <AddressInput />
-                        <hr class="spacer" />
+                        <div classList={{ hidden: destinationLocked() }}>
+                            <hr class="spacer" />
+                            <AddressInput />
+                        </div>
                     </Show>
                     <ConnectWallet
                         asset={walletConnectAsset()}
