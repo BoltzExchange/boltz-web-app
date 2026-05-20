@@ -25,31 +25,36 @@ const MnemonicVerifyContent = (props: MnemonicVerifyContentProps) => {
             { length: mnemonicWords.length / groupSize },
             (_, index) => {
                 const start = index * groupSize;
+                const groupWords = mnemonicWords.slice(
+                    start,
+                    start + groupSize,
+                );
                 const verificationIndex = Math.floor(Math.random() * groupSize);
+                const verificationWord = groupWords[verificationIndex];
+                const candidates = wordlist.filter(
+                    (word) => !groupWords.includes(word),
+                );
+                const fakeWords: string[] = [];
+
+                while (fakeWords.length < groupSize - 1) {
+                    const candidateIndex = Math.floor(
+                        Math.random() * candidates.length,
+                    );
+                    const [candidate] = candidates.splice(candidateIndex, 1);
+                    fakeWords.push(candidate);
+                }
+
+                const buttonWords = [...fakeWords];
+                buttonWords.splice(verificationIndex, 0, verificationWord);
+
                 return {
+                    buttonWords,
                     verificationIndex,
-                    verificationWord: mnemonicWords.slice(
-                        start,
-                        start + groupSize,
-                    )[verificationIndex],
+                    verificationWord,
                 };
             },
         );
     });
-
-    const generateFakeWord = () => {
-        const groupWords =
-            rescueFile()
-                ?.mnemonic.split(" ")
-                .slice(
-                    displayedGroup() * groupSize,
-                    displayedGroup() * groupSize + groupSize,
-                ) ?? [];
-        const candidates = wordlist.filter(
-            (word) => !groupWords.includes(word),
-        );
-        return candidates[Math.floor(Math.random() * candidates.length)];
-    };
 
     const isVerificationWord = (index: number) => {
         return index === mnemonicGroups()[displayedGroup()]?.verificationIndex;
@@ -150,7 +155,10 @@ const MnemonicVerifyContent = (props: MnemonicVerifyContentProps) => {
                                         mnemonicGroups()[displayedGroup()]
                                             ?.verificationIndex
                                     }>
-                                    {generateFakeWord()}
+                                    {
+                                        mnemonicGroups()[displayedGroup()]
+                                            ?.buttonWords[wordIndex]
+                                    }
                                 </Match>
                             </Switch>
                         </button>
