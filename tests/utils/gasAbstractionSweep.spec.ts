@@ -4,7 +4,13 @@ import { encodeFunctionData, erc20Abi, getAddress } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
 import { config } from "../../src/config";
-import { type AssetType, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import {
+    type AssetType,
+    TBTC,
+    USDC,
+    USDT0,
+    WBTC,
+} from "../../src/consts/Assets";
 import type { Signer } from "../../src/context/Web3";
 import type { sendPopulatedTransaction } from "../../src/utils/evmTransaction";
 import {
@@ -24,6 +30,11 @@ describe("gas abstraction sweep", () => {
             asset: USDT0,
             amount: 1_000_000n,
             expected: 1_000_000n,
+        },
+        {
+            asset: WBTC,
+            amount: 100_000_000n,
+            expected: 100_000_000n,
         },
         {
             asset: USDC,

@@ -4,7 +4,7 @@ import { RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { config } from "../../config";
-import { RBTC, TBTC } from "../../consts/Assets";
+import { RBTC, TBTC, WBTC } from "../../consts/Assets";
 import { paginationLimit } from "../../consts/Pagination";
 import { formatError } from "../../utils/errors";
 import { RescueAction } from "../../utils/rescue";
@@ -31,6 +31,8 @@ const resultSourcePriority: Record<RescueResultSource, number> = {
     [RescueResultSource.Evm]: 1,
     [RescueResultSource.Sweep]: 2,
 };
+
+export const arbitrumRescueAssets = [TBTC, WBTC] as const;
 
 export const getSwapDate = (swap: {
     date?: number;
@@ -163,15 +165,22 @@ export const getEvmScanTargets = (
     if (
         !skipArbitrum &&
         arbEndpoint &&
-        config.assets?.[TBTC]?.contracts?.deployHeight &&
-        config.network !== "regtest"
+        arbitrumRescueAssets.some(
+            (asset) => config.assets?.[asset]?.contracts?.deployHeight,
+        )
     ) {
-        targets.push({
-            asset: TBTC,
-            providerUrl: arbEndpoint,
-            scanInterval: 100_000,
-            contract: getErc20Swap(TBTC),
-        });
+        targets.push(
+            ...arbitrumRescueAssets
+                .filter(
+                    (asset) => config.assets?.[asset]?.contracts?.deployHeight,
+                )
+                .map((asset) => ({
+                    asset,
+                    providerUrl: arbEndpoint,
+                    scanInterval: 100_000,
+                    contract: getErc20Swap(asset),
+                })),
+        );
     } else if (!arbEndpoint) {
         log.warn("arbitrum log endpoint not set");
     }

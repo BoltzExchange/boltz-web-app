@@ -4,6 +4,7 @@ import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
+import { WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
@@ -165,6 +166,9 @@ describe("RescueExternal", () => {
         const tbtcChip = screen
             .getByText("TBTC")
             .closest(".rescue-external-chip") as HTMLElement;
+        const wbtcChip = screen
+            .getByText(WBTC)
+            .closest(".rescue-external-chip") as HTMLElement;
         const rbtcRefundChip = screen
             .getByText(`RBTC (${i18n.en.refund})`)
             .closest(".rescue-external-chip") as HTMLElement;
@@ -179,6 +183,11 @@ describe("RescueExternal", () => {
         );
         expect(tbtcChip).toHaveAttribute("data-active", "false");
         expect(tbtcChip).toHaveAttribute(
+            "data-tooltip",
+            i18n.en.rescue_external_requires_rescue_key_wallet,
+        );
+        expect(wbtcChip).toHaveAttribute("data-active", "false");
+        expect(wbtcChip).toHaveAttribute(
             "data-tooltip",
             i18n.en.rescue_external_requires_rescue_key_wallet,
         );
@@ -216,6 +225,18 @@ describe("RescueExternal", () => {
         ).toHaveAttribute("data-active", "true");
         expect(
             within(tbtcChip).getByLabelText("Wallet required"),
+        ).toHaveAttribute("data-active", "false");
+
+        expect(wbtcChip).toHaveAttribute("data-active", "false");
+        expect(wbtcChip).toHaveAttribute(
+            "data-tooltip",
+            i18n.en.rescue_external_requires_rescue_key_wallet,
+        );
+        expect(
+            within(wbtcChip).getByLabelText("Rescue key required"),
+        ).toHaveAttribute("data-active", "true");
+        expect(
+            within(wbtcChip).getByLabelText("Wallet required"),
         ).toHaveAttribute("data-active", "false");
 
         expect(rbtcResumeChip).toHaveAttribute("data-active", "false");

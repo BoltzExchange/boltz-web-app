@@ -22,7 +22,7 @@ import type {
     RescueFileResult,
 } from "../../components/RescueFileUpload";
 import { config } from "../../config";
-import { type AssetType, TBTC } from "../../consts/Assets";
+import type { AssetType } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { useRescueContext } from "../../context/Rescue";
 import { useWeb3Signer } from "../../context/Web3";
@@ -45,6 +45,7 @@ import { type RescueFile, getPathGasAbstraction } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
 import { PreimageHashesWorker } from "../../workers/preimageHashes/PreimageHashesWorker";
 import {
+    arbitrumRescueAssets,
     fetchPaginatedRestorableSwaps,
     getEvmRescueAction,
     getEvmScanTargets,
@@ -136,7 +137,11 @@ export const useExternalRescueSearch = () => {
     const evmAvailable =
         !!import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT ||
         (!!import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT &&
-            config.assets?.[TBTC]?.contracts?.deployHeight !== undefined);
+            arbitrumRescueAssets.some(
+                (asset) =>
+                    config.assets?.[asset]?.contracts?.deployHeight !==
+                    undefined,
+            ));
 
     if (!evmAvailable) {
         log.warn("No EVM log scan endpoints available");

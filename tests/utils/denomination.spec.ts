@@ -1,12 +1,13 @@
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, TBTC, USDT0, WBTC } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
     formatDenomination,
+    getDecimals,
     getValidationRegex,
 } from "../../src/utils/denomination";
 
@@ -49,6 +50,26 @@ describe("denomination utils", () => {
                 ).toEqual(converted);
             },
         );
+
+        test("converts WBTC like TBTC in sats denomination", () => {
+            expect(
+                convertAmount(
+                    WBTC,
+                    BigNumber("12345678"),
+                    Denomination.Sat,
+                ).toNumber(),
+            ).toEqual(12345678);
+        });
+
+        test("converts WBTC like TBTC in BTC denomination", () => {
+            expect(
+                convertAmount(
+                    WBTC,
+                    BigNumber("0.12345678"),
+                    Denomination.Btc,
+                ).toNumber(),
+            ).toEqual(12345678);
+        });
     });
 
     describe("format amount", () => {
@@ -80,6 +101,19 @@ describe("denomination utils", () => {
                 ).toEqual(formatted);
             },
         );
+
+        test("formats WBTC sats like TBTC sats", () => {
+            expect(
+                formatAmount(BigNumber(123123), Denomination.Sat, ".", WBTC),
+            ).toEqual("123 123");
+        });
+    });
+
+    test("treats routed WBTC as sat-denominated for display inputs", () => {
+        expect(getDecimals(WBTC)).toEqual({
+            isErc20: false,
+            decimals: 8,
+        });
     });
 
     describe("calculate allowed digits", () => {
@@ -132,8 +166,12 @@ describe("denomination utils", () => {
         ${Denomination.Sat} | ${LBTC}  | ${"sats"}
         ${Denomination.Btc} | ${BTC}   | ${BTC}
         ${Denomination.Btc} | ${LBTC}  | ${"LBTC"}
+        ${Denomination.Sat} | ${TBTC}  | ${"sats"}
+        ${Denomination.Btc} | ${TBTC}  | ${"TBTC"}
         ${Denomination.Sat} | ${USDT0} | ${"USDT"}
         ${Denomination.Btc} | ${USDT0} | ${"USDT"}
+        ${Denomination.Sat} | ${WBTC}  | ${"sats"}
+        ${Denomination.Btc} | ${WBTC}  | ${"WBTC"}
     `("should format denomination", ({ denomination, input, expected }) => {
         expect(formatDenomination(denomination, input)).toEqual(expected);
     });

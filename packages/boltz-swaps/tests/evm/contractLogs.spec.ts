@@ -2,9 +2,10 @@ import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import { etherSwapAbiV5 } from "boltz-swaps/evm/abis";
 import { getLogsFromReceipt, scanLockupEvents } from "boltz-swaps/evm/logs";
 import { etherSwapAbi } from "boltz-swaps/generated/evm-abis";
-import { RskRescueMode } from "boltz-swaps/types";
+import { AssetKind, type AssetType, RskRescueMode } from "boltz-swaps/types";
 import {
     type AbiEvent,
+    type Address,
     type Hex,
     encodeAbiParameters,
     encodeEventTopics,
@@ -63,11 +64,30 @@ beforeAll(() => {
     setBoltzSwapsConfig({
         assets: {
             RBTC: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                type: "EVM_NATIVE" as any,
+                type: AssetKind.EVMNative,
                 contracts: { deployHeight: 1 },
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 network: { chainId: 31 } as any,
+            },
+            TBTC: {
+                type: AssetKind.ERC20,
+                contracts: { deployHeight: 1 },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                network: { chainId: 31 } as any,
+                token: {
+                    address: "0x4000000000000000000000000000000000000000",
+                    decimals: 18,
+                },
+            },
+            WBTC: {
+                type: AssetKind.ERC20,
+                contracts: { deployHeight: 1 },
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                network: { chainId: 31 } as any,
+                token: {
+                    address: "0x5000000000000000000000000000000000000000",
+                    decimals: 8,
+                },
             },
         },
     });
@@ -76,10 +96,12 @@ beforeAll(() => {
 const swapAddress = getAddress("0x1000000000000000000000000000000000000000");
 const claimAddress = getAddress("0x2000000000000000000000000000000000000000");
 const refundAddress = getAddress("0x3000000000000000000000000000000000000000");
+const tbtcAddress = getAddress("0x4000000000000000000000000000000000000000");
+const wbtcAddress = getAddress("0x5000000000000000000000000000000000000000");
 const preimageHash = `0x${"11".repeat(32)}` as Hex;
 const swapHash = `0x${"22".repeat(32)}` as Hex;
 
-const buildDecodedLockup = () => ({
+const buildDecodedLockup = (tokenAddress?: Address) => ({
     address: swapAddress,
     blockNumber: 10n,
     transactionHash: `0x${"aa".repeat(32)}` as Hex,
@@ -90,14 +112,15 @@ const buildDecodedLockup = () => ({
         claimAddress,
         refundAddress,
         timelock: 456n,
+        tokenAddress,
     },
 });
 
-const setupScanner = (version: number) => {
+const setupScanner = (version: number, tokenAddress?: Address) => {
     mockCreateProvider.mockReturnValue(provider);
     mockCreateAssetProvider.mockReturnValue(provider);
     getBlockNumber.mockResolvedValue(10n);
-    getLogs.mockResolvedValue([buildDecodedLockup()]);
+    getLogs.mockResolvedValue([buildDecodedLockup(tokenAddress)]);
     getTransactionReceipt.mockReset();
     readContract.mockImplementation(({ functionName }) => {
         switch (functionName) {
@@ -118,7 +141,11 @@ const setupScanner = (version: number) => {
     contractReadSwaps.mockResolvedValue(true);
 };
 
-const scanOnce = async () => {
+const scanOnce = async (
+    asset: AssetType = "RBTC",
+    action = RskRescueMode.Claim,
+    filterAddress = claimAddress,
+) => {
     const generator = scanLockupEvents(
         new AbortController().signal,
         {
@@ -130,11 +157,11 @@ const scanOnce = async () => {
             },
         } as never,
         {
-            asset: "RBTC",
+            asset,
             providerUrl: "https://example.invalid/rpc",
             scanInterval: 10,
-            filter: { address: claimAddress },
-            action: RskRescueMode.Claim,
+            filter: { address: filterAddress },
+            action,
         },
     );
 
@@ -180,6 +207,62 @@ describe("contractLogs", () => {
             (input) => input.name === "claimAddress",
         );
         expect(claimInput).toMatchObject({ indexed: true });
+    });
+
+    test("filters ERC20 scans by the configured token address", async () => {
+        setupScanner(6, tbtcAddress);
+
+        const result = await scanOnce(
+            "WBTC",
+            RskRescueMode.Refund,
+            refundAddress,
+        );
+
+        expect(result.value).toMatchObject({
+            events: [],
+            unmatchedSwaps: 0,
+        });
+        expect(
+            readContract.mock.calls.some(
+                ([call]) => call.functionName === "hashValues",
+            ),
+        ).toBe(false);
+        expect(
+            readContract.mock.calls.some(
+                ([call]) => call.functionName === "swaps",
+            ),
+        ).toBe(false);
+    });
+
+    test("keeps matching ERC20 token lockups", async () => {
+        setupScanner(6, wbtcAddress);
+
+        const result = await scanOnce(
+            "WBTC",
+            RskRescueMode.Refund,
+            refundAddress,
+        );
+
+        expect(result.value).toMatchObject({
+            events: [
+                {
+                    asset: "WBTC",
+                    tokenAddress: wbtcAddress,
+                    refundAddress,
+                },
+            ],
+            unmatchedSwaps: 0,
+        });
+        expect(
+            readContract.mock.calls.some(
+                ([call]) => call.functionName === "hashValues",
+            ),
+        ).toBe(true);
+        expect(
+            readContract.mock.calls.some(
+                ([call]) => call.functionName === "swaps",
+            ),
+        ).toBe(true);
     });
 
     test("decodes v5 Lockup receipts with non-indexed claimAddress", async () => {

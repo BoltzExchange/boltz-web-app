@@ -24,6 +24,7 @@ import {
     RBTC,
     getBridgeKind,
     getCanonicalAsset,
+    getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
 import { InvoiceValidation } from "../consts/Enums";
@@ -177,7 +178,9 @@ export const getClaimAddress = async (
                 claim: GasAbstractionType.Signer,
             },
             claimAddress:
-                getBridgeKind(assetReceive()) === undefined && !getGasToken
+                getBridgeKind(assetReceive()) === undefined &&
+                getRouteViaAsset(assetReceive()) === undefined &&
+                !getGasToken
                     ? onchainAddress()
                     : gasSigner.address,
         };

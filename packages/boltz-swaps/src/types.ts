@@ -32,6 +32,7 @@ export type AssetType =
     | "L-BTC"
     | "RBTC"
     | "TBTC"
+    | "WBTC"
     | "USDT0"
     | "USDC";
 

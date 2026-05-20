@@ -4,9 +4,12 @@ import type {
     EtherSwapContract,
 } from "boltz-swaps/evm/contracts";
 import type * as EvmTransactionLib from "boltz-swaps/evm/transaction";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 
+import { TBTC, WBTC } from "../../src/consts/Assets";
 import type { Signer } from "../../src/context/Web3";
 import {
+    getClaimAssetForRoute,
     normalizePersistedReceiveAmount,
     signErc20ClaimToRouter,
 } from "../../src/status/TransactionConfirmed";
@@ -170,6 +173,29 @@ describe("TransactionConfirmed claimAsset", () => {
                 "USDT0",
             ),
         ).toEqual(satsToAssetAmount(51_990, "USDT0").toString());
+    });
+
+    test("should claim the token entering a post-claim WBTC route", () => {
+        expect(
+            getClaimAssetForRoute(WBTC, {
+                position: SwapPosition.Post,
+                quoteAmount: "1000",
+                hops: [
+                    {
+                        type: SwapType.Dex,
+                        from: TBTC,
+                        to: WBTC,
+                        dexDetails: {
+                            chain: "ARB",
+                            tokenIn:
+                                "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                            tokenOut:
+                                "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+                        },
+                    },
+                ],
+            }),
+        ).toEqual(TBTC);
     });
 
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {

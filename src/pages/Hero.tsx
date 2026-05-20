@@ -11,6 +11,7 @@ import rbtc from "../assets/rootstock-icon.svg";
 import tbtc from "../assets/tbtc-icon.svg";
 import usdc from "../assets/usdc.svg";
 import usdt from "../assets/usdt-icon.svg";
+import wbtc from "../assets/wbtc-icon.svg";
 import ExternalLink from "../components/ExternalLink";
 import { config } from "../config";
 import { BTC } from "../consts/Assets";
@@ -110,6 +111,7 @@ export const Hero = () => {
                             <img src={rbtc} alt="Rootstock Bitcoin" />
                             <div class="hero-icons-break" />
                             <img src={tbtc} alt="tBTC" class="full-bleed" />
+                            <img src={wbtc} alt="WBTC" class="full-bleed" />
                             <img src={usdt} alt="USDT" class="full-bleed" />
                             <img src={usdc} alt="USDC" class="full-bleed" />
                         </div>

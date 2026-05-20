@@ -96,6 +96,11 @@ const fixtureAssets = () => ({
             cctp,
         },
     },
+    "WBTC-ETH": {
+        type: AssetKind.ERC20,
+        network: baseEvmNetwork("ETH"),
+        token: { address: "0xWBTC_ETH", decimals: 8, routeVia: "TBTC-ETH" },
+    },
     "USDC-BASE": {
         type: AssetKind.ERC20,
         network: baseEvmNetwork("BASE"),
@@ -315,6 +320,32 @@ describe("quoteRouteAmountOut: leg planning", () => {
                 "/v2/quote/ETH/in?tokenIn=0xTBTC_ETH&tokenOut=0xUSDC_ETH&amountIn=98400",
             ),
         );
+    });
+
+    test("DEX hop routes non-bridge WBTC through TBTC", async () => {
+        const pair = makeChainPair(0.1, 1000, 500);
+        fetcherMock.mockResolvedValue([dexQuote("98000")]);
+        const result = await quoteRouteAmountOut({
+            from: "BTC",
+            to: "WBTC-ETH",
+            pairs: pairsWith({ BTC: { "TBTC-ETH": pair } }),
+            amountIn: 100_000n,
+        });
+
+        expect(result.legs).toHaveLength(2);
+        expect(result.legs[0]).toMatchObject({
+            kind: "chain-swap",
+            to: "TBTC-ETH",
+            receiveAmount: 98_400n,
+        });
+        expect(result.legs[1]).toMatchObject({
+            kind: "dex",
+            tokenIn: "0xTBTC_ETH",
+            tokenOut: "0xWBTC_ETH",
+            amountIn: 98_400n,
+            amountOut: 98_000n,
+        });
+        expect(result.receiveAmount).toBe(98_000n);
     });
 
     test("bridge leg added when destination is a variant: 2-leg", async () => {

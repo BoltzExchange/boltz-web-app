@@ -38,10 +38,11 @@ setBoltzSwapsConfig({
 });
 
 // Tests run against the regtest config, which intentionally omits TBTC,
-// USDT0, and USDC (they're mainnet-only assets). Inject them from the mainnet
+// WBTC, USDT0, and USDC (they're mainnet-only assets). Inject them from the mainnet
 // config so tests that read their shape (token decimals, bridge metadata, etc.) work.
 if (runtimeConfig.assets && mainnetConfig.assets) {
     runtimeConfig.assets.TBTC ??= mainnetConfig.assets.TBTC;
+    runtimeConfig.assets.WBTC ??= mainnetConfig.assets.WBTC;
     runtimeConfig.assets.USDT0 ??= mainnetConfig.assets.USDT0;
     runtimeConfig.assets.USDC ??= mainnetConfig.assets.USDC;
 }

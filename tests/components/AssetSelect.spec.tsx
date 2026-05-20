@@ -12,6 +12,7 @@ import {
     TBTC,
     USDC,
     USDT0,
+    WBTC,
 } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
@@ -140,12 +141,14 @@ afterEach(() => {
     localStorage.clear();
 });
 
-const bridgeVariantAssets = getBridgeVariantAssets(config.assets!);
+const bridgeVariantAssets = getBridgeVariantAssets(config.assets!, USDT0);
 const sendableBridgeVariantAssets = getSendableBridgeVariantAssets(
     config.assets!,
+    USDT0,
 );
 const unsendableBridgeVariantAssets = getUnsendableBridgeVariantAssets(
     config.assets!,
+    USDT0,
 );
 const evmAddress = "0x5000000000000000000000000000000000000000";
 
@@ -233,6 +236,7 @@ describe("AssetSelect", () => {
             `select-${LBTC}`,
             `select-${RBTC}`,
             `select-${TBTC}`,
+            `select-${WBTC}`,
             `select-${USDT0}`,
             `select-${USDC}`,
         ]);
@@ -479,12 +483,12 @@ describe("AssetSelect", () => {
         signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(Side.Receive);
 
-        await screen.findByTestId(`select-${USDT0}`);
+        await screen.findByTestId(`select-${WBTC}`);
 
         await waitFor(() => {
             expect(
                 screen
-                    .getByTestId(`select-${USDT0}`)
+                    .getByTestId(`select-${WBTC}`)
                     .getAttribute("data-focused"),
             ).toEqual("true");
         });
@@ -508,7 +512,7 @@ describe("AssetSelect", () => {
         signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(Side.Receive);
 
-        await screen.findByTestId(`select-${USDT0}`);
+        await screen.findByTestId(`select-${WBTC}`);
 
         await waitFor(() => {
             expect(
@@ -526,7 +530,7 @@ describe("AssetSelect", () => {
         await waitFor(() => {
             expect(
                 screen
-                    .getByTestId(`select-${USDT0}`)
+                    .getByTestId(`select-${WBTC}`)
                     .getAttribute("data-focused"),
             ).toEqual("true");
         });
@@ -600,7 +604,7 @@ describe("AssetSelect", () => {
             openAssetSelect();
 
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
-            await screen.findByText(i18n.en.select_network);
+            await screen.findByTestId("network-back");
 
             expect(screen.queryByTestId(`select-${USDT0}`)).not.toBeNull();
 
@@ -619,7 +623,7 @@ describe("AssetSelect", () => {
             openAssetSelect(Side.Receive);
 
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
-            await screen.findByText(i18n.en.select_network);
+            await screen.findByTestId("network-back");
 
             for (const variant of bridgeVariantAssets) {
                 expect(
@@ -644,7 +648,7 @@ describe("AssetSelect", () => {
             openAssetSelect();
 
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
-            await screen.findByText(i18n.en.select_network);
+            await screen.findByTestId("network-back");
 
             const searchInput = screen.getByPlaceholderText(i18n.en.search);
             fireEvent.input(searchInput, { target: { value: "Arb" } });
@@ -657,7 +661,7 @@ describe("AssetSelect", () => {
             openAssetSelect();
 
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
-            await screen.findByText(i18n.en.select_network);
+            await screen.findByTestId("network-back");
 
             const searchInput = screen.getByPlaceholderText(i18n.en.search);
             fireEvent.input(searchInput, { target: { value: "Eth" } });

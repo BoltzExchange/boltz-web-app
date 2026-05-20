@@ -6,7 +6,15 @@ import CreateButton, {
     getClaimAddress,
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
-import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    TBTC,
+    USDT0,
+    WBTC,
+} from "../../src/consts/Assets";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
@@ -365,6 +373,31 @@ describe("CreateButton", () => {
             claimAddress: "0xgas",
         });
         expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should use gas signer address for routed WBTC claims", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => WBTC,
+                () => BTC,
+                () => undefined,
+                () => "0xuser",
+                getGasAbstractionSigner,
+                false,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: {
+                lockup: GasAbstractionType.None,
+                claim: GasAbstractionType.Signer,
+            },
+            gasPrice: 0n,
+            claimAddress: "0xgas",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(WBTC);
     });
 
     test("should use canonical USDT0 gas abstraction for legacy mesh receives", async () => {

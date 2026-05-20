@@ -5,15 +5,18 @@ import { RskRescueMode } from "boltz-swaps/types";
 import type { JSX } from "solid-js";
 import { vi } from "vitest";
 
+import { TBTC, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import { TestComponent, contextWrapper } from "../helper";
 
 const {
+    mockGetErc20Swap,
     mockGetSweepableGasAbstractionBalances,
     mockPreimageHashesWorker,
     mockScanLockupEvents,
 } = vi.hoisted(() => ({
+    mockGetErc20Swap: vi.fn(() => ({})),
     mockGetSweepableGasAbstractionBalances: vi.fn(),
     mockPreimageHashesWorker: vi.fn(function PreimageHashesWorker() {
         return {};
@@ -58,7 +61,7 @@ vi.mock("../../src/context/Web3", () => ({
             transport: "evm",
         }),
         getContractsForAsset: vi.fn(),
-        getErc20Swap: vi.fn(() => ({})),
+        getErc20Swap: mockGetErc20Swap,
         getEtherSwap: vi.fn(() => ({})),
         getGasAbstractionSigner: vi.fn(),
         getSwapContractVersion: vi.fn(() => 6),
@@ -138,5 +141,52 @@ describe("RescueExternal EVM scan", () => {
             );
         });
         expect(mockPreimageHashesWorker).toHaveBeenCalledTimes(1);
+    });
+
+    test("scans WBTC and TBTC on Arbitrum", async () => {
+        const user = userEvent.setup();
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(
+                JSON.stringify({
+                    mnemonic:
+                        "horse olympic laundry marriage material private arch civil theory crew alone thank",
+                }),
+            );
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        await waitFor(() => {
+            expect(mockGetErc20Swap).toHaveBeenCalledWith(TBTC);
+            expect(mockGetErc20Swap).toHaveBeenCalledWith(WBTC);
+        });
+
+        expect(mockScanLockupEvents).toHaveBeenCalledWith(
+            expect.any(AbortSignal),
+            expect.anything(),
+            expect.objectContaining({
+                asset: WBTC,
+                providerUrl: "http://localhost:8547",
+            }),
+            expect.anything(),
+        );
     });
 });
