@@ -158,7 +158,7 @@ export const claimAsset = async ({
                 throw new Error("missing claim signer");
             }
 
-            const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;
+            const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
             const tx = isErc20
                 ? ({
                       to: erc20Swap.address,

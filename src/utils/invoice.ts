@@ -446,7 +446,7 @@ export const isBolt12Offer = (offer: string): boolean => {
 export const validateInvoiceForOffer = (
     offer: string,
     invoice: string,
-): boolean => {
+): void => {
     const possibleSigners: Uint8Array[] = [];
     const decodedOffer = Bolt12.decodeOffer(offer);
     const { fields, records } = decodeBolt12Invoice(invoice);
@@ -469,7 +469,7 @@ export const validateInvoiceForOffer = (
         fields.invoice_node_id === undefined ||
         fields.signature === undefined
     ) {
-        throw "invalid invoice signature";
+        throw new Error("invalid invoice signature");
     }
 
     const normalizedInvoiceNodeId = normalizeBolt12NodeId(
@@ -484,16 +484,16 @@ export const validateInvoiceForOffer = (
             fields.signature,
         )
     ) {
-        throw "invalid invoice signature";
+        throw new Error("invalid invoice signature");
     }
 
     for (const signer of possibleSigners) {
         if (equalBytes(signer, normalizedInvoiceNodeId)) {
-            return true;
+            return;
         }
     }
 
-    throw "invoice does not belong to offer";
+    throw new Error("invoice does not belong to offer");
 };
 
 export const checkInvoicePreimage = (

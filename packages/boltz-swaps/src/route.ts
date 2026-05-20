@@ -356,7 +356,8 @@ const executeStepForward = async (
 ): Promise<{ leg: RouteLeg; amountOut: bigint }> => {
     switch (step.kind) {
         case RouteLegKind.ChainSwap: {
-            const outSats = applyChainPairReceiveAmount(amountIn, step.pair);
+            const sendSats = toSats(amountIn, step.from);
+            const outSats = applyChainPairReceiveAmount(sendSats, step.pair);
             const amountOut = toAssetBaseUnits(outSats, step.to);
             return {
                 leg: buildChainSwapLeg(step, amountIn, amountOut),
@@ -415,7 +416,8 @@ const executeStepReverse = async (
         case RouteLegKind.ChainSwap: {
             // amountOut is in chain-swap-target base units; fee math runs in sats.
             const receiveSats = toSats(amountOut, step.to);
-            const amountIn = applyChainPairSendAmount(receiveSats, step.pair);
+            const sendSats = applyChainPairSendAmount(receiveSats, step.pair);
+            const amountIn = toAssetBaseUnits(sendSats, step.from);
             return {
                 leg: buildChainSwapLeg(step, amountIn, amountOut),
                 amountIn,

@@ -263,6 +263,27 @@ describe("quoteRouteAmountOut: leg planning", () => {
         expect(bridgeRegistryMock.requireDriverForRoute).not.toHaveBeenCalled();
     });
 
+    test("direct chain-swap from token source applies fees in sats", async () => {
+        const pair = makeChainPair(0.1, 1000, 500);
+        const result = await quoteRouteAmountOut({
+            from: "USDC-ETH",
+            to: "BTC",
+            pairs: pairsWith({ "USDC-ETH": { BTC: pair } }),
+            amountIn: 1_000n,
+        });
+
+        expect(result.legs).toHaveLength(1);
+        expect(result.legs[0]).toMatchObject({
+            kind: "chain-swap",
+            from: "USDC-ETH",
+            to: "BTC",
+            sendAmount: 1_000n,
+            receiveAmount: 98_400n,
+        });
+        expect(result.sendAmount).toBe(1_000n);
+        expect(result.receiveAmount).toBe(98_400n);
+    });
+
     test("DEX hop when no direct pair exists: 2-leg, no bridge", async () => {
         const pair = makeChainPair(0.1, 1000, 500);
         fetcherMock.mockResolvedValue([dexQuote("97000")]);
@@ -496,6 +517,25 @@ describe("quoteRouteAmountIn: reverse path", () => {
             kind: "chain-swap",
             sendAmount: 100_000n,
             receiveAmount: 984n,
+        });
+    });
+
+    test("1-leg reverse from token source returns source base units", async () => {
+        const pair = makeChainPair(0.1, 1000, 500);
+        const result = await quoteRouteAmountIn({
+            from: "USDC-ETH",
+            to: "BTC",
+            pairs: pairsWith({ "USDC-ETH": { BTC: pair } }),
+            amountOut: 98_400n,
+        });
+
+        expect(result.legs).toHaveLength(1);
+        expect(result.sendAmount).toBe(1_000n);
+        expect(result.receiveAmount).toBe(98_400n);
+        expect(result.legs[0]).toMatchObject({
+            kind: "chain-swap",
+            sendAmount: 1_000n,
+            receiveAmount: 98_400n,
         });
     });
 

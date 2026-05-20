@@ -222,7 +222,9 @@ describe("invoice", () => {
                 .spyOn(Bolt12, "verifySignature")
                 .mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
             expect(verifySignature).toHaveBeenCalledWith(
                 "invoice",
                 new Uint8Array(32).fill(3),
@@ -258,7 +260,9 @@ describe("invoice", () => {
             );
             vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
         });
 
         test("should accept x-only keys without conversion", () => {
@@ -286,7 +290,9 @@ describe("invoice", () => {
                 .spyOn(Bolt12, "verifySignature")
                 .mockReturnValue(true);
 
-            expect(validateInvoiceForOffer("lno1mock", "lni1mock")).toBe(true);
+            expect(() =>
+                validateInvoiceForOffer("lno1mock", "lni1mock"),
+            ).not.toThrow();
             expect(verifySignature).toHaveBeenCalledWith(
                 "invoice",
                 new Uint8Array(32).fill(3),
