@@ -553,7 +553,7 @@ textarea::placeholder {
 input:focus,
 textarea:focus {
     outline: none;
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-60);
 }
 input.invalid,
 textarea.invalid {
@@ -858,11 +858,11 @@ textarea.invalid {
         // for keyboard navigation
         &:focus-visible {
             outline: none;
-            border: 1px solid var(--color-primary);
+            border: 1px solid var(--color-primary-60);
         }
         &.active:focus-visible {
             outline: none;
-            border: 1px solid var(--color-primary);
+            border: 1px solid var(--color-primary-60);
         }
     }
 }
@@ -886,7 +886,7 @@ textarea.invalid {
     background-position: right 0.7rem center;
     &:focus-visible {
         outline: none;
-        border-color: var(--color-primary);
+        border-color: var(--color-primary-60);
     }
     @media (hover: hover) {
         &:hover {
@@ -1197,7 +1197,7 @@ textarea.invalid {
         }
 
         &:focus {
-            border-color: var(--color-primary);
+            border-color: var(--color-primary-60);
         }
     }
 }
