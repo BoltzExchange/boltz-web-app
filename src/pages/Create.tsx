@@ -939,18 +939,6 @@ const Create = () => {
                         }
                         disabled={() => !pair().isRoutable}
                     />
-                    {/* We have no gas abstraction for RBTC */}
-                    <Show
-                        when={
-                            isWalletConnectableAsset(pair().toAsset) &&
-                            pair().toAsset !== RBTC &&
-                            !connectedDestination()
-                        }>
-                        <div classList={{ hidden: destinationLocked() }}>
-                            <hr class="spacer" />
-                            <AddressInput />
-                        </div>
-                    </Show>
                     <hr class="spacer" />
                 </Show>
                 <CreateButton />
