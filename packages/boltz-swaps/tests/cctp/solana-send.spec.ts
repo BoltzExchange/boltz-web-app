@@ -12,7 +12,6 @@ import {
     CctpTransferMode,
     NetworkTransport,
 } from "boltz-swaps/types";
-import log from "loglevel";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // vi.mock factories are hoisted above all imports/consts. Any state or
@@ -225,7 +224,6 @@ const signerAddresses = () =>
 
 describe("createSolanaCctpContract send()", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    vi.spyOn(log, "warn").mockImplementation(() => {});
 
     beforeEach(() => {
         fetchSpy.mockReset();

@@ -11,7 +11,6 @@ import {
     getDepositForBurnInstruction,
     parseDepositForBurnInstruction,
 } from "boltz-swaps/generated/solana-cctp";
-import log from "loglevel";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import {
@@ -34,11 +33,9 @@ const okResponse = (body: unknown): Response =>
 
 describe("tryFetchSolburnAllocation", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const warnSpy = vi.spyOn(log, "warn").mockImplementation(() => {});
 
     beforeEach(() => {
         fetchSpy.mockReset();
-        warnSpy.mockClear();
     });
 
     afterEach(() => {

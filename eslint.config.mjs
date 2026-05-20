@@ -47,6 +47,7 @@ export default [
                         "packages/*/scripts/*.ts",
                         "packages/*/scripts/*.mjs",
                     ],
+                    maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 10,
                 },
                 tsconfigRootDir: import.meta.dirname,
             },
