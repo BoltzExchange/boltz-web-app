@@ -129,37 +129,36 @@ const TransactionLockupFailed = (props: {
                     chainSwap.assetReceive
                 ].fees.minerFees.user.claim + 1;
 
+            const lockupTxHex = transactions.userLock.transaction.hex;
             let sentAmountSource = "swap.sendAmount";
-            const outputAmount =
-                chainSwap.dex?.position === SwapPosition.Pre
-                    ? ((sentAmountSource = "dex.quoteAmount"),
-                      Number(chainSwap.dex.quoteAmount))
-                    : !isEvmAsset(chainSwap.assetSend) &&
-                        transactions.userLock.transaction.hex !== undefined
-                      ? await (async () => {
-                            sentAmountSource = "userLock.transaction.hex";
-                            const lockTransaction = getTransaction(
-                                chainSwap.assetSend,
-                            ).fromHex(transactions.userLock.transaction.hex!);
-                            const { script: lockupScript } = decodeAddress(
-                                chainSwap.assetSend,
-                                chainSwap.lockupDetails.lockupAddress,
-                            );
+            let outputAmount = chainSwap.sendAmount;
 
-                            const output = findOutputByScript(
-                                chainSwap.assetSend,
-                                lockTransaction,
-                                lockupScript,
-                            );
-                            return await getOutputAmount(chainSwap.assetSend, {
-                                ...output,
-                                blindingPrivateKey: parseBlindingKey(
-                                    chainSwap,
-                                    true,
-                                ),
-                            } as never);
-                        })()
-                      : chainSwap.sendAmount;
+            if (chainSwap.dex?.position === SwapPosition.Pre) {
+                sentAmountSource = "dex.quoteAmount";
+                outputAmount = Number(chainSwap.dex.quoteAmount);
+            } else if (
+                !isEvmAsset(chainSwap.assetSend) &&
+                lockupTxHex !== undefined
+            ) {
+                sentAmountSource = "userLock.transaction.hex";
+                const lockTransaction = getTransaction(
+                    chainSwap.assetSend,
+                ).fromHex(lockupTxHex);
+                const { script: lockupScript } = decodeAddress(
+                    chainSwap.assetSend,
+                    chainSwap.lockupDetails.lockupAddress,
+                );
+
+                const output = findOutputByScript(
+                    chainSwap.assetSend,
+                    lockTransaction,
+                    lockupScript,
+                );
+                outputAmount = await getOutputAmount(chainSwap.assetSend, {
+                    ...output,
+                    blindingPrivateKey: parseBlindingKey(chainSwap, true),
+                } as never);
+            }
             const boltzReceiveAmount = BigNumber(quote.amount - claimFee);
             const routePair = new Pair(
                 currentPairs,
