@@ -71,7 +71,34 @@ const SelectAsset = () => {
         setAssetSelection(null);
     };
 
-    const handleKeyDown = (e: KeyboardEvent) =>
+    const focusHorizontal = (direction: 1 | -1) => {
+        const list = assets();
+        const columnSize = Math.ceil(list.length / 2);
+
+        setFocusedIndex((i) => {
+            const next = i + direction * columnSize;
+
+            if (next < 0 || next >= list.length || isIndexDisabled(next)) {
+                return i;
+            }
+            return next;
+        });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        switch (e.key) {
+            case "ArrowRight":
+            case "l":
+                e.preventDefault();
+                focusHorizontal(1);
+                return;
+            case "ArrowLeft":
+            case "h":
+                e.preventDefault();
+                focusHorizontal(-1);
+                return;
+        }
+
         handleListKeyDown(
             e,
             assets().length,
@@ -80,6 +107,7 @@ const SelectAsset = () => {
             close,
             isIndexDisabled,
         );
+    };
 
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) {
