@@ -1,3 +1,4 @@
+import { useNavigate } from "@solidjs/router";
 import {
     fireEvent,
     render,
@@ -7,6 +8,7 @@ import {
 } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import { SwapType } from "boltz-swaps/types";
+import { Show, createSignal, onMount } from "solid-js";
 
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
@@ -53,6 +55,111 @@ const flushQuoteDebounce = async () => {
 };
 
 describe("Create", () => {
+    test("should apply asset url params when Create mounts after navigation", async () => {
+        const NavigateToCreate = () => {
+            const navigate = useNavigate();
+            const [showCreate, setShowCreate] = createSignal(false);
+
+            onMount(() => {
+                navigate(`/?sendAsset=${LBTC}&receiveAsset=${LN}`);
+                setShowCreate(true);
+            });
+
+            return (
+                <>
+                    <TestComponent />
+                    <Show when={showCreate()}>
+                        <Create />
+                    </Show>
+                </>
+            );
+        };
+
+        render(() => <NavigateToCreate />, {
+            wrapper: contextWrapper,
+        });
+
+        await waitFor(() => {
+            expect(signals.pair().fromAsset).toEqual(LBTC);
+            expect(signals.pair().toAsset).toEqual(LN);
+        });
+        expect(window.location.search).toEqual("");
+
+        window.history.replaceState({}, "", "/");
+    });
+
+    test("should preserve toAsset when only sendAsset is in URL", async () => {
+        let initialToAsset: string | undefined;
+
+        const NavigateToCreate = () => {
+            const navigate = useNavigate();
+            const [showCreate, setShowCreate] = createSignal(false);
+
+            onMount(() => {
+                initialToAsset = signals.pair().toAsset;
+                navigate(`/?sendAsset=${LBTC}`);
+                setShowCreate(true);
+            });
+
+            return (
+                <>
+                    <TestComponent />
+                    <Show when={showCreate()}>
+                        <Create />
+                    </Show>
+                </>
+            );
+        };
+
+        render(() => <NavigateToCreate />, {
+            wrapper: contextWrapper,
+        });
+
+        await waitFor(() => {
+            expect(signals.pair().fromAsset).toEqual(LBTC);
+        });
+        expect(signals.pair().toAsset).toEqual(initialToAsset);
+        expect(window.location.search).toEqual("");
+
+        window.history.replaceState({}, "", "/");
+    });
+
+    test("should preserve fromAsset when only receiveAsset is in URL", async () => {
+        let initialFromAsset: string | undefined;
+
+        const NavigateToCreate = () => {
+            const navigate = useNavigate();
+            const [showCreate, setShowCreate] = createSignal(false);
+
+            onMount(() => {
+                initialFromAsset = signals.pair().fromAsset;
+                navigate(`/?receiveAsset=${LBTC}`);
+                setShowCreate(true);
+            });
+
+            return (
+                <>
+                    <TestComponent />
+                    <Show when={showCreate()}>
+                        <Create />
+                    </Show>
+                </>
+            );
+        };
+
+        render(() => <NavigateToCreate />, {
+            wrapper: contextWrapper,
+        });
+
+        await waitFor(() => {
+            expect(signals.pair().toAsset).toEqual(LBTC);
+        });
+        expect(signals.pair().fromAsset).toEqual(initialFromAsset);
+        expect(window.location.search).toEqual("");
+
+        window.history.replaceState({}, "", "/");
+    });
+
     test("should render Create", async () => {
         render(
             () => (

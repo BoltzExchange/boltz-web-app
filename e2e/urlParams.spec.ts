@@ -119,6 +119,27 @@ test.describe("URL params", () => {
         );
     });
 
+    test("should apply asset params via client-side navigation to /swap", async ({
+        page,
+    }) => {
+        await page.goto("/products");
+
+        await page.evaluate(() => {
+            const a = document.createElement("a");
+            a.href = "/swap?sendAsset=L-BTC&receiveAsset=LN";
+            document.body.appendChild(a);
+            a.click();
+        });
+
+        await expect(page.getByTestId("asset-send")).toContainClass(
+            `asset-${getAssetDisplaySymbol(LBTC)}`,
+        );
+        await expect(page.getByTestId("asset-receive")).toContainClass(
+            `asset-${getAssetDisplaySymbol(LN)}`,
+        );
+        await expect(page).toHaveURL(/\/swap$/);
+    });
+
     test("should use `?mode=rescue-key` param to display mnemonic input", async ({
         page,
     }) => {
