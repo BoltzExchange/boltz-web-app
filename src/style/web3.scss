@@ -1,3 +1,29 @@
+.wallet-select-overlay {
+    position: fixed;
+    inset: 0;
+    place-items: start center;
+    padding: clamp(3.5rem, 14vh, 8rem) 1rem 1rem;
+    overflow: hidden;
+    z-index: 2147483001;
+    overscroll-behavior: contain;
+}
+
+.assets-select.wallet-select-modal {
+    display: block;
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 0;
+    width: min(100%, 420px);
+    max-height: 100%;
+    overflow-y: auto;
+    margin: 0;
+}
+
+.assets-select.wallet-select-modal::after {
+    pointer-events: none;
+}
+
 .provider-modal-entry-wrapper {
     padding-bottom: 5px;
 
@@ -59,4 +85,10 @@
 .paginator .disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+@media (max-width: 488px) {
+    .wallet-select-overlay {
+        padding-block: 1.75rem 0.5rem;
+    }
 }

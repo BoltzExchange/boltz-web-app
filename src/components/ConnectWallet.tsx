@@ -123,10 +123,12 @@ const Modal = (props: {
     return (
         <div
             data-testid="wallet-connect-modal"
-            class="frame assets-select"
+            class="wallet-select-overlay"
             onClick={() => props.setShow(false)}
-            style={props.show() ? "display: block;" : "display: none;"}>
-            <div onClick={(e) => e.stopPropagation()}>
+            style={props.show() ? "display: grid;" : "display: none;"}>
+            <div
+                class="frame assets-select wallet-select-modal"
+                onClick={(e) => e.stopPropagation()}>
                 <h2>{t("select_wallet")}</h2>
                 <span class="close" onClick={() => props.setShow(false)}>
                     <IoClose />
