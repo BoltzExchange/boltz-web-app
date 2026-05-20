@@ -21,6 +21,11 @@ declare global {
     }
 }
 
+const ALLOWED_DOMAINS = [
+    "chatwoot.boltz.exchange",
+    "chatwoot.staging.boltz.exchange",
+];
+
 const Chatwoot = () => {
     onMount(() => {
         const token = getChatwootToken();
@@ -31,13 +36,30 @@ const Chatwoot = () => {
             return;
         }
 
+        let parsedUrl: URL;
+        try {
+            parsedUrl = new URL(url);
+        } catch {
+            log.warn("Invalid Chatwoot URL");
+            return;
+        }
+
+        if (!ALLOWED_DOMAINS.includes(parsedUrl.hostname)) {
+            log.warn("Chatwoot URL domain not allowed");
+            return;
+        }
+
         const tag = "script";
         const script = document.createElement(tag);
         const parent = document.getElementsByTagName(tag)[0];
+        if (!parent?.parentNode) {
+            log.warn("Failed to inject Chatwoot script");
+            return;
+        }
         script.src = url + "/packs/js/sdk.js";
         script.defer = true;
         script.async = true;
-        parent.parentNode!.insertBefore(script, parent);
+        parent.parentNode.insertBefore(script, parent);
         script.onload = function () {
             window.chatwootSettings = {
                 darkMode: "auto",
