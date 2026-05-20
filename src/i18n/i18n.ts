@@ -494,8 +494,6 @@ const dict = {
         evm_rescue_prompt:
             'If you sent funds into a Boltz swap on an EVM chain, use "Refund Swap"; if you were receiving funds from an EVM chain, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
         evm_rescue_refund_title: "Refund Swap",
-        evm_rescue_refund_explainer:
-            "Connect your wallet to scan for EVM swaps that have expired and can be refunded. If you sent USDT0, USDC, or TBTC into a Boltz swap, use your Rescue Key to find it. Rescue Key is not necessary to refund RBTC.",
         start_scanning: "Start scanning",
         stop_scanning: "Stop scanning",
         evm_rescue_resume_title: "Resume Swap",
@@ -1023,8 +1021,6 @@ const dict = {
         evm_rescue_prompt:
             'Wenn du Guthaben in einen Boltz-Swap auf einer EVM-Chain gesendet hast, nutze "Swap erstatten"; wenn du Guthaben von einer EVM-Chain empfangen hast, nutze "Swap fortsetzen", um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.',
         evm_rescue_refund_title: "Swap erstatten",
-        evm_rescue_refund_explainer:
-            "Verbinde dein Wallet, um nach EVM-Swaps zu suchen, die abgelaufen sind und erstattet werden können. Wenn du USDT0, USDC oder TBTC in einen Boltz-Swap gesendet hast, nutze deinen Rettungsschlüssel, um ihn zu finden. Für die Rückerstattung von RBTC ist kein Rettungsschlüssel erforderlich.",
         start_scanning: "Scannen starten",
         stop_scanning: "Scannen stoppen",
         evm_rescue_resume_title: "Swap fortsetzen",
@@ -1548,8 +1544,6 @@ const dict = {
         evm_rescue_prompt:
             'Si enviaste fondos a un intercambio de Boltz en una cadena EVM, usa "Reembolsar intercambio"; si estabas recibiendo fondos desde una cadena EVM, usa "Reanudar intercambio" para rescatar un intercambio que no está disponible en el historial de este navegador.',
         evm_rescue_refund_title: "Reembolsar intercambio",
-        evm_rescue_refund_explainer:
-            "Conecta tu monedero para buscar intercambios EVM que hayan expirado y puedan reembolsarse. Si enviaste USDT0, USDC o TBTC a un intercambio de Boltz, usa tu clave de rescate para encontrarlo. No se necesita la clave de rescate para reembolsar RBTC.",
         start_scanning: "Iniciar escaneo",
         stop_scanning: "Detener escaneo",
         evm_rescue_resume_title: "Reanudar intercambio",
@@ -2068,8 +2062,6 @@ const dict = {
         evm_rescue_prompt:
             'Se você enviou fundos para uma troca da Boltz em uma rede EVM, use "Reembolsar troca"; se estava recebendo fundos de uma rede EVM, use "Continuar troca" para resgatar uma troca que não está disponível no histórico deste navegador.',
         evm_rescue_refund_title: "Reembolsar troca",
-        evm_rescue_refund_explainer:
-            "Conecte sua carteira para procurar trocas em EVM que expiraram e podem ser reembolsadas. Se você enviou USDT0, USDC ou TBTC para uma troca da Boltz, use sua chave de resgate para encontrá-la. A chave de resgate não é necessária para reembolsar RBTC.",
         start_scanning: "Iniciar varredura",
         stop_scanning: "Parar varredura",
         evm_rescue_resume_title: "Continuar troca",
@@ -2538,8 +2530,6 @@ const dict = {
         evm_rescue_prompt:
             "如果你向 EVM 链上的 Boltz 交换发送了资金，请使用“退还交换”；如果你正在从 EVM 链接收资金，请使用“继续交换”，以救援一个未在此浏览器交换历史中显示的交换。",
         evm_rescue_refund_title: "退还交换",
-        evm_rescue_refund_explainer:
-            "连接你的钱包以扫描已过期且可退款的 EVM 交换。如果你向 Boltz 交换发送了 USDT0、USDC 或 TBTC，请使用你的救援密钥来找到该交换。退还 RBTC 不需要救援密钥。",
         start_scanning: "开始扫描",
         stop_scanning: "停止扫描",
         evm_rescue_resume_title: "继续交换",
@@ -3052,8 +3042,6 @@ const dict = {
         evm_rescue_prompt:
             "EVM チェーン上の Boltz スワップに資金を送金した場合は「スワップを返金」を使用し、EVM チェーンから資金を受け取っていた場合は「スワップを再開」を使用して、このブラウザのスワップ履歴にないスワップを救済してください。",
         evm_rescue_refund_title: "スワップを返金",
-        evm_rescue_refund_explainer:
-            "ウォレットを接続して、期限切れで返金可能な EVM スワップをスキャンします。USDT0、USDC または TBTC を Boltz スワップに送金した場合は、レスキューキーを使ってそのスワップを見つけてください。RBTC の返金にはレスキューキーは不要です。",
         start_scanning: "スキャンを開始",
         stop_scanning: "スキャンを停止",
         evm_rescue_resume_title: "スワップを再開",
