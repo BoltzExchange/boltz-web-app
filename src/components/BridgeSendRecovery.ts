@@ -3,11 +3,18 @@ import {
     type PendingBridgeSend,
     PendingBridgeSendKind,
     PendingBridgeSendRecoveryStatus,
+    type PendingEvmOftBridgeSend,
     bridgeRegistry,
     recoverPendingBridgeSend,
 } from "boltz-swaps/bridge";
 import log from "loglevel";
-import { type Accessor, createEffect, createMemo, onCleanup } from "solid-js";
+import {
+    type Accessor,
+    createEffect,
+    createMemo,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -37,11 +44,27 @@ export const useBridgeSendRecovery = (params: {
     swapId: Accessor<string>;
     bridge: Accessor<BridgeDetail>;
     txSent: Accessor<string | undefined>;
+    evmSendActive?: Accessor<boolean>;
 }) => {
     const { setSwap, swap } = usePayContext();
     const { getSwap, setSwapStorage } = useGlobalContext();
 
-    const pendingSend = createMemo(() => swap()?.bridge?.pendingSend);
+    const storedPendingSend = createMemo(() => swap()?.bridge?.pendingSend);
+    const pendingSend = createMemo(() => {
+        const pending = storedPendingSend();
+        return pending?.kind === PendingBridgeSendKind.EvmOft
+            ? undefined
+            : pending;
+    });
+    const evmSendCandidate = createMemo(
+        () =>
+            swap()?.bridge?.evmSendCandidate ??
+            (storedPendingSend()?.kind === PendingBridgeSendKind.EvmOft
+                ? (storedPendingSend() as PendingEvmOftBridgeSend)
+                : undefined),
+    );
+    const [evmSendCandidateRecoveryFailed, setEvmSendCandidateRecoveryFailed] =
+        createSignal(false);
 
     const updateBridge = async (
         update: (bridge: BridgeDetail) => BridgeDetail,
@@ -64,6 +87,7 @@ export const useBridgeSendRecovery = (params: {
                 ...bridge,
                 txHash,
                 pendingSend: undefined,
+                evmSendCandidate: undefined,
             };
             if (details === undefined) {
                 delete next.details;
@@ -89,6 +113,38 @@ export const useBridgeSendRecovery = (params: {
                 destinationAsset: params.bridge().destinationAsset,
                 kind: pending.kind,
                 transaction: getPendingSendTransaction(pending),
+            });
+        }
+    };
+
+    const setEvmSendCandidate = async (
+        candidate: PendingEvmOftBridgeSend | undefined,
+    ) => {
+        await updateBridge((bridge) => {
+            const next: BridgeDetail = {
+                ...bridge,
+                pendingSend:
+                    bridge.pendingSend?.kind === PendingBridgeSendKind.EvmOft
+                        ? undefined
+                        : bridge.pendingSend,
+                evmSendCandidate: candidate,
+            };
+            if (next.pendingSend === undefined) {
+                delete next.pendingSend;
+            }
+            if (candidate === undefined) {
+                delete next.evmSendCandidate;
+            }
+            return next;
+        });
+
+        setEvmSendCandidateRecoveryFailed(false);
+        if (candidate !== undefined) {
+            log.info("Persisted EVM bridge send candidate for recovery", {
+                swapId: params.swapId(),
+                sourceAsset: params.bridge().sourceAsset,
+                destinationAsset: params.bridge().destinationAsset,
+                fromNonce: candidate.fromNonce,
             });
         }
     };
@@ -151,6 +207,77 @@ export const useBridgeSendRecovery = (params: {
         }
     };
 
+    let recoveringEvmCandidate = false;
+    const recoverEvmSendCandidate = async (
+        candidate: PendingEvmOftBridgeSend | undefined,
+    ) => {
+        if (
+            candidate === undefined ||
+            recoveringEvmCandidate ||
+            params.txSent() !== undefined
+        ) {
+            return;
+        }
+
+        recoveringEvmCandidate = true;
+        const bridge = params.bridge();
+        try {
+            const result = await recoverPendingBridgeSend(
+                candidate,
+                bridgeRegistry
+                    .requireDriverForRoute(bridge)
+                    .getProvider(bridge.sourceAsset),
+            );
+            switch (result.status) {
+                case PendingBridgeSendRecoveryStatus.Recovered:
+                    log.info("Recovered EVM bridge send candidate", {
+                        swapId: params.swapId(),
+                        txHash: result.transactionHash,
+                    });
+                    await persistBridgeSend(result.transactionHash);
+                    return;
+
+                case PendingBridgeSendRecoveryStatus.Failed:
+                    log.warn("EVM bridge send candidate recovery failed", {
+                        swapId: params.swapId(),
+                    });
+                    setEvmSendCandidateRecoveryFailed(true);
+                    return;
+
+                case PendingBridgeSendRecoveryStatus.Pending:
+                    setEvmSendCandidateRecoveryFailed(false);
+                    return;
+
+                default: {
+                    const exhaustive: never = result;
+                    throw new Error(
+                        `Unsupported bridge recovery status: ${String(exhaustive)}`,
+                    );
+                }
+            }
+        } catch (error) {
+            setEvmSendCandidateRecoveryFailed(true);
+            log.warn("Failed to recover EVM bridge send candidate", {
+                swapId: params.swapId(),
+                error,
+            });
+        } finally {
+            recoveringEvmCandidate = false;
+        }
+    };
+
+    const retryEvmSendCandidateRecovery = async () => {
+        const candidate = evmSendCandidate();
+        if (candidate === undefined) {
+            return;
+        }
+
+        await setEvmSendCandidate({
+            ...candidate,
+            createdAt: Date.now(),
+        });
+    };
+
     createEffect(() => {
         const pending = pendingSend();
         if (pending === undefined || params.txSent() !== undefined) {
@@ -162,10 +289,36 @@ export const useBridgeSendRecovery = (params: {
         onCleanup(() => window.clearInterval(interval));
     });
 
+    createEffect(() => {
+        if (params.evmSendActive?.() === true) {
+            return;
+        }
+
+        const candidate = evmSendCandidate();
+        if (
+            candidate === undefined ||
+            params.txSent() !== undefined ||
+            evmSendCandidateRecoveryFailed()
+        ) {
+            return;
+        }
+
+        void recoverEvmSendCandidate(candidate);
+        const interval = window.setInterval(
+            () => void recoverEvmSendCandidate(candidate),
+            5_000,
+        );
+        onCleanup(() => window.clearInterval(interval));
+    });
+
     return {
         pendingSend,
         pendingSendCallbacks,
+        evmSendCandidate,
+        evmSendCandidateRecoveryFailed,
         persistBridgeSend,
+        recoverEvmSendCandidate: retryEvmSendCandidateRecovery,
+        setEvmSendCandidate,
         setPendingSend,
     };
 };

@@ -234,9 +234,7 @@ export const sendOftDirect = async ({
 };
 
 // Builds the same transaction as `sendOftDirect`, but returns a request the
-// caller can sign and broadcast itself. The caller persists the populated call
-// so the resulting tx hash can be recovered if the page is closed before the
-// wallet returns.
+// caller can sign and broadcast itself.
 export const populateOftDirectSendTransaction = ({
     target,
     sendParam,

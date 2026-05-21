@@ -63,11 +63,7 @@ export type PendingBridgeSendRecoveryResult =
 
 const oftSentEvent = getAbiItem({ abi: oftAbi, name: "OFTSent" });
 
-// Logs may take a few seconds to be indexed after a transaction is mined, so we
-// keep checking briefly even after the sender's nonce has advanced past the
-// latest confirmed nonce captured before the pending send.
-const minedNonceLogIndexGracePeriodMs = 60_000;
-const pendingEvmSendGracePeriodMs = 10 * 60_000;
+const evmSendRecoveryTimeoutMs = 120_000;
 
 const sameAddress = (left: string | null | undefined, right: string) =>
     left !== null &&
@@ -178,23 +174,8 @@ export const recoverPendingEvmOftSend = async (
         }),
     ]);
     const age = Date.now() - pendingSend.createdAt;
-    if (
-        latestNonce > pendingSend.fromNonce &&
-        age > minedNonceLogIndexGracePeriodMs
-    ) {
-        log.warn("Pending EVM OFT send failed to recover", {
-            sender: pendingSend.sender,
-            fromNonce: pendingSend.fromNonce,
-            latestNonce,
-        });
-        return { status: PendingBridgeSendRecoveryStatus.Failed };
-    }
-
-    if (
-        pendingNonce <= pendingSend.fromNonce &&
-        age > pendingEvmSendGracePeriodMs
-    ) {
-        log.warn("Pending EVM OFT send expired without nonce advancement", {
+    if (age > evmSendRecoveryTimeoutMs) {
+        log.warn("Pending EVM OFT send recovery timed out", {
             sender: pendingSend.sender,
             fromNonce: pendingSend.fromNonce,
             latestNonce,

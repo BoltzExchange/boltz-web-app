@@ -205,7 +205,7 @@ describe("recoverPendingEvmOftSend", () => {
 
     test("keeps pending while the nonce is still in the mempool", async () => {
         const result = await recoverPendingEvmOftSend(
-            pendingSend,
+            { ...pendingSend, createdAt: Date.now() },
             createProvider({
                 logs: [],
                 latestNonce: 7,
@@ -215,6 +215,21 @@ describe("recoverPendingEvmOftSend", () => {
 
         expect(result).toEqual({
             status: PendingBridgeSendRecoveryStatus.Pending,
+        });
+    });
+
+    test("fails when a mempool tx is not found before expiry", async () => {
+        const result = await recoverPendingEvmOftSend(
+            pendingSend,
+            createProvider({
+                logs: [],
+                latestNonce: 7,
+                pendingNonce: 8,
+            }),
+        );
+
+        expect(result).toEqual({
+            status: PendingBridgeSendRecoveryStatus.Failed,
         });
     });
 

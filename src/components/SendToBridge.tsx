@@ -7,7 +7,6 @@ import {
     type PendingEvmOftBridgeSend,
     bridgeRegistry,
 } from "boltz-swaps/bridge";
-import { isWalletRejectionError } from "boltz-swaps/errors";
 import { createTokenContract } from "boltz-swaps/evm/contracts";
 import type { PopulatedEvmTransaction } from "boltz-swaps/evm/transaction";
 import {
@@ -30,6 +29,7 @@ import {
     createMemo,
     createResource,
     createSignal,
+    onCleanup,
 } from "solid-js";
 import { sendPopulatedTransaction } from "src/utils/evmTransaction";
 import { type Address, getAddress } from "viem";
@@ -51,7 +51,72 @@ import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
 import WaitForBridge from "./WaitForBridge";
 
-const evmPendingSendBlockLookback = 5n;
+const evmSendCandidateBlockLookback = 5n;
+const evmSendCandidateRecoveryTimeoutMs = 120_000;
+
+const EvmSendCandidateRecovery = (props: {
+    failed: boolean;
+    createdAt: number;
+    onCheckAgain: () => Promise<void>;
+    onReset: () => Promise<void>;
+}) => {
+    const { t } = useGlobalContext();
+    const [now, setNow] = createSignal(Date.now());
+
+    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
+    onCleanup(() => window.clearInterval(interval));
+
+    const remainingSeconds = createMemo(() =>
+        Math.max(
+            Math.ceil(
+                (props.createdAt + evmSendCandidateRecoveryTimeoutMs - now()) /
+                    1_000,
+            ),
+            0,
+        ),
+    );
+
+    const reset = () => {
+        if (window.confirm(t("did_not_send_transaction_confirm"))) {
+            void props.onReset();
+        }
+    };
+
+    return (
+        <>
+            <h2>
+                {t(
+                    props.failed
+                        ? "could_not_confirm_previous_transaction"
+                        : "checking_previous_transaction",
+                )}
+            </h2>
+            <h3>
+                {t(
+                    props.failed
+                        ? "could_not_confirm_previous_transaction_line"
+                        : "checking_previous_transaction_line",
+                )}
+            </h3>
+            <Show when={!props.failed}>
+                <p>
+                    {t("checking_previous_transaction_countdown", {
+                        seconds: remainingSeconds(),
+                    })}
+                </p>
+                <LoadingSpinner />
+            </Show>
+            <Show when={props.failed}>
+                <button class="btn" onClick={() => void props.onCheckAgain()}>
+                    {t("check_again")}
+                </button>
+            </Show>
+            <button class="btn btn-light" onClick={reset}>
+                {t("did_not_send_transaction")}
+            </button>
+        </>
+    );
+};
 
 const SendToBridge = (props: {
     bridge: BridgeDetail;
@@ -88,20 +153,25 @@ const SendToBridge = (props: {
     const [approvalTarget, setApprovalTarget] = createSignal<
         string | undefined
     >(undefined);
+    const [bridgeSendActive, setBridgeSendActive] = createSignal(false);
     const txSent = createMemo<string | undefined>(() => swap()?.bridge?.txHash);
     const {
+        evmSendCandidate,
+        evmSendCandidateRecoveryFailed,
         pendingSend,
         pendingSendCallbacks,
         persistBridgeSend,
-        setPendingSend,
+        recoverEvmSendCandidate,
+        setEvmSendCandidate,
     } = useBridgeSendRecovery({
         swapId: () => props.swapId,
         bridge: () => props.bridge,
         txSent,
+        evmSendActive: bridgeSendActive,
     });
 
-    // OFT transport sends (Solana/Tron) need callbacks to persist a pending
-    // send before broadcast. Other bridges (CCTP) go through the driver as-is.
+    // OFT transport sends (Solana/Tron) use callbacks to persist post-broadcast
+    // recovery state. Other bridges (CCTP) go through the driver as-is.
     const sendTransport = async (args: {
         contract: BridgeTransportClient;
         sendParam: BridgeSendParam;
@@ -631,9 +701,12 @@ const SendToBridge = (props: {
         });
 
         if (props.bridge.kind === BridgeKind.Oft) {
-            let txRequest: PopulatedEvmTransaction;
+            let prepared: {
+                candidate: PendingEvmOftBridgeSend;
+                txRequest: PopulatedEvmTransaction;
+            };
             try {
-                txRequest = await prepareOftFromEvm({
+                prepared = await prepareOftFromEvm({
                     signer: connectedSigner,
                     signerAddress,
                     directSendTarget: directSendTarget as OftDirectSendTarget,
@@ -655,17 +728,16 @@ const SendToBridge = (props: {
                 });
             }
 
+            await setEvmSendCandidate(prepared.candidate);
             try {
                 const hash = await sendPopulatedTransaction(
                     GasAbstractionType.None,
                     connectedSigner,
-                    txRequest,
+                    prepared.txRequest,
                 );
                 return { hash };
             } catch (error) {
-                if (isWalletRejectionError(error)) {
-                    await setPendingSend(undefined);
-                }
+                await setEvmSendCandidate(undefined);
                 throw error;
             }
         }
@@ -679,17 +751,16 @@ const SendToBridge = (props: {
         });
     };
 
-    // Capture the latest confirmed sender nonce as a lower bound and persist the
-    // populated call before broadcast. If the page is closed before the wallet
-    // returns we can find the resulting transaction by replaying OFTSent logs and
-    // matching on the sender and calldata.
     const prepareOftFromEvm = async (args: {
         signer: Signer;
         signerAddress: Address;
         directSendTarget: OftDirectSendTarget;
         sendParam: SendParam;
         msgFee: BridgeMsgFee;
-    }): Promise<PopulatedEvmTransaction> => {
+    }): Promise<{
+        candidate: PendingEvmOftBridgeSend;
+        txRequest: PopulatedEvmTransaction;
+    }> => {
         const txRequest: PopulatedEvmTransaction =
             populateOftDirectSendTransaction({
                 target: args.directSendTarget,
@@ -706,30 +777,26 @@ const SendToBridge = (props: {
                 address: args.signerAddress,
                 blockTag: "latest",
             }),
-            bridgeDriver()
-                .getProvider(props.bridge.sourceAsset)
-                .getBlockNumber(),
+            args.signer.provider.getBlockNumber(),
         ]);
 
-        const pending: PendingEvmOftBridgeSend = {
-            kind: PendingBridgeSendKind.EvmOft,
-            createdAt: Date.now(),
-            sender: args.signerAddress,
-            fromNonce,
-            // Reorgs can move the transaction back a few blocks; start a bit
-            // earlier so log replay still finds it.
-            fromBlock: Number(
-                latestBlock > evmPendingSendBlockLookback
-                    ? latestBlock - evmPendingSendBlockLookback
-                    : 0n,
-            ),
-            oftContractAddress: args.directSendTarget.oftContract.address,
-            transactionTo: txRequest.to,
-            calldata: txRequest.data,
+        return {
+            candidate: {
+                kind: PendingBridgeSendKind.EvmOft,
+                createdAt: Date.now(),
+                sender: args.signerAddress,
+                fromNonce,
+                fromBlock: Number(
+                    latestBlock > evmSendCandidateBlockLookback
+                        ? latestBlock - evmSendCandidateBlockLookback
+                        : 0n,
+                ),
+                oftContractAddress: args.directSendTarget.oftContract.address,
+                transactionTo: txRequest.to,
+                calldata: txRequest.data,
+            },
+            txRequest,
         };
-        await setPendingSend(pending);
-
-        return txRequest;
     };
 
     const sendBridge = async () => {
@@ -765,94 +832,116 @@ const SendToBridge = (props: {
                 />
             }>
             <Show
-                when={pendingSend() === undefined}
-                fallback={<WaitForBridge bridge={props.bridge} />}>
+                when={evmSendCandidate() === undefined || bridgeSendActive()}
+                fallback={
+                    <EvmSendCandidateRecovery
+                        createdAt={evmSendCandidate()!.createdAt}
+                        failed={evmSendCandidateRecoveryFailed()}
+                        onCheckAgain={recoverEvmSendCandidate}
+                        onReset={() => setEvmSendCandidate(undefined)}
+                    />
+                }>
                 <Show
-                    when={
-                        signerBalance() !== undefined &&
-                        hasEnoughMsgFee() !== undefined
-                    }
-                    fallback={
-                        <Show
-                            when={sourceWalletReady()}
-                            fallback={
-                                <ConnectWallet
-                                    asset={props.bridge.sourceAsset}
-                                />
-                            }>
-                            <LoadingSpinner />
-                        </Show>
-                    }>
+                    when={pendingSend() === undefined}
+                    fallback={<WaitForBridge bridge={props.bridge} />}>
                     <Show
                         when={
-                            signerBalance()! >=
-                            (requiredTokenBalance() ?? props.amount)
+                            signerBalance() !== undefined &&
+                            hasEnoughMsgFee() !== undefined
                         }
                         fallback={
-                            <InsufficientBalance
-                                asset={props.bridge.sourceAsset}
-                            />
+                            <Show
+                                when={sourceWalletReady()}
+                                fallback={
+                                    <ConnectWallet
+                                        asset={props.bridge.sourceAsset}
+                                    />
+                                }>
+                                <LoadingSpinner />
+                            </Show>
                         }>
                         <Show
-                            when={hasEnoughMsgFee()}
+                            when={
+                                signerBalance()! >=
+                                (requiredTokenBalance() ?? props.amount)
+                            }
                             fallback={
                                 <InsufficientBalance
                                     asset={props.bridge.sourceAsset}
-                                    line={t(
-                                        "insufficient_gas_balance_line" as DictKey,
-                                        {
-                                            gasToken: sourceGasToken(),
-                                        },
-                                    )}
                                 />
                             }>
                             <Show
-                                when={!needsApproval()}
+                                when={hasEnoughMsgFee()}
                                 fallback={
-                                    sourceTransport() ===
-                                    NetworkTransport.Tron ? (
-                                        <ApproveTrc20
-                                            asset={props.bridge.sourceAsset}
-                                            setNeedsApproval={setNeedsApproval}
-                                            approvalTarget={approvalTarget()!}
-                                        />
-                                    ) : (
-                                        <ApproveErc20
-                                            asset={props.bridge.sourceAsset}
-                                            value={() =>
-                                                requiredTokenBalance() ??
-                                                props.amount
-                                            }
-                                            setNeedsApproval={setNeedsApproval}
-                                            approvalTarget={
-                                                approvalTarget() as Address
-                                            }
-                                            resetAllowanceFirst={true}
-                                        />
-                                    )
+                                    <InsufficientBalance
+                                        asset={props.bridge.sourceAsset}
+                                        line={t(
+                                            "insufficient_gas_balance_line" as DictKey,
+                                            {
+                                                gasToken: sourceGasToken(),
+                                            },
+                                        )}
+                                    />
                                 }>
-                                <ContractTransaction
-                                    asset={props.bridge.sourceAsset}
-                                    /* eslint-disable-next-line solid/reactivity */
-                                    onClick={async () => {
-                                        const tx = await sendBridge();
-                                        await persistBridgeSend(
-                                            tx.hash,
-                                            tx.details,
-                                        );
-                                    }}
-                                    children={
-                                        <ConnectWallet
-                                            asset={props.bridge.sourceAsset}
-                                        />
-                                    }
-                                    buttonText={t("send")}
-                                    promptText={t("transaction_prompt", {
-                                        button: t("send"),
-                                    })}
-                                    waitingText={t("tx_in_mempool_subline")}
-                                    showHr={false}
-                                />
+                                <Show
+                                    when={!needsApproval()}
+                                    fallback={
+                                        sourceTransport() ===
+                                        NetworkTransport.Tron ? (
+                                            <ApproveTrc20
+                                                asset={props.bridge.sourceAsset}
+                                                setNeedsApproval={
+                                                    setNeedsApproval
+                                                }
+                                                approvalTarget={
+                                                    approvalTarget()!
+                                                }
+                                            />
+                                        ) : (
+                                            <ApproveErc20
+                                                asset={props.bridge.sourceAsset}
+                                                value={() =>
+                                                    requiredTokenBalance() ??
+                                                    props.amount
+                                                }
+                                                setNeedsApproval={
+                                                    setNeedsApproval
+                                                }
+                                                approvalTarget={
+                                                    approvalTarget() as Address
+                                                }
+                                                resetAllowanceFirst={true}
+                                            />
+                                        )
+                                    }>
+                                    <ContractTransaction
+                                        asset={props.bridge.sourceAsset}
+                                        /* eslint-disable-next-line solid/reactivity */
+                                        onClick={async () => {
+                                            setBridgeSendActive(true);
+                                            try {
+                                                const tx = await sendBridge();
+                                                await persistBridgeSend(
+                                                    tx.hash,
+                                                    tx.details,
+                                                );
+                                            } finally {
+                                                setBridgeSendActive(false);
+                                            }
+                                        }}
+                                        children={
+                                            <ConnectWallet
+                                                asset={props.bridge.sourceAsset}
+                                            />
+                                        }
+                                        buttonText={t("send")}
+                                        promptText={t("transaction_prompt", {
+                                            button: t("send"),
+                                        })}
+                                        waitingText={t("tx_in_mempool_subline")}
+                                        showHr={false}
+                                    />
+                                </Show>
                             </Show>
                         </Show>
                     </Show>
