@@ -200,10 +200,9 @@ describe("AssetSelect", () => {
         signals.setAssetSelected(side);
 
         const header = await screen.findByText(
-            i18n.en.select_asset.replace(
-                "{{ direction }}",
-                side === Side.Send ? i18n.en.send : i18n.en.receive,
-            ),
+            side === Side.Send
+                ? i18n.en.select_asset_send
+                : i18n.en.select_asset_receive,
         );
         expect(header).not.toBeUndefined();
     });

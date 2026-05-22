@@ -180,12 +180,11 @@ const SelectAsset = () => {
                     onClick={(e) => e.stopPropagation()}>
                     <div class="asset-select-header">
                         <h3>
-                            {t("select_asset", {
-                                direction:
-                                    assetSelected() === Side.Send
-                                        ? t("send")
-                                        : t("receive"),
-                            })}
+                            {t(
+                                assetSelected() === Side.Send
+                                    ? "select_asset_send"
+                                    : "select_asset_receive",
+                            )}
                         </h3>
                         <button
                             type="button"
