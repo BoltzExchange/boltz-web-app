@@ -22,7 +22,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
-    corsProxyUrl: "https://cors-proxy.m1011at.workers.dev/",
+    gasSponsor: "https://sponsor.ccxp.space/",
     supportUrl: "https://support.boltz.exchange/hc/center",
     twitterUrl: "https://twitter.com/boltzhq",
     githubUrl: "https://github.com/BoltzExchange",
