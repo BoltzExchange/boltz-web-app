@@ -128,7 +128,8 @@ const Modal = (props: {
             style={props.show() ? "display: grid;" : "display: none;"}>
             <div
                 class="frame assets-select wallet-select-modal"
-                onClick={(e) => e.stopPropagation()}>
+                onClick={(e) => e.stopPropagation()}
+                style={showDerivationPaths() ? "display: none;" : undefined}>
                 <h2>{t("select_wallet")}</h2>
                 <span class="close" onClick={() => props.setShow(false)}>
                     <IoClose />
