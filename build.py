@@ -67,8 +67,6 @@ if network != "regtest":
         "VITE_RSK_FALLBACK_ENDPOINT",
         "VITE_WALLETCONNECT_PROJECT_ID",
         "VITE_CHATWOOT_TOKEN",
-        "VITE_ALCHEMY_API_KEY",
-        "VITE_ALCHEMY_GAS_POLICY_ID",
     ]:
         if var not in env:
             print(f"WARN: {var} not in .env or .env.local")

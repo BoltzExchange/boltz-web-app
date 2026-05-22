@@ -18,27 +18,6 @@ const alchemyHeaders = {
 const jsonRpcVersion = "2.0";
 const jsonRpcId = 1;
 
-const getAlchemyApiKey = (): string => {
-    const key = import.meta.env.VITE_ALCHEMY_API_KEY as string | undefined;
-    if (key === undefined) {
-        throw new Error("VITE_ALCHEMY_API_KEY is not defined");
-    }
-    return key;
-};
-
-const alchemyUrl = () => {
-    const baseUrl = `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
-    return isTor() ? `${config.corsProxyUrl}${baseUrl}` : baseUrl;
-};
-
-const getAlchemyGasPolicyId = (): string => {
-    const id = import.meta.env.VITE_ALCHEMY_GAS_POLICY_ID as string | undefined;
-    if (id === undefined) {
-        throw new Error("VITE_ALCHEMY_GAS_POLICY_ID is not defined");
-    }
-    return id;
-};
-
 type JsonRpcError = {
     code: number;
     message: string;
@@ -101,7 +80,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     );
 
     try {
-        response = await fetch(alchemyUrl(), opts);
+        response = await fetch(config.gasSponsor, opts);
     } catch (error) {
         const isAbortError =
             (error instanceof DOMException && error.name === "AbortError") ||
@@ -171,11 +150,6 @@ const prepareCalls = async (
 ) => {
     return await requestAlchemy<PrepareCallsResponse>("wallet_prepareCalls", [
         {
-            capabilities: {
-                paymasterService: {
-                    policyId: getAlchemyGasPolicyId(),
-                },
-            },
             calls,
             from: signerAddress,
             chainId,

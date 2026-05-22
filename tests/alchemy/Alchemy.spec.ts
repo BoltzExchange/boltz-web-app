@@ -41,11 +41,6 @@ describe("Alchemy", () => {
         return JSON.parse(init.body) as T;
     };
 
-    beforeEach(() => {
-        vi.stubEnv("VITE_ALCHEMY_API_KEY", "alchemy-test-key");
-        vi.stubEnv("VITE_ALCHEMY_GAS_POLICY_ID", "alchemy-policy-id");
-    });
-
     afterEach(() => {
         vi.unstubAllEnvs();
         vi.restoreAllMocks();
