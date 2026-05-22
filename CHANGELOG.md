@@ -3,6 +3,48 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.2](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.1..v2.1.2) - 2026-05-22
+
+### Bug Fixes
+
+- boltz-swaps packaging - ([9320fd8](https://github.com/BoltzExchange/boltz-web-app/commit/9320fd849bb7d21bc1b53777e7e941475087779d))
+- overwritten http helper params - ([dfadaf1](https://github.com/BoltzExchange/boltz-web-app/commit/dfadaf12ba9d8c06de6c537d74a0bed75602df8b))
+- BOLT12 invoice verification - ([249949a](https://github.com/BoltzExchange/boltz-web-app/commit/249949adf7c4cd6ebf6f6d97d7ec23d604b661f0))
+- token decimals edge case handling - ([35d9b4c](https://github.com/BoltzExchange/boltz-web-app/commit/35d9b4cdc90af333c6fc151790eca27d8dac1302))
+- remove accidential loglevel import in package (#1482) - ([d7aa711](https://github.com/BoltzExchange/boltz-web-app/commit/d7aa71133fadf54c93bd9ac4e5cf6008b19ebb89))
+- pro opportunity click not updating assets (#1481) - ([9b62965](https://github.com/BoltzExchange/boltz-web-app/commit/9b629650a11356a792bb4439b2c1064d4b582121))
+- allow refunding 'transaction.claim.pending' swap with extra UTXOs (#1478) - ([28e890b](https://github.com/BoltzExchange/boltz-web-app/commit/28e890b8a0c98b5d4bbd0e479324fb5b0734ae22))
+- missing "rescue method connected" color in pro (#1479) - ([0c27a03](https://github.com/BoltzExchange/boltz-web-app/commit/0c27a031f1cd21fd573e82bddae70d75268fdf0c))
+- overflow in asset select - ([a24c480](https://github.com/BoltzExchange/boltz-web-app/commit/a24c480730a35c3231be793cdd2785b42041f9da))
+- flaky mnemonic verify fake word selection (#1487) - ([815af4a](https://github.com/BoltzExchange/boltz-web-app/commit/815af4a4fa1431097a5c7598eaae59caec830c21))
+
+### Features
+
+- high level qutoer library - ([a011f49](https://github.com/BoltzExchange/boltz-web-app/commit/a011f49f4101a6ae5193713c0776b3a1aa3ed03c))
+- add WBTC on Arbitrum - ([884782a](https://github.com/BoltzExchange/boltz-web-app/commit/884782ac12519ff408542e0c365e821debb3d491))
+
+### Miscellaneous Chores
+
+- lint rule for type import side effects - ([c9673c2](https://github.com/BoltzExchange/boltz-web-app/commit/c9673c2f7c1a7471084949bb56054705cd3885a4))
+- remove bignumber.js and Buffer from package - ([72b9c20](https://github.com/BoltzExchange/boltz-web-app/commit/72b9c203f4fa45280c5c7a70b66462e2215e6808))
+- bump dependencies - ([bcdbc8c](https://github.com/BoltzExchange/boltz-web-app/commit/bcdbc8cc540046c99a15fd45bbfe228ffb7a4c7a))
+- cleanup EVM claim args - ([e340823](https://github.com/BoltzExchange/boltz-web-app/commit/e3408236ddf0ddf01e278ede3aac30eafa2bdb94))
+- dim down focused input border color (#1480) - ([611d94e](https://github.com/BoltzExchange/boltz-web-app/commit/611d94ea10c7003be4ed108a5e09841727525048))
+- setup stylelint (#1484) - ([d998f94](https://github.com/BoltzExchange/boltz-web-app/commit/d998f94e566c310e61b13ab3db76f0e14a7377ef))
+- add WBTC to social preview and rescue explainer (#1489) - ([8c55bf5](https://github.com/BoltzExchange/boltz-web-app/commit/8c55bf513ed4dec20b32691d46b697edc6e40627))
+- ensure connect wallet modal fits in view (#1491) - ([c5c2adf](https://github.com/BoltzExchange/boltz-web-app/commit/c5c2adfa1440ba61137910bbdfc900c408966805))
+- remove yadio (#1495) - ([afdc499](https://github.com/BoltzExchange/boltz-web-app/commit/afdc499a96990476f875b0aabac58f45aefe0723))
+
+### Refactoring
+
+- move more EVM functionality into package - ([c72aa98](https://github.com/BoltzExchange/boltz-web-app/commit/c72aa982fd7d7989908a74e452c9aea5834e525e))
+- cleanup swap steps - ([586a5e8](https://github.com/BoltzExchange/boltz-web-app/commit/586a5e8d478fb7bf0db05d6205bdd3dada101af8))
+- fix solburn config - ([7830ddd](https://github.com/BoltzExchange/boltz-web-app/commit/7830dddeec2194d852235bd2632945a518983142))
+- cleanup renegotiaton logic (#1483) - ([0ec840a](https://github.com/BoltzExchange/boltz-web-app/commit/0ec840ad01089d5e729d03cd587e8d13d91bee5b))
+- gas sponsor wrapper (#1494) - ([792c5d7](https://github.com/BoltzExchange/boltz-web-app/commit/792c5d7cf565ce31ad9a7eef17da98ead360618d))
+- column asset selector (#1490) - ([47d2ff7](https://github.com/BoltzExchange/boltz-web-app/commit/47d2ff7a8184dda20e054366474b1b77e52a04b2))
+
+---
 ## [2.1.1](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.0..v2.1.1) - 2026-05-19
 
 ### Bug Fixes
@@ -43,6 +85,7 @@ All notable changes to this project will be documented in this file. See [conven
 - add USDC to pairs in social preview (#1468) - ([38b768d](https://github.com/BoltzExchange/boltz-web-app/commit/38b768dafe8a417b34df0a4d056a04b64a66bf3f))
 - make Alchemy logging more verbose (#1471) - ([9288422](https://github.com/BoltzExchange/boltz-web-app/commit/9288422fafcd9af871154f17ddf9279ea3c6e9b5))
 - small UI fixes (#1474) - ([e3933d0](https://github.com/BoltzExchange/boltz-web-app/commit/e3933d0f745ea53b24eb7610f073c31cadf94a85))
+- bump version to v2.1.1 (#1477) - ([901cde9](https://github.com/BoltzExchange/boltz-web-app/commit/901cde95d858cbfa9bff36fcbe973bfdbe897aad))
 
 ### Refactoring
 
