@@ -296,10 +296,12 @@ const HardwareDerivationPaths = (props: {
 
     return (
         <div
-            class="frame assets-select"
+            class="wallet-select-overlay"
             onClick={() => close()}
-            style={props.show() ? "display: block;" : "display: none;"}>
-            <div onClick={(e) => e.stopPropagation()}>
+            style={props.show() ? "display: grid;" : "display: none;"}>
+            <div
+                class="frame assets-select wallet-select-modal"
+                onClick={(e) => e.stopPropagation()}>
                 <h2>{t("select_derivation_path")}</h2>
                 <span class="close" onClick={() => close()}>
                     <IoClose />

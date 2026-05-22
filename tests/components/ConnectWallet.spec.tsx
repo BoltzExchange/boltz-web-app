@@ -1,6 +1,7 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import BigNumber from "bignumber.js";
+import { NetworkTransport } from "boltz-swaps/types";
 import { type JSX, createEffect, createMemo, createSignal } from "solid-js";
 
 vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
@@ -248,6 +249,149 @@ describe("ConnectWallet", () => {
             expect(screen.getByTestId("onchain-address").textContent).toBe(
                 "0x5000000000000000000000000000000000000000",
             );
+        });
+    });
+
+    describe("hardware wallet derivation paths", () => {
+        const importConnectWalletWithProviders = async () => {
+            vi.resetModules();
+            vi.doMock("../../src/context/Global", () => ({
+                useGlobalContext: () => ({
+                    notify: vi.fn(),
+                    privacyMode: () => false,
+                    separator: () => ".",
+                    t: (key: string) => key,
+                    hardwareDerivationPath: () => "",
+                    setHardwareDerivationPath: vi.fn(),
+                }),
+            }));
+            vi.doMock("../../src/context/Web3", () => ({
+                useWeb3Signer: () => ({
+                    browserWalletTransports: () =>
+                        new Set([NetworkTransport.Evm]),
+                    clearSigner: vi.fn(),
+                    connectProvider: vi.fn(),
+                    connectedWallet: () => undefined,
+                    providers: () => ({
+                        "io.example.injected": {
+                            info: {
+                                rdns: "io.example.injected",
+                                uuid: "u1",
+                                name: "Injected Wallet",
+                            },
+                            provider: {},
+                        },
+                        "io.example.hw": {
+                            info: {
+                                rdns: "io.example.hw",
+                                uuid: "u2",
+                                name: "Mock Hardware",
+                                isHardware: true,
+                            },
+                            provider: {},
+                        },
+                    }),
+                    setWalletConnected: vi.fn(),
+                    switchNetwork: vi.fn(),
+                }),
+            }));
+            vi.doMock("../../src/context/Create", () => ({
+                useCreateContext: () => ({
+                    onchainAddress: () => "",
+                    setAddressValid: vi.fn(),
+                    setOnchainAddress: vi.fn(),
+                }),
+            }));
+
+            return await import("../../src/components/ConnectWallet");
+        };
+
+        afterEach(() => {
+            vi.doUnmock("../../src/context/Global");
+            vi.doUnmock("../../src/context/Web3");
+            vi.doUnmock("../../src/context/Create");
+            vi.resetModules();
+        });
+
+        const openWalletPicker = () => {
+            fireEvent.click(
+                screen.getByRole("button", { name: "connect_wallet" }),
+            );
+        };
+
+        test("hides the wallet picker while the derivation path modal is open", async () => {
+            const { default: IsolatedConnectWallet } =
+                await importConnectWalletWithProviders();
+
+            render(() => <IsolatedConnectWallet asset={RBTC} />);
+
+            openWalletPicker();
+
+            const walletPicker = await screen.findByRole("heading", {
+                name: "select_wallet",
+            });
+            expect(walletPicker).toBeVisible();
+
+            fireEvent.click(screen.getByText("Mock Hardware"));
+
+            const derivationHeading = await screen.findByRole("heading", {
+                name: "select_derivation_path",
+            });
+            expect(derivationHeading).toBeVisible();
+            expect(walletPicker).not.toBeVisible();
+        });
+
+        test("restores the wallet picker when the derivation modal is closed", async () => {
+            const { default: IsolatedConnectWallet } =
+                await importConnectWalletWithProviders();
+
+            render(() => <IsolatedConnectWallet asset={RBTC} />);
+
+            openWalletPicker();
+            fireEvent.click(screen.getByText("Mock Hardware"));
+
+            const derivationHeading = await screen.findByRole("heading", {
+                name: "select_derivation_path",
+            });
+            const derivationModal = derivationHeading.closest(
+                ".wallet-select-overlay",
+            ) as HTMLElement;
+            expect(derivationModal).not.toBeNull();
+
+            const closeBtn = derivationModal.querySelector(
+                ".close",
+            ) as HTMLElement;
+            fireEvent.click(closeBtn);
+
+            await waitFor(() => {
+                expect(derivationModal.style.display).toBe("none");
+            });
+
+            expect(
+                screen.getByRole("heading", { name: "select_wallet" }),
+            ).toBeVisible();
+        });
+
+        test("renders the derivation path modal inside a wallet-select-overlay backdrop", async () => {
+            const { default: IsolatedConnectWallet } =
+                await importConnectWalletWithProviders();
+
+            render(() => <IsolatedConnectWallet asset={RBTC} />);
+
+            openWalletPicker();
+            fireEvent.click(screen.getByText("Mock Hardware"));
+
+            const derivationHeading = await screen.findByRole("heading", {
+                name: "select_derivation_path",
+            });
+            const derivationModal = derivationHeading.closest(
+                ".wallet-select-overlay",
+            );
+            expect(derivationModal).not.toBeNull();
+            const inner = derivationModal!.querySelector(
+                ".frame.assets-select.wallet-select-modal",
+            );
+            expect(inner).not.toBeNull();
         });
     });
 

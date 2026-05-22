@@ -73,6 +73,9 @@ export const WalletConnect = () => {
         const created = appKit.createAppKit({
             projectId,
             themeMode: "dark",
+            themeVariables: {
+                "--w3m-z-index": 2147483002,
+            },
             enableEIP6963: false,
             enableInjected: false,
             adapters: [
