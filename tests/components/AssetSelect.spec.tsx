@@ -200,10 +200,9 @@ describe("AssetSelect", () => {
         signals.setAssetSelected(side);
 
         const header = await screen.findByText(
-            i18n.en.select_asset.replace(
-                "{{ direction }}",
-                side === Side.Send ? i18n.en.send : i18n.en.receive,
-            ),
+            side === Side.Send
+                ? i18n.en.select_asset_send
+                : i18n.en.select_asset_receive,
         );
         expect(header).not.toBeUndefined();
     });
@@ -538,6 +537,143 @@ describe("AssetSelect", () => {
             screen.getByTestId(`select-${TBTC}`).getAttribute("data-focused"),
         ).not.toEqual("true");
     });
+
+    test.each`
+        key             | from    | to
+        ${"ArrowRight"} | ${BTC}  | ${WBTC}
+        ${"l"}          | ${BTC}  | ${WBTC}
+        ${"ArrowLeft"}  | ${WBTC} | ${BTC}
+        ${"h"}          | ${WBTC} | ${BTC}
+    `(
+        "should move focus horizontally with $key from $from to $to",
+        async ({ key, from, to }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <SelectAsset />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            setPairAssets(LN, from);
+            signals.setAssetSelection(AssetSelection.Asset);
+            signals.setAssetSelected(Side.Receive);
+
+            await screen.findByTestId(`select-${to}`);
+
+            await waitFor(() => {
+                expect(
+                    screen
+                        .getByTestId(`select-${from}`)
+                        .getAttribute("data-focused"),
+                ).toEqual("true");
+            });
+
+            const modal = document.querySelector(".asset-select-modal");
+            expect(modal).not.toBeNull();
+
+            fireEvent.keyDown(modal as HTMLDivElement, { key });
+
+            await waitFor(() => {
+                expect(
+                    screen
+                        .getByTestId(`select-${to}`)
+                        .getAttribute("data-focused"),
+                ).toEqual("true");
+            });
+            expect(
+                screen
+                    .getByTestId(`select-${from}`)
+                    .getAttribute("data-focused"),
+            ).not.toEqual("true");
+        },
+    );
+
+    test("should skip disabled assets during horizontal keyboard navigation", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(BTC, LN);
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        await screen.findByTestId(`select-${LN}`);
+
+        await waitFor(() => {
+            expect(
+                screen.getByTestId(`select-${LN}`).getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+
+        const modal = document.querySelector(".asset-select-modal");
+        expect(modal).not.toBeNull();
+
+        fireEvent.keyDown(modal as HTMLDivElement, { key: "ArrowRight" });
+
+        await waitFor(() => {
+            expect(
+                screen
+                    .getByTestId(`select-${WBTC}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        });
+        expect(
+            screen.getByTestId(`select-${TBTC}`).getAttribute("data-focused"),
+        ).not.toEqual("true");
+    });
+
+    test.each`
+        key             | from
+        ${"ArrowRight"} | ${USDC}
+        ${"ArrowLeft"}  | ${LN}
+    `(
+        "should not move focus past column boundary with $key from $from",
+        async ({ key, from }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <SelectAsset />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            setPairAssets(BTC, from);
+            signals.setAssetSelection(AssetSelection.Asset);
+            signals.setAssetSelected(Side.Receive);
+
+            await screen.findByTestId(`select-${from}`);
+
+            await waitFor(() => {
+                expect(
+                    screen
+                        .getByTestId(`select-${from}`)
+                        .getAttribute("data-focused"),
+                ).toEqual("true");
+            });
+
+            const modal = document.querySelector(".asset-select-modal");
+            expect(modal).not.toBeNull();
+
+            fireEvent.keyDown(modal as HTMLDivElement, { key });
+
+            expect(
+                screen
+                    .getByTestId(`select-${from}`)
+                    .getAttribute("data-focused"),
+            ).toEqual("true");
+        },
+    );
 
     test("should not render when bitcoinOnly is true", () => {
         render(

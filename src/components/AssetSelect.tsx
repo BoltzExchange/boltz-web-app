@@ -16,11 +16,7 @@ import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
-import {
-    findEnabledIndex,
-    handleListKeyDown,
-    scrollToFocused,
-} from "../utils/assetSearch";
+import { findEnabledIndex, handleListKeyDown } from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
@@ -44,7 +40,6 @@ const SelectAsset = () => {
     } = useCreateContext();
 
     const [focusedIndex, setFocusedIndex] = createSignal(0);
-    let listRef!: HTMLDivElement;
 
     const assets = createMemo(() =>
         orderedAssets.filter(
@@ -71,14 +66,57 @@ const SelectAsset = () => {
         }
     });
 
-    createEffect(() => scrollToFocused(listRef, focusedIndex()));
-
     const selectFocused = () => handleAssetClick(assets()[focusedIndex()]);
     const close = () => {
         setAssetSelection(null);
     };
 
-    const handleKeyDown = (e: KeyboardEvent) =>
+    const focusHorizontal = (direction: 1 | -1) => {
+        const list = assets();
+        const columnSize = Math.ceil(list.length / 2);
+
+        setFocusedIndex((i) => {
+            const columnStart = direction === 1 ? columnSize : 0;
+            const columnEnd = direction === 1 ? list.length : columnSize;
+            const target = i + direction * columnSize;
+
+            if (target < columnStart || target >= columnEnd) {
+                return i;
+            }
+
+            const maxOffset = Math.max(
+                target - columnStart,
+                columnEnd - 1 - target,
+            );
+            for (let offset = 0; offset <= maxOffset; offset++) {
+                const forward = target + offset;
+                if (forward < columnEnd && !isIndexDisabled(forward)) {
+                    return forward;
+                }
+                if (offset === 0) continue;
+                const backward = target - offset;
+                if (backward >= columnStart && !isIndexDisabled(backward)) {
+                    return backward;
+                }
+            }
+            return i;
+        });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+        switch (e.key) {
+            case "ArrowRight":
+            case "l":
+                e.preventDefault();
+                focusHorizontal(1);
+                return;
+            case "ArrowLeft":
+            case "h":
+                e.preventDefault();
+                focusHorizontal(-1);
+                return;
+        }
+
         handleListKeyDown(
             e,
             assets().length,
@@ -87,6 +125,7 @@ const SelectAsset = () => {
             close,
             isIndexDisabled,
         );
+    };
 
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) {
@@ -152,19 +191,18 @@ const SelectAsset = () => {
             when={assetSelection() === AssetSelection.Asset && !bitcoinOnly()}>
             <div class="asset-select-overlay" onClick={close}>
                 <div
-                    class="asset-select-modal"
+                    class="asset-select-modal asset-select-modal--assets"
                     ref={(el) => setTimeout(() => el.focus())}
                     tabIndex={-1}
                     onKeyDown={handleKeyDown}
                     onClick={(e) => e.stopPropagation()}>
                     <div class="asset-select-header">
                         <h3>
-                            {t("select_asset", {
-                                direction:
-                                    assetSelected() === Side.Send
-                                        ? t("send")
-                                        : t("receive"),
-                            })}
+                            {t(
+                                assetSelected() === Side.Send
+                                    ? "select_asset_send"
+                                    : "select_asset_receive",
+                            )}
                         </h3>
                         <button
                             type="button"
@@ -174,7 +212,7 @@ const SelectAsset = () => {
                             <IoClose />
                         </button>
                     </div>
-                    <div class="asset-select-list" ref={listRef}>
+                    <div class="asset-select-list asset-select-list--two-column">
                         <For each={assets()}>
                             {(asset, i) => (
                                 <button
