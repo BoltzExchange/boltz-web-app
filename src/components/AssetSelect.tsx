@@ -76,12 +76,30 @@ const SelectAsset = () => {
         const columnSize = Math.ceil(list.length / 2);
 
         setFocusedIndex((i) => {
-            const next = i + direction * columnSize;
+            const columnStart = direction === 1 ? columnSize : 0;
+            const columnEnd = direction === 1 ? list.length : columnSize;
+            const target = i + direction * columnSize;
 
-            if (next < 0 || next >= list.length || isIndexDisabled(next)) {
+            if (target < columnStart || target >= columnEnd) {
                 return i;
             }
-            return next;
+
+            const maxOffset = Math.max(
+                target - columnStart,
+                columnEnd - 1 - target,
+            );
+            for (let offset = 0; offset <= maxOffset; offset++) {
+                const forward = target + offset;
+                if (forward < columnEnd && !isIndexDisabled(forward)) {
+                    return forward;
+                }
+                if (offset === 0) continue;
+                const backward = target - offset;
+                if (backward >= columnStart && !isIndexDisabled(backward)) {
+                    return backward;
+                }
+            }
+            return i;
         });
     };
 
