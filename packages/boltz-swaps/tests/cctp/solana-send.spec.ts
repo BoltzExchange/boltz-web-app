@@ -1,3 +1,5 @@
+import { base58 } from "@scure/base";
+import { PendingBridgeSendKind } from "boltz-swaps/bridge";
 import {
     type CctpSendParam,
     cctpEmptyHookData,
@@ -27,9 +29,15 @@ const h = vi.hoisted(() => ({
     ALLOCATED_RENT_PAYER_ADDR: "ALLOCATED_RENT_PAYER_ADDR",
     SOLBURN_URL: "https://solburn.example",
     getDepositForBurnSpy: undefined as ReturnType<typeof vi.fn> | undefined,
+    fakeConnection: undefined as
+        | {
+              getLatestBlockhash: ReturnType<typeof vi.fn>;
+              simulateTransaction: ReturnType<typeof vi.fn>;
+              sendEncodedTransaction: ReturnType<typeof vi.fn>;
+          }
+        | undefined,
     lastBuiltInstructions: [] as unknown[],
     lastSignedWith: [] as unknown[],
-    walletSigned: false,
 }));
 
 vi.mock("../../src/solana/lazy.ts", () => {
@@ -89,17 +97,16 @@ vi.mock("../../src/solana/lazy.ts", () => {
             }
         },
         VersionedTransaction: class FakeVersionedTransaction {
+            signatures = [new Uint8Array(64), new Uint8Array(64)];
             constructor(public message: { instructions: unknown[] }) {
                 h.lastBuiltInstructions = message.instructions;
             }
             sign(signers: unknown[]) {
-                if (!h.walletSigned) {
-                    throw new Error("local sign before wallet sign");
-                }
                 h.lastSignedWith = signers;
+                this.signatures[1] = new Uint8Array(64).fill(2);
             }
             serialize() {
-                return new Uint8Array();
+                return new Uint8Array([1, 2, 3]);
             }
         },
         SendTransactionError: class FakeSendTransactionError extends Error {},
@@ -146,11 +153,12 @@ vi.mock("../../src/solana/index.ts", async () => {
             blockhash: "BLOCKHASH",
             lastValidBlockHeight: 1,
         }),
-        sendEncodedTransaction: vi.fn().mockResolvedValue("TX_SIGNATURE"),
         simulateTransaction: vi
             .fn()
             .mockResolvedValue({ value: { err: null, logs: [] } }),
+        sendEncodedTransaction: vi.fn(),
     };
+    h.fakeConnection = fakeConnection;
 
     return {
         ...actual,
@@ -167,6 +175,8 @@ vi.mock("../../src/solana/index.ts", async () => {
 });
 
 const mintRecipient32 = `0x${"ab".repeat(32)}` as const;
+const signedSignatureBytes = new Uint8Array(64).fill(1);
+const signedSignature = base58.encode(signedSignatureBytes);
 
 const makeSendParam = (): CctpSendParam => ({
     amount: 1_000_000n,
@@ -178,15 +188,35 @@ const makeSendParam = (): CctpSendParam => ({
     hookData: cctpEmptyHookData as `0x${string}`,
 });
 
-const makeWalletProvider = () =>
-    ({
-        signTransaction: async (transaction: unknown) => {
-            h.walletSigned = true;
-            return transaction;
-        },
-    }) as unknown as Parameters<
-        typeof createSolanaCctpContract
-    >[0]["walletProvider"];
+type FakeSignedTransaction = {
+    signatures: Uint8Array[];
+    serialize: () => Uint8Array;
+};
+
+type WalletProviderMock = NonNullable<
+    Parameters<typeof createSolanaCctpContract>[0]["walletProvider"]
+> & {
+    signAndSendTransaction: ReturnType<typeof vi.fn>;
+    signTransaction?: ReturnType<typeof vi.fn>;
+};
+
+const makeWalletProvider = ({
+    signTransaction = true,
+}: { signTransaction?: boolean } = {}): WalletProviderMock => {
+    const provider = {
+        signAndSendTransaction: vi.fn().mockResolvedValue("TX_SIGNATURE"),
+    } as WalletProviderMock;
+    if (signTransaction) {
+        provider.signTransaction = vi
+            .fn()
+            .mockImplementation((transaction: FakeSignedTransaction) => {
+                transaction.signatures[0] = signedSignatureBytes;
+                return transaction;
+            });
+    }
+
+    return provider;
+};
 
 const assets: Record<string, Asset> = {
     [h.ASSET]: {
@@ -240,8 +270,20 @@ describe("createSolanaCctpContract send()", () => {
         fetchSpy.mockReset();
         h.lastBuiltInstructions = [];
         h.lastSignedWith = [];
-        h.walletSigned = false;
         h.getDepositForBurnSpy?.mockClear();
+        h.fakeConnection?.getLatestBlockhash.mockReset();
+        h.fakeConnection?.getLatestBlockhash.mockResolvedValue({
+            blockhash: "BLOCKHASH",
+            lastValidBlockHeight: 1,
+        });
+        h.fakeConnection?.simulateTransaction.mockReset();
+        h.fakeConnection?.simulateTransaction.mockResolvedValue({
+            value: { err: null, logs: [] },
+        });
+        h.fakeConnection?.sendEncodedTransaction.mockReset();
+        h.fakeConnection?.sendEncodedTransaction.mockResolvedValue(
+            signedSignature,
+        );
         setBoltzSwapsConfig({ assets });
     });
 
@@ -250,19 +292,48 @@ describe("createSolanaCctpContract send()", () => {
         fetchSpy.mockReset();
     });
 
-    test("empty solburnUrl: compute-budget + burn ix only, user pays rent, single signer", async () => {
+    test("empty solburnUrl: compute-budget + burn ix only, user pays rent, single signer and pending send", async () => {
         setBoltzSwapsConfig({ assets, solburnUrl: "" });
 
+        const walletProvider = makeWalletProvider();
+        const persist = vi.fn().mockResolvedValue(undefined);
         const contract = createSolanaCctpContract({
             asset: h.ASSET,
             tokenMint: h.TOKEN_MINT,
-            walletProvider: makeWalletProvider(),
+            walletProvider,
         });
 
-        const result = await contract.send(makeSendParam());
+        const result = await contract.send(makeSendParam(), [0n, 0n], "", {
+            pendingSendCallbacks: { persist },
+        });
 
-        expect(result.hash).toBe("TX_SIGNATURE");
+        expect(result.hash).toBe(signedSignature);
+        expect(result.details?.solana).toEqual({ blockhash: "BLOCKHASH" });
         expect(fetchSpy).not.toHaveBeenCalled();
+
+        expect(h.fakeConnection?.simulateTransaction).toHaveBeenCalledWith(
+            expect.any(Object),
+            expect.objectContaining({
+                sigVerify: false,
+                replaceRecentBlockhash: true,
+                commitment: "confirmed",
+            }),
+        );
+        expect(walletProvider.signTransaction!).toHaveBeenCalledTimes(1);
+        expect(walletProvider.signAndSendTransaction).not.toHaveBeenCalled();
+        expect(h.fakeConnection?.sendEncodedTransaction).toHaveBeenCalledWith(
+            Buffer.from([1, 2, 3]).toString("base64"),
+            expect.objectContaining({
+                skipPreflight: true,
+                preflightCommitment: "confirmed",
+            }),
+        );
+        expect(persist).toHaveBeenCalledWith({
+            kind: PendingBridgeSendKind.SolanaCctp,
+            sourceAsset: h.ASSET,
+            lastValidBlockHeight: 1,
+            signature: signedSignature,
+        });
 
         expect(h.lastBuiltInstructions).toHaveLength(2);
         expect(h.lastBuiltInstructions[0]).toMatchObject({
@@ -279,6 +350,35 @@ describe("createSolanaCctpContract send()", () => {
         expect(accounts.owner.address).toBe(h.USER_ADDR);
     });
 
+    test("falls back to wallet-managed send when local signing is unavailable", async () => {
+        setBoltzSwapsConfig({ assets, solburnUrl: "" });
+
+        const walletProvider = makeWalletProvider({ signTransaction: false });
+        const contract = createSolanaCctpContract({
+            asset: h.ASSET,
+            tokenMint: h.TOKEN_MINT,
+            walletProvider,
+        });
+
+        const result = await contract.send(makeSendParam(), [0n, 0n], "");
+
+        expect(result.hash).toBe("TX_SIGNATURE");
+        expect(walletProvider.signAndSendTransaction).toHaveBeenCalledTimes(1);
+        expect(h.fakeConnection?.sendEncodedTransaction).not.toHaveBeenCalled();
+
+        const [transaction, sendOptions] =
+            walletProvider.signAndSendTransaction.mock.calls[0];
+        expect(sendOptions).toMatchObject({
+            skipPreflight: true,
+            preflightCommitment: "confirmed",
+        });
+        expect(
+            transaction.signatures.some((signature: Uint8Array) =>
+                signature.some((byte) => byte !== 0),
+            ),
+        ).toBe(true);
+    });
+
     test("solburnUrl + allocate 200: inserts rent prefund, two signers, allocated rent payer", async () => {
         fetchSpy.mockResolvedValueOnce(
             new Response(JSON.stringify(allocateBody()), { status: 200 }),
@@ -291,7 +391,7 @@ describe("createSolanaCctpContract send()", () => {
             walletProvider: makeWalletProvider(),
         });
 
-        await contract.send(makeSendParam());
+        await contract.send(makeSendParam(), [0n, 0n], "");
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(fetchSpy.mock.calls[0]![0]).toBe(`${h.SOLBURN_URL}/allocate`);
@@ -330,7 +430,7 @@ describe("createSolanaCctpContract send()", () => {
             walletProvider: makeWalletProvider(),
         });
 
-        await contract.send(makeSendParam());
+        await contract.send(makeSendParam(), [0n, 0n], "");
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(h.lastBuiltInstructions).toHaveLength(2);
@@ -344,8 +444,8 @@ describe("createSolanaCctpContract send()", () => {
             tokenMint: h.TOKEN_MINT,
         });
 
-        await expect(contract.send(makeSendParam())).rejects.toThrow(
-            /Missing connected Solana wallet/,
-        );
+        await expect(
+            contract.send(makeSendParam(), [0n, 0n], ""),
+        ).rejects.toThrow(/Missing connected Solana wallet/);
     });
 });

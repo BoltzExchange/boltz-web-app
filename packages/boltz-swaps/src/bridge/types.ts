@@ -31,7 +31,9 @@ export type { BridgeTransaction };
 export type { BridgeRoute };
 
 export enum PendingBridgeSendKind {
+    EvmCctp = "evm-cctp",
     EvmOft = "evm-oft",
+    SolanaCctp = "solana-cctp",
     SolanaOft = "solana-oft",
     TronOft = "tron-oft",
 }

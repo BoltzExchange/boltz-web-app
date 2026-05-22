@@ -3,10 +3,14 @@ import {
     type Log,
     type PublicClient,
     decodeEventLog,
+    decodeFunctionData,
     getAbiItem,
     getAddress,
 } from "viem";
 
+import { tokenMessengerV2Abi } from "../cctp/directSend.ts";
+import { cctpMessageSentTopic } from "../cctp/events.ts";
+import { cctpEmptyHookData } from "../cctp/evm.ts";
 import { getLogger } from "../logger.ts";
 import { oftAbi } from "../oft/evm.ts";
 import { getSolanaConnection } from "../solana/index.ts";
@@ -28,8 +32,30 @@ export type PendingEvmOftBridgeSend = {
     calldata: string;
 };
 
+export type PendingEvmCctpBridgeSend = {
+    kind: PendingBridgeSendKind.EvmCctp;
+    createdAt: number;
+    sender: string;
+    fromNonce: number;
+    fromBlock: number;
+    tokenMessenger: string;
+    messageTransmitter: string;
+    calldata: string;
+};
+
+export type PendingEvmBridgeSend =
+    | PendingEvmOftBridgeSend
+    | PendingEvmCctpBridgeSend;
+
 export type PendingSolanaOftBridgeSend = {
     kind: PendingBridgeSendKind.SolanaOft;
+    sourceAsset: string;
+    lastValidBlockHeight: number;
+    signature: string;
+};
+
+export type PendingSolanaCctpBridgeSend = {
+    kind: PendingBridgeSendKind.SolanaCctp;
     sourceAsset: string;
     lastValidBlockHeight: number;
     signature: string;
@@ -44,8 +70,14 @@ export type PendingTronOftBridgeSend = {
 
 export type PendingBridgeSend =
     | PendingEvmOftBridgeSend
+    | PendingEvmCctpBridgeSend
     | PendingSolanaOftBridgeSend
+    | PendingSolanaCctpBridgeSend
     | PendingTronOftBridgeSend;
+
+export type PendingBridgeSendCallbacks = {
+    persist: (pending: PendingBridgeSend) => Promise<void>;
+};
 
 export enum PendingBridgeSendRecoveryStatus {
     Recovered = "recovered",
@@ -62,6 +94,10 @@ export type PendingBridgeSendRecoveryResult =
     | { status: PendingBridgeSendRecoveryStatus.Pending };
 
 const oftSentEvent = getAbiItem({ abi: oftAbi, name: "OFTSent" });
+const cctpDepositForBurnEvent = getAbiItem({
+    abi: tokenMessengerV2Abi,
+    name: "DepositForBurn",
+});
 
 const evmSendRecoveryTimeoutMs = 120_000;
 
@@ -69,6 +105,34 @@ const sameEvmString = (left: string | null | undefined, right: string) =>
     left !== null &&
     left !== undefined &&
     left.toLowerCase() === right.toLowerCase();
+
+const decodeCctpPendingSendCalldata = (calldata: string) => {
+    const decoded = decodeFunctionData({
+        abi: tokenMessengerV2Abi,
+        data: calldata as Hex,
+    });
+    const [
+        amount,
+        destinationDomain,
+        mintRecipient,
+        burnToken,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        hookData = cctpEmptyHookData,
+    ] = decoded.args;
+
+    return {
+        amount,
+        destinationDomain,
+        mintRecipient,
+        burnToken,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold,
+        hookData,
+    };
+};
 
 const isOftSentLog = (event: Log, oftContractAddress: string) => {
     if (!sameEvmString(event.address, oftContractAddress)) {
@@ -85,6 +149,83 @@ const isOftSentLog = (event: Log, oftContractAddress: string) => {
     } catch {
         return false;
     }
+};
+
+const hasCctpMessageSentLog = (
+    receipt: { logs: ReadonlyArray<Log> },
+    messageTransmitter: string,
+) =>
+    receipt.logs.some(
+        (entry) =>
+            sameAddress(entry.address, messageTransmitter) &&
+            entry.topics[0]?.toLowerCase() === cctpMessageSentTopic,
+    );
+
+const isMatchingCctpDepositForBurn = (
+    event: Log,
+    pendingSend: PendingEvmCctpBridgeSend,
+    expected: ReturnType<typeof decodeCctpPendingSendCalldata>,
+) => {
+    if (!sameAddress(event.address, pendingSend.tokenMessenger)) {
+        return false;
+    }
+
+    try {
+        const decoded = decodeEventLog({
+            abi: tokenMessengerV2Abi,
+            eventName: "DepositForBurn",
+            data: event.data as Hex,
+            topics: event.topics as [Hex, ...Hex[]],
+        });
+        if (decoded.eventName !== "DepositForBurn") {
+            return false;
+        }
+
+        const args = decoded.args;
+        return (
+            sameAddress(args.burnToken, expected.burnToken) &&
+            sameAddress(args.depositor, pendingSend.sender) &&
+            args.amount === expected.amount &&
+            args.destinationDomain === expected.destinationDomain &&
+            sameHex(args.mintRecipient, expected.mintRecipient) &&
+            sameHex(args.destinationCaller, expected.destinationCaller) &&
+            args.maxFee === expected.maxFee &&
+            args.minFinalityThreshold === expected.minFinalityThreshold &&
+            sameHex(args.hookData, expected.hookData)
+        );
+    } catch {
+        return false;
+    }
+};
+
+const getPendingEvmSendTimeoutResult = async (
+    pendingSend: PendingEvmBridgeSend,
+    provider: PublicClient,
+    label: string,
+): Promise<PendingBridgeSendRecoveryResult> => {
+    const [latestNonce, pendingNonce] = await Promise.all([
+        provider.getTransactionCount({
+            address: getAddress(pendingSend.sender),
+            blockTag: "latest",
+        }),
+        provider.getTransactionCount({
+            address: getAddress(pendingSend.sender),
+            blockTag: "pending",
+        }),
+    ]);
+    const age = Date.now() - pendingSend.createdAt;
+    if (age > evmSendRecoveryTimeoutMs) {
+        getLogger().warn(`Pending EVM ${label} send recovery timed out`, {
+            sender: pendingSend.sender,
+            fromNonce: pendingSend.fromNonce,
+            fromBlock: pendingSend.fromBlock,
+            latestNonce,
+            pendingNonce,
+        });
+        return { status: PendingBridgeSendRecoveryStatus.Failed };
+    }
+
+    return { status: PendingBridgeSendRecoveryStatus.Pending };
 };
 
 export const recoverPendingEvmOftSend = async (
@@ -158,32 +299,94 @@ export const recoverPendingEvmOftSend = async (
         return { status: PendingBridgeSendRecoveryStatus.Pending };
     }
 
-    const [latestNonce, pendingNonce] = await Promise.all([
-        provider.getTransactionCount({
-            address: getAddress(pendingSend.sender),
-            blockTag: "latest",
-        }),
-        provider.getTransactionCount({
-            address: getAddress(pendingSend.sender),
-            blockTag: "pending",
-        }),
-    ]);
-    const age = Date.now() - pendingSend.createdAt;
-    if (age > evmSendRecoveryTimeoutMs) {
-        log.warn("Pending EVM OFT send recovery timed out", {
-            sender: pendingSend.sender,
-            fromNonce: pendingSend.fromNonce,
-            latestNonce,
-            pendingNonce,
-        });
-        return { status: PendingBridgeSendRecoveryStatus.Failed };
-    }
-
-    return { status: PendingBridgeSendRecoveryStatus.Pending };
+    return await getPendingEvmSendTimeoutResult(pendingSend, provider, "OFT");
 };
 
-export const recoverPendingSolanaOftSend = async (
-    pendingSend: PendingSolanaOftBridgeSend,
+export const recoverPendingEvmCctpSend = async (
+    pendingSend: PendingEvmCctpBridgeSend,
+    provider: PublicClient,
+): Promise<PendingBridgeSendRecoveryResult> => {
+    const log = getLogger();
+    const expected = decodeCctpPendingSendCalldata(pendingSend.calldata);
+    const logs = await provider.getLogs({
+        address: getAddress(pendingSend.tokenMessenger),
+        fromBlock: BigInt(pendingSend.fromBlock),
+        toBlock: "latest",
+        event: cctpDepositForBurnEvent,
+        args: {
+            burnToken: getAddress(expected.burnToken),
+            depositor: getAddress(pendingSend.sender),
+            minFinalityThreshold: expected.minFinalityThreshold,
+        },
+    });
+    log.info("Checking pending EVM CCTP send", {
+        sender: pendingSend.sender,
+        fromNonce: pendingSend.fromNonce,
+        fromBlock: pendingSend.fromBlock,
+        logs: logs.length,
+    });
+
+    const matches = new Set<string>();
+    for (const event of logs) {
+        if (
+            event.transactionHash === null ||
+            !isMatchingCctpDepositForBurn(event, pendingSend, expected)
+        ) {
+            continue;
+        }
+
+        const transactionHash = event.transactionHash;
+        const [transaction, receipt] = await Promise.all([
+            provider.getTransaction({ hash: transactionHash }),
+            provider.getTransactionReceipt({ hash: transactionHash }),
+        ]);
+        if (
+            transaction === null ||
+            receipt === null ||
+            receipt.status !== "success"
+        ) {
+            continue;
+        }
+
+        if (
+            transaction.nonce >= pendingSend.fromNonce &&
+            sameAddress(transaction.from, pendingSend.sender) &&
+            sameAddress(transaction.to, pendingSend.tokenMessenger) &&
+            sameHex(transaction.input, pendingSend.calldata) &&
+            hasCctpMessageSentLog(receipt, pendingSend.messageTransmitter)
+        ) {
+            matches.add(transactionHash);
+        }
+    }
+    const matchedTransactionHashes = [...matches];
+
+    if (matchedTransactionHashes.length === 1) {
+        log.info("Recovered pending EVM CCTP send", {
+            sender: pendingSend.sender,
+            fromNonce: pendingSend.fromNonce,
+            transactionHash: matchedTransactionHashes[0],
+        });
+        return {
+            status: PendingBridgeSendRecoveryStatus.Recovered,
+            transactionHash: matchedTransactionHashes[0],
+        };
+    }
+
+    if (matchedTransactionHashes.length > 1) {
+        log.warn("Found multiple matching pending CCTP bridge sends", {
+            sender: pendingSend.sender,
+            fromNonce: pendingSend.fromNonce,
+            matches: matchedTransactionHashes,
+        });
+        return { status: PendingBridgeSendRecoveryStatus.Pending };
+    }
+
+    return await getPendingEvmSendTimeoutResult(pendingSend, provider, "CCTP");
+};
+
+const recoverPendingSolanaSend = async (
+    pendingSend: PendingSolanaOftBridgeSend | PendingSolanaCctpBridgeSend,
+    label: string,
 ): Promise<PendingBridgeSendRecoveryResult> => {
     const log = getLogger();
     const connection = await getSolanaConnection(pendingSend.sourceAsset);
@@ -194,7 +397,7 @@ export const recoverPendingSolanaOftSend = async (
     ).value[0];
     if (status !== null) {
         if (status.err !== null) {
-            log.warn("Pending Solana OFT send failed on-chain", {
+            log.warn(`Pending Solana ${label} send failed on-chain`, {
                 sourceAsset: pendingSend.sourceAsset,
                 signature: pendingSend.signature,
                 error: status.err,
@@ -202,7 +405,7 @@ export const recoverPendingSolanaOftSend = async (
             return { status: PendingBridgeSendRecoveryStatus.Failed };
         }
 
-        log.info("Recovered pending Solana OFT send", {
+        log.info(`Recovered pending Solana ${label} send`, {
             sourceAsset: pendingSend.sourceAsset,
             signature: pendingSend.signature,
         });
@@ -214,7 +417,7 @@ export const recoverPendingSolanaOftSend = async (
 
     const currentBlockHeight = await connection.getBlockHeight("confirmed");
     if (currentBlockHeight > pendingSend.lastValidBlockHeight) {
-        log.warn("Pending Solana OFT send blockhash expired", {
+        log.warn(`Pending Solana ${label} send blockhash expired`, {
             sourceAsset: pendingSend.sourceAsset,
             signature: pendingSend.signature,
             currentBlockHeight,
@@ -225,6 +428,16 @@ export const recoverPendingSolanaOftSend = async (
 
     return { status: PendingBridgeSendRecoveryStatus.Pending };
 };
+
+export const recoverPendingSolanaOftSend = async (
+    pendingSend: PendingSolanaOftBridgeSend,
+): Promise<PendingBridgeSendRecoveryResult> =>
+    await recoverPendingSolanaSend(pendingSend, "OFT");
+
+export const recoverPendingSolanaCctpSend = async (
+    pendingSend: PendingSolanaCctpBridgeSend,
+): Promise<PendingBridgeSendRecoveryResult> =>
+    await recoverPendingSolanaSend(pendingSend, "CCTP");
 
 export const recoverPendingTronOftSend = async (
     pendingSend: PendingTronOftBridgeSend,
@@ -285,8 +498,19 @@ export const recoverPendingBridgeSend = async (
             }
             return await recoverPendingEvmOftSend(pendingSend, provider);
 
+        case PendingBridgeSendKind.EvmCctp:
+            if (provider === undefined) {
+                throw new Error(
+                    "EVM pending bridge send recovery needs an RPC provider",
+                );
+            }
+            return await recoverPendingEvmCctpSend(pendingSend, provider);
+
         case PendingBridgeSendKind.SolanaOft:
             return await recoverPendingSolanaOftSend(pendingSend);
+
+        case PendingBridgeSendKind.SolanaCctp:
+            return await recoverPendingSolanaCctpSend(pendingSend);
 
         case PendingBridgeSendKind.TronOft:
             return await recoverPendingTronOftSend(pendingSend);

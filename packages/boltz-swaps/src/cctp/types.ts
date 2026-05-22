@@ -1,5 +1,7 @@
 import type { Hex } from "viem";
 
+import type { PendingBridgeSendCallbacks } from "../bridge/pendingSend.ts";
+
 // Mirrors the on-chain Router.CctpData struct (see Router.sol). Used for
 // router-mediated flows (`executeCctp`, `claimERC20ExecuteCctp`, `hashCctpData`).
 export type CctpData = {
@@ -21,4 +23,8 @@ export type CctpData = {
 // `toCctpData`.
 export type CctpSendParam = CctpData & {
     amount: bigint;
+};
+
+export type CctpSendOverrides = {
+    pendingSendCallbacks?: PendingBridgeSendCallbacks;
 };

@@ -1,8 +1,17 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
-import { base64, hex } from "@scure/base";
-import type { Connection, TransactionInstruction } from "@solana/web3.js";
+import { base58, hex } from "@scure/base";
+import type {
+    Connection,
+    SendOptions,
+    Transaction,
+    TransactionInstruction,
+    VersionedTransaction,
+} from "@solana/web3.js";
 
+import type { PendingSolanaCctpBridgeSend } from "../bridge/pendingSend.ts";
+import { PendingBridgeSendKind } from "../bridge/types.ts";
 import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
+import { formatError, isWalletRejectionError } from "../errors.ts";
 import { constructRequestOptions } from "../helper.ts";
 import { getLogger } from "../logger.ts";
 import {
@@ -21,7 +30,7 @@ import {
     NetworkTransport,
 } from "../types.ts";
 import { cctpEmptyHookData } from "./evm.ts";
-import type { CctpSendParam } from "./types.ts";
+import type { CctpSendOverrides, CctpSendParam } from "./types.ts";
 
 type SolanaCctpModules = Awaited<ReturnType<(typeof lazySolanaCctp)["get"]>>;
 
@@ -33,7 +42,12 @@ export type SolanaCctpConfig = {
 
 export type SolanaCctpTransportClient = {
     transport: NetworkTransport.Solana;
-    send: (sendParam: CctpSendParam) => Promise<BridgeTransaction>;
+    send: (
+        sendParam: CctpSendParam,
+        msgFee: [bigint, bigint],
+        refundAddress: string,
+        overrides?: CctpSendOverrides,
+    ) => Promise<BridgeTransaction>;
 };
 
 type Context = {
@@ -178,6 +192,22 @@ const createTransaction = async (
     };
 };
 
+const getSignedTransactionSignature = (
+    signedTransaction: Transaction | VersionedTransaction,
+): string => {
+    const signature = signedTransaction.signatures[0];
+    const bytes =
+        signature instanceof Uint8Array ? signature : signature?.signature;
+    if (
+        bytes === undefined ||
+        bytes === null ||
+        bytes.every((byte) => byte === 0)
+    ) {
+        throw new Error("Solana wallet did not return a transaction signature");
+    }
+    return base58.encode(bytes);
+};
+
 const createDepositForBurnInstruction = async (
     context: Context,
     sendParam: CctpSendParam,
@@ -280,6 +310,7 @@ const createDepositForBurnInstruction = async (
 const send = async (
     context: Context,
     sendParam: CctpSendParam,
+    overrides?: CctpSendOverrides,
 ): Promise<BridgeTransaction> => {
     const { modules, walletProvider } = context;
     if (walletProvider === undefined) {
@@ -372,20 +403,110 @@ const send = async (
         );
     }
 
-    try {
-        const signedTransaction =
-            await walletProvider.signTransaction(transaction);
-        signedTransaction.sign(signers);
-
-        const signature = await context.connection.sendEncodedTransaction(
-            base64.encode(signedTransaction.serialize()),
-            {
-                skipPreflight: true,
-                preflightCommitment: "confirmed",
-            },
+    const sendOptions: SendOptions = {
+        skipPreflight: true,
+        preflightCommitment: "confirmed",
+    };
+    const sendWithWallet = async (): Promise<BridgeTransaction> => {
+        transaction.sign(signers);
+        const signature = await walletProvider.signAndSendTransaction(
+            transaction,
+            sendOptions,
         );
         return {
             hash: signature,
+            details: {
+                solana: {
+                    blockhash: latestBlockhash.blockhash,
+                },
+            },
+        };
+    };
+
+    const signTransaction =
+        walletProvider.signTransaction?.bind(walletProvider);
+    if (signTransaction === undefined) {
+        getLogger().warn("Falling back to wallet-managed Solana CCTP send", {
+            sourceAsset: context.asset,
+            sender: signerAddress,
+            reason: "Connected Solana wallet does not support signing transactions without broadcasting",
+        });
+        return await sendWithWallet();
+    }
+
+    try {
+        let signature: string;
+        let serializedSignedTransaction: Uint8Array;
+        try {
+            const signedTransaction = await signTransaction(transaction);
+            signature = getSignedTransactionSignature(signedTransaction);
+            signedTransaction.sign(signers);
+            serializedSignedTransaction = signedTransaction.serialize();
+        } catch (error) {
+            if (isWalletRejectionError(error)) {
+                throw error;
+            }
+
+            getLogger().warn(
+                "Falling back to wallet-managed Solana CCTP send",
+                {
+                    sourceAsset: context.asset,
+                    sender: signerAddress,
+                    reason: formatError(error),
+                },
+            );
+            return await sendWithWallet();
+        }
+
+        const pendingSend: PendingSolanaCctpBridgeSend = {
+            kind: PendingBridgeSendKind.SolanaCctp,
+            sourceAsset: context.asset,
+            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+            signature,
+        };
+        getLogger().info("Signed pending Solana CCTP send", {
+            sourceAsset: context.asset,
+            sender: signerAddress,
+            signature,
+        });
+
+        const encodedTransaction = Buffer.from(
+            serializedSignedTransaction,
+        ).toString("base64");
+
+        getLogger().info("Broadcasting pending Solana CCTP send...", {
+            sourceAsset: context.asset,
+            sender: signerAddress,
+            encodedTransaction,
+        });
+        const broadcastSignature =
+            await context.connection.sendEncodedTransaction(
+                encodedTransaction,
+                sendOptions,
+            );
+        await overrides?.pendingSendCallbacks?.persist(pendingSend);
+
+        if (broadcastSignature !== signature) {
+            getLogger().warn(
+                "Solana RPC returned a different broadcast signature",
+                {
+                    expected: signature,
+                    broadcastSignature,
+                },
+            );
+            await overrides?.pendingSendCallbacks?.persist({
+                ...pendingSend,
+                signature: broadcastSignature,
+            });
+        }
+        getLogger().info("Broadcast pending Solana CCTP send", {
+            sourceAsset: context.asset,
+            sender: signerAddress,
+            signature: broadcastSignature,
+        });
+
+        return {
+            hash: broadcastSignature,
             details: {
                 solana: {
                     blockhash: latestBlockhash.blockhash,
@@ -439,6 +560,7 @@ export const createSolanaCctpContract = (
 
     return {
         transport: NetworkTransport.Solana,
-        send: async (sendParam) => await send(await contextPromise, sendParam),
+        send: async (sendParam, _msgFee, _refundAddress, overrides) =>
+            await send(await contextPromise, sendParam, overrides),
     };
 };
