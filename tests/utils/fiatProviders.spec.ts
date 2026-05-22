@@ -7,7 +7,6 @@ import {
     getBtcPriceFailover,
     getBtcPriceKraken,
     getBtcPriceMempool,
-    getBtcPriceYadio,
     getEthPriceCoinGecko,
     getEthPriceFailover,
     getEthPriceKraken,
@@ -76,15 +75,6 @@ describe("fiat providers (integration)", () => {
         );
 
         test(
-            "Yadio returns a sane BTC/USD spot price",
-            async () => {
-                const price = await getBtcPriceYadio(Currency.USD);
-                expectInRange(price, btcUsdMin, btcUsdMax, "BTC/USD (Yadio)");
-            },
-            testTimeout,
-        );
-
-        test(
             "Mempool returns a sane BTC/EUR spot price",
             async () => {
                 const price = await getBtcPriceMempool(Currency.EUR);
@@ -98,15 +88,6 @@ describe("fiat providers (integration)", () => {
             async () => {
                 const price = await getBtcPriceKraken(Currency.EUR);
                 expectInRange(price, btcUsdMin, btcUsdMax, "BTC/EUR (Kraken)");
-            },
-            testTimeout,
-        );
-
-        test(
-            "Yadio returns a sane BTC/EUR spot price",
-            async () => {
-                const price = await getBtcPriceYadio(Currency.EUR);
-                expectInRange(price, btcUsdMin, btcUsdMax, "BTC/EUR (Yadio)");
             },
             testTimeout,
         );

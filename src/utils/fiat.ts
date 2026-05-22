@@ -3,7 +3,6 @@ import log from "loglevel";
 
 import { config } from "../config";
 import { isTor } from "../configs/base";
-import { BTC } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { satToBtc } from "./denomination";
 import { formatError } from "./errors";
@@ -103,29 +102,6 @@ const getKrakenPrice = async (
             `failed to get ${asset} price from Kraken in ${currency}: ${formatError(
                 e,
             )}`,
-            { cause: e },
-        );
-    } finally {
-        clearTimeout(requestTimeout);
-    }
-};
-
-export const getBtcPriceYadio = async (currency: Currency) => {
-    const { opts, requestTimeout } = constructRequestOptions(
-        {},
-        requestTimeoutDuration,
-    );
-    try {
-        const response = await fetch(config.rateProviders.Yadio, opts);
-
-        const data = (await response.json()) as {
-            BTC: Record<string, number>;
-        };
-
-        return BigNumber(data[BTC][currency]);
-    } catch (e) {
-        throw new Error(
-            `failed to get BTC price from Yadio: ${formatError(e)}`,
             { cause: e },
         );
     } finally {
@@ -246,7 +222,6 @@ export const getBtcPriceFailover = async (
     for (const [name, getBtcPrice] of [
         ["Mempool", getBtcPriceMempool],
         ["Kraken", getBtcPriceKraken],
-        ["Yadio", getBtcPriceYadio],
     ] as [string, typeof getBtcPriceMempool][]) {
         try {
             return await getBtcPrice(currency);
