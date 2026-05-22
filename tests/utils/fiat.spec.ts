@@ -6,7 +6,6 @@ import {
     convertToFiat,
     getBtcPriceKraken,
     getBtcPriceMempool,
-    getBtcPriceYadio,
     getEthPriceCoinGecko,
     getEthPriceKraken,
     getGasTokenPriceCoinGecko,
@@ -35,7 +34,6 @@ describe("fiat", () => {
             getBtcPriceKraken,
             { result: { XXBTZUSD: { c: ["102345.6", "1"] } } },
         ],
-        ["Yadio", getBtcPriceYadio, { BTC: { USD: 102_345 } }],
     ])("should fetch BTC price from $0", async (_, getBtcPrice, response) => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue({
             json: vi.fn().mockResolvedValue(response),
@@ -52,7 +50,6 @@ describe("fiat", () => {
             getBtcPriceKraken,
             { result: { XXBTZEUR: { c: ["95000.0", "1"] } } },
         ],
-        ["Yadio", getBtcPriceYadio, { BTC: { EUR: 95_000 } }],
     ])(
         "should fetch BTC price in EUR from $0",
         async (_, getBtcPrice, response) => {

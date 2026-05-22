@@ -45,7 +45,6 @@ const defaults = {
     cctpExplorerUrl: "https://ccxp.space",
     oftDeploymentsUrl: "https://docs.usdt0.to/api/deployments",
     rateProviders: {
-        Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",
         Mempool: "https://mempool.space/api/v1/prices",
         CoinGecko: "https://api.coingecko.com/api/v3/simple/price",
