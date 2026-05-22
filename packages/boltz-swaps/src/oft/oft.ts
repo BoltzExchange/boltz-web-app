@@ -410,6 +410,8 @@ const appendExecutorOption = (
         option,
     );
 
+const polygonLzReceiveGasBump = 30_000n;
+
 const buildOftExtraOptions = (
     destinationAsset: string,
     nativeDrop: OftNativeDrop | undefined,
@@ -422,6 +424,16 @@ const buildOftExtraOptions = (
             options,
             optionTypeLzReceive,
             encodeSolanaAtaCreationOption(),
+        );
+    }
+
+    // TODO: temporary workaround for failed txs on Polygon; remove once the
+    // OFT options are bumped on-chain.
+    if (destinationAsset === "USDT0-POL") {
+        options = appendExecutorOption(
+            options,
+            optionTypeLzReceive,
+            encodePacked(["uint128", "uint128"], [polygonLzReceiveGasBump, 0n]),
         );
     }
 
