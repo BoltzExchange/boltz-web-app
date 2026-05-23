@@ -116,6 +116,85 @@ export const getBitcoinWalletTx = (txId: string): Promise<string> =>
 export const getElementsWalletTx = (txId: string): Promise<string> =>
     execCommand(`elements-cli-sim-client gettransaction ${txId}`);
 
+type DecodedTransaction = {
+    txid: string;
+    vin: {
+        txid: string;
+        vout: number;
+        txinwitness?: string[];
+    }[];
+};
+
+type Unspent = {
+    txid: string;
+    vout: number;
+    address: string;
+    amount: number;
+};
+
+export const bitcoinListUnspentForAddress = async (
+    address: string,
+): Promise<Unspent[]> =>
+    JSON.parse(
+        await execCommand(
+            `bitcoin-cli-sim-client listunspent 0 9999999 '[\\"${address}\\"]'`,
+        ),
+    ) as Unspent[];
+
+export const elementsListUnspentForAddress = async (
+    address: string,
+): Promise<Unspent[]> =>
+    JSON.parse(
+        await execCommand(
+            `elements-cli-sim-client listunspent 0 9999999 '[\\"${address}\\"]'`,
+        ),
+    ) as Unspent[];
+
+export const bitcoinGetDecodedTransaction = async (
+    txId: string,
+): Promise<DecodedTransaction> =>
+    JSON.parse(
+        await execCommand(
+            `bitcoin-cli-sim-client getrawtransaction ${txId} true`,
+        ),
+    ) as DecodedTransaction;
+
+export const elementsGetDecodedTransaction = async (
+    txId: string,
+): Promise<DecodedTransaction> =>
+    JSON.parse(
+        await execCommand(
+            `elements-cli-sim-client getrawtransaction ${txId} true`,
+        ),
+    ) as DecodedTransaction;
+
+export const getClaimTransactionForAddress = async (
+    asset: AssetType,
+    address: string,
+): Promise<DecodedTransaction> => {
+    const listUnspent =
+        asset === LBTC
+            ? elementsListUnspentForAddress
+            : bitcoinListUnspentForAddress;
+    const decodeTx =
+        asset === LBTC
+            ? elementsGetDecodedTransaction
+            : bitcoinGetDecodedTransaction;
+
+    let utxos: Unspent[] = [];
+    await expect
+        .poll(
+            async () => {
+                utxos = await listUnspent(address);
+                return utxos.length;
+            },
+            { timeout: 30_000 },
+        )
+        .toBeGreaterThan(0);
+
+    return decodeTx(utxos[0].txid);
+};
+
 export const payInvoiceLnd = (invoice: string): Promise<string> =>
     execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
 

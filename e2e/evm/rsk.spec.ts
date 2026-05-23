@@ -8,6 +8,7 @@ import {
     generateInvoiceLnd,
     generateLiquidBlock,
     getBitcoinAddress,
+    getClaimTransactionForAddress,
     getLiquidAddress,
     payInvoiceLndBackground,
     verifyRescueFile,
@@ -166,7 +167,7 @@ test.describe("EVM", () => {
             getAddress: getLiquidAddress,
             mineReceiveBlock: generateLiquidBlock,
         },
-    ];
+    ] as const;
 
     fromRbtcCases.forEach(
         ({ receive, receiveTestId, getAddress, mineReceiveBlock }) => {
@@ -251,6 +252,15 @@ test.describe("EVM", () => {
                     "div[data-status='transaction.claimed']",
                 );
                 await expect(claimPending.or(claimConfirmed)).toBeVisible();
+
+                const claimTx = await getClaimTransactionForAddress(
+                    receive,
+                    receiveAddress,
+                );
+                expect(claimTx.vin).toHaveLength(1);
+                expect(claimTx.vin[0].txinwitness).toHaveLength(1);
+                // Schnorr signature with default sighash
+                expect(claimTx.vin[0].txinwitness![0]).toHaveLength(128);
             });
         },
     );
