@@ -132,7 +132,7 @@ export type ChainSwapCreateArgs<A extends string = string> = {
 
 export type ChainSwapClaimSubmitBody = {
     preimage: string | undefined;
-    signature: { pubNonce: string; partialSignature: string };
+    signature: { pubNonce: string; partialSignature: string } | undefined;
     toSign?: { pubNonce: string; transaction: string; index: number };
 };
 

@@ -21,7 +21,7 @@ import type { Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { type AssetType, LBTC, RBTC } from "../consts/Assets";
+import { type AssetType, LBTC, RBTC, isEvmAsset } from "../consts/Assets";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { broadcastTransaction } from "./blockchain";
@@ -37,6 +37,7 @@ import {
     txToId,
 } from "./compat";
 import type { ECKeys } from "./ecpair";
+import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import {
@@ -233,8 +234,8 @@ export const createTheirPartialChainSwapSignature = async (
     deriveKey: deriveKeyFn,
     swap: ChainSwap,
 ): Promise<Awaited<ReturnType<typeof postChainSwapDetails>> | undefined> => {
-    // RSK claim transactions can't be signed cooperatively
-    if (swap.assetSend === RBTC) {
+    // EVM claim transactions can't be signed cooperatively
+    if (isEvmAsset(swap.assetSend)) {
         return undefined;
     }
 
@@ -275,7 +276,7 @@ export const createTheirPartialChainSwapSignature = async (
             partialSignature: hex.encode(signed.ourPartialSignature),
         };
     } catch (err) {
-        if (err === "swap not eligible for a cooperative claim") {
+        if (formatError(err) === "swap not eligible for a cooperative claim") {
             log.debug(
                 `Backend already broadcast their claim for chain swap ${swap.id}`,
             );
@@ -343,14 +344,13 @@ const claimChainSwap = async (
         const withMsg = tweaked.message(sigHash);
         const withNonce = withMsg.generateNonce();
 
-        // Post our partial signature to ask for theirs
+        // Post our partial signature to ask for theirs. For EVM-receiving
+        // chain swaps, the server has no MuSig claim to cooperate on, so
+        // theirSig is undefined and we just request our partial signature
         const theirSig = await createTheirPartialChainSwapSignature(
             deriveKey,
             swap,
         );
-        if (theirSig === undefined) {
-            throw new Error("could not get their partial chain swap signature");
-        }
         const theirPartial = await postChainSwapDetails(
             swap.id,
             swap.preimage,
