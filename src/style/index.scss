@@ -905,7 +905,7 @@ textarea.invalid {
     }
 }
 .denomination img {
-    filter: brightness(10);
+    filter: var(--icon-filter);
     cursor: pointer;
     width: 28px;
 }
@@ -915,7 +915,7 @@ textarea.invalid {
 }
 
 .denominator {
-    filter: brightness(10);
+    filter: var(--icon-filter);
     width: 15px;
     height: 11px;
     background-repeat: no-repeat;
@@ -1761,4 +1761,22 @@ header {
     align-items: center;
     opacity: 0.5;
     border-bottom: 1px dotted var(--color-white-50);
+}
+
+.embedded-branding {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+
+    a {
+        color: var(--color-text);
+        text-decoration: none;
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+    }
 }

@@ -13,6 +13,7 @@ const meta = {
 };
 
 const THEME_SELECTOR = /^:root\[boltz-theme=["']([^"']+)["']\]$/;
+const BASELINE_SELECTOR = /^:root$/;
 
 const ruleFunction = (primary) => (root, result) => {
     const validOptions = stylelint.utils.validateOptions(result, ruleName, {
@@ -22,8 +23,15 @@ const ruleFunction = (primary) => (root, result) => {
     if (!validOptions) return;
 
     const themeBlocks = new Map();
+    const baselineTokens = new Set();
 
     root.walkRules((rule) => {
+        if (BASELINE_SELECTOR.test(rule.selector)) {
+            rule.walkDecls((decl) => {
+                if (decl.prop.startsWith("--")) baselineTokens.add(decl.prop);
+            });
+            return;
+        }
         const match = rule.selector.match(THEME_SELECTOR);
         if (!match) return;
         const themeName = match[1];
@@ -44,6 +52,7 @@ const ruleFunction = (primary) => (root, result) => {
     const tokenOrigin = new Map();
     for (const [themeName, { tokens }] of themeBlocks) {
         for (const token of tokens.keys()) {
+            if (baselineTokens.has(token)) continue;
             if (!tokenOrigin.has(token)) tokenOrigin.set(token, themeName);
         }
     }

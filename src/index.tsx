@@ -8,10 +8,12 @@ import {
     Route,
     type RouteSectionProps,
     Router,
+    useLocation,
     useParams,
 } from "@solidjs/router";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
+import { Show } from "solid-js";
 import { render } from "solid-js/web";
 
 import { configureBoltzSwaps } from "./boltzSwapsConfig";
@@ -62,15 +64,31 @@ if ("serviceWorker" in navigator) {
 }
 
 log.setLevel(config.loglevel as log.LogLevelDesc);
-document.documentElement.setAttribute(
-    "boltz-theme",
-    config.isPro ? "pro" : "default",
-);
+
+const urlParams = new URLSearchParams(window.location.search);
+const embeddedParam = urlParams.get("embedded");
+const themeParam = urlParams.get("theme");
+
+const isEmbedded = embeddedParam === "true";
+const validThemes = ["default", "pro", "light"];
+const initialTheme = isEmbedded
+    ? validThemes.includes(themeParam || "")
+        ? themeParam!
+        : "default"
+    : config.isPro
+      ? "pro"
+      : "default";
+document.documentElement.setAttribute("boltz-theme", initialTheme);
 document.body.classList.remove("loading");
 
 const App = (props: RouteSectionProps) => {
+    const isEmbedded = embeddedParam === "true";
+    const location = useLocation();
+
+    const isEmbeddedRoot = () => isEmbedded && location.pathname === "/";
+
     return (
-        <GlobalProvider>
+        <GlobalProvider initialEmbeddedMode={isEmbedded}>
             <FiatProvider>
                 <Web3SignerProvider>
                     <WalletConnect />
@@ -80,13 +98,21 @@ const App = (props: RouteSectionProps) => {
                                 <SwapChecker />
                                 <SwapExecutionWorker />
                                 <Chatwoot />
-                                <Nav
-                                    isPro={config.isPro}
-                                    network={config.network}
-                                />
-                                {props.children}
+                                <Show when={!isEmbedded}>
+                                    <Nav
+                                        isPro={config.isPro}
+                                        network={config.network}
+                                    />
+                                </Show>
+                                <Show
+                                    when={!isEmbeddedRoot()}
+                                    fallback={<Create />}>
+                                    {props.children}
+                                </Show>
                                 <Notification />
-                                <Footer />
+                                <Show when={!isEmbedded}>
+                                    <Footer />
+                                </Show>
                             </RescueProvider>
                         </PayProvider>
                     </CreateProvider>

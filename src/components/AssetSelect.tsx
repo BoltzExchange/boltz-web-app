@@ -37,6 +37,7 @@ const SelectAsset = () => {
         setInvoice,
         setOnchainAddress,
         setNetworkSelectCanonical,
+        destinationLocked,
     } = useCreateContext();
 
     const [focusedIndex, setFocusedIndex] = createSignal(0);
@@ -133,8 +134,10 @@ const SelectAsset = () => {
             return;
         }
 
-        // clear invoice every time asset changes
-        setInvoice("");
+        // clear invoice every time asset changes (unless destination is locked)
+        if (!destinationLocked()) {
+            setInvoice("");
+        }
 
         let nextPair: Pair;
 

@@ -55,4 +55,48 @@ describe("Reverse", () => {
 
         expect(signals.onchainAddress()).toEqual("");
     });
+
+    test("should clear invoice on reverse", () => {
+        const {
+            container: { firstChild: flip },
+        } = render(
+            () => (
+                <>
+                    <Reverse />
+                    <TestComponent />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setInvoice("lnbc1invoice");
+        setPairAssets(BTC, LN);
+
+        fireEvent.click(flip!);
+
+        expect(signals.invoice()).toEqual("");
+    });
+
+    test("should preserve invoice on reverse when destination is locked", () => {
+        const {
+            container: { firstChild: flip },
+        } = render(
+            () => (
+                <>
+                    <Reverse />
+                    <TestComponent />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const lockedInvoice = "lnbc1lockedinvoice";
+        signals.setInvoice(lockedInvoice);
+        signals.setDestinationLocked(true);
+        setPairAssets(BTC, LN);
+
+        fireEvent.click(flip!);
+
+        expect(signals.invoice()).toEqual(lockedInvoice);
+    });
 });

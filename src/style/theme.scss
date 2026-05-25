@@ -43,6 +43,7 @@ $boltz_icon: url(/boltz-icon.svg);
     // Black opacity levels
     --color-black-10: color-mix(in srgb, var(--color-black) 10%, transparent);
     --color-black-20: color-mix(in srgb, var(--color-black) 20%, transparent);
+    --color-black-25: color-mix(in srgb, var(--color-black) 25%, transparent);
     --color-black-30: color-mix(in srgb, var(--color-black) 30%, transparent);
     --color-black-40: color-mix(in srgb, var(--color-black) 40%, transparent);
     --color-black-50: color-mix(in srgb, var(--color-black) 50%, transparent);
@@ -129,6 +130,7 @@ $boltz_icon: url(/boltz-icon.svg);
     );
 
     --color-text-glow: color-mix(in srgb, var(--color-text) 35%, transparent);
+    --icon-filter: brightness(10);
 }
 
 :root[boltz-theme="pro"] {
@@ -174,4 +176,150 @@ $boltz_icon: url(/boltz-icon.svg);
         var(--color-link-hover) 80%,
         transparent
     );
+
+    --icon-filter: brightness(10);
+}
+
+:root[boltz-theme="light"] {
+    --color-primary: #c47835;
+    --color-primary-60: color-mix(
+        in srgb,
+        var(--color-primary) 60%,
+        transparent
+    );
+    --color-primary-lighter: #da9457;
+    --color-primary-glow: color-mix(
+        in srgb,
+        var(--color-primary) 40%,
+        transparent
+    );
+
+    --color-secondary-100: #303030;
+    --color-secondary-200: #4d4d4d;
+    --color-secondary-300: #707070;
+    --color-secondary-500: #d8d8d8;
+    --color-secondary-600: #ebebeb;
+    --color-secondary-700: #ffffff;
+    --color-secondary-800: #f2f2f2;
+    --color-secondary-900: #e2e2e2;
+
+    --color-tertiary: #7a5aad;
+
+    --color-text: #232323;
+    --color-text-glow: color-mix(in srgb, var(--color-text) 35%, transparent);
+    --color-dark-gray: #d3d3d3;
+    --color-hero-gradient-1: #da9457;
+    --color-hero-gradient-2: #c47835;
+    --color-error-500: #d93025;
+    --color-error-700: #b71c1c;
+    --color-success-400: #2e7d32;
+    --color-success-500: #1b5e20;
+    --color-success-700: #0d3d11;
+
+    --color-link: #1565c0;
+    --color-link-hover: #0d47a1;
+    --color-link-glow: color-mix(
+        in srgb,
+        var(--color-link-hover) 80%,
+        transparent
+    );
+
+    // Invert white opacities to black opacities for visible borders on light bg
+    --color-white-05: color-mix(in srgb, var(--color-black) 5%, transparent);
+    --color-white-10: color-mix(in srgb, var(--color-black) 10%, transparent);
+    --color-white-15: color-mix(in srgb, var(--color-black) 15%, transparent);
+    --color-white-25: color-mix(in srgb, var(--color-black) 25%, transparent);
+    --color-white-30: color-mix(in srgb, var(--color-black) 30%, transparent);
+    --color-white-50: color-mix(in srgb, var(--color-black) 50%, transparent);
+    --color-white-60: color-mix(in srgb, var(--color-black) 60%, transparent);
+    --color-white-80: color-mix(in srgb, var(--color-black) 80%, transparent);
+    --color-white-90: color-mix(in srgb, var(--color-black) 90%, transparent);
+
+    --icon-filter: none;
+
+    .asset-select-modal {
+        background: var(--color-secondary-700);
+        box-shadow: 0 8px 32px var(--color-black-25);
+    }
+
+    .assets-select.wallet-select-modal,
+    #settings-menu .settings-menu-panel {
+        box-shadow: 0 0 24px var(--color-black-25);
+    }
+
+    .provider-modal-icon.is-hardware {
+        filter: invert(1);
+    }
+
+    .asset-select-item[data-selected="true"] {
+        background: var(--color-secondary-800);
+    }
+
+    .asset-select-item[data-focused="true"],
+    .asset-select-item:hover {
+        background: var(--color-secondary-900);
+    }
+
+    .asset-select-search input {
+        background: var(--color-secondary-800);
+    }
+
+    .wallet-select-overlay,
+    #settings-menu {
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .assets-select:after {
+        display: none;
+    }
+
+    .tooltip .tooltip-text {
+        background: var(--color-secondary-700);
+        border: 1px solid var(--color-white-15);
+        box-shadow: 0 4px 12px var(--color-black-25);
+    }
+
+    .btn:disabled,
+    .btn:disabled:hover {
+        background-color: var(--color-secondary-200);
+        color: var(--color-secondary-700);
+    }
+
+    #flip-assets {
+        box-shadow: 0 1px 3px var(--color-black-20);
+    }
+
+    .copy-box {
+        background-color: var(--color-secondary-800);
+        border-color: var(--color-white-15);
+    }
+
+    .btn-light {
+        background-color: var(--color-secondary-500);
+        border: 1px solid var(--color-white-15);
+        color: var(--color-text);
+    }
+    @media (hover: hover) {
+        .btn-light:hover {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+    }
+
+    .btn.btn-danger,
+    .btn.btn-danger:disabled,
+    .btn.btn-danger:disabled:hover,
+    .btn-small.btn-danger,
+    .btn-small.btn-danger:disabled,
+    .btn-small.btn-danger:disabled:hover,
+    .btn.btn-error,
+    .btn.btn-error:disabled,
+    .btn.btn-error:disabled:hover,
+    .btn-success,
+    .btn-explorer,
+    .swap-status .btn-small,
+    .error {
+        color: var(--color-white);
+    }
 }

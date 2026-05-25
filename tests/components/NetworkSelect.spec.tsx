@@ -302,4 +302,26 @@ describe("NetworkSelect", () => {
         expect(signals.pair().toAsset).toEqual("USDT0-POL");
         expect(signals.onchainAddress()).toEqual(evmAddress);
     });
+
+    test("should clear invoice when network changes", async () => {
+        openNetworkSelect();
+        setPairAssets("USDT0-ETH", BTC);
+        signals.setInvoice("lnbc1invoice");
+
+        fireEvent.click(await screen.findByTestId("select-USDT0-OP"));
+
+        expect(signals.invoice()).toEqual("");
+    });
+
+    test("should preserve invoice when network changes while destination is locked", async () => {
+        openNetworkSelect();
+        setPairAssets("USDT0-ETH", BTC);
+        const lockedInvoice = "lnbc1lockedinvoice";
+        signals.setInvoice(lockedInvoice);
+        signals.setDestinationLocked(true);
+
+        fireEvent.click(await screen.findByTestId("select-USDT0-OP"));
+
+        expect(signals.invoice()).toEqual(lockedInvoice);
+    });
 });
