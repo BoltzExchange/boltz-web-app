@@ -1,5 +1,5 @@
 import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
-import { hex } from "@scure/base";
+import { base64, hex } from "@scure/base";
 import type { Connection, TransactionInstruction } from "@solana/web3.js";
 
 import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
@@ -357,7 +357,6 @@ const send = async (
     if (eventRentPayer !== null) {
         signers.push(eventRentPayer);
     }
-    transaction.sign(signers);
 
     const simulation = await context.connection.simulateTransaction(
         transaction,
@@ -374,8 +373,12 @@ const send = async (
     }
 
     try {
-        const signature = await walletProvider.signAndSendTransaction(
-            transaction,
+        const signedTransaction =
+            await walletProvider.signTransaction(transaction);
+        signedTransaction.sign(signers);
+
+        const signature = await context.connection.sendEncodedTransaction(
+            base64.encode(signedTransaction.serialize()),
             {
                 skipPreflight: true,
                 preflightCommitment: "confirmed",
