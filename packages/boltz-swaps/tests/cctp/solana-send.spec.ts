@@ -29,6 +29,7 @@ const h = vi.hoisted(() => ({
     getDepositForBurnSpy: undefined as ReturnType<typeof vi.fn> | undefined,
     lastBuiltInstructions: [] as unknown[],
     lastSignedWith: [] as unknown[],
+    walletSigned: false,
 }));
 
 vi.mock("../../src/solana/lazy.ts", () => {
@@ -92,7 +93,13 @@ vi.mock("../../src/solana/lazy.ts", () => {
                 h.lastBuiltInstructions = message.instructions;
             }
             sign(signers: unknown[]) {
+                if (!h.walletSigned) {
+                    throw new Error("local sign before wallet sign");
+                }
                 h.lastSignedWith = signers;
+            }
+            serialize() {
+                return new Uint8Array();
             }
         },
         SendTransactionError: class FakeSendTransactionError extends Error {},
@@ -139,6 +146,7 @@ vi.mock("../../src/solana/index.ts", async () => {
             blockhash: "BLOCKHASH",
             lastValidBlockHeight: 1,
         }),
+        sendEncodedTransaction: vi.fn().mockResolvedValue("TX_SIGNATURE"),
         simulateTransaction: vi
             .fn()
             .mockResolvedValue({ value: { err: null, logs: [] } }),
@@ -172,7 +180,10 @@ const makeSendParam = (): CctpSendParam => ({
 
 const makeWalletProvider = () =>
     ({
-        signAndSendTransaction: vi.fn().mockResolvedValue("TX_SIGNATURE"),
+        signTransaction: async (transaction: unknown) => {
+            h.walletSigned = true;
+            return transaction;
+        },
     }) as unknown as Parameters<
         typeof createSolanaCctpContract
     >[0]["walletProvider"];
@@ -229,6 +240,7 @@ describe("createSolanaCctpContract send()", () => {
         fetchSpy.mockReset();
         h.lastBuiltInstructions = [];
         h.lastSignedWith = [];
+        h.walletSigned = false;
         h.getDepositForBurnSpy?.mockClear();
         setBoltzSwapsConfig({ assets });
     });
