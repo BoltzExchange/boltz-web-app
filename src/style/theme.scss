@@ -194,30 +194,30 @@ $boltz_icon: url(/boltz-icon.svg);
         transparent
     );
 
-    --color-secondary-100: #3a3a4a;
-    --color-secondary-200: #5a5a6a;
-    --color-secondary-300: #8a8a9a;
-    --color-secondary-500: #c0c0d0;
-    --color-secondary-600: #f5f5f7;
+    --color-secondary-100: #303030;
+    --color-secondary-200: #4d4d4d;
+    --color-secondary-300: #707070;
+    --color-secondary-500: #d8d8d8;
+    --color-secondary-600: #ebebeb;
     --color-secondary-700: #ffffff;
-    --color-secondary-800: #e8e8ec;
-    --color-secondary-900: #d8d8de;
+    --color-secondary-800: #f2f2f2;
+    --color-secondary-900: #e2e2e2;
 
     --color-tertiary: #7a5aad;
 
-    --color-text: #2d2d3d;
+    --color-text: #232323;
     --color-text-glow: color-mix(in srgb, var(--color-text) 35%, transparent);
-    --color-dark-gray: #d0d0d8;
+    --color-dark-gray: #d3d3d3;
     --color-hero-gradient-1: #da9457;
     --color-hero-gradient-2: #c47835;
-    --color-error-500: #ffcccc;
-    --color-error-700: #ffaaaa;
-    --color-success-400: #90ee90;
-    --color-success-500: #228b22;
-    --color-success-700: #006400;
+    --color-error-500: #d93025;
+    --color-error-700: #b71c1c;
+    --color-success-400: #2e7d32;
+    --color-success-500: #1b5e20;
+    --color-success-700: #0d3d11;
 
-    --color-link: #0066cc;
-    --color-link-hover: #0088ff;
+    --color-link: #1565c0;
+    --color-link-hover: #0d47a1;
     --color-link-glow: color-mix(
         in srgb,
         var(--color-link-hover) 80%,
@@ -271,5 +271,55 @@ $boltz_icon: url(/boltz-icon.svg);
 
     .assets-select:after {
         display: none;
+    }
+
+    .tooltip .tooltip-text {
+        background: var(--color-secondary-700);
+        border: 1px solid var(--color-white-15);
+        box-shadow: 0 4px 12px var(--color-black-25);
+    }
+
+    .btn:disabled,
+    .btn:disabled:hover {
+        background-color: var(--color-secondary-300);
+        color: var(--color-secondary-700);
+    }
+
+    #flip-assets {
+        box-shadow: 0 1px 3px var(--color-black-20);
+    }
+
+    .copy-box {
+        background-color: var(--color-secondary-800);
+        border-color: var(--color-white-15);
+    }
+
+    .btn-light {
+        background-color: var(--color-secondary-600);
+        border: 1px solid var(--color-white-15);
+        color: var(--color-text);
+    }
+    @media (hover: hover) {
+        .btn-light:hover {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+        }
+    }
+
+    .btn.btn-danger,
+    .btn.btn-danger:disabled,
+    .btn.btn-danger:disabled:hover,
+    .btn-small.btn-danger,
+    .btn-small.btn-danger:disabled,
+    .btn-small.btn-danger:disabled:hover,
+    .btn.btn-error,
+    .btn.btn-error:disabled,
+    .btn.btn-error:disabled:hover,
+    .btn-success,
+    .btn-explorer,
+    .swap-status .btn-small,
+    .error {
+        color: var(--color-white);
     }
 }
