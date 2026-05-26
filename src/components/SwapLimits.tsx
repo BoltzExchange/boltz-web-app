@@ -10,9 +10,7 @@ type SwapLimitProps = {
 };
 
 type SwapLimitsProps = {
-    minimum: number;
     maximum: number;
-    minLabel: string;
     maxLabel: string;
     loading: boolean;
     maximumEnabled?: boolean;
@@ -38,20 +36,8 @@ const SwapLimit = (props: SwapLimitProps) => (
 );
 
 const SwapLimits = (props: SwapLimitsProps) => (
-    <Show
-        when={
-            props.loading ||
-            props.minimum > 0 ||
-            (props.maximumEnabled ?? props.maximum > 0)
-        }>
+    <Show when={props.loading || (props.maximumEnabled ?? props.maximum > 0)}>
         <div class="amount-limits">
-            <SwapLimit
-                label={props.minLabel}
-                testId="limit-min-button"
-                amount={props.minimum}
-                loading={props.loading}
-                onClick={() => props.onSelectAmount(props.minimum)}
-            />
             <SwapLimit
                 label={props.maxLabel}
                 testId="limit-max-button"

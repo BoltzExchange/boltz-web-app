@@ -851,9 +851,7 @@ const Create = () => {
                                     {t("send")}
                                 </span>
                                 <SwapLimits
-                                    minimum={minimum()}
                                     maximum={maximum()}
-                                    minLabel={t("min")}
                                     maxLabel={t("max")}
                                     loading={limitActionsLoading()}
                                     maximumEnabled={
