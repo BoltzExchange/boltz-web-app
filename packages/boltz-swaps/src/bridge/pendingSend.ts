@@ -152,12 +152,12 @@ const isOftSentLog = (event: Log, oftContractAddress: string) => {
 };
 
 const hasCctpMessageSentLog = (
-    receipt: { logs: ReadonlyArray<Log> },
+    logs: ReadonlyArray<Log>,
     messageTransmitter: string,
 ) =>
-    receipt.logs.some(
+    logs.some(
         (entry) =>
-            sameAddress(entry.address, messageTransmitter) &&
+            sameEvmString(entry.address, messageTransmitter) &&
             entry.topics[0]?.toLowerCase() === cctpMessageSentTopic,
     );
 
@@ -166,7 +166,7 @@ const isMatchingCctpDepositForBurn = (
     pendingSend: PendingEvmCctpBridgeSend,
     expected: ReturnType<typeof decodeCctpPendingSendCalldata>,
 ) => {
-    if (!sameAddress(event.address, pendingSend.tokenMessenger)) {
+    if (!sameEvmString(event.address, pendingSend.tokenMessenger)) {
         return false;
     }
 
@@ -183,15 +183,15 @@ const isMatchingCctpDepositForBurn = (
 
         const args = decoded.args;
         return (
-            sameAddress(args.burnToken, expected.burnToken) &&
-            sameAddress(args.depositor, pendingSend.sender) &&
+            sameEvmString(args.burnToken, expected.burnToken) &&
+            sameEvmString(args.depositor, pendingSend.sender) &&
             args.amount === expected.amount &&
             args.destinationDomain === expected.destinationDomain &&
-            sameHex(args.mintRecipient, expected.mintRecipient) &&
-            sameHex(args.destinationCaller, expected.destinationCaller) &&
+            sameEvmString(args.mintRecipient, expected.mintRecipient) &&
+            sameEvmString(args.destinationCaller, expected.destinationCaller) &&
             args.maxFee === expected.maxFee &&
             args.minFinalityThreshold === expected.minFinalityThreshold &&
-            sameHex(args.hookData, expected.hookData)
+            sameEvmString(args.hookData, expected.hookData)
         );
     } catch {
         return false;
@@ -350,10 +350,10 @@ export const recoverPendingEvmCctpSend = async (
 
         if (
             transaction.nonce >= pendingSend.fromNonce &&
-            sameAddress(transaction.from, pendingSend.sender) &&
-            sameAddress(transaction.to, pendingSend.tokenMessenger) &&
-            sameHex(transaction.input, pendingSend.calldata) &&
-            hasCctpMessageSentLog(receipt, pendingSend.messageTransmitter)
+            sameEvmString(transaction.from, pendingSend.sender) &&
+            sameEvmString(transaction.to, pendingSend.tokenMessenger) &&
+            sameEvmString(transaction.input, pendingSend.calldata) &&
+            hasCctpMessageSentLog(receipt.logs, pendingSend.messageTransmitter)
         ) {
             matches.add(transactionHash);
         }
