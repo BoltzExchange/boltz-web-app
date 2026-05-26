@@ -65,18 +65,13 @@ const oftSentEvent = getAbiItem({ abi: oftAbi, name: "OFTSent" });
 
 const evmSendRecoveryTimeoutMs = 120_000;
 
-const sameAddress = (left: string | null | undefined, right: string) =>
-    left !== null &&
-    left !== undefined &&
-    left.toLowerCase() === right.toLowerCase();
-
-const sameHex = (left: string | null | undefined, right: string) =>
+const sameEvmString = (left: string | null | undefined, right: string) =>
     left !== null &&
     left !== undefined &&
     left.toLowerCase() === right.toLowerCase();
 
 const isOftSentLog = (event: Log, oftContractAddress: string) => {
-    if (event.address.toLowerCase() !== oftContractAddress.toLowerCase()) {
+    if (!sameEvmString(event.address, oftContractAddress)) {
         return false;
     }
     try {
@@ -130,9 +125,9 @@ export const recoverPendingEvmOftSend = async (
         }
         if (
             transaction.nonce >= pendingSend.fromNonce &&
-            sameAddress(transaction.from, pendingSend.sender) &&
-            sameAddress(transaction.to, pendingSend.transactionTo) &&
-            sameHex(transaction.input, pendingSend.calldata) &&
+            sameEvmString(transaction.from, pendingSend.sender) &&
+            sameEvmString(transaction.to, pendingSend.transactionTo) &&
+            sameEvmString(transaction.input, pendingSend.calldata) &&
             receipt.logs.some((entry) =>
                 isOftSentLog(entry, pendingSend.oftContractAddress),
             )
