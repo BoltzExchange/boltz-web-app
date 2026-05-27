@@ -36,6 +36,7 @@ import {
     RescueAction,
     RescueNoAction,
     createRescueList,
+    enrichSwapsWithTempWalletData,
 } from "../../utils/rescue";
 import {
     evmAccountFromPrivateKey,
@@ -479,8 +480,13 @@ export const useExternalRescueSearch = () => {
                 return;
             }
             setRescuableSwaps(restorableSwaps);
+            const mappedSwaps = mapRestorableSwapList(restorableSwaps);
+            const enrichedSwaps = await enrichSwapsWithTempWalletData(
+                currentRescueFile,
+                mappedSwaps as SomeSwap[],
+            );
             setBtcState({
-                swaps: mapRestorableSwapList(restorableSwaps),
+                swaps: enrichedSwaps,
                 searchState: BtcSearchState.Ready,
             });
         } catch (e) {

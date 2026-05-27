@@ -3,7 +3,7 @@ import type { RestorableSwap } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
 import { describe, expect, test } from "vitest";
 
-import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LUSDT, RBTC } from "../../src/consts/Assets";
 import { mapSwap } from "../../src/pages/RefundRescue";
 
 const tree = {
@@ -96,6 +96,24 @@ describe("mapSwap", () => {
         });
         // The legacy "address" key is gone — reverse swaps now expose lockupAddress.
         expect(mapped).not.toHaveProperty("address");
+    });
+
+    test("reverse Liquid USDt output keeps the intermediary key index for rescue", () => {
+        const swap: RestorableSwap = {
+            ...baseSwap,
+            type: SwapType.Reverse,
+            from: BTC,
+            to: LUSDT,
+            claimDetails: { ...baseDetails, keyIndex: 42, amount: 123_456 },
+        };
+
+        expect(mapSwap(swap)).toMatchObject({
+            type: SwapType.Reverse,
+            assetSend: BTC,
+            assetReceive: LUSDT,
+            claimPrivateKeyIndex: 42,
+            sendAmount: 123_456,
+        });
     });
 
     test("chain output collapses refund details into lockupDetails and drops legacy duplicates", () => {

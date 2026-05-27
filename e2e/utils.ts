@@ -452,6 +452,29 @@ export const getCurrentSwapId = (page: Page): string => {
     return url.pathname.split("/").pop() ?? "";
 };
 
+export const getStoredSwap = <T>(page: Page, swapId: string): Promise<T> =>
+    page.evaluate(
+        async (id) =>
+            await new Promise<T>((resolve, reject) => {
+                const request = indexedDB.open("swaps");
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    const db = request.result;
+                    const transaction = db.transaction(
+                        "keyvaluepairs",
+                        "readonly",
+                    );
+                    const getRequest = transaction
+                        .objectStore("keyvaluepairs")
+                        .get(id);
+                    getRequest.onerror = () => reject(getRequest.error);
+                    getRequest.onsuccess = () =>
+                        resolve(getRequest.result as T);
+                };
+            }),
+        swapId,
+    );
+
 export const waitForUTXOs = async (
     asset: AssetType,
     address: string,
@@ -487,6 +510,112 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
             { timeout: 30_000 },
         )
         .toBe(true);
+};
+
+export const mockSideSwapQuotes = async (
+    page: Page,
+    quoteRate = 1,
+): Promise<void> => {
+    let nextQuoteId = 1;
+
+    await page.routeWebSocket("ws://localhost:9006/json-rpc-ws", (ws) => {
+        ws.onMessage((message) => {
+            const request = JSON.parse(message.toString()) as {
+                id?: number;
+                method?: string;
+                params?: {
+                    start_quotes?: {
+                        amount: number;
+                        asset_pair: { base: string; quote: string };
+                        asset_type: string;
+                        trade_dir: string;
+                    };
+                    get_quote?: { quote_id: number };
+                    taker_sign?: { quote_id: number };
+                };
+            };
+
+            if (request.method !== "market" || request.id === undefined) {
+                return;
+            }
+
+            const startQuotes = request.params?.start_quotes;
+            if (startQuotes !== undefined) {
+                const quoteId = nextQuoteId++;
+                const quoteAmount = Math.floor(startQuotes.amount * quoteRate);
+
+                ws.send(
+                    JSON.stringify({
+                        id: request.id,
+                        result: {
+                            start_quotes: {
+                                fee_asset: "Base",
+                                quote_sub_id: quoteId,
+                            },
+                        },
+                    }),
+                );
+
+                setTimeout(() => {
+                    ws.send(
+                        JSON.stringify({
+                            method: "market",
+                            params: {
+                                quote: {
+                                    amount: startQuotes.amount,
+                                    asset_pair: startQuotes.asset_pair,
+                                    asset_type: startQuotes.asset_type,
+                                    trade_dir: startQuotes.trade_dir,
+                                    quote_sub_id: quoteId,
+                                    status: {
+                                        Success: {
+                                            quote_id: quoteId,
+                                            base_amount: startQuotes.amount,
+                                            quote_amount: quoteAmount,
+                                            server_fee: 0,
+                                            fixed_fee: 0,
+                                            ttl: 60,
+                                        },
+                                    },
+                                },
+                            },
+                        }),
+                    );
+                }, 0);
+                return;
+            }
+
+            const getQuote = request.params?.get_quote;
+            if (getQuote !== undefined) {
+                ws.send(
+                    JSON.stringify({
+                        id: request.id,
+                        result: {
+                            get_quote: {
+                                pset: "",
+                                ttl: 60,
+                            },
+                        },
+                    }),
+                );
+                return;
+            }
+
+            const takerSign = request.params?.taker_sign;
+            if (takerSign !== undefined) {
+                ws.send(
+                    JSON.stringify({
+                        id: request.id,
+                        result: {
+                            taker_sign: {
+                                txid: `sideswap-tx-${takerSign.quote_id}`,
+                            },
+                        },
+                    }),
+                );
+            }
+        });
+    });
 };
 
 export const checkBoltzConfPatch = () => {

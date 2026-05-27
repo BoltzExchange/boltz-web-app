@@ -24,6 +24,7 @@ import {
     LBTC,
     type RefundableAssetType,
     type blockChainsAssets,
+    isLiquidAsset,
     refundableAssets,
 } from "../consts/Assets";
 import {
@@ -37,6 +38,7 @@ import secp from "../lazy/secp";
 import {
     blockTimeMinutes,
     broadcastTransaction,
+    getAddressUTXOs,
     getBlockTipHeight,
     getSwapUTXOs,
 } from "./blockchain";
@@ -55,9 +57,12 @@ import type { ECKeys } from "./ecpair";
 import { formatError } from "./errors";
 import { getFeeEstimationsFailover } from "./fees";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
+import { deriveTempLiquidWallet } from "./liquidWallet";
+import type { RescueFile } from "./rescueFile";
 import {
     type ChainSwap,
     type ReverseSwap,
+    SideSwapStatus,
     type SomeSwap,
     type SubmarineSwap,
     isEvmSwap,
@@ -144,6 +149,7 @@ export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
         [SwapType.Reverse]: () => (swap as ReverseSwap).timeoutBlockHeight,
         [SwapType.Submarine]: () => (swap as SubmarineSwap).timeoutBlockHeight,
         [SwapType.Dex]: () => Number.MAX_SAFE_INTEGER, // TODO: fix that
+        [SwapType.SideSwap]: () => Number.MAX_SAFE_INTEGER,
     };
 
     return currentBlockHeight >= swapTimeoutBlockHeight[swap.type]();
@@ -531,6 +537,14 @@ export const createRescueList = async (
                 const blockHeight =
                     currentBlockHeight[swap.assetSend as RefundableAssetType];
 
+                if (
+                    swap.sideswap?.status === SideSwapStatus.Failed &&
+                    swap.sideswap.tempAddress !== undefined &&
+                    isLiquidAsset(swap.assetReceive)
+                ) {
+                    return { ...swap, action: RescueAction.Refund };
+                }
+
                 if (utxos.length === 0) {
                     if (Object.values(swapStatusSuccess).includes(status)) {
                         return { ...swap, action: RescueAction.Successful };
@@ -592,6 +606,69 @@ export const createRescueList = async (
                 );
                 return { ...swap, action: RescueAction.Successful };
             }
+        }),
+    );
+};
+
+export type TempWalletData = {
+    address: string;
+    keyIndex: number;
+};
+
+const getTempWalletKeyIndex = (swap: SomeSwap): number | undefined => {
+    const castSwap = swap as ReverseSwap | ChainSwap;
+    return castSwap.claimPrivateKeyIndex ?? swap.sideswap?.tempKeyIndex;
+};
+
+export const checkTempWalletForUtxos = async (
+    rescueFile: RescueFile,
+    swap: SomeSwap,
+): Promise<TempWalletData | undefined> => {
+    const keyIndex = getTempWalletKeyIndex(swap);
+
+    if (keyIndex === undefined || !isLiquidAsset(swap.assetReceive)) {
+        return undefined;
+    }
+
+    try {
+        const wallet = deriveTempLiquidWallet(rescueFile, keyIndex);
+        const utxos = await getAddressUTXOs(LBTC, wallet.address);
+        if (utxos.length > 0) {
+            return { address: wallet.address, keyIndex };
+        }
+    } catch (e) {
+        log.debug(`Temp Liquid wallet check failed for swap ${swap.id}:`, e);
+    }
+
+    return undefined;
+};
+
+export const enrichSwapsWithTempWalletData = async (
+    rescueFile: RescueFile,
+    swaps: SomeSwap[],
+): Promise<SomeSwap[]> => {
+    return await Promise.all(
+        swaps.map(async (swap) => {
+            if (swap.sideswap !== undefined) return swap;
+
+            const tempWallet = await checkTempWalletForUtxos(rescueFile, swap);
+            if (!tempWallet) return swap;
+
+            log.info(`Found stuck SideSwap temp UTXOs for swap ${swap.id}`);
+
+            return {
+                ...swap,
+                sideswap: {
+                    baseAssetId: "",
+                    quoteAssetId: "",
+                    userAddress: "",
+                    quoteAmountEstimate: 0,
+                    status: SideSwapStatus.Failed,
+                    tempAddress: tempWallet.address,
+                    tempKeyIndex: tempWallet.keyIndex,
+                    error: "Funds detected at intermediate Liquid address",
+                },
+            };
         }),
     );
 };

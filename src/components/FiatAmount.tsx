@@ -7,9 +7,11 @@ import {
     createSignal,
 } from "solid-js";
 
-import { isStablecoinAsset, requireTokenConfig } from "../consts/Assets";
+import { isStablecoinAsset } from "../consts/Assets";
+import { Currency } from "../consts/Enums";
 import { useFiatContext } from "../context/Fiat";
 import { useGlobalContext } from "../context/Global";
+import { getDecimals } from "../utils/denomination";
 import { convertToFiat } from "../utils/fiat";
 
 const FiatAmount = (props: {
@@ -23,13 +25,16 @@ const FiatAmount = (props: {
     const { btcPrice, fiatCurrency, usdToFiatRate } = useFiatContext();
 
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
+    const stablecoinRate = () =>
+        fiatCurrency() === Currency.USD ? BigNumber(1) : usdToFiatRate();
 
     createEffect(() => {
         if (isStablecoinAsset(props.asset())) {
+            const { decimals } = getDecimals(props.asset());
             const faceValueUsd = BigNumber(props.amount).div(
-                BigNumber(10).pow(requireTokenConfig(props.asset()).decimals),
+                BigNumber(10).pow(decimals),
             );
-            const rate = usdToFiatRate();
+            const rate = stablecoinRate();
             if (rate instanceof BigNumber) {
                 setFiatAmount(faceValueUsd.multipliedBy(rate));
             }
@@ -49,7 +54,7 @@ const FiatAmount = (props: {
         }
 
         if (isStablecoinAsset(props.asset())) {
-            if (usdToFiatRate() instanceof BigNumber) {
+            if (stablecoinRate() instanceof BigNumber) {
                 return (
                     <>
                         ≈ {fiatAmount().toFixed(2)} {fiatCurrency()}

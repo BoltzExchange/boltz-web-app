@@ -1,7 +1,7 @@
 import { SwapType } from "boltz-swaps/types";
 import { type Mock, beforeEach, vi } from "vitest";
 
-import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LUSDT, RBTC } from "../../src/consts/Assets";
 import {
     swapStatusFailed,
     swapStatusFinal,
@@ -10,18 +10,24 @@ import {
 } from "../../src/consts/SwapStatus";
 import {
     RescueAction,
+    checkTempWalletForUtxos,
     createRescueList,
+    enrichSwapsWithTempWalletData,
     isSwapClaimable,
 } from "../../src/utils/rescue";
-import type {
-    ReverseSwap,
-    SomeSwap,
-    SubmarineSwap,
+import type { RescueFile } from "../../src/utils/rescueFile";
+import {
+    type ReverseSwap,
+    type SideSwapDetail,
+    SideSwapStatus,
+    type SomeSwap,
+    type SubmarineSwap,
 } from "../../src/utils/swapCreator";
 
 const blockchainModule = await import("../../src/utils/blockchain");
 const boltzClientModule =
     await import("../../packages/boltz-swaps/src/client.ts");
+const liquidWalletModule = await import("../../src/utils/liquidWallet");
 
 type RescueListResult = (SomeSwap & {
     action: RescueAction;
@@ -29,6 +35,7 @@ type RescueListResult = (SomeSwap & {
 })[];
 
 vi.mock("../../src/utils/blockchain", () => ({
+    getAddressUTXOs: vi.fn(),
     getBlockTipHeight: vi.fn(),
     getSwapUTXOs: vi.fn(),
 }));
@@ -39,6 +46,10 @@ vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
 
 vi.mock("../../src/utils/fees", () => ({
     getFeeEstimationsFailover: vi.fn(),
+}));
+
+vi.mock("../../src/utils/liquidWallet", () => ({
+    deriveTempLiquidWallet: vi.fn(),
 }));
 
 vi.mock("loglevel", () => ({
@@ -237,7 +248,7 @@ describe("rescue", () => {
             mockGetBlockTipHeight = vi.mocked(
                 blockchainModule.getBlockTipHeight,
             );
-            mockGetBlockTipHeight.mockResolvedValue(1000);
+            mockGetBlockTipHeight.mockResolvedValue("1000");
             mockGetSwapUTXOs = vi.mocked(blockchainModule.getSwapUTXOs);
             mockGetLockupTransaction = vi.mocked(
                 boltzClientModule.getLockupTransaction,
@@ -447,5 +458,134 @@ describe("rescue", () => {
                 expect(result[0].action).toBe(action);
             },
         );
+    });
+
+    describe("SideSwap temp Liquid wallet rescue", () => {
+        const rescueFile = {
+            mnemonic:
+                "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        } as RescueFile;
+
+        let mockGetAddressUTXOs: Mock;
+        let mockDeriveTempLiquidWallet: Mock;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            vi.resetAllMocks();
+
+            mockGetAddressUTXOs = vi.mocked(blockchainModule.getAddressUTXOs);
+            vi.mocked(blockchainModule.getBlockTipHeight).mockResolvedValue(
+                "1000",
+            );
+            vi.mocked(blockchainModule.getSwapUTXOs).mockResolvedValue([]);
+            mockDeriveTempLiquidWallet = vi.mocked(
+                liquidWalletModule.deriveTempLiquidWallet,
+            );
+            mockDeriveTempLiquidWallet.mockImplementation(
+                (_rescueFile: RescueFile, keyIndex: number) => ({
+                    address: `el1qtempwallet${keyIndex}`,
+                    keyIndex,
+                }),
+            );
+        });
+
+        test("detects UTXOs at the rescue-derived intermediary Liquid address", async () => {
+            mockGetAddressUTXOs.mockResolvedValue([{ txid: "tx", vout: 0 }]);
+
+            const result = await checkTempWalletForUtxos(rescueFile, {
+                id: "swap-id",
+                type: SwapType.Reverse,
+                assetReceive: LUSDT,
+                claimPrivateKeyIndex: 42,
+            } as SomeSwap);
+
+            expect(mockDeriveTempLiquidWallet).toHaveBeenCalledWith(
+                rescueFile,
+                42,
+            );
+            expect(mockGetAddressUTXOs).toHaveBeenCalledWith(
+                LBTC,
+                "el1qtempwallet42",
+            );
+            expect(result).toEqual({
+                address: "el1qtempwallet42",
+                keyIndex: 42,
+            });
+        });
+
+        test("falls back to stored SideSwap temp key index", async () => {
+            mockGetAddressUTXOs.mockResolvedValue([{ txid: "tx", vout: 0 }]);
+
+            const result = await checkTempWalletForUtxos(rescueFile, {
+                id: "swap-id",
+                type: SwapType.Chain,
+                assetReceive: LUSDT,
+                sideswap: {
+                    tempKeyIndex: 7,
+                } as SideSwapDetail,
+            } as SomeSwap);
+
+            expect(mockDeriveTempLiquidWallet).toHaveBeenCalledWith(
+                rescueFile,
+                7,
+            );
+            expect(result).toEqual({
+                address: "el1qtempwallet7",
+                keyIndex: 7,
+            });
+        });
+
+        test("does not scan non-Liquid receive assets", async () => {
+            const result = await checkTempWalletForUtxos(rescueFile, {
+                id: "swap-id",
+                type: SwapType.Reverse,
+                assetReceive: BTC,
+                claimPrivateKeyIndex: 42,
+            } as SomeSwap);
+
+            expect(result).toBeUndefined();
+            expect(mockDeriveTempLiquidWallet).not.toHaveBeenCalled();
+            expect(mockGetAddressUTXOs).not.toHaveBeenCalled();
+        });
+
+        test("enriches swaps with failed SideSwap metadata when stuck temp funds are found", async () => {
+            mockGetAddressUTXOs.mockResolvedValue([{ txid: "tx", vout: 0 }]);
+
+            const [result] = await enrichSwapsWithTempWalletData(rescueFile, [
+                {
+                    id: "swap-id",
+                    type: SwapType.Reverse,
+                    assetReceive: LUSDT,
+                    claimPrivateKeyIndex: 42,
+                } as SomeSwap,
+            ]);
+
+            expect(result.sideswap).toMatchObject({
+                status: SideSwapStatus.Failed,
+                tempAddress: "el1qtempwallet42",
+                tempKeyIndex: 42,
+            });
+        });
+
+        test("marks failed SideSwap temp-wallet swaps as refundable", async () => {
+            const [result] = await createRescueList(
+                [
+                    {
+                        id: "swap-id",
+                        type: SwapType.Reverse,
+                        status: swapStatusSuccess.TransactionClaimed,
+                        assetSend: BTC,
+                        assetReceive: LUSDT,
+                        sideswap: {
+                            status: SideSwapStatus.Failed,
+                            tempAddress: "el1qtempwallet42",
+                        } as SideSwapDetail,
+                    } as SomeSwap,
+                ],
+                zeroConf,
+            );
+
+            expect(result.action).toBe(RescueAction.Refund);
+        });
     });
 });

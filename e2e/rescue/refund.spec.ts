@@ -3,7 +3,7 @@ import { SwapType } from "boltz-swaps/types";
 import fs from "fs";
 import path from "path";
 
-import { type AssetType, BTC, LBTC } from "../../src/consts/Assets";
+import { type AssetType, BTC, LBTC, LUSDT } from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
 import {
     backupRescueFile,
@@ -22,6 +22,8 @@ import {
     getCurrentSwapId,
     getLiquidAddress,
     getLiquidBlockHeight,
+    getStoredSwap,
+    mockSideSwapQuotes,
     setFailedToPay,
     waitForBlockHeight,
     waitForNodesToSync,
@@ -249,6 +251,94 @@ test.describe("Refund", () => {
         if (fs.existsSync(fileName)) {
             fs.unlinkSync(fileName);
         }
+    });
+
+    test("Rescues L-BTC stuck at SideSwap intermediary Liquid address via external rescue", async ({
+        page,
+    }, testInfo) => {
+        test.setTimeout(90_000);
+
+        const rescueFileName = testInfo.outputPath("sideswap-rescue.json");
+        await mockSideSwapQuotes(page);
+
+        const userLiquidAddress = await getLiquidAddress();
+        await page.goto(
+            `/swap?sendAsset=${BTC}&receiveAsset=${LUSDT}&destination=${encodeURIComponent(
+                userLiquidAddress,
+            )}&receiveAmount=100000`,
+        );
+
+        const createButton = page.getByTestId("create-swap-button");
+        await expect(createButton).toBeEnabled();
+        await createButton.click();
+
+        await expect(
+            page.getByRole("button", { name: dict.en.download_new_key }),
+        ).toBeVisible();
+        const swapId = getCurrentSwapId(page);
+        await backupRescueFile(page, rescueFileName);
+
+        const storedSwap = await getStoredSwap<{
+            sideswap?: {
+                tempAddress?: string;
+            };
+        }>(page, swapId);
+        const tempAddress = storedSwap.sideswap?.tempAddress;
+        expect(tempAddress).toBeTruthy();
+
+        await elementsSendToAddress(tempAddress!, "0.001");
+        await generateLiquidBlock();
+        await waitForUTXOs(LBTC, tempAddress!, 1);
+
+        await page.evaluate(() => {
+            window.localStorage.clear();
+            indexedDB.deleteDatabase("swaps");
+        });
+        await page.reload();
+
+        await page.goto("/rescue/external");
+        await page.getByTestId("refundUpload").setInputFiles(rescueFileName);
+        await page
+            .getByRole("button", { name: dict.en.rescue, exact: true })
+            .click();
+
+        const swapItem = page.locator(
+            `div[data-testid='swaplist-item-${swapId}']`,
+        );
+        await expect(
+            swapItem.getByRole("link", {
+                name: dict.en.refund,
+                exact: true,
+            }),
+        ).toBeVisible({ timeout: 30_000 });
+        await swapItem.click();
+
+        await expect(page.getByText(dict.en.sideswap_failed)).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const sweepAddress = await getLiquidAddress();
+        await page.locator(".sideswap-recovery input").fill(sweepAddress);
+        await page
+            .locator(".sideswap-recovery")
+            .getByRole("button", { name: dict.en.refund })
+            .click();
+
+        await expect(
+            page.getByRole("heading", { name: dict.en.refunded }),
+        ).toBeVisible({ timeout: 30_000 });
+        await expect(
+            page.locator(".sideswap-recovery").getByText(/Transaction:/),
+        ).toHaveCount(0);
+        await expect(
+            page.locator(".sideswap-recovery").getByRole("link", {
+                name: dict.en.blockexplorer.replace(
+                    "{{ typeLabel }}",
+                    dict.en.blockexplorer_refund_tx,
+                ),
+            }),
+        ).toBeVisible();
+        await waitForUTXOs(LBTC, tempAddress!, 0);
     });
 
     const setupSwapWithMultipleUTXOs = async (

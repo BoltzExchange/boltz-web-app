@@ -30,6 +30,7 @@ import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
 import {
+    LUSDT,
     type RefundableAssetType,
     type blockChainsAssets,
     refundableAssets,
@@ -66,7 +67,12 @@ import {
     hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type SomeSwap,
+    type SubmarineSwap,
+    getFinalAssetReceive,
+} from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
@@ -147,11 +153,15 @@ const Pay = () => {
         prevSwapStatus.value = swapStatus();
     });
 
+    const requiresBackupVerification = (currentSwap: SomeSwap) =>
+        currentSwap.type !== SwapType.Reverse ||
+        getFinalAssetReceive(currentSwap) === LUSDT;
+
     const backupVerificationRequired = createMemo(() => {
         const currentSwap = swap();
         return (
             currentSwap !== null &&
-            currentSwap.type !== SwapType.Reverse &&
+            requiresBackupVerification(currentSwap) &&
             !rescueFileBackupDone()
         );
     });
@@ -187,16 +197,14 @@ const Pay = () => {
 
             return {
                 backupDone: rescueFileBackupDone(),
+                backupRequired: requiresBackupVerification(currentSwap),
                 id: currentSwap.id,
                 timedOutRefundable: timedOutRefundable(),
                 type: currentSwap.type,
             };
         },
         async (currentSwap) => {
-            if (
-                currentSwap.type !== SwapType.Reverse &&
-                !currentSwap.backupDone
-            ) {
+            if (currentSwap.backupRequired && !currentSwap.backupDone) {
                 return;
             }
 

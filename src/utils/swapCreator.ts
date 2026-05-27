@@ -44,6 +44,28 @@ export type BridgeDetail = BridgeRoute & {
     details?: BridgeDetails;
 };
 
+export const enum SideSwapStatus {
+    Pending = "pending",
+    WaitingConfirmation = "waitingConfirmation",
+    Quoting = "quoting",
+    Signing = "signing",
+    Broadcasting = "broadcasting",
+    Confirmed = "confirmed",
+    Failed = "failed",
+}
+
+export type SideSwapDetail = {
+    baseAssetId: string;
+    quoteAssetId: string;
+    userAddress: string;
+    tempKeyIndex?: number;
+    tempAddress?: string;
+    quoteAmountEstimate: number;
+    status: SideSwapStatus;
+    txid?: string;
+    error?: string;
+};
+
 export type GasAbstraction = {
     lockup: GasAbstractionType;
     claim: GasAbstractionType;
@@ -91,6 +113,9 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
+
+    // SideSwap post-hop for L-BTC -> Liquid token swaps.
+    sideswap?: SideSwapDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -181,6 +206,13 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.sideswap !== undefined) {
+        return (
+            swap.dex?.hops?.find((hop) => hop.type === SwapType.SideSwap)?.to ??
+            swap.assetReceive
+        );
+    }
+
     if (swap.bridge?.position === SwapPosition.Post) {
         return swap.bridge.destinationAsset;
     }

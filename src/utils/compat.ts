@@ -35,7 +35,14 @@ import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import { isAddress } from "viem";
 
 import { config } from "../config";
-import { BTC, LBTC, LN, getNetworkTransport } from "../consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    LUSDT,
+    getNetworkTransport,
+    isLiquidAsset,
+} from "../consts/Assets";
 import secp from "../lazy/secp";
 import {
     extractAddress,
@@ -51,7 +58,7 @@ type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
 
 type DecodedAddress = { script: Uint8Array; blindingKey?: Buffer };
 
-const possibleUserInputTypes = [LN, LBTC, BTC];
+const possibleUserInputTypes = [LN, LBTC, LUSDT, BTC];
 
 const getBtcNetwork = (network?: string): BTC_NETWORK => {
     switch (network ?? config.network) {
@@ -67,7 +74,7 @@ const getBtcNetwork = (network?: string): BTC_NETWORK => {
 };
 
 const decodeAddress = (asset: string, addr: string): DecodedAddress => {
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         const liquidNet =
             config.network === "mainnet" ? "liquid" : config.network;
         const network = LiquidNetworks[liquidNet] as LiquidNetwork;
@@ -172,7 +179,7 @@ const getNetwork = (
     network?: string,
 ): BTC_NETWORK | LiquidNetwork => {
     const resolvedNetwork = network ?? config.network;
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         const liquidNet =
             resolvedNetwork === "mainnet" ? "liquid" : resolvedNetwork;
         return LiquidNetworks[
@@ -184,7 +191,7 @@ const getNetwork = (
 };
 
 const getTransaction = (asset: string) => {
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         return {
             fromHex: (hexStr: string) => LiquidTransaction.fromHex(hexStr),
         };
@@ -208,7 +215,7 @@ const getConstructClaimTransaction = (asset: string) => {
         liquidNetwork?: LiquidNetwork,
         blindingKey?: Buffer,
     ) => {
-        if (asset === LBTC) {
+        if (isLiquidAsset(asset)) {
             return lcCT(
                 utxos as LiquidClaimDetails[],
                 destinationScript as Buffer,
@@ -241,7 +248,7 @@ const getConstructRefundTransaction = (
         liquidNetwork?: LiquidNetwork,
         blindingKey?: Buffer,
     ) => {
-        if (asset === LBTC) {
+        if (isLiquidAsset(asset)) {
             return targetFee(
                 feePerVbyte,
                 (fee) =>
@@ -274,7 +281,7 @@ const getOutputAmount = async (
     asset: string,
     output: TransactionOutput | LiquidTransactionOutputWithKey,
 ): Promise<number> => {
-    if (asset !== LBTC) {
+    if (!isLiquidAsset(asset)) {
         return Number((output as TransactionOutput).amount);
     }
 
@@ -303,7 +310,7 @@ const findOutputByScript = (
     tx: BtcTransaction | LiquidTransaction,
     targetScript: Uint8Array,
 ) => {
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         const liquidTx = tx as LiquidTransaction;
         const target = Buffer.from(targetScript);
         return liquidTx.outs.find((o) => o.script && target.equals(o.script));

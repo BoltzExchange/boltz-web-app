@@ -109,7 +109,7 @@ export const getPair = <
 ): T | undefined => {
     if (pairs === undefined) return undefined;
 
-    if (swapType === SwapType.Dex) {
+    if (swapType === SwapType.Dex || swapType === SwapType.SideSwap) {
         return undefined;
     }
     const pairSwapType = pairs[swapType];
@@ -231,6 +231,10 @@ export const getDestinationAddress = (
 
     if (isEvmSwap(swap) && swap.signer !== undefined) {
         return swap.signer;
+    }
+
+    if (swap.sideswap?.userAddress) {
+        return swap.sideswap.userAddress;
     }
 
     if (swap.type === SwapType.Submarine) {

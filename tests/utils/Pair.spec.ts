@@ -10,6 +10,7 @@ import {
     BTC,
     LBTC,
     LN,
+    LUSDT,
     TBTC,
     USDC,
     USDT0,
@@ -30,6 +31,9 @@ const {
     bridgeGetTransferFeeAssetMock,
     bridgeQuoteAmountInForAmountOutMock,
     bridgeQuoteReceiveAmountMock,
+    estimateSideSwapReceiveMock,
+    estimateSideSwapSendMock,
+    getSideSwapMinimumLbtcSatsMock,
     fetchDexQuoteMock,
     fetchGasTokenQuoteMock,
     gasTopUpSupportedMock,
@@ -46,6 +50,9 @@ const {
     bridgeGetTransferFeeAssetMock: vi.fn(),
     bridgeQuoteAmountInForAmountOutMock: vi.fn(),
     bridgeQuoteReceiveAmountMock: vi.fn(),
+    estimateSideSwapReceiveMock: vi.fn(),
+    estimateSideSwapSendMock: vi.fn(),
+    getSideSwapMinimumLbtcSatsMock: vi.fn(),
     fetchDexQuoteMock: vi.fn<typeof QuoterModule.fetchDexQuote>(),
     fetchGasTokenQuoteMock: vi.fn<typeof QuoterModule.fetchGasTokenQuote>(),
     gasTopUpSupportedMock: vi.fn<typeof QuoterModule.gasTopUpSupported>(),
@@ -147,6 +154,16 @@ vi.mock("../../src/config", async () => {
                     token: {
                         ...actual.config.assets!.USDT0.token,
                         address: "0x0000000000000000000000000000000000009999",
+                    },
+                },
+                "L-USDt": {
+                    ...actual.config.assets!["L-BTC"],
+                    type: "LIQUID_TOKEN",
+                    canSend: false,
+                    liquidToken: {
+                        assetId: "lusdt-asset-id",
+                        precision: 8,
+                        routeVia: "L-BTC",
                     },
                 },
                 "TBTC-DIS": {
@@ -281,6 +298,12 @@ vi.mock("../../src/utils/quoter", () => ({
     getGasTopUpNativeAmount: getGasTopUpNativeAmountMock,
 }));
 
+vi.mock("../../src/utils/sideswap", () => ({
+    estimateSideSwapReceive: estimateSideSwapReceiveMock,
+    estimateSideSwapSend: estimateSideSwapSendMock,
+    getSideSwapMinimumLbtcSats: getSideSwapMinimumLbtcSatsMock,
+}));
+
 const tbtcAssetAmount = (sats: number) =>
     (BigInt(sats) * 10_000_000_000n).toString();
 
@@ -328,6 +351,21 @@ const pairs: Pairs = {
         BTC: {
             [TBTC]: {
                 hash: "ln-tbtc-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        claim: 0,
+                        lockup: 0,
+                    },
+                },
+            },
+            [LBTC]: {
+                hash: "ln-lbtc-pair-hash",
                 rate: 1,
                 limits: {
                     maximal: 1_000_000,
@@ -455,10 +493,25 @@ describe("Pair", () => {
         bridgeGetTransferFeeAssetMock.mockReset();
         bridgeQuoteAmountInForAmountOutMock.mockReset();
         bridgeQuoteReceiveAmountMock.mockReset();
+        estimateSideSwapReceiveMock.mockReset();
+        estimateSideSwapSendMock.mockReset();
+        getSideSwapMinimumLbtcSatsMock.mockReset();
         fetchDexQuoteMock.mockReset();
         fetchGasTokenQuoteMock.mockReset();
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
+        estimateSideSwapReceiveMock.mockImplementation((amount) =>
+            Promise.resolve({
+                receiveAmount: amount,
+                feeAmount: 0,
+                feeAsset: "Base",
+                rate: 1,
+            }),
+        );
+        estimateSideSwapSendMock.mockImplementation((amount) =>
+            Promise.resolve(Number(amount)),
+        );
+        getSideSwapMinimumLbtcSatsMock.mockResolvedValue(81);
         gasTopUpSupportedMock.mockReturnValue(true);
         bridgeGetPreRouteMock.mockImplementation((asset: string) =>
             asset === "USDT0-POL"
@@ -611,6 +664,85 @@ describe("Pair", () => {
             });
             expect(pair.requiredInput).toBe(RequiredInput.Web3);
         }
+    });
+
+    test("should route Liquid USDt receives through a post-swap SideSwap hop", async () => {
+        for (const from of [BTC, LN]) {
+            estimateSideSwapReceiveMock.mockImplementationOnce((amount) =>
+                Promise.resolve({
+                    receiveAmount: amount - 123,
+                    feeAmount: 123,
+                    feeAsset: "Base",
+                    rate: 1,
+                }),
+            );
+
+            const pair = new Pair(pairs, from, LUSDT, pairs);
+
+            expect(pair.isRoutable).toBe(true);
+            expect(pair.hasSideSwapHop).toBe(true);
+            expect(pair.needsBackup).toBe(true);
+            expect(pair.requiredInput).toBe(RequiredInput.Address);
+            expect(pair.swapToCreate).toMatchObject({
+                from,
+                to: LBTC,
+            });
+
+            const receiveAmount = await pair.calculateReceiveAmount(
+                BigNumber(50_000),
+                0,
+            );
+            expect(receiveAmount.toNumber()).toBe(49_877);
+            expect(estimateSideSwapReceiveMock).toHaveBeenCalled();
+            expect(
+                pair.sideSwapFeeFromLatestQuote(BigNumber(50_000))?.toNumber(),
+            ).toBe(123);
+            expect(
+                pair.sideSwapFeeAssetFromLatestQuote(BigNumber(50_000)),
+            ).toBe(LBTC);
+
+            const creationData = await pair.creationData(BigNumber(50_000), 0);
+            expect(creationData).toMatchObject({
+                from: from === LN ? BTC : from,
+                to: LBTC,
+                hopsPosition: "post",
+                hops: [
+                    {
+                        type: SwapType.SideSwap,
+                        from: LBTC,
+                        to: LUSDT,
+                    },
+                ],
+            });
+        }
+    });
+
+    test("should use the SideSwap API minimum for Liquid USDt receive routes", async () => {
+        getSideSwapMinimumLbtcSatsMock.mockResolvedValue(81);
+
+        const pair = new Pair(pairs, BTC, LUSDT, pairs);
+
+        await expect(pair.getMinimum()).resolves.toBe(81);
+        expect(getSideSwapMinimumLbtcSatsMock).toHaveBeenCalled();
+    });
+
+    test("should not support pure L-BTC to Liquid USDt pairs without a Boltz leg", () => {
+        const pairsWithPureSideSwapPair: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                [LBTC]: {
+                    ...pairs.chain[LBTC],
+                    [LUSDT]: pairs.chain.BTC[LBTC],
+                },
+            },
+        };
+
+        const pair = new Pair(pairsWithPureSideSwapPair, LBTC, LUSDT);
+
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.swapToCreate).toBeUndefined();
+        expect(pair.hasSideSwapHop).toBe(false);
     });
 
     test("should route WBTC sends through a pre-swap TBTC DEX hop", () => {

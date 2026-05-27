@@ -10,6 +10,7 @@ export type Config = {
     cctpApiUrl?: string;
     solburnUrl?: string;
     torUrl?: string;
+    sideswapUrl?: string;
 } & typeof defaults;
 
 const defaults = {

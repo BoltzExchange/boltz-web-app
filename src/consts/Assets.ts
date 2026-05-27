@@ -11,6 +11,7 @@ import { config } from "../config";
 export const LN = "LN";
 export const BTC = "BTC";
 export const LBTC = "L-BTC";
+export const LUSDT = "L-USDt";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const WBTC = "WBTC";
@@ -22,6 +23,7 @@ export type AssetType =
     | typeof LN
     | typeof BTC
     | typeof LBTC
+    | typeof LUSDT
     | typeof RBTC
     | typeof TBTC
     | typeof WBTC
@@ -75,7 +77,7 @@ const networkBadgeAliases: Record<string, string> = {
 // Canonical assets that are USD stablecoins. Their base-unit → USD conversion
 // is a simple power-of-ten, not a market-rate lookup. When a new stablecoin
 // bridge (e.g. USDC via CCTP) is added, include its canonical here.
-const stablecoinCanonicals = new Set<string>([USDT0, USDC]);
+const stablecoinCanonicals = new Set<string>([LUSDT, USDT0, USDC]);
 
 export const isStablecoinAsset = (asset: string): boolean => {
     if (stablecoinCanonicals.has(asset)) {
@@ -131,7 +133,9 @@ const getCanonicalAssetConfig = (asset: string) =>
 
 export const getRouteViaAsset = (asset: string): string | undefined =>
     getAssetConfig(asset)?.token?.routeVia ??
-    getCanonicalAssetConfig(asset)?.token?.routeVia;
+    getAssetConfig(asset)?.liquidToken?.routeVia ??
+    getCanonicalAssetConfig(asset)?.token?.routeVia ??
+    getCanonicalAssetConfig(asset)?.liquidToken?.routeVia;
 
 export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
@@ -158,6 +162,7 @@ export const getBridgeMesh = (from: string, to?: string): Usdt0Kind => {
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
+    [LUSDT]: "USDT",
     [USDT0]: "USDT",
 };
 
@@ -165,6 +170,40 @@ export const getAssetDisplaySymbol = (asset: string): string => {
     const canonicalAsset = getCanonicalAsset(asset);
     return assetDisplaySymbols[canonicalAsset] ?? canonicalAsset;
 };
+
+const assetPickerNetworkVariantCanonicals: Record<string, string> = {
+    [LUSDT]: USDT0,
+};
+
+export const isAssetPickerNetworkVariant = (asset: string): boolean => {
+    const canonical = assetPickerNetworkVariantCanonicals[asset];
+    return canonical !== undefined && config.assets?.[canonical] !== undefined;
+};
+
+export const getAssetPickerCanonical = (asset: string): string => {
+    const bridgeCanonical = getAssetBridge(asset)?.canonicalAsset;
+    if (bridgeCanonical !== undefined) {
+        return bridgeCanonical;
+    }
+
+    return isAssetPickerNetworkVariant(asset)
+        ? assetPickerNetworkVariantCanonicals[asset]
+        : asset;
+};
+
+export const getAssetPickerNetworkVariants = (canonical: string): string[] => [
+    ...getBridgeVariants(canonical),
+    ...Object.entries(assetPickerNetworkVariantCanonicals)
+        .filter(
+            ([asset, variantCanonical]) =>
+                variantCanonical === canonical &&
+                config.assets?.[asset] !== undefined,
+        )
+        .map(([asset]) => asset),
+];
+
+export const hasAssetPickerNetworkVariants = (asset: string): boolean =>
+    getAssetPickerNetworkVariants(asset).length > 0;
 
 const normalizeNetworkBadge = (chainName: string): string =>
     networkBadgeAliases[chainName] ??
@@ -188,6 +227,14 @@ export const getKindForAsset = (asset: string): AssetKind => {
     }
 
     return assetConfig.type;
+};
+
+export const isLiquidAsset = (asset: string): boolean =>
+    asset === LBTC || asset === LUSDT || isLiquidTokenAsset(asset);
+
+export const isLiquidTokenAsset = (asset: string): boolean => {
+    const assetConfig = config.assets?.[asset];
+    return assetConfig?.type === AssetKind.LiquidToken;
 };
 
 export const isEvmAsset = (asset: string): boolean => {
@@ -278,6 +325,7 @@ export const getAssetNetwork = (asset: string): string | null => {
         case LN:
             return "Lightning";
         case LBTC:
+        case LUSDT:
             return "Liquid";
         default:
             return config.assets?.[asset]?.network?.chainName ?? null;
@@ -285,6 +333,10 @@ export const getAssetNetwork = (asset: string): string | null => {
 };
 
 export const getNetworkBadge = (asset: string): string | null => {
+    if (isLiquidTokenAsset(asset)) {
+        return "liquid";
+    }
+
     // avoid network badge on native assets like RBTC
     if (getKindForAsset(asset) !== AssetKind.ERC20) {
         return null;

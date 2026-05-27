@@ -3,9 +3,9 @@ import { useLocation } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
-import { SwapType } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, LUSDT } from "../../src/consts/Assets";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -25,10 +25,11 @@ import {
     isRefundableSwapType,
     isSwapClaimable,
 } from "../../src/utils/rescue";
-import type {
-    ChainSwap,
-    ReverseSwap,
-    SomeSwap,
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    SideSwapStatus,
+    type SomeSwap,
 } from "../../src/utils/swapCreator";
 import {
     TestComponent,
@@ -271,6 +272,60 @@ describe("Pay", () => {
             expect(mockGetSwapStatus).toHaveBeenCalledWith("123");
         });
         expect(await screen.findByText("swap.created")).toBeVisible();
+    });
+
+    test("should show backup flow for unverified reverse Liquid USDt SideSwap swaps", async () => {
+        swapsGetItemMock.mockResolvedValue({
+            id: "123",
+            type: SwapType.Reverse,
+            assetReceive: LBTC,
+            assetSend: LN,
+            dex: {
+                hops: [
+                    {
+                        type: SwapType.SideSwap,
+                        from: LBTC,
+                        to: LUSDT,
+                    },
+                ],
+                position: SwapPosition.Post,
+                quoteAmount: 100_000,
+            },
+            sideswap: {
+                baseAssetId: "lbtc",
+                quoteAssetId: "lusdt",
+                userAddress: "el1quser",
+                quoteAmountEstimate: 100_000,
+                status: SideSwapStatus.Pending,
+            },
+        });
+
+        renderPay(false);
+
+        await screen.findByText(dict.en.download_boltz_rescue_key);
+        expect(mockGetSwapStatus).not.toHaveBeenCalled();
+    });
+
+    test("should not show backup flow for unverified regular reverse swaps", async () => {
+        swapsGetItemMock.mockResolvedValue({
+            id: "123",
+            type: SwapType.Reverse,
+            assetReceive: LBTC,
+            assetSend: LN,
+            claimAddress: "lq1claim",
+        });
+        mockGetSwapStatus.mockResolvedValue({
+            status: swapStatusPending.InvoiceSet,
+        });
+
+        renderPay(false);
+
+        await waitFor(() => {
+            expect(mockGetSwapStatus).toHaveBeenCalledWith("123");
+        });
+        expect(
+            screen.queryByText(dict.en.download_boltz_rescue_key),
+        ).toBeNull();
     });
 
     test.each([

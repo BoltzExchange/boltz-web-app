@@ -6,6 +6,7 @@ const config = {
     network: "regtest",
     loglevel: "debug",
     preventReloadOnPendingSwaps: false,
+    sideswapUrl: "ws://localhost:9006/json-rpc-ws",
     apiUrl: {
         normal: "http://localhost:9001",
     },
@@ -35,6 +36,26 @@ const config = {
                     normal: "http://localhost:4003/api",
                 },
             ],
+        },
+        "L-USDt": {
+            type: AssetKind.LiquidToken,
+            canSend: false,
+            blockExplorerUrl: {
+                id: Explorer.Esplora,
+                normal: "http://localhost:4003",
+            },
+            blockExplorerApis: [
+                {
+                    id: Explorer.Esplora,
+                    normal: "http://localhost:4003/api",
+                },
+            ],
+            liquidToken: {
+                assetId:
+                    "0f3cf1eddf84a24f2bb984a36e8de6a9e32fb35ae158ea4cf89fcb96b1d54d8a",
+                precision: 8,
+                routeVia: "L-BTC",
+            },
         },
         RBTC: {
             type: AssetKind.EVMNative,

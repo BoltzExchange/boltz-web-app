@@ -23,6 +23,8 @@ import {
     SwapPosition,
     SwapType,
 } from "boltz-swaps/types";
+import { networks as LiquidNetworks } from "liquidjs-lib";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { zeroAddress } from "viem";
 
@@ -48,6 +50,12 @@ import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
 } from "./quoter";
+import {
+    type SideSwapFeeAsset,
+    estimateSideSwapReceive,
+    estimateSideSwapSend,
+    getSideSwapMinimumLbtcSats,
+} from "./sideswap";
 
 /**
  * Whether an asset is a routed ERC20 (like USDT0) whose internal
@@ -95,9 +103,16 @@ type Hop = {
         tokenIn: string;
         tokenOut: string;
     };
+    sideswapDetails?: {
+        baseAssetId: string;
+        quoteAssetId: string;
+    };
 };
 
-export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
+export type EncodedHop = Pick<
+    Hop,
+    "type" | "from" | "to" | "dexDetails" | "sideswapDetails"
+>;
 
 export type CreationData = {
     type: SwapType;
@@ -116,6 +131,7 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
         from: hop.from,
         to: hop.to,
         dexDetails: hop.dexDetails,
+        sideswapDetails: hop.sideswapDetails,
     };
 };
 
@@ -141,6 +157,13 @@ export default class Pair {
                     }
                   | undefined;
               transfer?: BigNumber | undefined;
+          }
+        | undefined;
+    private latestSideSwapFee:
+        | {
+              sendAmount: string;
+              value: BigNumber;
+              asset: string;
           }
         | undefined;
 
@@ -183,7 +206,12 @@ export default class Pair {
             return false;
         };
 
-        const pair = Pair.findPair(pairs, routeSource, routeTarget);
+        const supportsDirectPair =
+            canonicalSourceAsset?.type !== AssetKind.LiquidToken &&
+            canonicalTargetAsset?.type !== AssetKind.LiquidToken;
+        const pair = supportsDirectPair
+            ? Pair.findPair(pairs, routeSource, routeTarget)
+            : undefined;
         if (pair !== undefined) {
             log.debug(`Found direct pair for ${from} -> ${routeTarget}`);
             const proposedRoute: Hop[] = [
@@ -248,6 +276,57 @@ export default class Pair {
                             chain: hopAsset.network.symbol,
                             tokenIn: hopAsset.token.address,
                             tokenOut: canonicalTargetAsset.token.address,
+                        },
+                    },
+                ];
+                if (logDisabledAssetInRoute(proposedRoute)) {
+                    return;
+                }
+                this.route = proposedRoute;
+                return;
+            }
+        }
+
+        if (
+            canonicalTargetAsset !== undefined &&
+            canonicalTargetAsset.type === AssetKind.LiquidToken
+        ) {
+            const hopAssetSymbol = canonicalTargetAsset.liquidToken?.routeVia;
+            const hopPair =
+                hopAssetSymbol !== undefined
+                    ? Pair.findPair(pairs, routeSource, hopAssetSymbol)
+                    : undefined;
+
+            if (
+                hopPair !== undefined &&
+                hopAssetSymbol !== undefined &&
+                canonicalTargetAsset.liquidToken !== undefined
+            ) {
+                log.debug(
+                    `Found SideSwap route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
+                );
+
+                const liquidNet =
+                    config.network === "mainnet" ? "liquid" : config.network;
+                const lbtcAssetId =
+                    (LiquidNetworks[liquidNet] as LiquidNetwork)?.assetHash ??
+                    "";
+
+                const proposedRoute: Hop[] = [
+                    {
+                        type: hopPair.type,
+                        pair: hopPair.pair,
+                        from: routeSource,
+                        to: hopAssetSymbol,
+                    },
+                    {
+                        type: SwapType.SideSwap,
+                        from: hopAssetSymbol,
+                        to: routeTarget,
+                        sideswapDetails: {
+                            baseAssetId: lbtcAssetId,
+                            quoteAssetId:
+                                canonicalTargetAsset.liquidToken.assetId,
                         },
                     },
                 ];
@@ -390,7 +469,10 @@ export default class Pair {
         return (
             this.preBridge !== undefined ||
             this.postBridge !== undefined ||
-            this.route.some((hop) => hop.type === SwapType.Dex)
+            this.route.some(
+                (hop) =>
+                    hop.type === SwapType.Dex || hop.type === SwapType.SideSwap,
+            )
         );
     }
 
@@ -427,13 +509,27 @@ export default class Pair {
     }
 
     public get needsBackup() {
-        return this.route.some(
-            (hop) =>
-                !isEvmAsset(hop.from) &&
-                (hop.type === SwapType.Submarine ||
-                    hop.type === SwapType.Chain),
+        return (
+            this.hasSideSwapHop ||
+            this.route.some(
+                (hop) =>
+                    !isEvmAsset(hop.from) &&
+                    (hop.type === SwapType.Submarine ||
+                        hop.type === SwapType.Chain),
+            )
         );
     }
+
+    public get hasSideSwapHop() {
+        return this.route.some((hop) => hop.type === SwapType.SideSwap);
+    }
+
+    public get sideSwapHop() {
+        return this.route.find((hop) => hop.type === SwapType.SideSwap);
+    }
+
+    private routeHopForCreation = (hop: Hop) =>
+        ![SwapType.Dex, SwapType.SideSwap].includes(hop.type);
 
     public get fromAsset() {
         return this.from;
@@ -629,6 +725,19 @@ export default class Pair {
                               this.bridgeMessagingFeeToken,
                       },
             transfer: BigNumber((quote.amountIn - quote.amountOut).toString()),
+        };
+    };
+
+    private cacheLatestSideSwapFee = (
+        sendAmountKey: string,
+        hop: Hop,
+        feeAmount: number,
+        feeAsset: SideSwapFeeAsset,
+    ) => {
+        this.latestSideSwapFee = {
+            sendAmount: sendAmountKey,
+            value: BigNumber(feeAmount),
+            asset: feeAsset === "Quote" ? hop.to : hop.from,
         };
     };
 
@@ -1156,6 +1265,26 @@ export default class Pair {
         return this.latestBridgeFee.transfer;
     };
 
+    public sideSwapFeeFromLatestQuote = (sendAmount: BigNumber) => {
+        const key = sendAmount.toFixed();
+
+        if (this.latestSideSwapFee?.sendAmount !== key) {
+            return undefined;
+        }
+
+        return this.latestSideSwapFee.value;
+    };
+
+    public sideSwapFeeAssetFromLatestQuote = (sendAmount: BigNumber) => {
+        const key = sendAmount.toFixed();
+
+        if (this.latestSideSwapFee?.sendAmount !== key) {
+            return undefined;
+        }
+
+        return this.latestSideSwapFee.asset;
+    };
+
     public get bridgeMessagingFeeToken() {
         return (
             this.latestBridgeFee?.messaging?.token ??
@@ -1190,6 +1319,7 @@ export default class Pair {
         hop: Hop,
         minerFees: number,
         useDexGasToken: boolean,
+        sideSwapFeeCacheKey?: string,
     ): Promise<BigNumber> => {
         switch (hop.type) {
             case SwapType.Dex: {
@@ -1211,6 +1341,29 @@ export default class Pair {
                     );
                     return fromDexAmount(trade.amountOut, hop.to);
                 } catch {
+                    return BigNumber(0);
+                }
+            }
+
+            case SwapType.SideSwap: {
+                try {
+                    const estimate = await estimateSideSwapReceive(
+                        amount.toNumber(),
+                    );
+                    if (sideSwapFeeCacheKey !== undefined) {
+                        this.cacheLatestSideSwapFee(
+                            sideSwapFeeCacheKey,
+                            hop,
+                            estimate.feeAmount,
+                            estimate.feeAsset,
+                        );
+                    }
+                    return BigNumber(estimate.receiveAmount);
+                } catch (e) {
+                    log.warn("Could not quote SideSwap receive amount", e);
+                    if (sideSwapFeeCacheKey !== undefined) {
+                        this.latestSideSwapFee = undefined;
+                    }
                     return BigNumber(0);
                 }
             }
@@ -1289,6 +1442,17 @@ export default class Pair {
             ).toNumber();
         }
 
+        if (this.hasSideSwapHop) {
+            const sideSwapMinimum = await getSideSwapMinimumLbtcSats();
+            const sideSwapSendLimit = calculateSendAmount(
+                BigNumber(sideSwapMinimum),
+                this.feePercentage,
+                this.minerFees,
+                boltzHop.type,
+            ).toNumber();
+            boltzSendLimit = Math.max(boltzSendLimit, sideSwapSendLimit);
+        }
+
         return await this.convertFromBoltzSendAmount(boltzSendLimit);
     };
 
@@ -1336,7 +1500,7 @@ export default class Pair {
     }
 
     public get swapToCreate() {
-        return this.route.find((hop) => hop.type !== SwapType.Dex);
+        return this.route.find(this.routeHopForCreation);
     }
 
     public feeOnSend = (sendAmount: BigNumber) => {
@@ -1398,6 +1562,7 @@ export default class Pair {
                 hop,
                 minerFees,
                 useDexGasToken,
+                shouldCacheBoltzSwapSendAmount ? sendAmountKey : undefined,
             );
         }
 
@@ -1465,6 +1630,13 @@ export default class Pair {
 
         const boltzHop = this.boltzHop;
         let boltzSwapSendAmountForCache: BigNumber | undefined;
+        let sideSwapFeeForCache:
+            | {
+                  hop: Hop;
+                  feeAmount: number;
+                  feeAsset: SideSwapFeeAsset;
+              }
+            | undefined;
         const routeToQuote = this.routeWithoutPostBridgeDex;
         const useDexGasToken = this.useDexGasToken(getGasToken);
 
@@ -1501,6 +1673,27 @@ export default class Pair {
                     break;
                 }
 
+                case SwapType.SideSwap: {
+                    const sideSwapSendAmount = await estimateSideSwapSend(
+                        amount.toNumber(),
+                    );
+                    amount = BigNumber(sideSwapSendAmount);
+
+                    try {
+                        const estimate =
+                            await estimateSideSwapReceive(sideSwapSendAmount);
+                        sideSwapFeeForCache = {
+                            hop,
+                            feeAmount: estimate.feeAmount,
+                            feeAsset: estimate.feeAsset,
+                        };
+                    } catch (e) {
+                        log.warn("Could not quote SideSwap fee", e);
+                        sideSwapFeeForCache = undefined;
+                    }
+                    break;
+                }
+
                 default:
                     amount = calculateSendAmount(
                         amount,
@@ -1524,6 +1717,16 @@ export default class Pair {
             sendAmount: sendAmountKey,
             value: boltzSwapSendAmountForCache ?? amount,
         };
+        if (sideSwapFeeForCache !== undefined) {
+            this.cacheLatestSideSwapFee(
+                sendAmountKey,
+                sideSwapFeeForCache.hop,
+                sideSwapFeeForCache.feeAmount,
+                sideSwapFeeForCache.feeAsset,
+            );
+        } else if (this.hasSideSwapHop) {
+            this.latestSideSwapFee = undefined;
+        }
         const quote = preBridgeQuote.quote ?? postBridgeQuote.quote;
         if (quote !== undefined) {
             this.cacheLatestBridgeFee(sendAmountKey, quote);
@@ -1568,7 +1771,10 @@ export default class Pair {
             [boltzHop],
         );
 
-        const dexHops = this.route.filter((hop) => hop.type === SwapType.Dex);
+        const routedHops = this.route.filter(
+            (hop) =>
+                hop.type === SwapType.Dex || hop.type === SwapType.SideSwap,
+        );
         const boltzIndex = this.route.indexOf(boltzHop);
         return {
             type: boltzHop.type,
@@ -1577,10 +1783,10 @@ export default class Pair {
             from: coalesceLn(boltzHop.from),
             to: coalesceLn(boltzHop.to),
             pairHash: boltzHop.pair!.hash,
-            hops: dexHops.map(toEncodedHop),
+            hops: routedHops.map(toEncodedHop),
             hopsPosition:
-                dexHops.length > 0
-                    ? this.route.indexOf(dexHops[0]) < boltzIndex
+                routedHops.length > 0
+                    ? this.route.indexOf(routedHops[0]) < boltzIndex
                         ? SwapPosition.Pre
                         : SwapPosition.Post
                     : undefined,

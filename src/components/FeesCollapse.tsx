@@ -11,17 +11,17 @@ import {
 import { formatUnits } from "viem";
 
 import { config } from "../config";
-import {
-    BTC,
-    getAssetDisplaySymbol,
-    requireTokenConfig,
-} from "../consts/Assets";
-import type { Currency } from "../consts/Enums";
+import { BTC, LBTC, getAssetDisplaySymbol } from "../consts/Assets";
+import { Currency } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useFiatContext } from "../context/Fiat";
 import { useGlobalContext } from "../context/Global";
 import { BridgeMessagingFeeDisplayMode } from "../utils/Pair";
-import { formatAmount, formatDenomination } from "../utils/denomination";
+import {
+    formatAmount,
+    formatDenomination,
+    getDecimals,
+} from "../utils/denomination";
 import {
     convertToFiat,
     getGasTokenPriceFailover,
@@ -42,6 +42,15 @@ type FeeFiatView =
     | { status: FeeFiatViewStatus.Error }
     | { status: FeeFiatViewStatus.Ok; amount: BigNumber };
 
+type SideSwapFeePair = {
+    sideSwapFeeFromLatestQuote?: (
+        sendAmount: BigNumber,
+    ) => BigNumber | undefined;
+    sideSwapFeeAssetFromLatestQuote?: (
+        sendAmount: BigNumber,
+    ) => string | undefined;
+};
+
 const TokenFee = (props: { token?: string }) => {
     return (
         <Show when={props.token}>
@@ -51,6 +60,9 @@ const TokenFee = (props: { token?: string }) => {
         </Show>
     );
 };
+
+const isBitcoinLikeFeeAsset = (asset: string | undefined): boolean =>
+    asset === BTC || asset === LBTC;
 
 const getBridgeMessagingFeeTokenDecimals = (
     token: string | undefined,
@@ -87,6 +99,9 @@ const FeesCollapse = () => {
         useCreateContext();
 
     const [feesExpanded, setFeesExpanded] = createSignal(false);
+    const stablecoinRate = createMemo(() =>
+        fiatCurrency() === Currency.USD ? BigNumber(1) : usdToFiatRate(),
+    );
 
     const bridgeMessagingFeeIncluded = createMemo(() => {
         return (
@@ -162,6 +177,28 @@ const FeesCollapse = () => {
         return pair().bridgeMessagingFeeFromLatestQuote(sendAmount());
     });
 
+    const sideSwapFee = createMemo(() => {
+        if (!pair().isRoutable) {
+            return undefined;
+        }
+
+        receiveAmount();
+
+        return (
+            pair() as unknown as SideSwapFeePair
+        ).sideSwapFeeFromLatestQuote?.(sendAmount());
+    });
+
+    const sideSwapFeeAsset = createMemo(() => {
+        if (sideSwapFee() === undefined) {
+            return undefined;
+        }
+
+        return (
+            pair() as unknown as SideSwapFeePair
+        ).sideSwapFeeAssetFromLatestQuote?.(sendAmount());
+    });
+
     const hasBridgeMessagingFee = createMemo(() => {
         const fee = bridgeMessagingFee();
         return fee !== undefined && fee > 0n;
@@ -171,7 +208,16 @@ const FeesCollapse = () => {
         receiveAmount();
 
         const rate = btcPrice();
-        const totalSatsFee = BigNumber(minerFee()).plus(boltzFeeAmount());
+        const sideSwapFeeAmount = sideSwapFee();
+        const sideSwapFeeAssetValue = sideSwapFeeAsset();
+        const sideSwapSatsFee =
+            sideSwapFeeAmount !== undefined &&
+            isBitcoinLikeFeeAsset(sideSwapFeeAssetValue)
+                ? sideSwapFeeAmount
+                : BigNumber(0);
+        const totalSatsFee = BigNumber(minerFee())
+            .plus(boltzFeeAmount())
+            .plus(sideSwapSatsFee);
 
         if (totalSatsFee.isGreaterThan(0)) {
             if (rate === null) {
@@ -197,9 +243,9 @@ const FeesCollapse = () => {
             !transferFee.isNaN() &&
             transferFeeAsset !== undefined
         ) {
-            const { decimals } = requireTokenConfig(transferFeeAsset);
+            const { decimals } = getDecimals(transferFeeAsset);
             const transferFeeUsd = transferFee.div(BigNumber(10).pow(decimals));
-            const usdToFiat = usdToFiatRate();
+            const usdToFiat = stablecoinRate();
 
             if (!(usdToFiat instanceof BigNumber)) {
                 return {
@@ -211,6 +257,30 @@ const FeesCollapse = () => {
             }
 
             amount = amount.plus(transferFeeUsd.multipliedBy(usdToFiat));
+        }
+
+        if (
+            sideSwapFeeAmount !== undefined &&
+            !sideSwapFeeAmount.isNaN() &&
+            sideSwapFeeAssetValue !== undefined &&
+            !isBitcoinLikeFeeAsset(sideSwapFeeAssetValue)
+        ) {
+            const { decimals } = getDecimals(sideSwapFeeAssetValue);
+            const sideSwapFeeUsd = sideSwapFeeAmount.div(
+                BigNumber(10).pow(decimals),
+            );
+            const usdToFiat = stablecoinRate();
+
+            if (!(usdToFiat instanceof BigNumber)) {
+                return {
+                    status:
+                        rate === null
+                            ? FeeFiatViewStatus.Loading
+                            : FeeFiatViewStatus.Error,
+                };
+            }
+
+            amount = amount.plus(sideSwapFeeUsd.multipliedBy(usdToFiat));
         }
 
         const messagingFee = bridgeMessagingFee();
@@ -295,6 +365,23 @@ const FeesCollapse = () => {
             .replace(/\.?0+$/, "");
     });
 
+    const formattedSideSwapFee = createMemo(() => {
+        const fee = sideSwapFee();
+        const asset = sideSwapFeeAsset();
+        if (
+            fee === undefined ||
+            asset === undefined ||
+            fee.isLessThanOrEqualTo(0)
+        ) {
+            return undefined;
+        }
+
+        return {
+            amount: formatAmount(fee, denomination(), separator(), asset, true),
+            denominator: formatDenomination(denomination(), asset),
+        };
+    });
+
     onMount(() => {
         void fetchBtcPrice();
     });
@@ -370,6 +457,22 @@ const FeesCollapse = () => {
                             </span>
                             <AmountDenominator value={denomination()} />
                         </span>
+                        <Show when={formattedSideSwapFee()}>
+                            {(fee) => (
+                                <>
+                                    <br />
+                                    {t("sideswap_fee")}:{" "}
+                                    <span class="fee-amount">
+                                        <span data-testid="sideswap-fee">
+                                            {fee().amount}
+                                        </span>
+                                        <AmountDenominator
+                                            value={fee().denominator}
+                                        />
+                                    </span>
+                                </>
+                            )}
+                        </Show>
                         <Show
                             when={
                                 bridgeTransferFee() !== undefined &&

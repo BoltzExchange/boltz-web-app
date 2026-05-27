@@ -3,12 +3,12 @@ import { IoClose } from "solid-icons/io";
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
 import {
-    getAssetBridge,
     getAssetDisplaySymbol,
     getAssetNetwork,
-    getBridgeVariants,
+    getAssetPickerCanonical,
     getNetworkBadge,
-    isBridgeCanonicalAsset,
+    hasAssetPickerNetworkVariants,
+    isAssetPickerNetworkVariant,
     isBridgeVariant,
     assets as orderedAssets,
 } from "../consts/Assets";
@@ -20,9 +20,8 @@ import { findEnabledIndex, handleListKeyDown } from "../utils/assetSearch";
 import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset, isAssetDisabled } from "../utils/selectableAsset";
 
-// True if this canonical hub has >= 1 chain-specific variant registered.
-const hasBridgeVariants = (asset: string) =>
-    isBridgeCanonicalAsset(asset) && getBridgeVariants(asset).length > 0;
+// True if this top-level entry has >= 1 network-specific variant registered.
+const hasNetworkVariants = hasAssetPickerNetworkVariants;
 
 const SelectAsset = () => {
     const { t, fetchPairs, pairs, regularPairs, bitcoinOnly } =
@@ -46,6 +45,7 @@ const SelectAsset = () => {
         orderedAssets.filter(
             (asset) =>
                 !isBridgeVariant(asset) &&
+                !isAssetPickerNetworkVariant(asset) &&
                 canSelectAsset(assetSelected(), asset),
         ),
     );
@@ -172,7 +172,7 @@ const SelectAsset = () => {
         if (isAssetDisabled(asset)) {
             return;
         }
-        if (hasBridgeVariants(asset)) {
+        if (hasNetworkVariants(asset)) {
             setNetworkSelectCanonical(asset);
             setAssetSelection(AssetSelection.AssetNetwork);
             return;
@@ -183,8 +183,8 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         const current =
             assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
-        if (hasBridgeVariants(asset)) {
-            return getAssetBridge(current)?.canonicalAsset === asset;
+        if (hasNetworkVariants(asset)) {
+            return getAssetPickerCanonical(current) === asset;
         }
         return asset === current;
     };
@@ -222,7 +222,7 @@ const SelectAsset = () => {
                                     type="button"
                                     class={`asset-select-item asset-${getAssetDisplaySymbol(asset)}`}
                                     data-network={
-                                        hasBridgeVariants(asset)
+                                        hasNetworkVariants(asset)
                                             ? null
                                             : getNetworkBadge(asset)
                                     }
@@ -239,7 +239,7 @@ const SelectAsset = () => {
                                             {getAssetDisplaySymbol(asset)}
                                         </span>
                                         <span class="asset-select-network">
-                                            {hasBridgeVariants(asset)
+                                            {hasNetworkVariants(asset)
                                                 ? t("select_network")
                                                 : getAssetNetwork(asset)}
                                         </span>

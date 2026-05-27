@@ -3,7 +3,13 @@ import BigNumber from "bignumber.js";
 import { randomUUID } from "crypto";
 import fs from "fs";
 
-import { BTC, LBTC, LN, getAssetDisplaySymbol } from "../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    LUSDT,
+    getAssetDisplaySymbol,
+} from "../src/consts/Assets";
 import { Denomination } from "../src/consts/Enums";
 import dict from "../src/i18n/i18n";
 import { formatAmount } from "../src/utils/denomination";
@@ -13,6 +19,8 @@ import {
     getBolt12Offer,
     getCurrentSwapId,
     getLiquidAddress,
+    getStoredSwap,
+    mockSideSwapQuotes,
 } from "./utils";
 
 test.describe("BIP21 URIs", () => {
@@ -322,5 +330,91 @@ test.describe("page reload during inline backup flow", () => {
             await completeBackup(page);
             await expect(page).toHaveURL(new RegExp(`/swap/${swapId}$`));
         });
+    });
+
+    test(`${BTC} -> ${LUSDT} stores SideSwap temp Liquid address in rescue-backed swap`, async ({
+        page,
+    }) => {
+        await mockSideSwapQuotes(page);
+
+        const destination = await getLiquidAddress();
+        await page.goto(
+            `/swap?sendAsset=${BTC}&receiveAsset=${LUSDT}&destination=${encodeURIComponent(
+                destination,
+            )}&receiveAmount=100000`,
+        );
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await expect(buttonCreateSwap).toBeEnabled();
+        await buttonCreateSwap.click();
+
+        await expect(
+            page.getByRole("button", { name: dict.en.download_new_key }),
+        ).toBeVisible();
+
+        const swapId = getCurrentSwapId(page);
+        expect(swapId).toBeTruthy();
+        await completeBackup(page);
+
+        const swap = await getStoredSwap<{
+            claimAddress?: string;
+            sideswap?: {
+                userAddress?: string;
+                tempAddress?: string;
+                tempKeyIndex?: number;
+            };
+        }>(page, swapId);
+
+        expect(swap.sideswap?.userAddress).toBe(destination);
+        expect(swap.sideswap?.tempAddress).toBeTruthy();
+        expect(swap.sideswap?.tempKeyIndex).toBeGreaterThanOrEqual(0);
+        expect(swap.claimAddress).toBe(swap.sideswap?.tempAddress);
+    });
+
+    test(`${LN} -> ${LUSDT} requires rescue backup for the SideSwap temp Liquid address`, async ({
+        page,
+    }) => {
+        await mockSideSwapQuotes(page);
+
+        const destination = await getLiquidAddress();
+        await page.goto(
+            `/swap?sendAsset=${LN}&receiveAsset=${LUSDT}&destination=${encodeURIComponent(
+                destination,
+            )}&receiveAmount=100000`,
+        );
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await expect(buttonCreateSwap).toBeEnabled();
+        await buttonCreateSwap.click();
+
+        await expect(
+            page.getByRole("button", { name: dict.en.download_new_key }),
+        ).toBeVisible();
+
+        const swapId = getCurrentSwapId(page);
+        expect(swapId).toBeTruthy();
+
+        const swap = await getStoredSwap<{
+            type: string;
+            claimAddress?: string;
+            sideswap?: {
+                userAddress?: string;
+                tempAddress?: string;
+                tempKeyIndex?: number;
+            };
+        }>(page, swapId);
+
+        expect(swap.type).toBe("reverse");
+        expect(swap.sideswap?.userAddress).toBe(destination);
+        expect(swap.sideswap?.tempAddress).toBeTruthy();
+        expect(swap.sideswap?.tempKeyIndex).toBeGreaterThanOrEqual(0);
+        expect(swap.claimAddress).toBe(swap.sideswap?.tempAddress);
+
+        await completeBackup(page);
+        await expect(page.getByTestId("pay-invoice-title")).toBeVisible();
     });
 });

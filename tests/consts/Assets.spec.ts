@@ -6,20 +6,27 @@ import {
     BTC,
     LBTC,
     LN,
+    LUSDT,
     RBTC,
     TBTC,
     USDC,
     USDT0,
     WBTC,
     getAssetDisplaySymbol,
+    getAssetNetwork,
+    getAssetPickerCanonical,
+    getAssetPickerNetworkVariants,
     getBridgeMesh,
     getBridgeVariants,
     getCanonicalAsset,
+    getNetworkBadge,
     getRouteViaAsset,
     getRouterAddress,
+    isAssetPickerNetworkVariant,
     isBridgeAsset,
     isBridgeCanonicalAsset,
     isBridgeVariant,
+    isLiquidAsset,
     isStablecoinAsset,
     requireRouterAddress,
 } from "../../src/consts/Assets";
@@ -40,6 +47,7 @@ describe("Assets", () => {
             input           | expected
             ${BTC}          | ${BTC}
             ${LBTC}         | ${LBTC}
+            ${LUSDT}        | ${LUSDT}
             ${LN}           | ${LN}
             ${RBTC}         | ${RBTC}
             ${WBTC}         | ${WBTC}
@@ -59,6 +67,7 @@ describe("Assets", () => {
             input           | expected
             ${BTC}          | ${"BTC"}
             ${LBTC}         | ${"LBTC"}
+            ${LUSDT}        | ${"USDT"}
             ${LN}           | ${"LN"}
             ${RBTC}         | ${"RBTC"}
             ${WBTC}         | ${"WBTC"}
@@ -126,6 +135,18 @@ describe("Assets", () => {
         });
     });
 
+    describe("asset picker network variants", () => {
+        test("groups Liquid USDt under the USDT picker entry without changing swap canonicalization", () => {
+            expect(getCanonicalAsset(LUSDT)).toBe(LUSDT);
+            expect(getAssetPickerCanonical(LUSDT)).toBe(USDT0);
+            expect(isAssetPickerNetworkVariant(LUSDT)).toBe(true);
+
+            const variants = getAssetPickerNetworkVariants(USDT0);
+            expect(variants).toContain(LUSDT);
+            expect(variants).toContain("USDT0-ETH");
+        });
+    });
+
     describe("getBridgeMesh", () => {
         test("returns legacy when either OFT asset is on the legacy mesh", () => {
             expect(getBridgeMesh("USDT0-ETH", "USDT0-SOL")).toBe(
@@ -144,6 +165,7 @@ describe("Assets", () => {
         test.each`
             input             | expected
             ${USDT0}          | ${"TBTC"}
+            ${LUSDT}          | ${"L-BTC"}
             ${"USDT0-ETH"}    | ${"TBTC"}
             ${"USDT0-TRON"}   | ${"TBTC"}
             ${"USDT0-POL"}    | ${"TBTC"}
@@ -205,6 +227,7 @@ describe("Assets", () => {
             ${BTC}         | ${false}
             ${RBTC}        | ${false}
             ${WBTC}        | ${false}
+            ${LUSDT}       | ${true}
             ${USDT0}       | ${true}
             ${"USDT0-ETH"} | ${true}
             ${"USDT0-POL"} | ${true}
@@ -214,6 +237,14 @@ describe("Assets", () => {
             ${"USDC-SOL"}  | ${true}
         `("$input -> $expected", ({ input, expected }) => {
             expect(isStablecoinAsset(input)).toBe(expected);
+        });
+    });
+
+    describe("Liquid token helpers", () => {
+        test("treats Liquid USDt as a Liquid asset on the Liquid network", () => {
+            expect(isLiquidAsset(LUSDT)).toBe(true);
+            expect(getAssetNetwork(LUSDT)).toBe("Liquid");
+            expect(getNetworkBadge(LUSDT)).toBe("liquid");
         });
     });
 });

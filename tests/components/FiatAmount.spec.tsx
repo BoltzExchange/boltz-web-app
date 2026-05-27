@@ -2,7 +2,7 @@ import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import { createSignal } from "solid-js";
 
-import { USDT0, WBTC } from "../../src/consts/Assets";
+import { LUSDT, USDT0, WBTC } from "../../src/consts/Assets";
 import { Currency } from "../../src/consts/Enums";
 import type { FiatContextType } from "../../src/context/Fiat";
 
@@ -29,15 +29,21 @@ describe("FiatAmount", () => {
         fiatContextMock.value = undefined;
     });
 
-    const renderAmount = (
-        asset: string,
-        amount: number,
-        context: Partial<FiatContextType>,
-    ) => {
+    const renderAmount = ({
+        asset,
+        amount,
+        context,
+        currency = Currency.EUR,
+    }: {
+        asset: string;
+        amount: number;
+        context: Partial<FiatContextType>;
+        currency?: Currency;
+    }) => {
         const [btcPrice] = createSignal<BigNumber | Error | null>(
             BigNumber(95_000),
         );
-        const [fiatCurrency] = createSignal(Currency.EUR);
+        const [fiatCurrency] = createSignal(currency);
         const [usdToFiatRate] = createSignal<BigNumber | null>(null);
 
         fiatContextMock.value = {
@@ -55,7 +61,7 @@ describe("FiatAmount", () => {
     };
 
     const renderStablecoinAmount = (context: Partial<FiatContextType>) =>
-        renderAmount(USDT0, 100_000_000, context);
+        renderAmount({ asset: USDT0, amount: 100_000_000, context });
 
     test("should not label USD stablecoin face values as EUR without a conversion rate", () => {
         renderStablecoinAmount({});
@@ -72,8 +78,31 @@ describe("FiatAmount", () => {
         expect(screen.getByText(/92\.00 EUR/)).toBeInTheDocument();
     });
 
+    test("should convert Liquid USDt face values without ERC20 config", () => {
+        const [usdToFiatRate] = createSignal<BigNumber | null>(BigNumber(0.92));
+
+        renderAmount({
+            asset: LUSDT,
+            amount: 10_000_000_000,
+            context: { usdToFiatRate },
+        });
+
+        expect(screen.getByText(/92\.00 EUR/)).toBeInTheDocument();
+    });
+
+    test("should price Liquid USDt 1:1 when USD is selected", () => {
+        renderAmount({
+            asset: LUSDT,
+            amount: 10_000_000_000,
+            context: {},
+            currency: Currency.USD,
+        });
+
+        expect(screen.getByText(/100\.00 USD/)).toBeInTheDocument();
+    });
+
     test("should treat WBTC amounts as sats for fiat conversion", () => {
-        renderAmount(WBTC, 100_000_000, {});
+        renderAmount({ asset: WBTC, amount: 100_000_000, context: {} });
 
         expect(screen.getByText(/95000\.00 EUR/)).toBeInTheDocument();
     });

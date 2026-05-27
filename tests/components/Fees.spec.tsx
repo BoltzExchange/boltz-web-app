@@ -7,7 +7,7 @@ import { SwapType } from "boltz-swaps/types";
 import Fees from "../../src/components/Fees";
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, LUSDT, RBTC, USDT0 } from "../../src/consts/Assets";
 import { Currency, Denomination } from "../../src/consts/Enums";
 import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
@@ -481,6 +481,65 @@ describe("Fees component", () => {
         expect(screen.queryByTestId("bridge-messaging-fee")).toBeNull();
     });
 
+    test("should display SideSwap fees when present", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: LN,
+            toAsset: LUSDT,
+            swapToCreate: {
+                type: SwapType.Reverse,
+            },
+            feePercentage: 0,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            bridgeMessagingFeeIncludedInTotal: false,
+            bridgeMessagingFeeDisplayMode: BridgeMessagingFeeDisplayMode.Inline,
+            bridgeMessagingFeeToken: undefined,
+            bridgeTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            sideSwapFeeFromLatestQuote: vi.fn(() => BigNumber(82)),
+            sideSwapFeeAssetFromLatestQuote: vi.fn(() => LBTC),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("fees-total-amount").textContent).toEqual(
+                "0.08",
+            );
+        });
+
+        fireEvent.click(screen.getByTestId("fees-toggle"));
+
+        expect(
+            screen.getByText((content) =>
+                content.includes(i18n.en.sideswap_fee),
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("sideswap-fee").textContent).toEqual(
+            "0.00000082",
+        );
+    });
+
     test("should ignore legacy mesh transfer fees without an asset config", async () => {
         render(
             () => (
@@ -901,6 +960,55 @@ describe("Fees component", () => {
                 .parentElement?.querySelector(".denominator-text-symbol")
                 ?.textContent,
         ).toEqual("Ξ");
+    });
+
+    test("should price Liquid USDt bridge transfer fees as USD face value", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: LUSDT,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            bridgeMessagingFeeIncludedInTotal: true,
+            bridgeMessagingFeeDisplayMode:
+                BridgeMessagingFeeDisplayMode.Details,
+            bridgeMessagingFeeToken: undefined,
+            bridgeTransferFeeAsset: LUSDT,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            bridgeMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            bridgeTransferFeeFromLatestQuote: vi.fn(() =>
+                BigNumber(30_000_000),
+            ),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("fees-total-amount").textContent).toEqual(
+                "0.30",
+            );
+        });
     });
 
     test("should convert every fee component into the selected fiat currency", async () => {

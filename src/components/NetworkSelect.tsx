@@ -10,9 +10,9 @@ import {
 } from "solid-js";
 
 import {
-    getAssetBridge,
     getAssetNetwork,
-    getBridgeVariants,
+    getAssetPickerCanonical,
+    getAssetPickerNetworkVariants,
     getNetworkBadge,
 } from "../consts/Assets";
 import { AssetSelection, Side } from "../consts/Enums";
@@ -54,15 +54,12 @@ const NetworkSelect = () => {
     const selectedAsset = () =>
         assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
 
-    const bridgeNetworks = createMemo(() => {
+    const networkAssets = createMemo(() => {
         const canonical =
             networkSelectCanonical() ??
-            getAssetBridge(selectedAsset())?.canonicalAsset;
-        if (canonical === undefined) {
-            return [];
-        }
+            getAssetPickerCanonical(selectedAsset());
 
-        return [canonical, ...getBridgeVariants(canonical)]
+        return [canonical, ...getAssetPickerNetworkVariants(canonical)]
             .filter((asset) => canSelectAsset(assetSelected(), asset))
             .sort((a, b) =>
                 (getAssetNetwork(a) ?? "").localeCompare(
@@ -73,7 +70,7 @@ const NetworkSelect = () => {
 
     const filtered = () =>
         fuzzySort(
-            bridgeNetworks(),
+            networkAssets(),
             search(),
             (asset) => getAssetNetwork(asset) ?? "",
         );

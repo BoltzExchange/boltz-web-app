@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC, TBTC, USDT0, WBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LUSDT, TBTC, USDT0, WBTC } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
@@ -70,6 +70,16 @@ describe("denomination utils", () => {
                 ).toNumber(),
             ).toEqual(12345678);
         });
+
+        test("converts Liquid USDt as token base units", () => {
+            expect(
+                convertAmount(
+                    LUSDT,
+                    BigNumber("1.23456789"),
+                    Denomination.Sat,
+                ).toNumber(),
+            ).toEqual(123456789);
+        });
     });
 
     describe("format amount", () => {
@@ -112,6 +122,13 @@ describe("denomination utils", () => {
     test("treats routed WBTC as sat-denominated for display inputs", () => {
         expect(getDecimals(WBTC)).toEqual({
             isErc20: false,
+            decimals: 8,
+        });
+    });
+
+    test("treats Liquid USDt as token-denominated for display inputs", () => {
+        expect(getDecimals(LUSDT)).toEqual({
+            isErc20: true,
             decimals: 8,
         });
     });
@@ -170,6 +187,8 @@ describe("denomination utils", () => {
         ${Denomination.Btc} | ${TBTC}  | ${"TBTC"}
         ${Denomination.Sat} | ${USDT0} | ${"USDT"}
         ${Denomination.Btc} | ${USDT0} | ${"USDT"}
+        ${Denomination.Sat} | ${LUSDT} | ${"USDT"}
+        ${Denomination.Btc} | ${LUSDT} | ${"USDT"}
         ${Denomination.Sat} | ${WBTC}  | ${"sats"}
         ${Denomination.Btc} | ${WBTC}  | ${"WBTC"}
     `("should format denomination", ({ denomination, input, expected }) => {

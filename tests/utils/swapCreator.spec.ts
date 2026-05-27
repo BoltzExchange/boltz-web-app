@@ -1,8 +1,9 @@
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
-import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, LUSDT, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
+    SideSwapStatus,
     type SwapBase,
     getFinalAssetReceive,
     getFinalAssetSend,
@@ -150,6 +151,31 @@ describe("getFinalAssetReceive", () => {
             },
         });
         expect(getFinalAssetReceive(swap)).toBe("TBTC");
+    });
+
+    test("returns the SideSwap hop target for Liquid token receives", () => {
+        const swap = makeSwap({
+            assetReceive: LBTC,
+            dex: {
+                hops: [
+                    {
+                        type: SwapType.SideSwap,
+                        from: LBTC,
+                        to: LUSDT,
+                    },
+                ],
+                position: SwapPosition.Post,
+                quoteAmount: 0,
+            },
+            sideswap: {
+                baseAssetId: "lbtc",
+                quoteAssetId: "lusdt",
+                userAddress: "el1quser",
+                quoteAmountEstimate: 0,
+                status: SideSwapStatus.Pending,
+            },
+        });
+        expect(getFinalAssetReceive(swap)).toBe(LUSDT);
     });
 
     test("coalesces to LN for submarine swaps when requested", () => {

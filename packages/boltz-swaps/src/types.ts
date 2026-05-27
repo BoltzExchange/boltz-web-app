@@ -11,6 +11,7 @@ export enum SwapType {
     Reverse = "reverse",
     Chain = "chain",
     Dex = "dex",
+    SideSwap = "sideswap",
 }
 
 export enum RskRescueMode {
@@ -30,6 +31,7 @@ export type AssetType =
     | "LN"
     | "BTC"
     | "L-BTC"
+    | "L-USDt"
     | "RBTC"
     | "TBTC"
     | "WBTC"
@@ -107,6 +109,7 @@ export enum SwapPosition {
 
 export enum AssetKind {
     UTXO = "UTXO",
+    LiquidToken = "LIQUID_TOKEN",
     EVMNative = "EVM_NATIVE",
     ERC20 = "ERC20",
 }
@@ -206,5 +209,10 @@ export type Asset = {
         address: string;
         decimals: number;
         routeVia?: string;
+    };
+    liquidToken?: {
+        assetId: string;
+        precision: number;
+        routeVia: string;
     };
 };

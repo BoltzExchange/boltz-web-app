@@ -25,6 +25,7 @@ are:
 - `LN`
 - `BTC`
 - `L-BTC`
+- `L-USDt`
 - `RBTC`
 - `TBTC` (Arbitrum)
 - `WBTC` (Arbitrum)

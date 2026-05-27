@@ -23,6 +23,7 @@ import BlockExplorer, {
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
+import SideSwapRecovery from "../components/SideSwapRecovery";
 import type {
     AssetType,
     RefundableAssetType,
@@ -33,12 +34,18 @@ import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
 import { ECPair } from "../utils/ecpair";
 import {
+    checkTempWalletForUtxos,
     getCurrentBlockHeight,
     getRescuableUTXOs,
     getTimeoutEta,
 } from "../utils/rescue";
 import { deriveKey } from "../utils/rescueFile";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    SideSwapStatus,
+    type SomeSwap,
+    type SubmarineSwap,
+} from "../utils/swapCreator";
 
 export const mapSwap = (
     swap?: RestorableSwap,
@@ -140,6 +147,8 @@ const RefundRescue = () => {
     const [timeoutBlockHeight, setTimeoutBlockHeight] = createSignal<number>(0);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
     const [loading, setLoading] = createSignal<boolean>(false);
+    const [isTempWalletSweep, setIsTempWalletSweep] =
+        createSignal<boolean>(false);
 
     createResource(async () => {
         try {
@@ -168,6 +177,32 @@ const RefundRescue = () => {
                 const utxos = await getRescuableUTXOs(mappedSwap);
 
                 if (utxos.length === 0) {
+                    const rescue = rescueFile();
+                    if (rescue !== undefined) {
+                        const tempWallet = await checkTempWalletForUtxos(
+                            rescue,
+                            mappedSwap,
+                        );
+                        if (tempWallet !== undefined) {
+                            const enrichedSwap = {
+                                ...mappedSwap,
+                                sideswap: {
+                                    baseAssetId: "",
+                                    quoteAssetId: "",
+                                    userAddress: "",
+                                    quoteAmountEstimate: 0,
+                                    status: SideSwapStatus.Failed,
+                                    tempAddress: tempWallet.address,
+                                    tempKeyIndex: tempWallet.keyIndex,
+                                    error: "Funds detected at intermediate Liquid address",
+                                },
+                            };
+                            setSwap(enrichedSwap);
+                            setIsTempWalletSweep(true);
+                            return;
+                        }
+                    }
+
                     throw new Error(
                         `failed to get refundable UTXOs for swap ${mappedSwap.id}`,
                     );
@@ -240,6 +275,14 @@ const RefundRescue = () => {
                     <h2>{t("refund_swap")}</h2>
 
                     <Switch>
+                        <Match when={isTempWalletSweep()}>
+                            <hr />
+                            <h3>{t("sideswap_failed")}</h3>
+                            <SideSwapRecovery
+                                swap={swap() as SomeSwap}
+                                rescueFileOverride={rescueFile()}
+                            />
+                        </Match>
                         <Match when={waitForSwapTimeout()}>
                             <hr />
                             <RefundEta

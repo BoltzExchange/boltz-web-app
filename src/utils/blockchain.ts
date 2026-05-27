@@ -175,11 +175,11 @@ const fetchBlockExplorerParallel = async <T>(
     }
 };
 
-const getAddressUTXOs = async (asset: string, address: string) => {
+export const getAddressUTXOs = async (asset: string, address: string) => {
     return await fetchBlockExplorer<UTXO[]>(asset, `/address/${address}/utxo`);
 };
 
-const getRawTransaction = async (asset: string, txid: string) => {
+export const getRawTransaction = async (asset: string, txid: string) => {
     return await fetchBlockExplorer<string>(asset, `/tx/${txid}/hex`);
 };
 

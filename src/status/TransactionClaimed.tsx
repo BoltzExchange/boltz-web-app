@@ -14,7 +14,12 @@ import { usePayContext } from "../context/Pay";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
-import { type SubmarineSwap, getFinalAssetReceive } from "../utils/swapCreator";
+import {
+    SideSwapStatus,
+    type SubmarineSwap,
+    getFinalAssetReceive,
+} from "../utils/swapCreator";
+import SideSwapExecution from "./SideSwapExecution";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -44,6 +49,15 @@ const TransactionClaimed = () => {
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
     >(undefined);
+
+    const hasPendingSideSwap = () => {
+        const s = swap();
+        return (
+            s?.sideswap !== undefined &&
+            s.sideswap.status !== SideSwapStatus.Confirmed &&
+            s.claimTx !== undefined
+        );
+    };
 
     const [preimage] = createResource(async () => {
         const submarine = swap() as SubmarineSwap;
@@ -85,39 +99,45 @@ const TransactionClaimed = () => {
 
     return (
         <div>
-            <Show when={claimBroadcast() === true} fallback={<Broadcasting />}>
-                <h2>{t("congrats")}</h2>
-                <p>
-                    {t("successfully_swapped", {
-                        amount: formatAmount(
-                            BigNumber(
-                                (swap()!.dex?.position === SwapPosition.Post
-                                    ? swap()!.dex?.quoteAmount
-                                    : swap()!.receiveAmount) ?? 0,
+            <Show
+                when={!hasPendingSideSwap()}
+                fallback={<SideSwapExecution swap={swap()!} />}>
+                <Show
+                    when={claimBroadcast() === true}
+                    fallback={<Broadcasting />}>
+                    <h2>{t("congrats")}</h2>
+                    <p>
+                        {t("successfully_swapped", {
+                            amount: formatAmount(
+                                BigNumber(
+                                    (swap()!.dex?.position === SwapPosition.Post
+                                        ? swap()!.dex?.quoteAmount
+                                        : swap()!.receiveAmount) ?? 0,
+                                ),
+                                denomination(),
+                                separator(),
+                                getFinalAssetReceive(swap()!),
                             ),
-                            denomination(),
-                            separator(),
-                            getFinalAssetReceive(swap()!),
-                        ),
-                        denomination: formatDenomination(
-                            denomination(),
-                            getFinalAssetReceive(swap()!),
-                        ),
-                    })}
-                </p>
-                <hr />
-                <span class="btn" onClick={() => navigate("/swap")}>
-                    {t("new_swap")}
-                </span>
-                <Show when={!preimage.loading && preimage() !== undefined}>
-                    <ExternalLink
-                        class="btn btn-explorer"
-                        href={paymentValidationUrl(
-                            (swap() as SubmarineSwap).invoice,
-                            preimage()!,
-                        )}>
-                        {t("validate_payment")}
-                    </ExternalLink>
+                            denomination: formatDenomination(
+                                denomination(),
+                                getFinalAssetReceive(swap()!),
+                            ),
+                        })}
+                    </p>
+                    <hr />
+                    <span class="btn" onClick={() => navigate("/swap")}>
+                        {t("new_swap")}
+                    </span>
+                    <Show when={!preimage.loading && preimage() !== undefined}>
+                        <ExternalLink
+                            class="btn btn-explorer"
+                            href={paymentValidationUrl(
+                                (swap() as SubmarineSwap).invoice,
+                                preimage()!,
+                            )}>
+                            {t("validate_payment")}
+                        </ExternalLink>
+                    </Show>
                 </Show>
             </Show>
         </div>

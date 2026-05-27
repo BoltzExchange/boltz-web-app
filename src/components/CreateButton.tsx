@@ -30,7 +30,7 @@ import {
 import { InvoiceValidation } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
-import { useGlobalContext } from "../context/Global";
+import { type newKeyFn, useGlobalContext } from "../context/Global";
 import {
     type Signer,
     customDerivationPathRdns,
@@ -59,6 +59,7 @@ import {
     getAssetByBip21Prefix,
     validateInvoiceForOffer,
 } from "../utils/invoice";
+import { deriveTempLiquidWallet } from "../utils/liquidWallet";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { estimateFeesPerGas } from "../utils/provider";
@@ -68,6 +69,8 @@ import {
     type BridgeDetail,
     type GasAbstraction,
     GasAbstractionType,
+    type SideSwapDetail,
+    SideSwapStatus,
     type SomeSwap,
     createChain,
     createReverse,
@@ -107,6 +110,33 @@ const buildBridgeDetail = (
     }
 
     return driver.getRoutePosition(route, position);
+};
+
+const buildSideSwapDetail = (
+    pairInstance: Pair,
+    userAddress: string,
+    receiveAmountEstimate: number,
+    tempKeyIndex?: number,
+    tempAddress?: string,
+): SideSwapDetail | undefined => {
+    if (!pairInstance.hasSideSwapHop) {
+        return undefined;
+    }
+
+    const ssHop = pairInstance.sideSwapHop;
+    if (!ssHop?.sideswapDetails) {
+        return undefined;
+    }
+
+    return {
+        baseAssetId: ssHop.sideswapDetails.baseAssetId,
+        quoteAssetId: ssHop.sideswapDetails.quoteAssetId,
+        userAddress,
+        tempKeyIndex,
+        tempAddress,
+        quoteAmountEstimate: receiveAmountEstimate,
+        status: SideSwapStatus.Pending,
+    };
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
@@ -567,6 +597,7 @@ const CreateButton = () => {
     const createSwap = async (
         claimAddress: string,
         gasAbstraction: GasAbstraction,
+        effectiveNewKey: newKeyFn = newKey,
     ): Promise<boolean> => {
         try {
             let data!: SomeSwap;
@@ -593,7 +624,7 @@ const CreateButton = () => {
                             invoice(),
                             creationData.pairHash,
                             gasAbstraction,
-                            newKey,
+                            effectiveNewKey,
                             originalDestination(),
                         );
                     };
@@ -763,7 +794,7 @@ const CreateButton = () => {
                         creationData.pairHash,
                         gasAbstraction,
                         rescue,
-                        newKey,
+                        effectiveNewKey,
                         getOriginalDestination(),
                     );
                     break;
@@ -792,7 +823,7 @@ const CreateButton = () => {
                         creationData.pairHash,
                         gasAbstraction,
                         rescue,
-                        newKey,
+                        effectiveNewKey,
                         getOriginalDestination(),
                     );
                     break;
@@ -824,6 +855,14 @@ const CreateButton = () => {
             const bridge =
                 buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
                 buildBridgeDetail(assetReceive(), SwapPosition.Post);
+            const sideswapDetail = buildSideSwapDetail(
+                pair(),
+                onchainAddress(),
+                Number(receiveAmount()),
+                (data as SomeSwap & { claimPrivateKeyIndex?: number })
+                    .claimPrivateKeyIndex,
+                (data as SomeSwap & { claimAddress?: string }).claimAddress,
+            );
 
             await setSwapStorage({
                 ...data,
@@ -840,6 +879,7 @@ const CreateButton = () => {
                           }
                         : undefined,
                 bridge,
+                sideswap: sideswapDetail,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
@@ -897,14 +937,51 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { gasAbstraction, claimAddress } = await getClaimAddress(
-                assetReceive,
-                assetSend,
-                signer,
-                onchainAddress,
-                getGasAbstractionSigner,
-                getGasToken(),
-            );
+            let resolvedClaimAddress: string;
+            let resolvedGasAbstraction: GasAbstraction;
+            let effectiveNewKey: newKeyFn = newKey;
+
+            if (pair().hasSideSwapHop) {
+                const rescue = rescueFile();
+                if (rescue === null) {
+                    throw new Error("missing rescue file");
+                }
+
+                const preAllocatedKey = await newKey(LBTC);
+                const tempWallet = deriveTempLiquidWallet(
+                    rescue,
+                    preAllocatedKey.index,
+                );
+                resolvedClaimAddress = tempWallet.address;
+                resolvedGasAbstraction = {
+                    lockup: getLockupGasAbstraction(assetSend()),
+                    claim: GasAbstractionType.None,
+                };
+                log.debug(
+                    "Using temp Liquid wallet for SideSwap claim:",
+                    resolvedClaimAddress,
+                );
+
+                let claimed = false;
+                effectiveNewKey = (asset) => {
+                    if (!claimed) {
+                        claimed = true;
+                        return Promise.resolve(preAllocatedKey);
+                    }
+                    return newKey(asset);
+                };
+            } else {
+                const result = await getClaimAddress(
+                    assetReceive,
+                    assetSend,
+                    signer,
+                    onchainAddress,
+                    getGasAbstractionSigner,
+                    getGasToken(),
+                );
+                resolvedClaimAddress = result.claimAddress;
+                resolvedGasAbstraction = result.gasAbstraction;
+            }
 
             if (isKnownTokenAddress(assetReceive(), onchainAddress())) {
                 showInvalidAddress(assetReceive());
@@ -913,7 +990,7 @@ const CreateButton = () => {
 
             if (
                 (assetReceive() === BTC || assetReceive() === LBTC) &&
-                !validateOnchainAddress(assetReceive(), claimAddress)
+                !validateOnchainAddress(assetReceive(), resolvedClaimAddress)
             ) {
                 showInvalidAddress(assetReceive());
                 return;
@@ -921,9 +998,13 @@ const CreateButton = () => {
 
             if (!valid()) return;
 
-            log.debug("Creating with EVM address", claimAddress);
+            log.debug("Creating with claim address", resolvedClaimAddress);
 
-            await createSwap(claimAddress, gasAbstraction);
+            await createSwap(
+                resolvedClaimAddress,
+                resolvedGasAbstraction,
+                effectiveNewKey,
+            );
         } catch (e) {
             log.error("Swap creation setup failed", {
                 ...getSwapCreationLogContext(),

@@ -4,7 +4,9 @@ import { type Accessor, Match, Show, Switch, createMemo } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
 import {
+    SideSwapStatus,
     type SomeSwap,
+    getFinalAssetReceive,
     getPostBridgeDetail,
     getRelevantAssetForSwap,
     getSwapAddress,
@@ -17,14 +19,30 @@ const claimTxLabel = (explorer: ExplorerKind | undefined) =>
         ? "bridge_status"
         : undefined;
 
+const getSideSwapClaimTx = (swap: SomeSwap): string | undefined =>
+    swap.sideswap?.status === SideSwapStatus.Confirmed
+        ? swap.sideswap.txid
+        : undefined;
+
+const hasPendingSideSwapAfterBoltzClaim = (swap: SomeSwap): boolean =>
+    swap.sideswap !== undefined &&
+    getSideSwapClaimTx(swap) === undefined &&
+    swap.claimTx !== undefined;
+
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
-    const hasBeenClaimed = () => props.swap().claimTx !== undefined;
+    const txToShow = () =>
+        getSideSwapClaimTx(props.swap()) ?? props.swap().claimTx;
+    const hasBeenClaimed = () => txToShow() !== undefined;
 
     const asset = () =>
-        hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
+        getSideSwapClaimTx(props.swap()) !== undefined
+            ? getFinalAssetReceive(props.swap())
+            : hasBeenClaimed()
+              ? props.swap().assetReceive
+              : props.swap().assetSend;
 
     const explorer = createMemo(() =>
         bridgeRegistry.getExplorerKind(
@@ -45,7 +63,7 @@ const ChainSwapLink = (props: {
                     }
                     id={
                         hasBeenClaimed()
-                            ? props.swap().claimTx!
+                            ? txToShow()!
                             : getSwapAddress(props.swap())
                     }
                     explorer={explorer()}
@@ -72,6 +90,13 @@ const BlockExplorerLinkInner = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
+    const sideSwapClaimTx = () => getSideSwapClaimTx(props.swap());
+    const txToShow = () => sideSwapClaimTx() ?? props.swap().claimTx;
+    const assetToShow = () =>
+        sideSwapClaimTx() !== undefined
+            ? getFinalAssetReceive(props.swap())
+            : getRelevantAssetForSwap(props.swap());
+
     const bridgeSendPending = () => {
         const s = props.swap();
         return (
@@ -114,15 +139,15 @@ const BlockExplorerLinkInner = (props: {
                                 props.swapStatus() !== "swap.created"
                             }>
                             <BlockExplorer
-                                asset={getRelevantAssetForSwap(props.swap())}
+                                asset={assetToShow()}
                                 kind={
-                                    props.swap().claimTx !== undefined
+                                    txToShow() !== undefined
                                         ? BlockExplorerTargetKind.Tx
                                         : BlockExplorerTargetKind.Address
                                 }
                                 id={
-                                    props.swap().claimTx !== undefined
-                                        ? props.swap().claimTx!
+                                    txToShow() !== undefined
+                                        ? txToShow()!
                                         : getSwapAddress(props.swap())
                                 }
                                 explorer={bridgeRegistry.getExplorerKind(
@@ -175,8 +200,17 @@ const BlockExplorerLink = (props: {
     swap: Accessor<SomeSwap | null>;
     swapStatus: Accessor<string>;
 }) => {
+    const visibleSwap = createMemo(() => {
+        const swap = props.swap();
+        if (swap === null || hasPendingSideSwapAfterBoltzClaim(swap)) {
+            return undefined;
+        }
+
+        return swap;
+    });
+
     return (
-        <Show when={props.swap()}>
+        <Show when={visibleSwap()}>
             {(swap) => (
                 <BlockExplorerLinkInner
                     swap={swap}

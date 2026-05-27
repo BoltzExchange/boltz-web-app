@@ -9,6 +9,7 @@ import {
     BTC,
     LBTC,
     LN,
+    LUSDT,
     RBTC,
     TBTC,
     USDC,
@@ -488,6 +489,7 @@ describe("AssetSelect", () => {
         await screen.findByTestId(`select-${BTC}`);
 
         expect(screen.queryByTestId(`select-${RBTC}`)).toBeNull();
+        expect(screen.queryByTestId(`select-${LUSDT}`)).toBeNull();
     });
 
     test("should still show unsendable assets when selecting receive asset", async () => {
@@ -505,6 +507,8 @@ describe("AssetSelect", () => {
         signals.setAssetSelected(Side.Receive);
 
         expect(await screen.findByTestId(`select-${RBTC}`)).toBeDefined();
+        expect(screen.queryByTestId(`select-${LUSDT}`)).toBeNull();
+        expect(await screen.findByTestId(`select-${USDT0}`)).toBeDefined();
     });
 
     test("should mark disabled assets as disabled in the list", async () => {
@@ -803,6 +807,7 @@ describe("AssetSelect", () => {
             for (const variant of bridgeVariantAssets) {
                 expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
+            expect(screen.queryByTestId(`select-${LUSDT}`)).toBeNull();
         });
 
         test("should show single USDT0 entry in asset list", async () => {
@@ -839,6 +844,7 @@ describe("AssetSelect", () => {
             for (const variant of unsendableBridgeVariantAssets) {
                 expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
+            expect(screen.queryByTestId(`select-${LUSDT}`)).toBeNull();
         });
 
         test("should still show unsendable USDT0 networks in step 2 for receive selection", async () => {
@@ -852,6 +858,22 @@ describe("AssetSelect", () => {
                     screen.queryByTestId(`select-${variant}`),
                 ).not.toBeNull();
             }
+            expect(screen.queryByTestId(`select-${LUSDT}`)).not.toBeNull();
+        });
+
+        test("should select Liquid USDt from the USDT network list", async () => {
+            openAssetSelect(Side.Receive);
+            setPairAssets(BTC, USDT0);
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            const liquidEntry = await screen.findByTestId(`select-${LUSDT}`);
+
+            expect(liquidEntry.getAttribute("data-network")).toEqual("liquid");
+
+            fireEvent.click(liquidEntry);
+
+            expect(signals.pair().toAsset).toEqual(LUSDT);
+            expect(signals.assetSelection()).toBeNull();
         });
 
         test("should return to asset list when clicking back", async () => {

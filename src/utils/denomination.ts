@@ -22,13 +22,17 @@ export const getDecimals = (asset: string) => {
 
     const usesTokenUnits =
         asset !== WBTC &&
-        assetConfig?.type === AssetKind.ERC20 &&
-        (assetConfig?.token?.routeVia !== undefined || isBridgeAsset(asset));
+        ((assetConfig?.type === AssetKind.ERC20 &&
+            (assetConfig?.token?.routeVia !== undefined ||
+                isBridgeAsset(asset))) ||
+            assetConfig?.type === AssetKind.LiquidToken);
 
     return {
         isErc20: usesTokenUnits,
         decimals: usesTokenUnits
-            ? (assetConfig?.token?.decimals ?? satDecimals)
+            ? (assetConfig?.token?.decimals ??
+              assetConfig?.liquidToken?.precision ??
+              satDecimals)
             : satDecimals,
     };
 };

@@ -4,9 +4,21 @@ import { createSignal } from "solid-js";
 
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
-import { BTC, LBTC, RBTC, TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LUSDT,
+    RBTC,
+    TBTC,
+    USDC,
+    USDT0,
+} from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
-import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
+import {
+    type ChainSwap,
+    SideSwapStatus,
+    type SomeSwap,
+} from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("BlockExplorerLink", () => {
@@ -81,6 +93,78 @@ describe("BlockExplorerLink", () => {
                 );
             },
         );
+
+        test("should show the SideSwap transaction for completed Liquid USDt swaps", async () => {
+            const [swap] = createSignal<SomeSwap>({
+                type: SwapType.Reverse,
+                assetReceive: LBTC,
+                claimTx: "boltz-claim-tx",
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.SideSwap,
+                            from: LBTC,
+                            to: LUSDT,
+                        },
+                    ],
+                    position: SwapPosition.Post,
+                    quoteAmount: 100_000_000,
+                },
+                sideswap: {
+                    baseAssetId: "lbtc",
+                    quoteAssetId: "lusdt",
+                    userAddress: "lq1user",
+                    quoteAmountEstimate: 100_000_000,
+                    status: SideSwapStatus.Confirmed,
+                    txid: "sideswap-tx",
+                },
+            } as unknown as SomeSwap);
+
+            render(
+                () => (
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={() => "transaction.claimed"}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const button = (await screen.findByText(
+                claimTransactionLabel,
+            )) as HTMLAnchorElement;
+
+            expect(button.href).toEqual(
+                `${config.assets![LUSDT].blockExplorerUrl!.normal}/tx/sideswap-tx`,
+            );
+        });
+
+        test("should hide the Boltz claim transaction while SideSwap is pending", () => {
+            const [swap] = createSignal<SomeSwap>({
+                type: SwapType.Reverse,
+                assetReceive: LBTC,
+                claimTx: "boltz-claim-tx",
+                sideswap: {
+                    baseAssetId: "lbtc",
+                    quoteAssetId: "lusdt",
+                    userAddress: "lq1user",
+                    quoteAmountEstimate: 100_000_000,
+                    status: SideSwapStatus.Signing,
+                },
+            } as unknown as SomeSwap);
+
+            render(
+                () => (
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={() => "transaction.claimed"}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            expect(screen.queryByText(claimTransactionLabel)).toBeNull();
+        });
 
         test("should show LayerZero bridge status for OFT swaps", async () => {
             const claimTx = "123";

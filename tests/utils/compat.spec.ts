@@ -3,7 +3,7 @@ import { networks as LiquidNetworks } from "liquidjs-lib";
 
 import { config as runtimeConfig } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
-import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, LUSDT, RBTC } from "../../src/consts/Assets";
 import {
     getNetwork,
     isConfidentialAddress,
@@ -26,13 +26,16 @@ afterAll(() => {
 
 describe("parse network correctly", () => {
     test.each`
-        asset   | network      | expected
-        ${BTC}  | ${"mainnet"} | ${Networks.bitcoin}
-        ${BTC}  | ${"testnet"} | ${Networks.testnet}
-        ${BTC}  | ${"regtest"} | ${Networks.regtest}
-        ${LBTC} | ${"mainnet"} | ${LiquidNetworks.liquid}
-        ${LBTC} | ${"testnet"} | ${LiquidNetworks.testnet}
-        ${LBTC} | ${"regtest"} | ${LiquidNetworks.regtest}
+        asset    | network      | expected
+        ${BTC}   | ${"mainnet"} | ${Networks.bitcoin}
+        ${BTC}   | ${"testnet"} | ${Networks.testnet}
+        ${BTC}   | ${"regtest"} | ${Networks.regtest}
+        ${LBTC}  | ${"mainnet"} | ${LiquidNetworks.liquid}
+        ${LBTC}  | ${"testnet"} | ${LiquidNetworks.testnet}
+        ${LBTC}  | ${"regtest"} | ${LiquidNetworks.regtest}
+        ${LUSDT} | ${"mainnet"} | ${LiquidNetworks.liquid}
+        ${LUSDT} | ${"testnet"} | ${LiquidNetworks.testnet}
+        ${LUSDT} | ${"regtest"} | ${LiquidNetworks.regtest}
     `("$asset $network", ({ asset, network, expected }) => {
         expect(getNetwork(asset, network)).toEqual(expected);
     });
@@ -55,6 +58,13 @@ describe("parse network correctly", () => {
         for (const expectedAsset of ["", BTC, LBTC, LN]) {
             expect(probeUserInput(expectedAsset, input)).toEqual(asset);
         }
+    });
+
+    test("should preserve Liquid USDt when a Liquid destination is expected", () => {
+        const address =
+            "el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu";
+
+        expect(probeUserInput(LUSDT, address)).toEqual(LUSDT);
     });
 
     test.each`
