@@ -3,7 +3,7 @@ import {
     type PendingBridgeSend,
     PendingBridgeSendKind,
     PendingBridgeSendRecoveryStatus,
-    type PendingEvmOftBridgeSend,
+    type PendingEvmBridgeSend,
     bridgeRegistry,
     recoverPendingBridgeSend,
 } from "boltz-swaps/bridge";
@@ -23,10 +23,16 @@ import type {
     PendingBridgeSendCallbacks,
 } from "../utils/swapCreator";
 
+type NonEvmPendingBridgeSend = Exclude<PendingBridgeSend, PendingEvmBridgeSend>;
+
 const getPendingSendTransaction = (pending: PendingBridgeSend) => {
     switch (pending.kind) {
+        case PendingBridgeSendKind.EvmCctp:
+            return pending.fromNonce;
         case PendingBridgeSendKind.EvmOft:
             return pending.fromNonce;
+        case PendingBridgeSendKind.SolanaCctp:
+            return pending.signature;
         case PendingBridgeSendKind.SolanaOft:
             return pending.signature;
         case PendingBridgeSendKind.TronOft:
@@ -40,6 +46,12 @@ const getPendingSendTransaction = (pending: PendingBridgeSend) => {
     }
 };
 
+const isEvmBridgeSend = (
+    pending: PendingBridgeSend | undefined,
+): pending is PendingEvmBridgeSend =>
+    pending?.kind === PendingBridgeSendKind.EvmOft ||
+    pending?.kind === PendingBridgeSendKind.EvmCctp;
+
 export const useBridgeSendRecovery = (params: {
     swapId: Accessor<string>;
     bridge: Accessor<BridgeDetail>;
@@ -50,18 +62,18 @@ export const useBridgeSendRecovery = (params: {
     const { getSwap, setSwapStorage } = useGlobalContext();
 
     const storedPendingSend = createMemo(() => swap()?.bridge?.pendingSend);
-    const pendingSend = createMemo(() => {
+    const pendingSend = createMemo<NonEvmPendingBridgeSend | undefined>(() => {
         const pending = storedPendingSend();
-        return pending?.kind === PendingBridgeSendKind.EvmOft
-            ? undefined
-            : pending;
+        return isEvmBridgeSend(pending) ? undefined : pending;
     });
-    const evmSendCandidate = createMemo(
-        () =>
-            swap()?.bridge?.evmSendCandidate ??
-            (storedPendingSend()?.kind === PendingBridgeSendKind.EvmOft
-                ? (storedPendingSend() as PendingEvmOftBridgeSend)
-                : undefined),
+    const evmSendCandidate = createMemo<PendingEvmBridgeSend | undefined>(
+        () => {
+            const stored = storedPendingSend();
+            return (
+                swap()?.bridge?.evmSendCandidate ??
+                (isEvmBridgeSend(stored) ? stored : undefined)
+            );
+        },
     );
     const [evmSendCandidateRecoveryFailed, setEvmSendCandidateRecoveryFailed] =
         createSignal(false);
@@ -105,7 +117,13 @@ export const useBridgeSendRecovery = (params: {
     };
 
     const setPendingSend = async (pending: PendingBridgeSend | undefined) => {
-        await updateBridge((bridge) => ({ ...bridge, pendingSend: pending }));
+        await updateBridge((bridge) => {
+            const next = { ...bridge, pendingSend: pending };
+            if (pending === undefined) {
+                delete next.pendingSend;
+            }
+            return next;
+        });
         if (pending !== undefined) {
             log.info("Persisted pending bridge send for recovery", {
                 swapId: params.swapId(),
@@ -118,15 +136,14 @@ export const useBridgeSendRecovery = (params: {
     };
 
     const setEvmSendCandidate = async (
-        candidate: PendingEvmOftBridgeSend | undefined,
+        candidate: PendingEvmBridgeSend | undefined,
     ) => {
         await updateBridge((bridge) => {
             const next: BridgeDetail = {
                 ...bridge,
-                pendingSend:
-                    bridge.pendingSend?.kind === PendingBridgeSendKind.EvmOft
-                        ? undefined
-                        : bridge.pendingSend,
+                pendingSend: isEvmBridgeSend(bridge.pendingSend)
+                    ? undefined
+                    : bridge.pendingSend,
                 evmSendCandidate: candidate,
             };
             if (next.pendingSend === undefined) {
@@ -144,6 +161,7 @@ export const useBridgeSendRecovery = (params: {
                 swapId: params.swapId(),
                 sourceAsset: params.bridge().sourceAsset,
                 destinationAsset: params.bridge().destinationAsset,
+                kind: candidate.kind,
                 fromNonce: candidate.fromNonce,
             });
         }
@@ -153,22 +171,28 @@ export const useBridgeSendRecovery = (params: {
         persist: (pending) => setPendingSend(pending),
     };
 
+    const getBridgeProvider = () => {
+        const bridge = params.bridge();
+        return bridgeRegistry
+            .requireDriverForRoute(bridge)
+            .getProvider(bridge.sourceAsset);
+    };
+
     let recovering = false;
-    const recover = async (pending: PendingBridgeSend) => {
+    const recover = async (pending: NonEvmPendingBridgeSend) => {
         if (recovering) {
             return;
         }
         recovering = true;
-        const bridge = params.bridge();
         try {
-            const result = await recoverPendingBridgeSend(
-                pending,
-                pending.kind === PendingBridgeSendKind.EvmOft
-                    ? bridgeRegistry
-                          .requireDriverForRoute(bridge)
-                          .getProvider(bridge.sourceAsset)
-                    : undefined,
-            );
+            const result = await recoverPendingBridgeSend(pending);
+            if (params.txSent() !== undefined) {
+                log.info("Skipping stale pending bridge recovery result", {
+                    swapId: params.swapId(),
+                    kind: pending.kind,
+                });
+                return;
+            }
             switch (result.status) {
                 case PendingBridgeSendRecoveryStatus.Recovered:
                     log.info("Recovered pending bridge send", {
@@ -209,7 +233,7 @@ export const useBridgeSendRecovery = (params: {
 
     let recoveringEvmCandidate = false;
     const recoverEvmSendCandidate = async (
-        candidate: PendingEvmOftBridgeSend | undefined,
+        candidate: PendingEvmBridgeSend | undefined,
     ) => {
         if (
             candidate === undefined ||
@@ -220,18 +244,26 @@ export const useBridgeSendRecovery = (params: {
         }
 
         recoveringEvmCandidate = true;
-        const bridge = params.bridge();
         try {
             const result = await recoverPendingBridgeSend(
                 candidate,
-                bridgeRegistry
-                    .requireDriverForRoute(bridge)
-                    .getProvider(bridge.sourceAsset),
+                getBridgeProvider(),
             );
+            if (params.txSent() !== undefined) {
+                log.info(
+                    "Skipping stale EVM bridge send candidate recovery result",
+                    {
+                        swapId: params.swapId(),
+                        kind: candidate.kind,
+                    },
+                );
+                return;
+            }
             switch (result.status) {
                 case PendingBridgeSendRecoveryStatus.Recovered:
                     log.info("Recovered EVM bridge send candidate", {
                         swapId: params.swapId(),
+                        kind: candidate.kind,
                         txHash: result.transactionHash,
                     });
                     await persistBridgeSend(result.transactionHash);
@@ -240,6 +272,7 @@ export const useBridgeSendRecovery = (params: {
                 case PendingBridgeSendRecoveryStatus.Failed:
                     log.warn("EVM bridge send candidate recovery failed", {
                         swapId: params.swapId(),
+                        kind: candidate.kind,
                     });
                     setEvmSendCandidateRecoveryFailed(true);
                     return;

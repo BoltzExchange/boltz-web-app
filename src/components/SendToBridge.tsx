@@ -4,9 +4,15 @@ import {
     type BridgeTransaction,
     type BridgeTransportClient,
     PendingBridgeSendKind,
-    type PendingEvmOftBridgeSend,
+    type PendingEvmBridgeSend,
     bridgeRegistry,
 } from "boltz-swaps/bridge";
+import {
+    type CctpDirectSendTarget,
+    type CctpSendParam,
+    type SolanaCctpTransportClient,
+    populateCctpDirectSendTransaction,
+} from "boltz-swaps/cctp";
 import { createTokenContract } from "boltz-swaps/evm/contracts";
 import type { PopulatedEvmTransaction } from "boltz-swaps/evm/transaction";
 import {
@@ -53,6 +59,43 @@ import WaitForBridge from "./WaitForBridge";
 
 const evmSendCandidateBlockLookback = 5n;
 const evmSendCandidateRecoveryTimeoutMs = 120_000;
+const transactionHashPattern = /^0x[0-9a-fA-F]{64}$/;
+
+const getTransactionHashFromError = (
+    error: unknown,
+    depth = 0,
+): string | undefined => {
+    if (depth > 3 || typeof error !== "object" || error === null) {
+        return undefined;
+    }
+
+    for (const key of ["hash", "transactionHash"]) {
+        const value = Reflect.get(error, key);
+        if (typeof value === "string" && transactionHashPattern.test(value)) {
+            return value;
+        }
+    }
+
+    const value = Reflect.get(error, "value");
+    if (typeof value === "object" && value !== null) {
+        const hash = Reflect.get(value, "hash");
+        if (typeof hash === "string" && transactionHashPattern.test(hash)) {
+            return hash;
+        }
+    }
+
+    const cause = Reflect.get(error, "cause");
+    if (cause !== error) {
+        return getTransactionHashFromError(cause, depth + 1);
+    }
+
+    return undefined;
+};
+
+type PreparedEvmBridgeSend = {
+    candidate: PendingEvmBridgeSend;
+    txRequest: PopulatedEvmTransaction;
+};
 
 const EvmSendCandidateRecovery = (props: {
     failed: boolean;
@@ -170,23 +213,53 @@ const SendToBridge = (props: {
         evmSendActive: bridgeSendActive,
     });
 
-    // OFT transport sends (Solana/Tron) use callbacks to persist post-broadcast
-    // recovery state. Other bridges (CCTP) go through the driver as-is.
+    // Transport sends that leave the browser to sign persist post-broadcast
+    // recovery state. EVM sends use a candidate until the wallet returns a hash.
     const sendTransport = async (args: {
         contract: BridgeTransportClient;
         sendParam: BridgeSendParam;
         msgFee: BridgeMsgFee;
         refundAddress: string;
     }): Promise<BridgeTransaction> => {
-        if (props.bridge.kind !== BridgeKind.Oft) {
-            return await bridgeDriver().sendTransport(args);
+        if (props.bridge.kind === BridgeKind.Cctp && "send" in args.contract) {
+            return await (args.contract as SolanaCctpTransportClient).send(
+                args.sendParam as CctpSendParam,
+                args.msgFee,
+                args.refundAddress,
+                { pendingSendCallbacks },
+            );
         }
-        return await (args.contract as OftTransportClient).send(
-            args.sendParam as SendParam,
-            args.msgFee,
-            args.refundAddress,
-            { pendingSendCallbacks },
-        );
+        if (props.bridge.kind === BridgeKind.Oft) {
+            return await (args.contract as OftTransportClient).send(
+                args.sendParam as SendParam,
+                args.msgFee,
+                args.refundAddress,
+                { pendingSendCallbacks },
+            );
+        }
+        return await bridgeDriver().sendTransport(args);
+    };
+
+    const sendPreparedEvmBridgeTransaction = async (
+        connectedSigner: Signer,
+        prepared: PreparedEvmBridgeSend,
+    ): Promise<BridgeTransaction> => {
+        await setEvmSendCandidate(prepared.candidate);
+        try {
+            const hash = await sendPopulatedTransaction(
+                GasAbstractionType.None,
+                connectedSigner,
+                prepared.txRequest,
+            );
+            return { hash };
+        } catch (error) {
+            const hash = getTransactionHashFromError(error);
+            if (hash !== undefined) {
+                return { hash };
+            }
+            await setEvmSendCandidate(undefined);
+            throw error;
+        }
     };
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
@@ -700,67 +773,95 @@ const SendToBridge = (props: {
             lzTokenFee: msgFee[1].toString(),
         });
 
-        if (props.bridge.kind === BridgeKind.Oft) {
-            let prepared: {
-                candidate: PendingEvmOftBridgeSend;
-                txRequest: PopulatedEvmTransaction;
-            };
+        const sendDirect = async () =>
+            await bridgeDriver().sendDirect({
+                target: directSendTarget,
+                runner: connectedSigner,
+                sendParam,
+                msgFee,
+                refundAddress: signerAddress,
+            });
+
+        if (
+            props.bridge.kind === BridgeKind.Oft ||
+            props.bridge.kind === BridgeKind.Cctp
+        ) {
+            let prepared: PreparedEvmBridgeSend;
             try {
-                prepared = await prepareOftFromEvm({
-                    signer: connectedSigner,
-                    signerAddress,
-                    directSendTarget: directSendTarget as OftDirectSendTarget,
-                    sendParam: sendParam as SendParam,
-                    msgFee,
-                });
+                prepared =
+                    props.bridge.kind === BridgeKind.Oft
+                        ? await prepareOftFromEvm({
+                              signer: connectedSigner,
+                              signerAddress,
+                              directSendTarget:
+                                  directSendTarget as OftDirectSendTarget,
+                              sendParam: sendParam as SendParam,
+                              msgFee,
+                          })
+                        : await prepareCctpFromEvm({
+                              signer: connectedSigner,
+                              signerAddress,
+                              directSendTarget:
+                                  directSendTarget as CctpDirectSendTarget,
+                              sendParam: sendParam as CctpSendParam,
+                          });
             } catch (error) {
-                log.warn("Falling back to direct EVM OFT send", {
+                const label =
+                    props.bridge.kind === BridgeKind.Oft ? "OFT" : "CCTP";
+                log.warn(`Falling back to direct EVM ${label} send`, {
                     sourceAsset: props.bridge.sourceAsset,
                     destinationAsset: props.bridge.destinationAsset,
                     error,
                 });
-                return await bridgeDriver().sendDirect({
-                    target: directSendTarget,
-                    runner: connectedSigner,
-                    sendParam,
-                    msgFee,
-                    refundAddress: signerAddress,
-                });
+                return await sendDirect();
             }
 
-            await setEvmSendCandidate(prepared.candidate);
-            try {
-                const hash = await sendPopulatedTransaction(
-                    GasAbstractionType.None,
-                    connectedSigner,
-                    prepared.txRequest,
-                );
-                return { hash };
-            } catch (error) {
-                await setEvmSendCandidate(undefined);
-                throw error;
-            }
+            return await sendPreparedEvmBridgeTransaction(
+                connectedSigner,
+                prepared,
+            );
         }
 
-        return await bridgeDriver().sendDirect({
-            target: directSendTarget,
-            runner: connectedSigner,
-            sendParam,
-            msgFee,
-            refundAddress: signerAddress,
-        });
+        return await sendDirect();
     };
 
+    const getEvmCandidateFromBlock = (latestBlock: bigint) =>
+        Number(
+            latestBlock > evmSendCandidateBlockLookback
+                ? latestBlock - evmSendCandidateBlockLookback
+                : 0n,
+        );
+
+    const getEvmCandidateBase = async (args: {
+        signer: Signer;
+        signerAddress: Address;
+    }) => {
+        const [fromNonce, latestBlock] = await Promise.all([
+            args.signer.provider.getTransactionCount({
+                address: args.signerAddress,
+                blockTag: "latest",
+            }),
+            bridgeDriver()
+                .getProvider(props.bridge.sourceAsset)
+                .getBlockNumber(),
+        ]);
+
+        return {
+            fromNonce,
+            fromBlock: getEvmCandidateFromBlock(latestBlock),
+        };
+    };
+
+    // Capture the latest confirmed sender nonce as a lower bound. If the page is
+    // closed before the wallet returns we can find the resulting transaction by
+    // replaying bridge logs and matching the sender, target, nonce, and calldata.
     const prepareOftFromEvm = async (args: {
         signer: Signer;
         signerAddress: Address;
         directSendTarget: OftDirectSendTarget;
         sendParam: SendParam;
         msgFee: BridgeMsgFee;
-    }): Promise<{
-        candidate: PendingEvmOftBridgeSend;
-        txRequest: PopulatedEvmTransaction;
-    }> => {
+    }): Promise<PreparedEvmBridgeSend> => {
         const txRequest: PopulatedEvmTransaction =
             populateOftDirectSendTransaction({
                 target: args.directSendTarget,
@@ -772,27 +873,59 @@ const SendToBridge = (props: {
             throw new Error("OFT direct send transaction is missing call data");
         }
 
-        const [fromNonce, latestBlock] = await Promise.all([
-            args.signer.provider.getTransactionCount({
-                address: args.signerAddress,
-                blockTag: "latest",
-            }),
-            args.signer.provider.getBlockNumber(),
-        ]);
+        const candidateBase = await getEvmCandidateBase(args);
 
         return {
             candidate: {
                 kind: PendingBridgeSendKind.EvmOft,
                 createdAt: Date.now(),
                 sender: args.signerAddress,
-                fromNonce,
-                fromBlock: Number(
-                    latestBlock > evmSendCandidateBlockLookback
-                        ? latestBlock - evmSendCandidateBlockLookback
-                        : 0n,
-                ),
+                ...candidateBase,
                 oftContractAddress: args.directSendTarget.oftContract.address,
                 transactionTo: txRequest.to,
+                calldata: txRequest.data,
+            },
+            txRequest,
+        };
+    };
+
+    // CCTP burns emit MessageSent from the MessageTransmitter rather than an
+    // OFTSent event. Save the exact TokenMessenger calldata so recovery can
+    // replay burn logs against it.
+    const prepareCctpFromEvm = async (args: {
+        signer: Signer;
+        signerAddress: Address;
+        directSendTarget: CctpDirectSendTarget;
+        sendParam: CctpSendParam;
+    }): Promise<PreparedEvmBridgeSend> => {
+        const cctpBridge = config.assets?.[props.bridge.sourceAsset]?.bridge;
+        if (cctpBridge?.kind !== BridgeKind.Cctp) {
+            throw new Error(
+                `Missing CCTP config for ${props.bridge.sourceAsset}`,
+            );
+        }
+
+        const txRequest: PopulatedEvmTransaction =
+            populateCctpDirectSendTransaction({
+                target: args.directSendTarget,
+                sendParam: args.sendParam,
+            });
+        if (txRequest.to === undefined || txRequest.data === undefined) {
+            throw new Error(
+                "CCTP direct send transaction is missing call data",
+            );
+        }
+
+        const candidateBase = await getEvmCandidateBase(args);
+
+        return {
+            candidate: {
+                kind: PendingBridgeSendKind.EvmCctp,
+                createdAt: Date.now(),
+                sender: args.signerAddress,
+                ...candidateBase,
+                tokenMessenger: args.directSendTarget.executionContract.address,
+                messageTransmitter: cctpBridge.cctp.messageTransmitter,
                 calldata: txRequest.data,
             },
             txRequest,

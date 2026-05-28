@@ -10,7 +10,9 @@ export { BridgeRegistry, bridgeRegistry } from "./registry.ts";
 export {
     PendingBridgeSendRecoveryStatus,
     recoverPendingBridgeSend,
+    recoverPendingEvmCctpSend,
     recoverPendingEvmOftSend,
+    recoverPendingSolanaCctpSend,
     recoverPendingSolanaOftSend,
     recoverPendingTronOftSend,
 } from "./pendingSend.ts";
@@ -24,8 +26,12 @@ export { vFromSignature } from "./signature.ts";
 export type { BridgeDetails, SolanaDetails } from "../types.ts";
 export type {
     PendingBridgeSend,
+    PendingBridgeSendCallbacks,
     PendingBridgeSendRecoveryResult,
+    PendingEvmBridgeSend,
+    PendingEvmCctpBridgeSend,
     PendingEvmOftBridgeSend,
+    PendingSolanaCctpBridgeSend,
     PendingSolanaOftBridgeSend,
     PendingTronOftBridgeSend,
 } from "./pendingSend.ts";

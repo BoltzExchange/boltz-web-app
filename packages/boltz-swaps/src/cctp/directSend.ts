@@ -1,13 +1,20 @@
 import { hex } from "@scure/base";
-import { type Address, getAddress, getContract, parseAbi } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    getAddress,
+    getContract,
+    parseAbi,
+} from "viem";
 
 import { getTokenAddress } from "../config.ts";
 import type { Signer } from "../interfaces/signer.ts";
 import type { CctpSendParam } from "./types.ts";
 
-const tokenMessengerV2Abi = parseAbi([
+export const tokenMessengerV2Abi = parseAbi([
     "function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold) external returns (uint64 nonce)",
     "function depositForBurnWithHook(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold, bytes hookData) external returns (uint64 nonce)",
+    "event DepositForBurn(address indexed burnToken, uint256 amount, address indexed depositor, bytes32 mintRecipient, uint32 destinationDomain, bytes32 destinationTokenMessenger, bytes32 destinationCaller, uint256 maxFee, uint32 indexed minFinalityThreshold, bytes hookData)",
 ]);
 
 // Shape is compatible with OftDirectSendTarget for the subset used by
@@ -50,6 +57,57 @@ const isEmptyHookData = (hookData: string): boolean => {
     }
 };
 
+const getDepositForBurnArgs = (
+    target: CctpDirectSendTarget,
+    sendParam: CctpSendParam,
+) =>
+    [
+        sendParam.amount,
+        sendParam.destinationDomain,
+        sendParam.mintRecipient,
+        getAddress(target.burnToken),
+        sendParam.destinationCaller,
+        sendParam.maxFee,
+        sendParam.minFinalityThreshold,
+    ] as const;
+
+const getDepositForBurnWithHookArgs = (
+    target: CctpDirectSendTarget,
+    sendParam: CctpSendParam,
+) => [...getDepositForBurnArgs(target, sendParam), sendParam.hookData] as const;
+
+export const populateCctpDirectSendTransaction = ({
+    target,
+    sendParam,
+}: {
+    target: CctpDirectSendTarget;
+    sendParam: CctpSendParam;
+}) => {
+    const address = getAddress(target.executionContract.address);
+
+    if (isEmptyHookData(sendParam.hookData)) {
+        return {
+            to: address,
+            value: 0n,
+            data: encodeFunctionData({
+                abi: tokenMessengerV2Abi,
+                functionName: "depositForBurn",
+                args: getDepositForBurnArgs(target, sendParam),
+            }),
+        };
+    }
+
+    return {
+        to: address,
+        value: 0n,
+        data: encodeFunctionData({
+            abi: tokenMessengerV2Abi,
+            functionName: "depositForBurnWithHook",
+            args: getDepositForBurnWithHookArgs(target, sendParam),
+        }),
+    };
+};
+
 export const sendCctpDirect = async ({
     target,
     runner,
@@ -70,15 +128,7 @@ export const sendCctpDirect = async ({
     if (isEmptyHookData(sendParam.hookData)) {
         return {
             hash: await messenger.write.depositForBurn(
-                [
-                    sendParam.amount,
-                    sendParam.destinationDomain,
-                    sendParam.mintRecipient,
-                    getAddress(target.burnToken),
-                    sendParam.destinationCaller,
-                    sendParam.maxFee,
-                    sendParam.minFinalityThreshold,
-                ],
+                getDepositForBurnArgs(target, sendParam),
                 writeOptions,
             ),
         };
@@ -86,16 +136,7 @@ export const sendCctpDirect = async ({
 
     return {
         hash: await messenger.write.depositForBurnWithHook(
-            [
-                sendParam.amount,
-                sendParam.destinationDomain,
-                sendParam.mintRecipient,
-                getAddress(target.burnToken),
-                sendParam.destinationCaller,
-                sendParam.maxFee,
-                sendParam.minFinalityThreshold,
-                sendParam.hookData,
-            ],
+            getDepositForBurnWithHookArgs(target, sendParam),
             writeOptions,
         ),
     };

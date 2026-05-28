@@ -6,7 +6,7 @@ import type {
     BridgeDetails,
     BridgeRoute,
     PendingBridgeSend,
-    PendingEvmOftBridgeSend,
+    PendingEvmBridgeSend,
 } from "boltz-swaps/bridge";
 import {
     type ChainSwapCreatedResponse,
@@ -48,7 +48,7 @@ export type BridgeDetail = BridgeRoute & {
     txHash?: string;
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
-    evmSendCandidate?: PendingEvmOftBridgeSend;
+    evmSendCandidate?: PendingEvmBridgeSend;
 };
 
 export type PendingBridgeSendCallbacks = {

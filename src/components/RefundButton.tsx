@@ -592,7 +592,12 @@ export const RefundEvm = (props: {
 
             log.debug("Fetching lockup data");
             const txHash = lockupTx ?? commitmentLockupTxHash;
-            if (txHash === undefined) {
+            if (
+                txHash === undefined ||
+                txHash === null ||
+                txHash === "" ||
+                !txHash.startsWith("0x")
+            ) {
                 throw new Error(
                     "missing lockup or commitment transaction hash",
                 );
