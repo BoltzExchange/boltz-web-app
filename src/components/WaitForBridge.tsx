@@ -131,7 +131,7 @@ const OftCountdown = (props: {
 
 const WaitForBridge = (props: {
     bridge: BridgeDetail;
-    transactionHash: string;
+    transactionHash?: string;
 }) => {
     const { t } = useGlobalContext();
 
@@ -145,11 +145,17 @@ const WaitForBridge = (props: {
             <h3>{t("tx_in_mempool_warning")}</h3>
             <LoadingSpinner />
             <Show when={props.bridge.kind === BridgeKind.Oft}>
-                <OftCountdown
-                    sourceAsset={props.bridge.sourceAsset}
-                    destinationAsset={props.bridge.destinationAsset}
-                    txHash={props.transactionHash}
-                />
+                <Show
+                    when={props.transactionHash}
+                    fallback={<p>{t("oft_transfer_in_progress")}</p>}>
+                    {(transactionHash) => (
+                        <OftCountdown
+                            sourceAsset={props.bridge.sourceAsset}
+                            destinationAsset={props.bridge.destinationAsset}
+                            txHash={transactionHash()}
+                        />
+                    )}
+                </Show>
             </Show>
         </>
     );

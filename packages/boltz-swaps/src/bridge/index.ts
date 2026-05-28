@@ -8,12 +8,27 @@ export {
 export { OftBridgeDriver } from "./OftBridgeDriver.ts";
 export { BridgeRegistry, bridgeRegistry } from "./registry.ts";
 export {
+    PendingBridgeSendRecoveryStatus,
+    recoverPendingBridgeSend,
+    recoverPendingEvmOftSend,
+    recoverPendingSolanaOftSend,
+    recoverPendingTronOftSend,
+} from "./pendingSend.ts";
+export { PendingBridgeSendKind } from "./types.ts";
+export {
     type LooseRouterCall,
     type RouterCall,
     toRouterCalls,
 } from "./router.ts";
 export { vFromSignature } from "./signature.ts";
 export type { BridgeDetails, SolanaDetails } from "../types.ts";
+export type {
+    PendingBridgeSend,
+    PendingBridgeSendRecoveryResult,
+    PendingEvmOftBridgeSend,
+    PendingSolanaOftBridgeSend,
+    PendingTronOftBridgeSend,
+} from "./pendingSend.ts";
 export type {
     BridgeContract,
     BridgeDirectSendRunner,

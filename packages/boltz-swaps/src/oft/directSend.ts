@@ -1,8 +1,18 @@
-import { type PublicClient, getAddress, getContract, parseAbi } from "viem";
+import {
+    type PublicClient,
+    encodeFunctionData,
+    getAddress,
+    getContract,
+} from "viem";
 
 import { getBoltzSwapsConfig, requireTokenConfig } from "../config.ts";
 import type { Signer } from "../interfaces/signer.ts";
-import { createEvmOftContract, toViemSendParam } from "./evm.ts";
+import {
+    createEvmOftContract,
+    oftAbi,
+    tempoOftWrapperAbi,
+    toViemSendParam,
+} from "./evm.ts";
 import { getBufferedOftNativeFee } from "./oft.ts";
 import {
     type OftContract,
@@ -44,10 +54,6 @@ type TempoOftWrapperInstance = {
         maxNativeFee: bigint,
     ) => Promise<OftDirectSendTransaction>;
 };
-
-const tempoOftWrapperAbi = parseAbi([
-    "function sendOFT(address oft, address feeToken, (uint32 dstEid, bytes32 to, uint256 amountLD, uint256 minAmountLD, bytes extraOptions, bytes composeMsg, bytes oftCmd) sendParam, uint256 maxNativeFee) returns ((bytes32 guid, uint64 nonce, (uint256 nativeFee, uint256 lzTokenFee) fee), (uint256 amountSentLD, uint256 amountReceivedLD))",
-]);
 
 const tempoChainName = "tempo";
 const tempoWrapperContractName = "TempoOFTWrapper";
@@ -217,6 +223,63 @@ export const sendOftDirect = async ({
                 sendParam,
                 msgFee[0],
             );
+
+        default: {
+            const exhaustiveCheck: never = target;
+            throw new Error(
+                `Unhandled OFT direct send target: ${String(exhaustiveCheck)}`,
+            );
+        }
+    }
+};
+
+// Builds the same transaction as `sendOftDirect`, but returns a request the
+// caller can sign and broadcast itself.
+export const populateOftDirectSendTransaction = ({
+    target,
+    sendParam,
+    msgFee,
+    refundAddress,
+}: {
+    target: OftDirectSendTarget;
+    sendParam: SendParam;
+    msgFee: MsgFee;
+    refundAddress: string;
+}) => {
+    switch (target.kind) {
+        case OftDirectSendTargetKind.Oft:
+            return {
+                to: getAddress(target.executionContract.address),
+                value: msgFee[0],
+                data: encodeFunctionData({
+                    abi: oftAbi,
+                    functionName: "send",
+                    args: [
+                        toViemSendParam(sendParam),
+                        {
+                            nativeFee: msgFee[0],
+                            lzTokenFee: msgFee[1],
+                        },
+                        getAddress(refundAddress),
+                    ],
+                }),
+            };
+
+        case OftDirectSendTargetKind.TempoWrapper:
+            return {
+                to: getAddress(target.executionContract.address),
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: tempoOftWrapperAbi,
+                    functionName: "sendOFT",
+                    args: [
+                        getAddress(target.oftContract.address),
+                        getAddress(target.feeTokenAddress),
+                        toViemSendParam(sendParam),
+                        msgFee[0],
+                    ],
+                }),
+            };
 
         default: {
             const exhaustiveCheck: never = target;

@@ -48,6 +48,10 @@ export const oftAbi = parseAbi([
     "event OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)",
 ]);
 
+export const tempoOftWrapperAbi = parseAbi([
+    "function sendOFT(address oft, address feeToken, (uint32 dstEid, bytes32 to, uint256 amountLD, uint256 minAmountLD, bytes extraOptions, bytes composeMsg, bytes oftCmd) sendParam, uint256 maxNativeFee) returns ((bytes32 guid, uint64 nonce, (uint256 nativeFee, uint256 lzTokenFee) fee), (uint256 amountSentLD, uint256 amountReceivedLD))",
+]);
+
 const requireHex = (value: string, field: string): Hex => {
     if (!isHex(value, { strict: true })) {
         throw new Error(`invalid ${field}`);

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import type { TronConnector } from "@reown/appkit-utils/tron";
+import { PendingBridgeSendKind } from "boltz-swaps/bridge";
 import {
     createTronOftContract,
     getTronOftGuidFromTransactionInfo,
@@ -43,7 +44,11 @@ const createWalletProvider = (request = vi.fn()) =>
         provider: { request },
     }) as unknown as TronConnector;
 
-const createMockClient = () => {
+const createMockClient = (
+    sendRawTransaction = vi.fn().mockResolvedValue({
+        result: true,
+    }),
+) => {
     const triggerConstantContract = vi.fn();
     const triggerSmartContract = vi.fn().mockResolvedValue({
         result: {
@@ -52,9 +57,6 @@ const createMockClient = () => {
         transaction: {
             txID: "built-tron-tx",
         },
-    });
-    const sendRawTransaction = vi.fn().mockResolvedValue({
-        result: true,
     });
     const client = {
         transactionBuilder: {
@@ -112,13 +114,18 @@ describe("tron oft", () => {
         });
         const walletProvider = createWalletProvider(walletConnectRequest);
         const { client, sendRawTransaction } = createMockClient();
+        const persistPendingSend = vi.fn().mockResolvedValue(undefined);
         vi.mocked(tronChain.getTronWeb).mockResolvedValue(client);
 
         const transaction = await createTronOftContract({
             sourceAsset: "USDT0-TRON",
             contractAddress,
             walletProvider,
-        }).send([...sendParam], [...msgFee], refundAddress);
+        }).send([...sendParam], [...msgFee], refundAddress, {
+            pendingSendCallbacks: {
+                persist: persistPendingSend,
+            },
+        });
 
         expect(transaction.hash).toBe("wallet-connect-tx");
         expect(walletConnectRequest).toHaveBeenCalledWith(
@@ -139,6 +146,47 @@ describe("tron oft", () => {
             txID: "wallet-connect-tx",
             signature: ["0x01"],
         });
+        expect(persistPendingSend).toHaveBeenCalledWith({
+            kind: PendingBridgeSendKind.TronOft,
+            createdAt: expect.any(Number),
+            sourceAsset: "USDT0-TRON",
+            txHash: "wallet-connect-tx",
+        });
+        expect(sendRawTransaction.mock.invocationCallOrder[0]).toBeLessThan(
+            persistPendingSend.mock.invocationCallOrder[0],
+        );
+    });
+
+    test("should not persist pending Tron OFT sends before broadcast succeeds", async () => {
+        const walletConnectRequest = vi.fn().mockResolvedValue({
+            result: {
+                txID: "failed-broadcast-tron-tx",
+                signature: ["0x01"],
+            },
+        });
+        const walletProvider = createWalletProvider(walletConnectRequest);
+        const { client } = createMockClient(
+            vi.fn().mockResolvedValue({
+                result: false,
+                message: "broadcast failed",
+            }),
+        );
+        const persistPendingSend = vi.fn().mockResolvedValue(undefined);
+        vi.mocked(tronChain.getTronWeb).mockResolvedValue(client);
+
+        await expect(
+            createTronOftContract({
+                sourceAsset: "USDT0-TRON",
+                contractAddress,
+                walletProvider,
+            }).send([...sendParam], [...msgFee], refundAddress, {
+                pendingSendCallbacks: {
+                    persist: persistPendingSend,
+                },
+            }),
+        ).rejects.toThrow("broadcast failed");
+
+        expect(persistPendingSend).not.toHaveBeenCalled();
     });
 
     test("should decode hex Tron transaction failure messages", async () => {

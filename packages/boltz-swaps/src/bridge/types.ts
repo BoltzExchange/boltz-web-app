@@ -30,6 +30,12 @@ import type { BridgeRoute } from "./route.ts";
 export type { BridgeTransaction };
 export type { BridgeRoute };
 
+export enum PendingBridgeSendKind {
+    EvmOft = "evm-oft",
+    SolanaOft = "solana-oft",
+    TronOft = "tron-oft",
+}
+
 export type BridgeNativeDrop = {
     amount: bigint;
     receiver: string;

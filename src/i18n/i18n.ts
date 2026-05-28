@@ -36,6 +36,19 @@ const dict = {
         fee: "Boltz Fee",
         denomination: "Denomination",
         send: "Send",
+        checking_previous_transaction: "Checking previous transaction",
+        checking_previous_transaction_line:
+            "Please wait while we check whether your wallet submitted the bridge transaction.",
+        could_not_confirm_previous_transaction:
+            "Could not confirm previous transaction",
+        could_not_confirm_previous_transaction_line:
+            "We could not confirm whether your wallet submitted the bridge transaction.",
+        checking_previous_transaction_countdown:
+            "{{ seconds }} seconds remaining.",
+        check_again: "Check again",
+        did_not_send_transaction: "I didn't send a transaction",
+        did_not_send_transaction_confirm:
+            "Only continue if you are sure your wallet did not submit the transaction. Continuing can make you send funds twice.",
         continue: "Continue",
         receive: "Receive",
         min: "Min",
@@ -547,6 +560,18 @@ const dict = {
         fee: "Boltzgebühr",
         denomination: "Denominierung",
         send: "Sende",
+        checking_previous_transaction: "Vorherige Transaktion wird geprüft",
+        checking_previous_transaction_line:
+            "Bitte warte, während wir prüfen, ob dein Wallet die Bridge-Transaktion übermittelt hat.",
+        could_not_confirm_previous_transaction:
+            "Vorherige Transaktion konnte nicht bestätigt werden",
+        could_not_confirm_previous_transaction_line:
+            "Wir konnten nicht bestätigen, ob dein Wallet die Bridge-Transaktion übermittelt hat.",
+        checking_previous_transaction_countdown: "Noch {{ seconds }} Sekunden.",
+        check_again: "Erneut prüfen",
+        did_not_send_transaction: "Ich habe keine Transaktion gesendet",
+        did_not_send_transaction_confirm:
+            "Fahre nur fort, wenn du sicher bist, dass dein Wallet die Transaktion nicht übermittelt hat. Wenn du fortfährst, könntest du Geld zweimal senden.",
         continue: "Weiter",
         receive: "Empfange",
         min: "Min",
@@ -1074,6 +1099,19 @@ const dict = {
         fee: "Comisión de Boltz",
         denomination: "Denominación",
         send: "Enviar",
+        checking_previous_transaction: "Comprobando transacción anterior",
+        checking_previous_transaction_line:
+            "Espera mientras comprobamos si tu billetera envió la transacción de puente.",
+        could_not_confirm_previous_transaction:
+            "No se pudo confirmar la transacción anterior",
+        could_not_confirm_previous_transaction_line:
+            "No pudimos confirmar si tu billetera envió la transacción de puente.",
+        checking_previous_transaction_countdown:
+            "Quedan {{ seconds }} segundos.",
+        check_again: "Comprobar de nuevo",
+        did_not_send_transaction: "No envié una transacción",
+        did_not_send_transaction_confirm:
+            "Continúa solo si tienes la certeza de que tu billetera no envió la transacción. Continuar puede hacer que envíes fondos dos veces.",
         continue: "Continuar",
         receive: "Recibir",
         min: "Mín",
@@ -1598,6 +1636,19 @@ const dict = {
         fee: "Taxa da Boltz",
         denomination: "Denominação",
         send: "Enviar",
+        checking_previous_transaction: "Verificando transação anterior",
+        checking_previous_transaction_line:
+            "Por favor, aguarde enquanto verificamos se sua carteira enviou a transação da ponte.",
+        could_not_confirm_previous_transaction:
+            "Não foi possível confirmar a transação anterior",
+        could_not_confirm_previous_transaction_line:
+            "Não foi possível confirmar se sua carteira enviou a transação da ponte.",
+        checking_previous_transaction_countdown:
+            "{{ seconds }} segundos restantes.",
+        check_again: "Verificar novamente",
+        did_not_send_transaction: "Eu não enviei uma transação",
+        did_not_send_transaction_confirm:
+            "Continue apenas se tiver certeza de que sua carteira não enviou a transação. Continuar pode fazer com que você envie fundos duas vezes.",
         continue: "Continuar",
         receive: "Receber",
         min: "Mín",
@@ -2117,6 +2168,17 @@ const dict = {
         fee: "Boltz费",
         denomination: "面额",
         send: "发送",
+        checking_previous_transaction: "正在检查上一笔交易",
+        checking_previous_transaction_line:
+            "请稍候，我们正在检查您的钱包是否已提交桥接交易。",
+        could_not_confirm_previous_transaction: "无法确认上一笔交易",
+        could_not_confirm_previous_transaction_line:
+            "我们无法确认您的钱包是否已提交桥接交易。",
+        checking_previous_transaction_countdown: "剩余 {{ seconds }} 秒。",
+        check_again: "再次检查",
+        did_not_send_transaction: "我没有发送交易",
+        did_not_send_transaction_confirm:
+            "仅当您确定钱包没有提交该交易时才继续。继续可能会导致您重复发送资金。",
         continue: "继续",
         receive: "接收",
         min: "最小",
@@ -2585,6 +2647,18 @@ const dict = {
         fee: "Boltz手数料",
         denomination: "単位",
         send: "送信",
+        checking_previous_transaction: "前回のトランザクションを確認中",
+        checking_previous_transaction_line:
+            "ウォレットがブリッジトランザクションを送信したか確認しています。しばらくお待ちください。",
+        could_not_confirm_previous_transaction:
+            "前回のトランザクションを確認できませんでした",
+        could_not_confirm_previous_transaction_line:
+            "ウォレットがブリッジトランザクションを送信したか確認できませんでした。",
+        checking_previous_transaction_countdown: "残り {{ seconds }} 秒。",
+        check_again: "再確認",
+        did_not_send_transaction: "トランザクションを送信していません",
+        did_not_send_transaction_confirm:
+            "ウォレットがトランザクションを送信していないことが確実な場合のみ続行してください。続行すると、資金を二重に送信する可能性があります。",
         continue: "続ける",
         receive: "受取",
         min: "最小",
