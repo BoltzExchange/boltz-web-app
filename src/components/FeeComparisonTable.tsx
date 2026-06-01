@@ -3,11 +3,12 @@ import { SwapType } from "boltz-swaps/types";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
-import { LN, getAssetDisplaySymbol, isBitcoinOnlyPair } from "../consts/Assets";
+import { LN, isBitcoinOnlyPair } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import ExternalLink from "./ExternalLink";
 import { getFeeHighlightClass } from "./Fees";
 import LoadingSpinner from "./LoadingSpinner";
+import { SwapListAssetIcon } from "./SwapIcons";
 
 type SwapFees = {
     assetSend: string;
@@ -134,16 +135,12 @@ export const FeeComparisonTable = (props: {
                                     onClick={() => props.onSelect(opportunity)}>
                                     <td>
                                         <div class="swaplist-asset">
-                                            <span
-                                                data-asset={getAssetDisplaySymbol(
-                                                    opportunity.assetSend,
-                                                )}
+                                            <SwapListAssetIcon
+                                                asset={opportunity.assetSend}
                                             />
                                             <VsArrowSmallRight />
-                                            <span
-                                                data-asset={getAssetDisplaySymbol(
-                                                    opportunity.assetReceive,
-                                                )}
+                                            <SwapListAssetIcon
+                                                asset={opportunity.assetReceive}
                                             />
                                         </div>
                                     </td>

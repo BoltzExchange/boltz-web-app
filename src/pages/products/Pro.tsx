@@ -95,9 +95,15 @@ const Pro = () => {
                         />
                         <div class="caption">
                             <div class="swaplist-asset">
-                                <span data-asset={BTC} />
+                                <span
+                                    class="swaplist-asset-static-icon"
+                                    data-asset={BTC}
+                                />
                                 <VsArrowSmallRight />
-                                <span data-asset={LN} />
+                                <span
+                                    class="swaplist-asset-static-icon"
+                                    data-asset={LN}
+                                />
                             </div>
                             <p data-type="regular">
                                 {t("boltz_pro_regular_fee")}

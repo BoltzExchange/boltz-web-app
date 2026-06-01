@@ -2,16 +2,10 @@ import { useNavigate } from "@solidjs/router";
 import type { LogRefundData, RskRescueMode } from "boltz-swaps/types";
 import { type Accessor, For, Show, createMemo } from "solid-js";
 
-import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import { cropString } from "../utils/helper";
-
-const AssetIcon = (props: { asset: AssetType }) => (
-    <span class="swaplist-asset swaplist-asset-single">
-        <span data-asset={getAssetDisplaySymbol(props.asset)} />
-    </span>
-);
+import { SwapListAssetIcon } from "./SwapIcons";
 
 const SwapListLogs = (props: {
     swaps: Accessor<LogRefundData[]>;
@@ -42,7 +36,9 @@ const SwapListLogs = (props: {
                             <a class="btn-small hidden-mobile" href="#">
                                 {t("view")}
                             </a>
-                            <AssetIcon asset={swap.asset} />
+                            <span class="swaplist-asset swaplist-asset-single">
+                                <SwapListAssetIcon asset={swap.asset} />
+                            </span>
                             <span class="swaplist-asset-id">
                                 {t("id")}:&nbsp;
                                 <span class="monospace">
