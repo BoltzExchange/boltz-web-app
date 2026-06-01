@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.3](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.2..v2.1.3) - 2026-06-01
+
+### Bug Fixes
+
+- wallet connection styles (#1497) - ([a458162](https://github.com/BoltzExchange/boltz-web-app/commit/a458162d4609f59ac2bd122e3da900795d280864))
+- OFT sends to Polygon (#1500) - ([8bf8d5c](https://github.com/BoltzExchange/boltz-web-app/commit/8bf8d5c9ac94479caefc6bb750810c9fa684c63c))
+- cooperative claims of chain swaps from EVM (#1501) - ([6060738](https://github.com/BoltzExchange/boltz-web-app/commit/60607384317a8fff6d41bae9fa499cb61a3e15df))
+
+### Features
+
+- embedded mode and light theme (#1498) - ([9319c04](https://github.com/BoltzExchange/boltz-web-app/commit/9319c04313beb22fad6ca081904538a01cf10ade))
+- retrieve missing OFT transfer tx hash (#1433) - ([cbad27f](https://github.com/BoltzExchange/boltz-web-app/commit/cbad27f92641cf737bd1e20eb55bd60105940352))
+- recover pending CCTP bridge sends (#1459) - ([4a8678e](https://github.com/BoltzExchange/boltz-web-app/commit/4a8678e1c98d42d57e1c3e55e3e429922340130e))
+
+### Miscellaneous Chores
+
+- improve logging of resource fetching error (#1506) - ([f99feed](https://github.com/BoltzExchange/boltz-web-app/commit/f99feed8dd8b9ef47376916d2405f744ae86d7f9))
+- mempool.space API override for tests (#1508) - ([c49c110](https://github.com/BoltzExchange/boltz-web-app/commit/c49c110ccdc8c4dcbbd03e1eb8dbd9818b57e92b))
+
+### Refactoring
+
+- adjust Solana signer order (#1503) - ([407258d](https://github.com/BoltzExchange/boltz-web-app/commit/407258db828b329815e3797e867698fdc2e8cc53))
+
+---
 ## [2.1.2](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.1..v2.1.2) - 2026-05-22
 
 ### Bug Fixes
@@ -34,6 +58,7 @@ All notable changes to this project will be documented in this file. See [conven
 - add WBTC to social preview and rescue explainer (#1489) - ([8c55bf5](https://github.com/BoltzExchange/boltz-web-app/commit/8c55bf513ed4dec20b32691d46b697edc6e40627))
 - ensure connect wallet modal fits in view (#1491) - ([c5c2adf](https://github.com/BoltzExchange/boltz-web-app/commit/c5c2adfa1440ba61137910bbdfc900c408966805))
 - remove yadio (#1495) - ([afdc499](https://github.com/BoltzExchange/boltz-web-app/commit/afdc499a96990476f875b0aabac58f45aefe0723))
+- bump version to v2.1.2 (#1496) - ([c345afb](https://github.com/BoltzExchange/boltz-web-app/commit/c345afb99957a5a8d0c2ee892cb3f059f36d1472))
 
 ### Refactoring
 
