@@ -154,15 +154,6 @@ const getHopExecutionQuote = async (
     };
 };
 
-const parseHopInputAmount = (amount: number | string | undefined) => {
-    if (amount === undefined) {
-        return undefined;
-    }
-    return typeof amount === "string"
-        ? BigInt(amount)
-        : BigInt(Math.round(amount));
-};
-
 const hashRouterCalls = (calls: RouterCall[]) => {
     const encodedCalls = encodeAbiParameters(
         [
@@ -630,14 +621,17 @@ const LockupEvm = (props: {
     claimAddress: Address;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
-    hopInputAmount?: number | string;
+    hopInputAmount?: string;
     bridge?: BridgeDetail;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
 
     const value = () => satsToAssetAmount(props.amount, props.asset);
-    const hopInputValue = () => parseHopInputAmount(props.hopInputAmount);
+    const hopInputValue = () =>
+        props.hopInputAmount === undefined
+            ? undefined
+            : BigInt(props.hopInputAmount);
 
     const hasHopsBefore = () =>
         props.hops !== undefined && props.hops.length > 0;

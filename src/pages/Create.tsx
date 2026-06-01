@@ -1,9 +1,6 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { bridgeRegistry } from "boltz-swaps/bridge";
 import { getRpcUrls } from "boltz-swaps/config";
-import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
-import { createTokenContract } from "boltz-swaps/evm/contracts";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -38,7 +35,6 @@ import { config } from "../config";
 import {
     LN,
     RBTC,
-    getKindForAsset,
     getNetworkTransport,
     isWalletConnectableAsset,
 } from "../consts/Assets";
@@ -49,18 +45,16 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
+import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
     formatDenomination,
-    getDecimals,
     getValidationRegex,
 } from "../utils/denomination";
-import { getNativeEvmLockupSpendableBalance } from "../utils/evmLockup";
 import { isMobile } from "../utils/helper";
 import { decodeInvoice, isLnurl } from "../utils/invoice";
-import { estimateFeesPerGas } from "../utils/provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -568,84 +562,18 @@ const Create = () => {
         });
     };
 
-    const baseAssetAmountToInternal = (asset: string, amount: bigint) =>
-        getDecimals(asset).isErc20
-            ? BigNumber(amount.toString())
-            : BigNumber(assetAmountToSats(amount, asset).toString());
-
-    const getConnectedMaximum = async (currentPair: Pair) => {
-        const preBridgeRoute = bridgeRegistry.getPreRoute(
-            currentPair.fromAsset,
-        );
-        if (preBridgeRoute !== undefined) {
-            const driver = bridgeRegistry.requireDriverForRoute(preBridgeRoute);
-            const wallet = connectedWallet();
-            if (
-                wallet?.transport !==
-                    driver.getTransport(preBridgeRoute.sourceAsset) ||
-                wallet.address === undefined
-            ) {
-                return undefined;
-            }
-
-            return baseAssetAmountToInternal(
-                preBridgeRoute.sourceAsset,
-                await driver.getSourceTokenBalance(
-                    preBridgeRoute,
-                    wallet.address,
-                ),
-            );
-        }
-
-        const activeSigner = signer();
-        if (activeSigner === undefined) {
-            return undefined;
-        }
-
-        switch (getKindForAsset(currentPair.fromAsset)) {
-            case AssetKind.EVMNative: {
-                const provider = createAssetProvider(currentPair.fromAsset);
-                const [balance, gasPrice] = await Promise.all([
-                    getAssetNativeBalance(
-                        currentPair.fromAsset,
-                        activeSigner.address,
-                    ),
-                    estimateFeesPerGas(provider).then((data) => {
-                        if (data.gasPrice === null) {
-                            throw new Error("missing gas price");
-                        }
-                        return data.gasPrice;
-                    }),
-                ]);
-                return baseAssetAmountToInternal(
-                    currentPair.fromAsset,
-                    getNativeEvmLockupSpendableBalance(balance, gasPrice),
-                );
-            }
-
-            case AssetKind.ERC20: {
-                const balance = await createTokenContract(
-                    currentPair.fromAsset,
-                    activeSigner,
-                ).read.balanceOf([activeSigner.address]);
-
-                return baseAssetAmountToInternal(
-                    currentPair.fromAsset,
-                    balance,
-                );
-            }
-
-            default:
-                return undefined;
-        }
-    };
-
     const setMaxAmount = async () => {
         const selectedPair = pair();
         let amount: number | undefined;
 
         try {
-            amount = (await getConnectedMaximum(selectedPair))?.toNumber();
+            amount = (
+                await getConnectedMaximum({
+                    fromAsset: selectedPair.fromAsset,
+                    connectedWallet: connectedWallet(),
+                    signer: signer(),
+                })
+            )?.toNumber();
         } catch (error) {
             log.warn("failed to resolve connected wallet max amount", {
                 asset: selectedPair.fromAsset,
