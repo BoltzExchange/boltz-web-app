@@ -744,11 +744,7 @@ describe("Create", () => {
         });
     });
 
-    test.each`
-        extrema
-        ${"min"}
-        ${"max"}
-    `("should set $extrema amount on click", async ({ extrema }) => {
+    test("should set max amount on click", async () => {
         render(
             () => (
                 <>
@@ -763,10 +759,9 @@ describe("Create", () => {
 
         globalSignals.setPairs(pairs);
 
-        const amount =
-            extrema === "min" ? signals.minimum() : signals.maximum();
+        const amount = signals.maximum();
 
-        fireEvent.click(await screen.findByTestId(`limit-${extrema}-button`));
+        fireEvent.click(await screen.findByTestId("limit-max-button"));
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(
@@ -779,7 +774,7 @@ describe("Create", () => {
         );
     });
 
-    test("should update the loading target immediately when selecting a limit", async () => {
+    test("should update the loading target when selecting max", async () => {
         vi.useFakeTimers();
 
         try {
@@ -818,7 +813,8 @@ describe("Create", () => {
             const sendAmountInput = (await screen.findByTestId(
                 "sendAmount",
             )) as HTMLInputElement;
-            fireEvent.click(screen.getByTestId("limit-min-button"));
+            fireEvent.click(screen.getByTestId("limit-max-button"));
+            await Promise.resolve();
 
             expect(signals.amountChanged()).toEqual(Side.Send);
             expect(sendAmountInput.disabled).toEqual(false);

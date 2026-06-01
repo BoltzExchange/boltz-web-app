@@ -92,6 +92,7 @@ export const useBridgeSendRecovery = (params: {
     const persistBridgeSend = async (
         txHash: string,
         details?: BridgeTransaction["details"],
+        sourceAmount?: bigint,
     ) => {
         await updateBridge((bridge) => {
             const next: BridgeDetail = {
@@ -100,6 +101,9 @@ export const useBridgeSendRecovery = (params: {
                 pendingSend: undefined,
                 evmSendCandidate: undefined,
             };
+            if (sourceAmount !== undefined) {
+                next.sourceAmount = sourceAmount.toString();
+            }
             if (details === undefined) {
                 delete next.details;
             } else {

@@ -3,6 +3,7 @@ import {
     type QuoteData,
     encodeDexQuote,
     getCommitmentLockupDetails,
+    quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
 import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
@@ -48,6 +49,8 @@ import {
 import { useModifySwap } from "../hooks/useModifySwap";
 import type { EncodedHop } from "../utils/Pair";
 import { formatAssetAmountForLog } from "../utils/denomination";
+import { calculateAmountWithSlippage } from "../utils/calculate";
+import { getNativeEvmLockupSpendableBalance } from "../utils/evmLockup";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
@@ -63,8 +66,6 @@ import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
 import SendToBridge from "./SendToBridge";
-
-const lockupGasUsage = 46_000n;
 
 const permitWitnessTransferFromTypes = {
     PermitWitnessTransferFrom: [
@@ -92,6 +93,7 @@ const getHopExecutionQuote = async (
     hop: EncodedHop,
     lockupAmount: bigint,
     slippage: number,
+    hopInputAmount?: bigint,
 ): Promise<{
     targetLockupAmount: bigint;
     quote: QuoteData;
@@ -100,6 +102,31 @@ const getHopExecutionQuote = async (
     if (hop.dexDetails === undefined) {
         throw new Error("missing DEX details for lockup hop");
     }
+
+    if (hopInputAmount !== undefined) {
+        const quotes = await quoteDexAmountIn(
+            hop.dexDetails.chain,
+            hop.dexDetails.tokenIn,
+            hop.dexDetails.tokenOut,
+            hopInputAmount,
+        );
+
+        if (!Array.isArray(quotes) || quotes.length === 0) {
+            log.error("No DEX exact-input quotes returned for lockup hop", {
+                dexDetails: hop.dexDetails,
+                hopInputAmount: hopInputAmount.toString(),
+            });
+            throw new Error("could not get DEX quote for lockup hop");
+        }
+
+        const quote = quotes[0];
+        return {
+            quote,
+            amountIn: hopInputAmount,
+            targetLockupAmount: lockupAmount,
+        };
+    }
+
     const targetLockupAmount = calculateAmountWithSlippage(
         lockupAmount,
         slippage / 2,
@@ -113,7 +140,7 @@ const getHopExecutionQuote = async (
     );
 
     if (!Array.isArray(quotes) || quotes.length === 0) {
-        log.error("No DEX quotes returned for lockup hop", {
+        log.error("No DEX exact-output quotes returned for lockup hop", {
             dexDetails: hop.dexDetails,
             targetLockupAmount: formatAssetAmountForLog(
                 targetLockupAmount,
@@ -249,6 +276,7 @@ const lockupWithHops = async (
     slippage: number,
     getSwap: (id: string) => Promise<SomeSwap | null>,
     modifySwap: ReturnType<typeof useModifySwap>,
+    hopInputAmount?: bigint,
 ): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
@@ -270,7 +298,12 @@ const lockupWithHops = async (
         }
 
         const { targetLockupAmount, quote, amountIn } =
-            await getHopExecutionQuote(hop, lockupAmount, slippage);
+            await getHopExecutionQuote(
+                hop,
+                lockupAmount,
+                slippage,
+                hopInputAmount,
+            );
         log.info("Got DEX quote for lockup hop", {
             amountIn: formatAssetAmountForLog(amountIn, hop.from),
             targetLockupAmount: formatAssetAmountForLog(
@@ -434,6 +467,7 @@ const LockupTransaction = (props: {
     approvalValue?: () => bigint;
     approvalTarget?: Address;
     hops?: EncodedHop[];
+    hopInputAmount?: bigint;
 }) => {
     const { t, slippage, getSwap } = useGlobalContext();
     const {
@@ -495,6 +529,7 @@ const LockupTransaction = (props: {
                             slippage(),
                             getSwap,
                             modifySwap,
+                            props.hopInputAmount,
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
@@ -598,12 +633,17 @@ const LockupEvm = (props: {
     claimAddress: Address;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
+    hopInputAmount?: string;
     bridge?: BridgeDetail;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
 
     const value = () => satsToAssetAmount(props.amount, props.asset);
+    const hopInputValue = () =>
+        props.hopInputAmount === undefined
+            ? undefined
+            : BigInt(props.hopInputAmount);
 
     const hasHopsBefore = () =>
         props.hops !== undefined && props.hops.length > 0;
@@ -675,9 +715,12 @@ const LockupEvm = (props: {
                         activeSigner.address,
                         permit2Address,
                     ]),
-                    getHopExecutionQuote(hop, value(), slippage()).then(
-                        ({ amountIn }) => amountIn,
-                    ),
+                    getHopExecutionQuote(
+                        hop,
+                        value(),
+                        slippage(),
+                        hopInputValue(),
+                    ).then(({ amountIn }) => amountIn),
                 ]);
 
                 log.info("Hop input token balance", {
@@ -716,7 +759,10 @@ const LockupEvm = (props: {
                     if (gasPrice === null) {
                         throw new Error("missing gas price");
                     }
-                    const spendable = balance - gasPrice * lockupGasUsage;
+                    const spendable = getNativeEvmLockupSpendableBalance(
+                        balance,
+                        gasPrice,
+                    );
                     log.info("EVM signer spendable balance", {
                         asset: props.asset,
                         spendableBalance: formatAssetAmountForLog(
@@ -826,6 +872,7 @@ const LockupEvm = (props: {
                             }
                             approvalTarget={approvalTarget()}
                             hops={hasHopsBefore() ? props.hops : undefined}
+                            hopInputAmount={hopInputValue()}
                         />
                     </Show>
                 </Show>
