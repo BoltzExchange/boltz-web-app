@@ -65,6 +65,19 @@ if ("serviceWorker" in navigator) {
 
 log.setLevel(config.loglevel as log.LogLevelDesc);
 
+const resourceErrorHandler = (event: Event) => {
+    const target = event.target;
+    if (
+        target instanceof HTMLScriptElement ||
+        target instanceof HTMLLinkElement
+    ) {
+        const url =
+            target instanceof HTMLScriptElement ? target.src : target.href;
+        log.error(`failed to load resource: ${url}`);
+    }
+};
+window.addEventListener("error", resourceErrorHandler, true);
+
 const urlParams = new URLSearchParams(window.location.search);
 const embeddedParam = urlParams.get("embedded");
 const themeParam = urlParams.get("theme");
@@ -196,5 +209,8 @@ const cleanup = render(
 
 if (import.meta.hot) {
     log.info("Hot reload");
-    import.meta.hot.dispose(cleanup);
+    import.meta.hot.dispose(() => {
+        cleanup();
+        window.removeEventListener("error", resourceErrorHandler, true);
+    });
 }
