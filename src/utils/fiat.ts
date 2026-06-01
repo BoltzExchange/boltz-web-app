@@ -203,7 +203,13 @@ export const getBtcPriceMempool = async (currency: Currency) => {
         requestTimeoutDuration,
     );
     try {
-        const response = await fetch(config.rateProviders.Mempool, opts);
+        const mempoolApiUrl = import.meta.env.VITE_MEMPOOL_API_URL;
+        const response = await fetch(
+            mempoolApiUrl
+                ? `${mempoolApiUrl}/v1/prices`
+                : config.rateProviders.Mempool,
+            opts,
+        );
         const data = (await response.json()) as { [currency: string]: number };
         return BigNumber(data[currency]);
     } catch (e) {
