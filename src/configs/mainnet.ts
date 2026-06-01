@@ -6,6 +6,7 @@ import { usdt0CanSendOverrides } from "src/configs/usdt0";
 const mainnetPreset = buildMainnetConfig({
     rpcUrls: envRpcUrls,
     canSend: usdt0CanSendOverrides,
+    btcMempoolApiUrl: import.meta.env.VITE_MEMPOOL_API_URL || undefined,
 });
 
 const config = {

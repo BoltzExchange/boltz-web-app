@@ -24,6 +24,8 @@ jobs:
             - run: bun run prettier:check
 
             - run: bun run test
+              env:
+                  VITE_MEMPOOL_API_URL: ${{ vars.VITE_MEMPOOL_API_URL }}
 
             - run: bun run tsc
 

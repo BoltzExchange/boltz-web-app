@@ -41,6 +41,7 @@ export type MainnetAsset =
 
 export type MainnetConfigOverrides = {
     boltzApiUrl?: string;
+    btcMempoolApiUrl?: string;
     cctpApiUrl?: string;
     cctpExplorerUrl?: string;
     layerZeroExplorerUrl?: string;
@@ -107,7 +108,9 @@ const buildCoreAssets = (
                 },
                 {
                     id: Explorer.Mempool,
-                    normal: "https://mempool.space/api",
+                    normal:
+                        overrides.btcMempoolApiUrl ??
+                        "https://mempool.space/api",
                     tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api",
                 },
             ],
