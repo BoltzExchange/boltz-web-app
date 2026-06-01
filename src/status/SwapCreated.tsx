@@ -58,6 +58,11 @@ const SwapCreated = () => {
                             ? chain.dex.hops
                             : undefined
                     }
+                    hopInputAmount={
+                        chain.dex?.position === SwapPosition.Pre
+                            ? chain.dex.sourceAmount
+                            : undefined
+                    }
                     bridge={getPreBridgeDetail(chain.bridge)}
                 />
             </Show>

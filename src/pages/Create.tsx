@@ -45,6 +45,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
+import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
     convertAmount,
@@ -112,7 +113,7 @@ const Create = () => {
         quoteLoading,
         setQuoteLoading,
     } = useCreateContext();
-    const { connectedWallet } = useWeb3Signer();
+    const { connectedWallet, signer } = useWeb3Signer();
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
@@ -561,6 +562,37 @@ const Create = () => {
         });
     };
 
+    const setMaxAmount = async () => {
+        const selectedPair = pair();
+        let amount: number | undefined;
+
+        try {
+            amount = (
+                await getConnectedMaximum({
+                    fromAsset: selectedPair.fromAsset,
+                    connectedWallet: connectedWallet(),
+                    signer: signer(),
+                })
+            )?.toNumber();
+        } catch (error) {
+            log.warn("failed to resolve connected wallet max amount", {
+                asset: selectedPair.fromAsset,
+                error,
+            });
+        }
+
+        if (pair() !== selectedPair) {
+            return;
+        }
+
+        const limit = maximum();
+        const selectedAmount =
+            amount === undefined || (limit > 0 && amount > limit)
+                ? limit
+                : amount;
+        setAmount(selectedAmount);
+    };
+
     onMount(() => {
         sendAmountRef?.focus();
     });
@@ -747,12 +779,14 @@ const Create = () => {
                                     {t("send")}
                                 </span>
                                 <SwapLimits
-                                    minimum={minimum()}
                                     maximum={maximum()}
-                                    minLabel={t("min")}
                                     maxLabel={t("max")}
                                     loading={limitActionsLoading()}
+                                    maximumEnabled={
+                                        maximum() > 0 || pair().canZeroAmount
+                                    }
                                     onSelectAmount={setAmount}
+                                    onSelectMaximum={setMaxAmount}
                                 />
                                 <Show when={sendAmountQuoteLoading()}>
                                     <div
