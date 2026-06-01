@@ -5,16 +5,17 @@ type SwapLimitProps = {
     testId: string;
     amount: number;
     loading: boolean;
+    enabled?: boolean;
     onClick: (amount: number) => void;
 };
 
 type SwapLimitsProps = {
-    minimum: number;
     maximum: number;
-    minLabel: string;
     maxLabel: string;
     loading: boolean;
+    maximumEnabled?: boolean;
     onSelectAmount: (amount: number) => void;
+    onSelectMaximum?: () => void;
 };
 
 const SwapLimit = (props: SwapLimitProps) => (
@@ -24,7 +25,7 @@ const SwapLimit = (props: SwapLimitProps) => (
         data-testid={props.testId}
         aria-busy={props.loading}
         aria-label={props.label}
-        disabled={props.loading || props.amount <= 0}
+        disabled={props.loading || !(props.enabled ?? props.amount > 0)}
         onClick={() => props.onClick(props.amount)}>
         <Show
             when={!props.loading}
@@ -35,21 +36,22 @@ const SwapLimit = (props: SwapLimitProps) => (
 );
 
 const SwapLimits = (props: SwapLimitsProps) => (
-    <Show when={props.loading || props.minimum > 0 || props.maximum > 0}>
+    <Show when={props.loading || (props.maximumEnabled ?? props.maximum > 0)}>
         <div class="amount-limits">
-            <SwapLimit
-                label={props.minLabel}
-                testId="limit-min-button"
-                amount={props.minimum}
-                loading={props.loading}
-                onClick={props.onSelectAmount}
-            />
             <SwapLimit
                 label={props.maxLabel}
                 testId="limit-max-button"
                 amount={props.maximum}
                 loading={props.loading}
-                onClick={props.onSelectAmount}
+                enabled={props.maximumEnabled ?? props.maximum > 0}
+                onClick={() => {
+                    if (props.onSelectMaximum !== undefined) {
+                        props.onSelectMaximum();
+                        return;
+                    }
+
+                    props.onSelectAmount(props.maximum);
+                }}
             />
         </div>
     </Show>

@@ -41,6 +41,9 @@ export type DexDetail = {
     // For post-swap hops: expected output amount from the DEX.
     // For pre-swap hops: expected input amount to the DEX.
     quoteAmount: number | string;
+
+    // For pre-swap hops, exact source amount to spend in the DEX.
+    sourceAmount?: string;
 };
 
 export enum PreBridgeRecoveryStatus {
@@ -62,6 +65,7 @@ export type PreBridgeRecovery = {
 export type BridgeDetail = BridgeRoute & {
     kind: BridgeKind;
     position: SwapPosition;
+    sourceAmount?: string;
     txHash?: string;
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
