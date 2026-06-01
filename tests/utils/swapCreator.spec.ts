@@ -4,6 +4,7 @@ import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
     type SwapBase,
+    createLocalSwapId,
     getFinalAssetReceive,
     getFinalAssetSend,
     getPostBridgeDetail,
@@ -36,6 +37,11 @@ const makeSwap = (overrides: Partial<SwapBase>): SwapBase =>
         ...overrides,
     }) as SwapBase;
 
+describe("createLocalSwapId", () => {
+    test("creates local-only ids from eight random bytes", () => {
+        expect(createLocalSwapId()).toMatch(/^[0-9a-f]{16}$/);
+    });
+});
 describe("getPreBridgeDetail", () => {
     test("returns the bridge when its position is Pre", () => {
         const bridge = makeBridge("USDT0-ETH", USDT0, SwapPosition.Pre);

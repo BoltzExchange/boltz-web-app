@@ -75,6 +75,7 @@ import { RefundType, refund } from "../utils/rescue";
 import {
     type BridgeDetail,
     type ChainSwap,
+    type CommitmentSwap,
     type DexDetail,
     GasAbstractionType,
     type SubmarineSwap,
@@ -764,7 +765,10 @@ export const RefundEvm = (props: {
                                 await getEvmRefundCooperativeSignature({
                                     isCommitmentLockup,
                                     asset: props.asset,
-                                    swapId: props.swapId,
+                                    swapId:
+                                        props.swapType === SwapType.Commitment
+                                            ? undefined
+                                            : props.swapId,
                                     swapType: props.swapType,
                                     commitmentTxHash:
                                         props.lockupTxHash ??
@@ -1090,7 +1094,7 @@ export const RefundBtc = (props: {
 };
 
 const RefundButton = (props: {
-    swap: Accessor<SubmarineSwap | ChainSwap>;
+    swap: Accessor<SubmarineSwap | ChainSwap | CommitmentSwap>;
     setRefundTxId?: Setter<string>;
     buttonOverride?: string;
     deriveKeyFn?: deriveKeyFn;
@@ -1134,7 +1138,12 @@ const RefundButton = (props: {
                     bridge={props.swap().bridge}
                 />
             }>
-            <RefundBtc {...props} setRefundTxId={setRefundTxId} />
+            <RefundBtc
+                swap={props.swap as Accessor<SubmarineSwap | ChainSwap>}
+                buttonOverride={props.buttonOverride}
+                deriveKeyFn={props.deriveKeyFn}
+                setRefundTxId={setRefundTxId}
+            />
         </Show>
     );
 };

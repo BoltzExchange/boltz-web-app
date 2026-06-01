@@ -4,6 +4,7 @@ import { vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { Side } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
 import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
 import {
@@ -31,17 +32,19 @@ vi.mock("boltz-swaps/invoice", async () => {
 
 vi.mock("../../src/utils/validation", async () => {
     const actual = await vi.importActual("../../src/utils/validation");
+    const validateInvoice = vi.fn((inputValue: string) => {
+        if (inputValue.startsWith("lnzeroamt")) {
+            throw new Error("invalid_0_amount");
+        }
+        if (inputValue.startsWith("ln")) {
+            return 1000;
+        }
+        throw new Error("invalid_invoice");
+    });
+
     return {
         ...actual,
-        validateInvoice: vi.fn((inputValue: string) => {
-            if (inputValue.startsWith("lnzeroamt")) {
-                throw new Error("invalid_0_amount");
-            }
-            if (inputValue.startsWith("ln")) {
-                return 1000;
-            }
-            throw new Error("invalid_invoice");
-        }),
+        validateInvoice,
     };
 });
 
@@ -145,6 +148,75 @@ describe("InvoiceInput", () => {
         signals.setSendAmount(signals.sendAmount().plus(1));
 
         expect(input.value).toEqual(lnurl);
+    });
+
+    test("should keep BOLT12 offers when the send amount changes", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        setPairAssets(BTC, LN);
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLInputElement;
+        const offer =
+            "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+
+        fireEvent.input(input, {
+            target: { value: offer },
+        });
+
+        await waitFor(() => {
+            expect(signals.bolt12Offer()).toEqual(offer);
+        });
+
+        signals.setAmountChanged(Side.Send);
+        signals.setSendAmount(BigNumber(10_000));
+        signals.setReceiveAmount(BigNumber(9_900));
+        signals.setAmountValid(true);
+
+        await waitFor(() => {
+            expect(signals.invoice()).toEqual(offer);
+            expect(input.value).toEqual(offer);
+        });
+    });
+
+    test("should clear amounts when changing to a BOLT12 offer", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        setPairAssets(BTC, LN);
+
+        signals.setSendAmount(BigNumber(10_000));
+        signals.setReceiveAmount(BigNumber(9_900));
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLInputElement;
+        const offer =
+            "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+
+        fireEvent.input(input, {
+            target: { value: offer },
+        });
+
+        await waitFor(() => {
+            expect(signals.bolt12Offer()).toEqual(offer);
+            expect(signals.sendAmount().isZero()).toEqual(true);
+            expect(signals.receiveAmount().isZero()).toEqual(true);
+        });
     });
 
     test.each`

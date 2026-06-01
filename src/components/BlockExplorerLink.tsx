@@ -26,12 +26,16 @@ const claimTxLabel = (explorer: ExplorerKind | undefined) =>
         ? "bridge_status"
         : undefined;
 
+const getLockupTxHash = (swap: SomeSwap) =>
+    swap.lockupTx ?? swap.commitmentLockupTxHash;
+
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
     blinded: Accessor<string | undefined>;
 }) => {
     const hasBeenClaimed = () => props.swap().claimTx !== undefined;
+    const lockupTxHash = () => getLockupTxHash(props.swap());
 
     const asset = () =>
         hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
@@ -67,11 +71,11 @@ const ChainSwapLink = (props: {
             }>
             {/* Showing addresses makes no sense for EVM based chains.
                 The lockup tx is a regular EVM tx, not a LayerZero message. */}
-            <Show when={props.swap().lockupTx}>
+            <Show when={lockupTxHash()}>
                 <BlockExplorer
                     asset={asset()}
                     kind={BlockExplorerTargetKind.Tx}
-                    id={props.swap().lockupTx!}
+                    id={lockupTxHash()!}
                     typeLabel={"lockup_tx"}
                 />
             </Show>
@@ -84,7 +88,7 @@ const BlockExplorerLinkInner = (props: {
     swapStatus: Accessor<string>;
 }) => {
     const { deriveKey } = useGlobalContext();
-
+    const lockupTxHash = () => getLockupTxHash(props.swap());
     const bridgeSendPending = () => {
         const s = props.swap();
         return (
@@ -163,13 +167,13 @@ const BlockExplorerLinkInner = (props: {
                         <Show
                             when={props.swap().claimTx !== undefined}
                             fallback={
-                                <Show when={props.swap().lockupTx}>
+                                <Show when={lockupTxHash()}>
                                     <BlockExplorer
                                         asset={getRelevantAssetForSwap(
                                             props.swap(),
                                         )}
                                         kind={BlockExplorerTargetKind.Tx}
-                                        id={props.swap().lockupTx!}
+                                        id={lockupTxHash()!}
                                         typeLabel={"lockup_tx"}
                                     />
                                 </Show>

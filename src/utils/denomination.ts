@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import { assetAmountToSats } from "boltz-swaps/evm";
 import { AssetKind } from "boltz-swaps/types";
 
 import { config } from "../config";
@@ -132,6 +133,11 @@ export const convertAmount = (
         return amount;
     }
 };
+
+export const baseAssetAmountToInternal = (asset: string, amount: bigint) =>
+    getDecimals(asset).isErc20
+        ? BigNumber(amount.toString())
+        : BigNumber(assetAmountToSats(amount, asset).toString());
 
 export const calculateDigits = (
     maximum: number,

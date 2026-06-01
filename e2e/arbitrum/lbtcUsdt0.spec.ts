@@ -1,20 +1,15 @@
 import type { Page } from "@playwright/test";
-import { oftAbi } from "boltz-swaps/oft";
 import {
     type Address,
-    type Chain,
-    type Hex,
     type PublicClient,
     createWalletClient,
     getAddress,
     http,
-    isAddressEqual,
-    parseEther,
-    parseEventLogs,
     parseUnits,
 } from "viem";
 
 import dict from "../../src/i18n/i18n";
+import { expect, test } from "../fixtures/arbitrum";
 import { injectWalletProvider } from "../fixtures/ethereum";
 import {
     elementsSendToAddress,
@@ -24,136 +19,29 @@ import {
 } from "../utils";
 import {
     actionTimeout,
-    approveAndSend,
+    clearEoaDelegation,
+    clickSendBridge,
     connectWallet,
     createEthereumClient,
     createSwap,
     describeArbitrumE2e,
-    erc20Abi,
     ethereumE2eChain,
     ethereumRpcUrl,
-    expect,
+    expectEthereumWalletReady,
+    expectOftSendTx,
+    fullFlowTestTimeout,
+    fundArbitrumStablesE2eWallet,
+    fundEthereumStablesE2eWallet,
     getRegtestTokenAddress,
     getStablesE2eWalletAddress,
     getTokenBalance,
     lbtcSendAmount,
-    stablesFundingAmount,
-    stablesFundingSource,
-    test,
     testTimeout,
     usdt0EthSendAmount,
     waitForBridgeTxHash,
     waitForDexQuote,
     waitForEthereumRpc,
 } from "./shared";
-
-// Funds the test wallet with gas + USDT0-ETH by impersonating a whale on the
-// Anvil fork, so the test does not depend on an external funding container.
-const fundStablesE2eWallet = async (
-    publicClient: PublicClient,
-    wallet: Address,
-) => {
-    const token = getRegtestTokenAddress("USDT0-ETH");
-    const tokenCode = await publicClient.getCode({ address: token });
-    if (tokenCode === undefined || tokenCode === "0x") {
-        throw new Error("Ethereum e2e fork is missing the USDT0-ETH contract");
-    }
-
-    if (
-        (await getTokenBalance(publicClient, token, wallet)) >=
-        parseUnits(usdt0EthSendAmount, 6)
-    ) {
-        return;
-    }
-
-    await publicClient.request({
-        method: "anvil_setBalance" as never,
-        params: [wallet, "0x" + parseEther("10").toString(16)] as never,
-    });
-    await publicClient.request({
-        method: "anvil_setBalance" as never,
-        params: [
-            stablesFundingSource,
-            "0x" + parseEther("1").toString(16),
-        ] as never,
-    });
-    await publicClient.request({
-        method: "anvil_impersonateAccount" as never,
-        params: [stablesFundingSource] as never,
-    });
-
-    try {
-        const walletClient = createWalletClient({
-            account: stablesFundingSource,
-            chain: ethereumE2eChain,
-            transport: http(ethereumRpcUrl(), { timeout: actionTimeout }),
-        });
-        const hash = await walletClient.writeContract({
-            address: token,
-            abi: erc20Abi,
-            functionName: "transfer",
-            args: [wallet, stablesFundingAmount],
-        });
-        await publicClient.waitForTransactionReceipt({ hash });
-    } finally {
-        await publicClient.request({
-            method: "anvil_stopImpersonatingAccount" as never,
-            params: [stablesFundingSource] as never,
-        });
-    }
-};
-
-const expectEthereumWalletReady = async (
-    publicClient: PublicClient,
-    owner: Address,
-) => {
-    const token = getRegtestTokenAddress("USDT0-ETH");
-
-    expect(await publicClient.getBalance({ address: owner })).toBeGreaterThan(
-        0n,
-    );
-    expect(
-        await getTokenBalance(publicClient, token, owner),
-    ).toBeGreaterThanOrEqual(parseUnits(usdt0EthSendAmount, 6));
-};
-
-const expectOftSendTx = async (
-    publicClient: PublicClient,
-    txHash: Hex,
-    walletAddress: Address,
-) => {
-    const transaction = await publicClient.getTransaction({
-        hash: txHash,
-    });
-    const receipt = await publicClient.waitForTransactionReceipt({
-        hash: txHash,
-        timeout: actionTimeout,
-    });
-    expect(receipt.status).toBe("success");
-
-    const [sent] = parseEventLogs({
-        abi: oftAbi,
-        eventName: "OFTSent",
-        logs: receipt.logs,
-    });
-
-    expect(sent).toBeDefined();
-    expect(isAddressEqual(sent.address, getAddress(transaction.to!))).toBe(
-        true,
-    );
-    expect(isAddressEqual(sent.args.fromAddress, walletAddress)).toBe(true);
-    expect(sent.args.amountSentLD).toBeGreaterThan(0n);
-    expect(sent.args.amountReceivedLD).toBeGreaterThan(0n);
-};
-
-// Whale holding USD₮0 on the Arbitrum fork; impersonated to fund the test
-// wallet so it can send a native USDT0 (Arbitrum) commitment swap.
-const usdt0FundingSource = getAddress(
-    "0xF977814e90dA44bFA03b6295A0616a897441aceC",
-);
-const usdt0FundingAmount = parseUnits("500", 6);
-
-type ArbitrumE2e = { chain: Chain; publicClient: PublicClient; rpcUrl: string };
 
 const arbWalletAccountIndex = 3;
 
@@ -171,58 +59,6 @@ const getArbWalletAddress = async (
         );
     }
     return getAddress(walletAddress);
-};
-
-const clearEoaDelegation = async (
-    publicClient: PublicClient,
-    account: Address,
-) => {
-    await publicClient.request({
-        method: "anvil_setCode" as never,
-        params: [account, "0x"] as never,
-    });
-};
-
-const fundArbUsdt0Wallet = async (arbitrum: ArbitrumE2e, wallet: Address) => {
-    const token = getRegtestTokenAddress("USDT0");
-    if (
-        (await getTokenBalance(arbitrum.publicClient, token, wallet)) >=
-        parseUnits(usdt0EthSendAmount, 6)
-    ) {
-        return;
-    }
-
-    await arbitrum.publicClient.request({
-        method: "anvil_setBalance" as never,
-        params: [
-            usdt0FundingSource,
-            `0x${parseEther("1").toString(16)}`,
-        ] as never,
-    });
-    await arbitrum.publicClient.request({
-        method: "anvil_impersonateAccount" as never,
-        params: [usdt0FundingSource] as never,
-    });
-
-    try {
-        const walletClient = createWalletClient({
-            account: usdt0FundingSource,
-            chain: arbitrum.chain,
-            transport: http(arbitrum.rpcUrl, { timeout: actionTimeout }),
-        });
-        const hash = await walletClient.writeContract({
-            address: token,
-            abi: erc20Abi,
-            functionName: "transfer",
-            args: [wallet, usdt0FundingAmount],
-        });
-        await arbitrum.publicClient.waitForTransactionReceipt({ hash });
-    } finally {
-        await arbitrum.publicClient.request({
-            method: "anvil_stopImpersonatingAccount" as never,
-            params: [usdt0FundingSource] as never,
-        });
-    }
 };
 
 const lockupCommitment = async (page: Page, walletAddress: Address) => {
@@ -254,7 +90,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
         recipientAddress,
         page,
     }) => {
-        test.setTimeout(testTimeout);
+        test.setTimeout(fullFlowTestTimeout);
 
         const token = getRegtestTokenAddress("USDT0");
         const balanceBefore = await getTokenBalance(
@@ -292,7 +128,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
 
         await expect(
             page.locator("div[data-status='transaction.claimed']"),
-        ).toBeVisible({ timeout: actionTimeout });
+        ).toBeVisible({ timeout: fullFlowTestTimeout });
 
         const balanceAfter = await getTokenBalance(
             arbitrum.publicClient,
@@ -308,9 +144,9 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
     }) => {
         test.setTimeout(testTimeout);
 
-        // Requesting the arbitrum fixture runs the worker setup (RPC wait and
-        // backend TBTC liquidity) needed before the USDT0 -> TBTC DEX hop.
-        void arbitrum;
+        expect(await arbitrum.publicClient.getChainId()).toBe(
+            arbitrum.chain.id,
+        );
 
         const ethereum = createEthereumClient();
         await waitForEthereumRpc(ethereum);
@@ -322,7 +158,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
             transport: http(ethereumRpcUrl(), { timeout: actionTimeout }),
         });
 
-        await fundStablesE2eWallet(ethereum, walletAddress);
+        await fundEthereumStablesE2eWallet(ethereum, walletAddress);
         await expectEthereumWalletReady(ethereum, walletAddress);
         await injectWalletProvider({
             page,
@@ -346,7 +182,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
             usdt0EthSendAmount,
             { walletAddress },
         );
-        await approveAndSend(page, walletAddress);
+        await clickSendBridge(page, walletAddress);
 
         await expectOftSendTx(
             ethereum,
@@ -363,7 +199,10 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
 
         const walletAddress = await getArbWalletAddress(arbitrum.publicClient);
         await clearEoaDelegation(arbitrum.publicClient, walletAddress);
-        await fundArbUsdt0Wallet(arbitrum, walletAddress);
+        await fundArbitrumStablesE2eWallet(
+            arbitrum.publicClient,
+            walletAddress,
+        );
         await injectWalletProvider({
             page,
             publicClient: arbitrum.publicClient,

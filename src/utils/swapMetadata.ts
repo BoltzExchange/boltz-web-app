@@ -130,8 +130,15 @@ const parseObject =
         return result as T;
     };
 
+const swapHopTypes = {
+    Submarine: SwapType.Submarine,
+    Reverse: SwapType.Reverse,
+    Chain: SwapType.Chain,
+    Dex: SwapType.Dex,
+} as const;
+
 const parseHopMetadata = parseObject<EncodedHop>({
-    type: parseEnum(SwapType),
+    type: parseEnum(swapHopTypes),
     from: parseString,
     to: parseString,
     dexDetails: parseOptional(

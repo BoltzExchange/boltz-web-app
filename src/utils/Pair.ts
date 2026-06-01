@@ -63,11 +63,19 @@ const isRoutedAsset = (asset: string) =>
     getRouteViaAsset(asset) !== undefined ||
     config.assets?.[asset]?.bridge !== undefined;
 
-/** Convert an internal amount to EVM base units for the DEX API. */
-const toDexAmount = (amount: number, asset: string): bigint =>
-    isRoutedAsset(asset)
+const toIntegerAmount = (amount: number | BigNumber) =>
+    typeof amount === "number"
         ? BigInt(Math.round(amount))
-        : satsToAssetAmount(amount, asset);
+        : BigInt(amount.toFixed(0));
+
+/** Convert an internal amount to EVM base units for the DEX API. */
+export const toDexAmount = (
+    amount: number | BigNumber,
+    asset: string,
+): bigint =>
+    isRoutedAsset(asset)
+        ? toIntegerAmount(amount)
+        : satsToAssetAmount(toIntegerAmount(amount), asset);
 
 /** Convert an EVM base unit amount from the DEX API back to internal representation. */
 const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
@@ -88,7 +96,7 @@ export const enum BridgeMessagingFeeDisplayMode {
 }
 
 type Hop = {
-    type: SwapType;
+    type: Exclude<SwapType, SwapType.Commitment>;
     from: string;
     to: string;
     pair?:
@@ -462,7 +470,7 @@ export default class Pair {
         }
 
         if (firstHop.type !== SwapType.Chain) {
-            blockers.push(`first hop type is ${firstHop.type}`);
+            blockers.push("first hop is not a chain swap");
         }
 
         if (isEvmAsset(firstHop.from)) {
@@ -567,6 +575,10 @@ export default class Pair {
         }
 
         return undefined;
+    }
+
+    public get hasPreBoltzDex() {
+        return this.dexHopBeforeBoltz !== undefined;
     }
 
     private get postBridgeDexHop(): Hop | undefined {

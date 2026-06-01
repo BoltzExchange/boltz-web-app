@@ -109,7 +109,7 @@ export const getPair = <
 ): T | undefined => {
     if (pairs === undefined) return undefined;
 
-    if (swapType === SwapType.Dex) {
+    if (swapType === SwapType.Dex || swapType === SwapType.Commitment) {
         return undefined;
     }
     const pairSwapType = pairs[swapType];
@@ -226,6 +226,10 @@ export const getDestinationAddress = (
     swap: SomeSwap | null | undefined,
 ): string => {
     if (swap === null || swap === undefined) {
+        return "";
+    }
+
+    if (swap.type === SwapType.Commitment) {
         return "";
     }
 
