@@ -6,12 +6,15 @@ import { Show, createSignal, onCleanup, onMount } from "solid-js";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
+import { validateAddress } from "../utils/compat";
+import { extractAddress } from "../utils/invoice";
 
 const QrScan = () => {
     let qrRef!: HTMLVideoElement;
     let qrScanner: QrScanner | undefined;
 
-    const { pair, setInvoice, setOnchainAddress } = useCreateContext();
+    const { pair, setAddressValid, setInvoice, setOnchainAddress } =
+        useCreateContext();
     const { t, notify } = useGlobalContext();
 
     const [camera, setCamera] = createSignal<boolean>(false);
@@ -28,13 +31,18 @@ const QrScan = () => {
             qrScanner = new QrScanner(
                 qrRef,
                 (result) => {
-                    log.debug("scanned qr code:", result.data);
+                    const scannedValue = result.data.trim();
+                    log.debug("scanned qr code:", scannedValue);
                     if (pair().swapToCreate?.type === SwapType.Submarine) {
                         setInvoice("");
-                        setInvoice(result.data);
+                        setInvoice(scannedValue);
                     } else {
+                        const address = extractAddress(scannedValue);
                         setOnchainAddress("");
-                        setOnchainAddress(result.data);
+                        setOnchainAddress(address);
+                        setAddressValid(
+                            validateAddress(pair().toAsset, address),
+                        );
                     }
                     stopScan();
                 },
