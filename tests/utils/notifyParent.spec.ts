@@ -35,7 +35,7 @@ describe("useParentNotifier", () => {
 
     test("sends postMessage when embedded mode is active with a parent origin", () => {
         const { notifyParent } = useParentNotifier();
-        const message = { type: "test", data: "hello" };
+        const message = { type: "test" as string, data: "hello" };
 
         notifyParent(message);
 
