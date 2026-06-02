@@ -76,6 +76,46 @@ test.describe("Rescue file", () => {
         await expect(page.getByTestId("copy_address")).toBeVisible();
     });
 
+    test("should open the mnemonic backup with ?backup=mnemonic", async ({
+        page,
+    }) => {
+        await page.goto("/");
+        await setupSwapAssets(page);
+        await fillSwapDetails(page);
+
+        await expect(page).toHaveURL(/\/swap\/.+/);
+        const swapId = getCurrentSwapId(page);
+        expect(swapId).toBeTruthy();
+
+        // By default the backup flow offers the downloadable rescue file
+        await expect(
+            page.getByRole("heading", {
+                name: dict.en.download_boltz_rescue_key,
+                exact: true,
+            }),
+        ).toBeVisible();
+
+        // Re-opening the same swap with the param forces the 12 word path
+        await page.goto(`/swap/${swapId}?backup=mnemonic`);
+
+        await expect(
+            page.getByRole("heading", {
+                name: dict.en.backup_boltz_rescue_key,
+                exact: true,
+            }),
+        ).toBeVisible();
+        await expect(page.locator(".mnemonic-item")).toHaveCount(12);
+        await expect(
+            page.getByRole("button", { name: dict.en.user_saved_key }),
+        ).toBeVisible();
+        await expect(
+            page.getByRole("heading", {
+                name: dict.en.download_boltz_rescue_key,
+                exact: true,
+            }),
+        ).toBeHidden();
+    });
+
     test("should show entries for swaps with no lockup transaction as disabled", async ({
         page,
     }) => {

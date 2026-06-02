@@ -157,6 +157,7 @@ const renderPay = (backupDone: boolean = true) => {
 describe("Pay", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        window.history.replaceState({}, "", "/");
         swapsGetItemMock.mockResolvedValue({
             id: "123",
             type: SwapType.Chain,
@@ -257,6 +258,26 @@ describe("Pay", () => {
 
         await screen.findByText(dict.en.download_boltz_rescue_key);
         expect(mockGetSwapStatus).not.toHaveBeenCalled();
+    });
+
+    test("should start backup flow on mnemonic step when ?backup=mnemonic is set", async () => {
+        window.history.replaceState({}, "", "/?backup=mnemonic");
+
+        renderPay(false);
+
+        await screen.findByText(dict.en.backup_boltz_rescue_key);
+        expect(
+            screen.queryByText(dict.en.download_boltz_rescue_key),
+        ).toBeNull();
+    });
+
+    test("should ignore unknown backup URL param values", async () => {
+        window.history.replaceState({}, "", "/?backup=bogus");
+
+        renderPay(false);
+
+        await screen.findByText(dict.en.download_boltz_rescue_key);
+        expect(screen.queryByText(dict.en.backup_boltz_rescue_key)).toBeNull();
     });
 
     test("should fetch status once backup has been verified", async () => {
