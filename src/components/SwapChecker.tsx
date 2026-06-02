@@ -62,9 +62,19 @@ class BoltzWebSocket {
 
         ids.forEach((id) => this.relevantIds.add(id));
         if (this.ws === undefined || this.ws.readyState !== WebSocket.OPEN) {
+            log.debug("WebSocket subscription deferred", {
+                swapIds: ids,
+                readyState: this.ws?.readyState,
+                force,
+            });
             return;
         }
 
+        log.debug("Sending WebSocket subscription", {
+            swapIds: ids,
+            readyState: this.ws.readyState,
+            force,
+        });
         this.ws.send(
             JSON.stringify({
                 op: "subscribe",
@@ -83,10 +93,14 @@ class BoltzWebSocket {
             this.ws = new WebSocket(BoltzWebSocket.formatWsUrl(url));
 
             this.ws.onopen = () => {
+                log.debug("WebSocket opened");
                 this.subscribeUpdates(
                     Array.from(this.relevantIds.values()),
                     true,
                 );
+            };
+            this.ws.onerror = (error) => {
+                log.error("WebSocket error", error);
             };
             this.ws.onclose = (error) => {
                 log.warn("WebSocket closed", error);
