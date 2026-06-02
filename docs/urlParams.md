@@ -94,3 +94,12 @@ from the URL after being applied. Available values are:
 
 - `USD`
 - `EUR`
+
+## Backup
+
+On the swap status page, `backup` selects which rescue key backup method is
+shown when a backup of the rescue key is required. By default the downloadable
+rescue file is offered; the value below opens the 12 word mnemonic backup
+instead. Available value is:
+
+- `mnemonic`

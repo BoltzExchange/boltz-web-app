@@ -20,6 +20,7 @@ export enum UrlParam {
     Embedded = "embedded",
     Theme = "theme",
     LockOutput = "lockOutput",
+    Backup = "backup",
 }
 
 export enum AssetSelection {

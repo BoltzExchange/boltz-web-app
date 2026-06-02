@@ -16,7 +16,7 @@ import {
     onCleanup,
 } from "solid-js";
 
-import BackupFlow from "../components/BackupFlow";
+import BackupFlow, { BackupStep } from "../components/BackupFlow";
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
@@ -35,6 +35,7 @@ import {
     refundableAssets,
 } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
+import { UrlParam } from "../consts/Enums";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -67,10 +68,17 @@ import {
     isRefundableSwapType,
 } from "../utils/rescue";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { getUrlParam } from "../utils/urlParams";
 
 const Pay = () => {
     const params = useParams();
     const navigate = useNavigate();
+
+    const initialBackupStep =
+        getUrlParam(UrlParam.Backup) === BackupStep.Mnemonic
+            ? BackupStep.Mnemonic
+            : undefined;
+
     const location = useLocation<{
         timedOutRefundable?: boolean | undefined;
         waitForSwapTimeout?: boolean | undefined;
@@ -413,7 +421,10 @@ const Pay = () => {
                 when={!backupVerificationRequired()}
                 fallback={
                     <div class="frame">
-                        <BackupFlow resetKey={params.id} />
+                        <BackupFlow
+                            resetKey={params.id}
+                            initialStep={initialBackupStep}
+                        />
                         <SettingsMenu />
                     </div>
                 }>
