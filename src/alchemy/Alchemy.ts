@@ -3,7 +3,7 @@ import log from "loglevel";
 import { type Address, type Hash, type Hex, toHex } from "viem";
 
 import { config } from "../config";
-import { isTor } from "../configs/base";
+import { chooseUrl, isTor } from "../configs/base";
 import type { Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
 import {
@@ -64,6 +64,10 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     params: unknown[],
 ): Promise<T> => {
     let response: Response;
+    const sponsorUrl = chooseUrl(config.gasSponsor);
+    if (sponsorUrl === undefined) {
+        throw new Error("missing gas sponsor url in config");
+    }
     const timeoutMs = isTor() ? 60_000 : defaultTimeoutDuration;
     const { opts, requestTimeout } = constructRequestOptions(
         {
@@ -80,7 +84,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     );
 
     try {
-        response = await fetch(config.gasSponsor, opts);
+        response = await fetch(sponsorUrl, opts);
     } catch (error) {
         const isAbortError =
             (error instanceof DOMException && error.name === "AbortError") ||
