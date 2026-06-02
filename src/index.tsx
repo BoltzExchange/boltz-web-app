@@ -81,6 +81,7 @@ window.addEventListener("error", resourceErrorHandler, true);
 const urlParams = new URLSearchParams(window.location.search);
 const embeddedParam = urlParams.get("embedded");
 const themeParam = urlParams.get("theme");
+const parentOriginParam = urlParams.get("parentOrigin");
 
 const isEmbedded = embeddedParam === "true";
 const validThemes = ["default", "pro", "light"];
@@ -101,7 +102,9 @@ const App = (props: RouteSectionProps) => {
     const isEmbeddedRoot = () => isEmbedded && location.pathname === "/";
 
     return (
-        <GlobalProvider initialEmbeddedMode={isEmbedded}>
+        <GlobalProvider
+            initialEmbeddedMode={isEmbedded}
+            initialParentOrigin={parentOriginParam ?? undefined}>
             <FiatProvider>
                 <Web3SignerProvider>
                     <WalletConnect />

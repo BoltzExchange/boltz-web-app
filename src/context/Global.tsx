@@ -102,6 +102,8 @@ export type GlobalContextType = {
     setBitcoinOnly: Setter<boolean>;
     embeddedMode: Accessor<boolean>;
     setEmbeddedMode: Setter<boolean>;
+    parentOrigin: Accessor<string | undefined>;
+    setParentOrigin: Setter<string | undefined>;
     // functions
     t: tFn;
     notify: notifyFn;
@@ -147,6 +149,7 @@ const GlobalContext = createContext<GlobalContextType>();
 const GlobalProvider = (props: {
     children: JSX.Element;
     initialEmbeddedMode?: boolean;
+    initialParentOrigin?: string;
 }) => {
     const [online, setOnline] = createSignal<boolean>(true);
     const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
@@ -511,6 +514,10 @@ const GlobalProvider = (props: {
         props.initialEmbeddedMode ?? false,
     );
 
+    const [parentOrigin, setParentOrigin] = createSignal<string | undefined>(
+        props.initialParentOrigin,
+    );
+
     createEffect(() => {
         if (isMobile()) {
             setZeroConf(true);
@@ -594,6 +601,8 @@ const GlobalProvider = (props: {
                 setBitcoinOnly,
                 embeddedMode,
                 setEmbeddedMode,
+                parentOrigin,
+                setParentOrigin,
                 // functions
                 t,
                 notify,
