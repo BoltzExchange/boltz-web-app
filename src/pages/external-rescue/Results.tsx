@@ -7,10 +7,9 @@ import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
 } from "../../components/Pagination";
-import { SwapIcons } from "../../components/SwapIcons";
+import { SwapIcons, SwapListAssetIcon } from "../../components/SwapIcons";
 import { getSwapListHeight } from "../../components/SwapList";
 import { hiddenInformation } from "../../components/settings/PrivacyMode";
-import { getAssetDisplaySymbol } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { formatAmount, formatDenomination } from "../../utils/denomination";
 import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
@@ -27,7 +26,7 @@ import type { ExternalRescueSearch } from "./useExternalRescueSearch";
 
 const EvmAssetIcon = (props: { asset: string }) => (
     <span class="swaplist-asset swaplist-asset-single">
-        <span data-asset={getAssetDisplaySymbol(props.asset)} />
+        <SwapListAssetIcon asset={props.asset} />
     </span>
 );
 

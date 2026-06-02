@@ -10,6 +10,7 @@ import {
     USDT0,
     WBTC,
     getAssetDisplaySymbol,
+    getNetworkBadge,
 } from "../../consts/Assets";
 import type { tFn } from "../../context/Global";
 import { RescueAction } from "../../utils/rescue";
@@ -31,28 +32,24 @@ export const recoveryOptions: RecoveryOption[] = [
     {
         asset: TBTC,
         className: "asset-TBTC",
-        network: "arbitrum",
         actions: [RescueAction.Refund, RescueAction.Claim],
         methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
     },
     {
         asset: WBTC,
         className: "asset-WBTC",
-        network: "arbitrum",
         actions: [RescueAction.Refund, RescueAction.Claim],
         methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
     },
     {
         asset: USDT0,
         className: "asset-USDT",
-        network: "arbitrum",
         actions: [RescueAction.Refund, RescueAction.Claim],
         methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
     },
     {
         asset: USDC,
         className: "asset-USDC",
-        network: "arbitrum",
         actions: [RescueAction.Refund, RescueAction.Claim],
         methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
     },
@@ -116,7 +113,9 @@ const RequirementIcon = (props: {
 );
 
 const AssetIcon = (props: RecoveryOption) => (
-    <span class={`asset ${props.className}`} data-network={props.network}>
+    <span
+        class={`asset ${props.className}`}
+        data-network={getNetworkBadge(props.asset)}>
         <span class="icon" />
     </span>
 );

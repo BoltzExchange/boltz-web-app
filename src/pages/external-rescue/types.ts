@@ -28,7 +28,6 @@ export type RecoveryAction = RescueAction.Claim | RescueAction.Refund;
 export type RecoveryOption = {
     asset: string;
     className: string;
-    network?: string;
     actions: RecoveryAction[];
     methods: RecoveryMethod[];
 };
