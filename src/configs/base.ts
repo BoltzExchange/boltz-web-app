@@ -22,7 +22,10 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
-    gasSponsor: "https://sponsor.ccxp.space/",
+    gasSponsor: {
+        normal: "https://sponsor.ccxp.space/",
+        tor: "http://bcyxkoqqofgnygmajez5rmpk2ne3bbq3p4l2c6yk57cilvfm4pnbp6ad.onion/",
+    },
     supportUrl: "https://support.boltz.exchange/hc/center",
     twitterUrl: "https://twitter.com/boltzhq",
     githubUrl: "https://github.com/BoltzExchange",
