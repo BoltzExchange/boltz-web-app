@@ -103,3 +103,30 @@ rescue file is offered; the value below opens the 12 word mnemonic backup
 instead. Available value is:
 
 - `mnemonic`
+
+## Parent origin
+
+`parentOrigin` sets the target origin for `postMessage` notifications sent to
+the parent window when the app is embedded as an iframe. It must be used
+alongside `embedded=true`. When a swap reaches a final status (success or
+failure), the app sends a message to `window.parent` with the swap ID and
+status:
+
+```json
+{
+    "type": "boltz-swap-status",
+    "swapId": "abc123",
+    "status": "invoice.settled"
+}
+```
+
+The parent page should listen for these messages and validate the origin:
+
+```javascript
+window.addEventListener("message", (event) => {
+    if (event.origin !== "https://boltz.exchange") return;
+    if (event.data?.type === "boltz-swap-status") {
+        // Handle swap completion
+    }
+});
+```

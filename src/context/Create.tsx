@@ -245,6 +245,7 @@ const handleUrlParams = (
         UrlParam.Embedded,
         UrlParam.Theme,
         UrlParam.LockOutput,
+        UrlParam.ParentOrigin,
     ];
 
     if (

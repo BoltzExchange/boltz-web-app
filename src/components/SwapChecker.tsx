@@ -13,6 +13,7 @@ import { useGlobalContext } from "../context/Global";
 import { type SwapStatusTransaction, usePayContext } from "../context/Pay";
 import { formatError } from "../utils/errors";
 import { getApiUrl } from "../utils/helper";
+import { useParentNotifier } from "../utils/notifyParent";
 import type { SomeSwap } from "../utils/swapCreator";
 
 type SwapStatus = {
@@ -164,6 +165,7 @@ export const SwapChecker = () => {
         shouldIgnoreBackendStatus,
     } = usePayContext();
     const { updateSwapStatus, getSwap, getSwaps } = useGlobalContext();
+    const { notifyParent } = useParentNotifier();
 
     let ws: BoltzWebSocket | undefined = undefined;
 
@@ -211,6 +213,14 @@ export const SwapChecker = () => {
         if (data.status) {
             updatePendingSwaps(currentSwap, data);
             await updateSwapStatus(currentSwap.id, data.status);
+
+            if (swapStatusFinal.includes(data.status)) {
+                notifyParent({
+                    type: "boltz-swap-status",
+                    swapId: currentSwap.id,
+                    status: data.status,
+                });
+            }
         }
     };
 

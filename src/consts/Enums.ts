@@ -21,6 +21,7 @@ export enum UrlParam {
     Theme = "theme",
     LockOutput = "lockOutput",
     Backup = "backup",
+    ParentOrigin = "parentOrigin",
 }
 
 export enum AssetSelection {
