@@ -23,7 +23,9 @@ $size: 40px;
         background-image: vars.$liquid_icon;
     }
     &[data-asset="RBTC"] span {
-        background-image: vars.$rootstock_icon;
+        background-image: vars.$rbtc_icon;
+        background-size: 80%;
+        background-position: center;
     }
     img {
         width: 300px;

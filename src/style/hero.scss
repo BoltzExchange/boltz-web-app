@@ -96,6 +96,11 @@ h3 {
         &.padded {
             transform: scale(1.037);
         }
+
+        &.rbtc {
+            padding: 4px;
+            box-sizing: border-box;
+        }
     }
 }
 .hero-icons-break {

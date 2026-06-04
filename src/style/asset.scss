@@ -78,7 +78,9 @@
 
 .asset-RBTC {
     .icon {
-        background-image: vars.$rootstock_icon;
+        background-image: vars.$rbtc_icon;
+        background-size: 78%;
+        background-position: center;
     }
     .asset-text:before {
         content: "RBTC";

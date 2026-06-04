@@ -112,7 +112,9 @@
     background-image: vars.$liquid_icon;
 }
 .swaplist-asset-static-icon[data-asset="RBTC"] {
-    background-image: vars.$rootstock_icon;
+    background-image: vars.$rbtc_icon;
+    background-size: 48%;
+    background-position: center;
 }
 .swaplist-asset-static-icon[data-asset="TBTC"] {
     background-image: vars.$tbtc_icon;
