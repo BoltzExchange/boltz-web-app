@@ -34,7 +34,7 @@
         "playwright:install": "playwright install --with-deps chromium",
         "dev": "vite",
         "preview": "vite preview",
-        "build": "./build.py && vite build; cp dist/index.html dist/404.html",
+        "build": "bun --filter boltz-swaps build && ./build.py && vite build; cp dist/index.html dist/404.html",
         "build:regular": "bun run index-template-vars.mjs --regular && bun run build",
         "build:pro": "bun run index-template-vars.mjs --pro && bun run build",
         "check:html-template": "bun run index-template-vars.mjs --regular && bun run index-template-vars.mjs --pro",

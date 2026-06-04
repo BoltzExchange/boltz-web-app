@@ -20,6 +20,10 @@ import { formatError, isWalletRejectionError } from "../errors.ts";
 import { prefix0x } from "../evm/prefix0x.ts";
 import { getLogger } from "../logger.ts";
 import {
+    getPhantomSimulationWarningComplianceDebugInfo,
+    getSolanaVersionedTransactionSummaryDebugInfo,
+} from "../solana/debug.ts";
+import {
     derivePda,
     formatSolanaLogsMessage,
     getConnectedSolanaWalletAddress,
@@ -233,8 +237,8 @@ export const getSolanaLegacyMeshContext = async ({
     storeAddress,
     walletProvider,
 }: SolanaLegacyMeshConfig): Promise<Context> => {
-    const modules = await lazySolanaOft.get();
     try {
+        const modules = await lazySolanaOft.get();
         const connection = await getSolanaConnection(asset);
         const accountInfo = await getSolanaAccountInfo(
             asset,
@@ -250,6 +254,7 @@ export const getSolanaLegacyMeshContext = async ({
             connection,
             walletProvider,
         );
+
         const storeInfo = modules.generated
             .getOFTStoreDecoder()
             .decode(accountInfo.data);
@@ -261,6 +266,7 @@ export const getSolanaLegacyMeshContext = async ({
         )
             ? String(storeInfo.alt.value)
             : undefined;
+        const quotePayer = await getQuotePayer(asset, walletProvider);
 
         return {
             modules,
@@ -279,15 +285,16 @@ export const getSolanaLegacyMeshContext = async ({
             tokenMint,
             tokenEscrow,
             endpointProgram,
-            quotePayer: await getQuotePayer(asset, walletProvider),
+            quotePayer,
             addressLookupTableAddress,
         };
     } catch (error) {
-        getLogger().warn(
-            "Failed to initialize Solana OFT context",
-            asset,
-            formatError(error),
-        );
+        getLogger().warn("Failed to initialize Solana OFT context", {
+            sourceAsset: asset,
+            programAddress,
+            storeAddress,
+            formattedError: formatError(error),
+        });
         throw new Error(
             `Failed to initialize Solana OFT context for ${asset}: ${formatError(error)}`,
             { cause: error },
@@ -758,7 +765,84 @@ const sendLegacyMesh = async (
             commitment: "confirmed",
         },
     );
+    let exactBlockhashSimulation:
+        | {
+              err: unknown;
+              logs?: string[] | null;
+              returnData?: unknown;
+              unitsConsumed?: number;
+          }
+        | undefined;
+    let exactBlockhashSimulationError: string | undefined;
+    try {
+        const exactBlockhashSimulationResult =
+            await context.connection.simulateTransaction(transaction, {
+                sigVerify: false,
+                replaceRecentBlockhash: false,
+                commitment: "confirmed",
+            });
+        exactBlockhashSimulation = exactBlockhashSimulationResult.value;
+    } catch (error) {
+        exactBlockhashSimulationError = formatError(error);
+        getLogger().warn(
+            "[PHANTOM_DEBUG] Solana OFT exact-blockhash local simulation threw",
+            {
+                sourceAsset: asset,
+                signerAddress,
+                simulationOptions: {
+                    commitment: "confirmed",
+                    replaceRecentBlockhash: false,
+                    sigVerify: false,
+                },
+                formattedError: exactBlockhashSimulationError,
+                rpcEndpoint: context.connection.rpcEndpoint,
+            },
+        );
+    }
+
+    const logPhantomDocsCompliance = async (
+        selectedSigningMethod: "signAndSendTransaction" | "signTransaction",
+        localSignaturesAppliedBeforeWallet: boolean,
+    ) => {
+        // Diagnostic instrumentation must never abort a real send, so any
+        // failure while building the debug payload is swallowed.
+        try {
+            getLogger().info(
+                "[PHANTOM_DEBUG] Solana OFT Phantom compliance evidence",
+                {
+                    sourceAsset: asset,
+                    signerAddress,
+                    selectedSigningMethod,
+                    localSignaturesAppliedBeforeWallet,
+                    transaction:
+                        await getSolanaVersionedTransactionSummaryDebugInfo(
+                            transaction,
+                            { includeSerializedBase64: true },
+                        ),
+                    compliance:
+                        await getPhantomSimulationWarningComplianceDebugInfo({
+                            connection: context.connection,
+                            exactBlockhashSimulation,
+                            exactBlockhashSimulationError,
+                            localSignerPublicKeys: [],
+                            localSignaturesAppliedBeforeWallet,
+                            selectedSigningMethod,
+                            simulation: simulation.value,
+                            transaction,
+                            walletSignerAddress: signerAddress,
+                        }),
+                },
+            );
+        } catch (error) {
+            getLogger().warn(
+                "[PHANTOM_DEBUG] Solana OFT compliance evidence logging failed",
+                { sourceAsset: asset, error: formatError(error) },
+            );
+        }
+    };
+
     if (simulation.value.err !== null) {
+        await logPhantomDocsCompliance("signTransaction", false);
         throw new Error(
             `Simulation failed: ${JSON.stringify(simulation.value.err)}${formatSolanaLogsMessage(simulation.value.logs)}`,
         );
@@ -768,7 +852,19 @@ const sendLegacyMesh = async (
         skipPreflight: true,
         preflightCommitment: "confirmed",
     };
-    const sendWithWallet = async (): Promise<BridgeTransaction> => {
+    const sendWithWallet = async (
+        reason: string,
+    ): Promise<BridgeTransaction> => {
+        await logPhantomDocsCompliance("signAndSendTransaction", false);
+        getLogger().warn(
+            "[PHANTOM_DEBUG] Solana OFT wallet-managed signing fallback",
+            {
+                sourceAsset: asset,
+                signerAddress,
+                selectedSigningMethod: "signAndSendTransaction",
+                reason,
+            },
+        );
         const signature = await walletProvider.signAndSendTransaction(
             transaction,
             sendOptions,
@@ -791,17 +887,47 @@ const sendLegacyMesh = async (
             sender: signerAddress,
             reason: "Connected Solana wallet does not support signing transactions without broadcasting",
         });
-        return await sendWithWallet();
+        return await sendWithWallet("signTransaction method missing");
     }
 
     try {
         let signature: string;
         let serializedSignedTransaction: Uint8Array;
         try {
+            await logPhantomDocsCompliance("signTransaction", false);
             const signedTransaction = await signTransaction(transaction);
+            try {
+                getLogger().info(
+                    "[PHANTOM_DEBUG] Solana OFT wallet returned signed transaction",
+                    {
+                        sourceAsset: asset,
+                        signerAddress,
+                        selectedSigningMethod: "signTransaction",
+                        transaction:
+                            await getSolanaVersionedTransactionSummaryDebugInfo(
+                                signedTransaction as VersionedTransaction,
+                            ),
+                    },
+                );
+            } catch (error) {
+                getLogger().warn(
+                    "[PHANTOM_DEBUG] Solana OFT signed transaction logging failed",
+                    { sourceAsset: asset, error: formatError(error) },
+                );
+            }
             signature = getSignedTransactionSignature(signedTransaction);
             serializedSignedTransaction = signedTransaction.serialize();
         } catch (error) {
+            getLogger().warn(
+                "[PHANTOM_DEBUG] Solana OFT signTransaction failed",
+                {
+                    sourceAsset: asset,
+                    signerAddress,
+                    selectedSigningMethod: "signTransaction",
+                    isWalletRejection: isWalletRejectionError(error),
+                    formattedError: formatError(error),
+                },
+            );
             if (isWalletRejectionError(error)) {
                 throw error;
             }
@@ -811,7 +937,7 @@ const sendLegacyMesh = async (
                 sender: signerAddress,
                 reason: formatError(error),
             });
-            return await sendWithWallet();
+            return await sendWithWallet("signTransaction threw non-rejection");
         }
 
         const pendingSend: PendingSolanaOftBridgeSend = {
@@ -876,6 +1002,15 @@ const sendLegacyMesh = async (
             const logs = await error
                 .getLogs(context.connection)
                 .catch(() => error.logs);
+            getLogger().error(
+                "[PHANTOM_DEBUG] Solana OFT send failed with SendTransactionError",
+                {
+                    sourceAsset: asset,
+                    signerAddress,
+                    formattedError: formatError(error),
+                    logs,
+                },
+            );
             throw new Error(
                 `${error.message}${formatSolanaLogsMessage(logs)}`,
                 {
@@ -883,6 +1018,12 @@ const sendLegacyMesh = async (
                 },
             );
         }
+        getLogger().warn("[PHANTOM_DEBUG] Solana OFT send failed", {
+            sourceAsset: asset,
+            signerAddress,
+            isWalletRejection: isWalletRejectionError(error),
+            formattedError: formatError(error),
+        });
         throw error;
     }
 };
@@ -939,13 +1080,15 @@ export const createSolanaOftContract = (
             await quoteOft(await contextPromise, sendParam),
         quoteSend: async (sendParam, payInLzToken) =>
             await quoteSend(await contextPromise, sendParam, payInLzToken),
-        send: async (sendParam, msgFee, _refundAddress, overrides) =>
-            await sendLegacyMesh(
+        send: async (sendParam, msgFee, refundAddress, overrides) => {
+            void refundAddress;
+            return await sendLegacyMesh(
                 contextConfig.asset,
                 await contextPromise,
                 sendParam,
                 msgFee,
                 overrides?.pendingSendCallbacks,
-            ),
+            );
+        },
     };
 };

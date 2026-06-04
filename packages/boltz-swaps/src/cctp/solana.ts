@@ -15,6 +15,10 @@ import { formatError, isWalletRejectionError } from "../errors.ts";
 import { constructRequestOptions } from "../helper.ts";
 import { getLogger } from "../logger.ts";
 import {
+    getPhantomSimulationWarningComplianceDebugInfo,
+    getSolanaVersionedTransactionSummaryDebugInfo,
+} from "../solana/debug.ts";
+import {
     derivePda,
     formatSolanaLogsMessage,
     getConnectedSolanaWalletAddress,
@@ -162,14 +166,29 @@ export const tryFetchSolburnAllocation = async (
     }
 };
 
-const getContext = async (config: SolanaCctpConfig): Promise<Context> => ({
-    modules: await lazySolanaCctp.get(),
-    asset: config.asset,
-    connection: await getSolanaConnection(config.asset),
-    tokenMint: config.tokenMint,
-    walletProvider: config.walletProvider,
-    ...requireSolanaCctpProgramIds(config.asset),
-});
+const getContext = async (config: SolanaCctpConfig): Promise<Context> => {
+    try {
+        const modules = await lazySolanaCctp.get();
+        const connection = await getSolanaConnection(config.asset);
+        const programIds = requireSolanaCctpProgramIds(config.asset);
+
+        return {
+            modules,
+            asset: config.asset,
+            connection,
+            tokenMint: config.tokenMint,
+            walletProvider: config.walletProvider,
+            ...programIds,
+        };
+    } catch (error) {
+        getLogger().warn("Solana CCTP context init failed", {
+            sourceAsset: config.asset,
+            tokenMint: config.tokenMint,
+            formattedError: formatError(error),
+        });
+        throw error;
+    }
+};
 
 const createTransaction = async (
     context: Context,
@@ -324,12 +343,12 @@ const send = async (
         );
     }
 
+    const { solburnUrl } = getBoltzSwapsConfig();
     // Try to obtain ephemeral keypairs from solburn so the MessageSent rent
     // can be reclaimed 5 days after the burn lands. On any failure (network,
     // service, missing config), fall back to the legacy path: user wallet
     // pays the rent directly via a locally-generated MessageSentEventData
     // and the rent stays stuck on chain.
-    const { solburnUrl } = getBoltzSwapsConfig();
     const allocation = solburnUrl
         ? await tryFetchSolburnAllocation(solburnUrl)
         : null;
@@ -388,6 +407,9 @@ const send = async (
     if (eventRentPayer !== null) {
         signers.push(eventRentPayer);
     }
+    const localSignerPublicKeys = signers.map((signer) =>
+        signer.publicKey.toBase58(),
+    );
 
     const simulation = await context.connection.simulateTransaction(
         transaction,
@@ -397,7 +419,85 @@ const send = async (
             commitment: "confirmed",
         },
     );
+    let exactBlockhashSimulation:
+        | {
+              err: unknown;
+              logs?: string[] | null;
+              returnData?: unknown;
+              unitsConsumed?: number;
+          }
+        | undefined;
+    let exactBlockhashSimulationError: string | undefined;
+    try {
+        const exactBlockhashSimulationResult =
+            await context.connection.simulateTransaction(transaction, {
+                sigVerify: false,
+                replaceRecentBlockhash: false,
+                commitment: "confirmed",
+            });
+        exactBlockhashSimulation = exactBlockhashSimulationResult.value;
+    } catch (error) {
+        exactBlockhashSimulationError = formatError(error);
+        getLogger().warn(
+            "[PHANTOM_DEBUG] Solana CCTP exact-blockhash local simulation threw",
+            {
+                sourceAsset: context.asset,
+                signerAddress,
+                simulationOptions: {
+                    commitment: "confirmed",
+                    replaceRecentBlockhash: false,
+                    sigVerify: false,
+                },
+                formattedError: exactBlockhashSimulationError,
+                rpcEndpoint: context.connection.rpcEndpoint,
+            },
+        );
+    }
+
+    const logPhantomDocsCompliance = async (
+        selectedSigningMethod: "signAndSendTransaction" | "signTransaction",
+        localSignaturesAppliedBeforeWallet: boolean,
+    ) => {
+        // Diagnostic instrumentation must never abort a real send, so any
+        // failure while building the debug payload is swallowed.
+        try {
+            getLogger().info(
+                "[PHANTOM_DEBUG] Solana CCTP Phantom compliance evidence",
+                {
+                    sourceAsset: context.asset,
+                    signerAddress,
+                    selectedSigningMethod,
+                    localSignaturesAppliedBeforeWallet,
+                    localSignerPublicKeys,
+                    transaction:
+                        await getSolanaVersionedTransactionSummaryDebugInfo(
+                            transaction,
+                            { includeSerializedBase64: true },
+                        ),
+                    compliance:
+                        await getPhantomSimulationWarningComplianceDebugInfo({
+                            connection: context.connection,
+                            exactBlockhashSimulation,
+                            exactBlockhashSimulationError,
+                            localSignerPublicKeys,
+                            localSignaturesAppliedBeforeWallet,
+                            selectedSigningMethod,
+                            simulation: simulation.value,
+                            transaction,
+                            walletSignerAddress: signerAddress,
+                        }),
+                },
+            );
+        } catch (error) {
+            getLogger().warn(
+                "[PHANTOM_DEBUG] Solana CCTP compliance evidence logging failed",
+                { sourceAsset: context.asset, error: formatError(error) },
+            );
+        }
+    };
+
     if (simulation.value.err !== null) {
+        await logPhantomDocsCompliance("signTransaction", false);
         throw new Error(
             `Simulation failed: ${JSON.stringify(simulation.value.err)}${formatSolanaLogsMessage(simulation.value.logs)}`,
         );
@@ -407,8 +507,21 @@ const send = async (
         skipPreflight: true,
         preflightCommitment: "confirmed",
     };
-    const sendWithWallet = async (): Promise<BridgeTransaction> => {
+    const sendWithWallet = async (
+        reason: string,
+    ): Promise<BridgeTransaction> => {
         transaction.sign(signers);
+        await logPhantomDocsCompliance("signAndSendTransaction", true);
+        getLogger().warn(
+            "[PHANTOM_DEBUG] Solana CCTP wallet-managed signing fallback",
+            {
+                sourceAsset: context.asset,
+                signerAddress,
+                selectedSigningMethod: "signAndSendTransaction",
+                reason,
+                localSignerPublicKeys,
+            },
+        );
         const signature = await walletProvider.signAndSendTransaction(
             transaction,
             sendOptions,
@@ -431,18 +544,51 @@ const send = async (
             sender: signerAddress,
             reason: "Connected Solana wallet does not support signing transactions without broadcasting",
         });
-        return await sendWithWallet();
+        return await sendWithWallet("signTransaction method missing");
     }
 
     try {
         let signature: string;
         let serializedSignedTransaction: Uint8Array;
         try {
+            await logPhantomDocsCompliance("signTransaction", false);
             const signedTransaction = await signTransaction(transaction);
+            try {
+                getLogger().info(
+                    "[PHANTOM_DEBUG] Solana CCTP wallet returned signed transaction",
+                    {
+                        sourceAsset: context.asset,
+                        signerAddress,
+                        selectedSigningMethod: "signTransaction",
+                        transaction:
+                            await getSolanaVersionedTransactionSummaryDebugInfo(
+                                signedTransaction as VersionedTransaction,
+                            ),
+                    },
+                );
+            } catch (error) {
+                getLogger().warn(
+                    "[PHANTOM_DEBUG] Solana CCTP signed transaction logging failed",
+                    {
+                        sourceAsset: context.asset,
+                        error: formatError(error),
+                    },
+                );
+            }
             signature = getSignedTransactionSignature(signedTransaction);
             signedTransaction.sign(signers);
             serializedSignedTransaction = signedTransaction.serialize();
         } catch (error) {
+            getLogger().warn(
+                "[PHANTOM_DEBUG] Solana CCTP signTransaction failed",
+                {
+                    sourceAsset: context.asset,
+                    signerAddress,
+                    selectedSigningMethod: "signTransaction",
+                    isWalletRejection: isWalletRejectionError(error),
+                    formattedError: formatError(error),
+                },
+            );
             if (isWalletRejectionError(error)) {
                 throw error;
             }
@@ -455,7 +601,7 @@ const send = async (
                     reason: formatError(error),
                 },
             );
-            return await sendWithWallet();
+            return await sendWithWallet("signTransaction threw non-rejection");
         }
 
         const pendingSend: PendingSolanaCctpBridgeSend = {
@@ -518,6 +664,15 @@ const send = async (
             const logs = await error
                 .getLogs(context.connection)
                 .catch(() => error.logs);
+            getLogger().error(
+                "[PHANTOM_DEBUG] Solana CCTP send failed with SendTransactionError",
+                {
+                    sourceAsset: context.asset,
+                    signerAddress,
+                    formattedError: formatError(error),
+                    logs,
+                },
+            );
             throw new Error(
                 `${error.message}${formatSolanaLogsMessage(logs)}`,
                 {
@@ -525,6 +680,12 @@ const send = async (
                 },
             );
         }
+        getLogger().warn("[PHANTOM_DEBUG] Solana CCTP send failed", {
+            sourceAsset: context.asset,
+            signerAddress,
+            isWalletRejection: isWalletRejectionError(error),
+            formattedError: formatError(error),
+        });
         throw error;
     }
 };
@@ -560,7 +721,10 @@ export const createSolanaCctpContract = (
 
     return {
         transport: NetworkTransport.Solana,
-        send: async (sendParam, _msgFee, _refundAddress, overrides) =>
-            await send(await contextPromise, sendParam, overrides),
+        send: async (sendParam, msgFee, refundAddress, overrides) => {
+            void msgFee;
+            void refundAddress;
+            return await send(await contextPromise, sendParam, overrides);
+        },
     };
 };

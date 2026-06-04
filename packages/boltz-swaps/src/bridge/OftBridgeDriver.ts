@@ -424,12 +424,14 @@ export class OftBridgeDriver extends BridgeDriver {
         sendParam: BridgeSendParam;
         msgFee: BridgeMsgFee;
         refundAddress: string;
-    }): Promise<BridgeTransaction> =>
-        await (args.contract as OftTransportClient).send(
-            args.sendParam as SendParam,
+    }): Promise<BridgeTransaction> => {
+        const sendParam = args.sendParam as SendParam;
+        return await (args.contract as OftTransportClient).send(
+            sendParam,
             args.msgFee,
             args.refundAddress,
         );
+    };
 
     public encodeRouterExecuteData = (args: EncodeRouterExecuteArgs): Hex => {
         const sendData = this.toSendData(args.sendParam);

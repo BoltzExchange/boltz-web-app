@@ -1,3 +1,4 @@
+import type { Logger } from "boltz-swaps/logger";
 import log from "loglevel";
 
 // One week
@@ -117,4 +118,22 @@ export const persistLogLine = <T extends unknown[]>(
         });
 
     return message;
+};
+
+const persistAndForward =
+    (
+        methodName: PersistedLogMethod,
+        forward: (...message: unknown[]) => void,
+    ) =>
+    (...message: unknown[]) => {
+        forward(...persistLogLine(methodName, message));
+    };
+
+export const persistedLoglevelLogger: Logger = {
+    trace: persistAndForward("trace", (...message) => log.trace(...message)),
+    debug: persistAndForward("debug", (...message) => log.debug(...message)),
+    info: persistAndForward("info", (...message) => log.info(...message)),
+    warn: persistAndForward("warn", (...message) => log.warn(...message)),
+    error: persistAndForward("error", (...message) => log.error(...message)),
+    log: persistAndForward("log", (...message) => log.log(...message)),
 };

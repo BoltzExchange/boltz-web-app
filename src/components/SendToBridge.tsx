@@ -61,6 +61,92 @@ const evmSendCandidateBlockLookback = 5n;
 const evmSendCandidateRecoveryTimeoutMs = 120_000;
 const transactionHashPattern = /^0x[0-9a-fA-F]{64}$/;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null;
+
+const readProviderValue = (
+    provider: Record<string, unknown>,
+    key: string,
+): unknown => {
+    try {
+        return Reflect.get(provider, key);
+    } catch (error) {
+        return `threw: ${String(error)}`;
+    }
+};
+
+const getBase58 = (value: unknown): string | undefined =>
+    isRecord(value) && typeof value.toBase58 === "function"
+        ? String(value.toBase58())
+        : undefined;
+
+const getWalletConnectSolanaProviderDebugInfo = (provider: unknown) => {
+    if (!isRecord(provider)) {
+        return { type: typeof provider };
+    }
+
+    const constructor = readProviderValue(provider, "constructor");
+    const chains = readProviderValue(provider, "chains");
+    const session = readProviderValue(provider, "session");
+    const namespaces =
+        isRecord(session) && isRecord(session.namespaces)
+            ? session.namespaces
+            : undefined;
+    const solanaNamespace = isRecord(namespaces?.solana)
+        ? namespaces.solana
+        : undefined;
+
+    return {
+        constructorName:
+            (isRecord(constructor) || typeof constructor === "function") &&
+            typeof Reflect.get(constructor, "name") === "string"
+                ? Reflect.get(constructor, "name")
+                : undefined,
+        providerType: readProviderValue(provider, "type"),
+        name: readProviderValue(provider, "name"),
+        id: readProviderValue(provider, "id"),
+        chain: readProviderValue(provider, "chain"),
+        publicKey: getBase58(readProviderValue(provider, "publicKey")),
+        methods: Object.fromEntries(
+            [
+                "connect",
+                "disconnect",
+                "getAccounts",
+                "request",
+                "sendTransaction",
+                "setDefaultChain",
+                "signAllTransactions",
+                "signAndSendTransaction",
+                "signMessage",
+                "signTransaction",
+            ].map((method) => [
+                method,
+                typeof readProviderValue(provider, method) === "function",
+            ]),
+        ),
+        chains: Array.isArray(chains)
+            ? chains.map((chain: unknown) =>
+                  isRecord(chain)
+                      ? {
+                            id: chain.id,
+                            caipNetworkId: chain.caipNetworkId,
+                            name: chain.name,
+                        }
+                      : chain,
+              )
+            : chains,
+        sessionSolanaAccounts: Array.isArray(solanaNamespace?.accounts)
+            ? solanaNamespace.accounts
+            : undefined,
+        sessionSolanaChains: Array.isArray(solanaNamespace?.chains)
+            ? solanaNamespace.chains
+            : undefined,
+        sessionSolanaMethods: Array.isArray(solanaNamespace?.methods)
+            ? solanaNamespace.methods
+            : undefined,
+    };
+};
+
 const getTransactionHashFromError = (
     error: unknown,
     depth = 0,
@@ -221,23 +307,42 @@ const SendToBridge = (props: {
         msgFee: BridgeMsgFee;
         refundAddress: string;
     }): Promise<BridgeTransaction> => {
-        if (props.bridge.kind === BridgeKind.Cctp && "send" in args.contract) {
-            return await (args.contract as SolanaCctpTransportClient).send(
-                args.sendParam as CctpSendParam,
-                args.msgFee,
-                args.refundAddress,
-                { pendingSendCallbacks },
-            );
+        try {
+            if (
+                props.bridge.kind === BridgeKind.Cctp &&
+                "send" in args.contract
+            ) {
+                return await (args.contract as SolanaCctpTransportClient).send(
+                    args.sendParam as CctpSendParam,
+                    args.msgFee,
+                    args.refundAddress,
+                    {
+                        pendingSendCallbacks,
+                    },
+                );
+            }
+            if (props.bridge.kind === BridgeKind.Oft) {
+                return await (args.contract as OftTransportClient).send(
+                    args.sendParam as SendParam,
+                    args.msgFee,
+                    args.refundAddress,
+                    { pendingSendCallbacks },
+                );
+            }
+
+            return await bridgeDriver().sendTransport(args);
+        } catch (error) {
+            log.warn("[PHANTOM_DEBUG] App Solana bridge send failed", {
+                swapId: props.swapId,
+                bridgeKind: props.bridge.kind,
+                sourceAsset: props.bridge.sourceAsset,
+                destinationAsset: props.bridge.destinationAsset,
+                errorName: error instanceof Error ? error.name : undefined,
+                errorMessage:
+                    error instanceof Error ? error.message : String(error),
+            });
+            throw error;
         }
-        if (props.bridge.kind === BridgeKind.Oft) {
-            return await (args.contract as OftTransportClient).send(
-                args.sendParam as SendParam,
-                args.msgFee,
-                args.refundAddress,
-                { pendingSendCallbacks },
-            );
-        }
-        return await bridgeDriver().sendTransport(args);
     };
 
     const sendPreparedEvmBridgeTransaction = async (
@@ -626,18 +731,35 @@ const SendToBridge = (props: {
             `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
         );
 
+        const solanaProvider = WalletConnectProvider.getSolanaProvider();
+        log.info("[PHANTOM_DEBUG] App Solana bridge send evidence", {
+            swapId: props.swapId,
+            bridgeKind: props.bridge.kind,
+            sourceAsset: props.bridge.sourceAsset,
+            destinationAsset: props.bridge.destinationAsset,
+            walletAddress: wallet.address,
+            recipient,
+            requestedAmountOut: props.amount.toString(),
+            cctpReceiveMode: cctpReceiveMode(),
+            solanaProvider:
+                getWalletConnectSolanaProviderDebugInfo(solanaProvider),
+        });
+
         const quotedBridgeInstance = await bridgeDriver().getQuotedContract(
             props.bridge,
         );
+
         const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
             props.bridge,
             props.amount,
             { cctpReceiveMode: cctpReceiveMode() },
         );
+
         const bridgeInstance = await bridgeDriver().createContract(
             props.bridge,
-            WalletConnectProvider.getSolanaProvider(),
+            solanaProvider,
         );
+
         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
             quotedBridgeInstance,
             props.bridge,

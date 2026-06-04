@@ -1,0 +1,2243 @@
+diff --git a/packages/boltz-swaps/src/bridge/CctpBridgeDriver.ts b/packages/boltz-swaps/src/bridge/CctpBridgeDriver.ts
+index 08390e38..57e2f12d 100644
+--- a/packages/boltz-swaps/src/bridge/CctpBridgeDriver.ts
++++ b/packages/boltz-swaps/src/bridge/CctpBridgeDriver.ts
+@@ -46,10 +46,12 @@ import {
+     getNetworkTransport,
+     getTokenAddress,
+ } from "../config.ts";
++import { formatError } from "../errors.ts";
+ import { prefix0x } from "../evm/prefix0x.ts";
+ import { createAssetProvider } from "../evm/provider.ts";
+ import { erc20Abi, routerAbi } from "../generated/evm-abis.ts";
+ import type { AlchemyCall, Signer } from "../interfaces/index.ts";
++import { getLogger } from "../logger.ts";
+ import * as solanaChain from "../solana/index.ts";
+ import {
+     type Asset,
+@@ -286,6 +288,18 @@ export class CctpBridgeDriver extends BridgeDriver {
+         route: BridgeRoute,
+         runner?: BridgeTransportRunner,
+     ): Promise<BridgeTransportClient> => {
++        getLogger().info("[PHANTOM_DEBUG] CctpBridgeDriver createContract", {
++            sourceAsset: route.sourceAsset,
++            destinationAsset: route.destinationAsset,
++            sourceTransport: this.getTransport(route.sourceAsset),
++            runnerType: typeof runner,
++            runnerHasSignTransaction:
++                typeof (runner as SolanaWalletProvider | undefined)
++                    ?.signTransaction === "function",
++            runnerHasSignAndSendTransaction:
++                typeof (runner as SolanaWalletProvider | undefined)
++                    ?.signAndSendTransaction === "function",
++        });
+         if (this.getTransport(route.sourceAsset) === NetworkTransport.Solana) {
+             return Promise.resolve(
+                 createSolanaCctpContract({
+@@ -538,17 +552,48 @@ export class CctpBridgeDriver extends BridgeDriver {
+         msgFee: BridgeMsgFee;
+         refundAddress: string;
+     }): Promise<BridgeTransaction> => {
++        getLogger().info("[PHANTOM_DEBUG] CctpBridgeDriver sendTransport", {
++            refundAddress: args.refundAddress,
++            contractHasSend: "send" in args.contract,
++            msgFee: args.msgFee.map((fee) => fee.toString()),
++            sendParam: {
++                amount: (args.sendParam as CctpSendParam).amount.toString(),
++                destinationDomain: (args.sendParam as CctpSendParam)
++                    .destinationDomain,
++                mintRecipient: (args.sendParam as CctpSendParam)
++                    .mintRecipient,
++                destinationCaller: (args.sendParam as CctpSendParam)
++                    .destinationCaller,
++                maxFee: (args.sendParam as CctpSendParam).maxFee.toString(),
++                minFinalityThreshold: (args.sendParam as CctpSendParam)
++                    .minFinalityThreshold,
++            },
++        });
+         if (!("send" in args.contract)) {
+             throw new Error(
+                 "CCTP transport sends are only supported on Solana",
+             );
+         }
+ 
+-        return await (args.contract as SolanaCctpTransportClient).send(
+-            args.sendParam as CctpSendParam,
+-            args.msgFee,
+-            args.refundAddress,
+-        );
++        try {
++            const result = await (
++                args.contract as SolanaCctpTransportClient
++            ).send(args.sendParam as CctpSendParam, args.msgFee, args.refundAddress);
++            getLogger().info(
++                "[PHANTOM_DEBUG] CctpBridgeDriver sendTransport returned",
++                { result },
++            );
++            return result;
++        } catch (error) {
++            getLogger().warn(
++                "[PHANTOM_DEBUG] CctpBridgeDriver sendTransport failed",
++                {
++                    formattedError: formatError(error),
++                    rawError: error,
++                },
++            );
++            throw error;
++        }
+     };
+ 
+     public encodeRouterExecuteData = (args: EncodeRouterExecuteArgs): Hex => {
+diff --git a/packages/boltz-swaps/src/bridge/OftBridgeDriver.ts b/packages/boltz-swaps/src/bridge/OftBridgeDriver.ts
+index bfd3216f..530e496f 100644
+--- a/packages/boltz-swaps/src/bridge/OftBridgeDriver.ts
++++ b/packages/boltz-swaps/src/bridge/OftBridgeDriver.ts
+@@ -12,6 +12,7 @@ import {
+ } from "viem";
+ 
+ import { getBoltzSwapsConfig, getTokenAddress } from "../config.ts";
++import { formatError } from "../errors.ts";
+ import { prefix0x } from "../evm/prefix0x.ts";
+ import { erc20Abi, routerAbi } from "../generated/evm-abis.ts";
+ import type {
+@@ -19,6 +20,7 @@ import type {
+     RouterContract,
+     Signer,
+ } from "../interfaces/index.ts";
++import { getLogger } from "../logger.ts";
+ import {
+     type OftDirectSendTarget,
+     type OftTransportClient,
+@@ -232,7 +234,32 @@ export class OftBridgeDriver extends BridgeDriver {
+         route: BridgeRoute,
+         runner?: BridgeTransportRunner,
+     ): Promise<BridgeTransportClient> => {
+-        return await createOftContract(route, runner);
++        getLogger().info("[PHANTOM_DEBUG] OftBridgeDriver createContract", {
++            sourceAsset: route.sourceAsset,
++            destinationAsset: route.destinationAsset,
++            sourceTransport: this.getTransport(route.sourceAsset),
++            runnerType: typeof runner,
++            runnerHasSignTransaction:
++                typeof (runner as { signTransaction?: unknown } | undefined)
++                    ?.signTransaction === "function",
++            runnerHasSignAndSendTransaction:
++                typeof (
++                    runner as { signAndSendTransaction?: unknown } | undefined
++                )?.signAndSendTransaction === "function",
++        });
++        const contract = await createOftContract(route, runner);
++        getLogger().info(
++            "[PHANTOM_DEBUG] OftBridgeDriver createContract returned",
++            {
++                sourceAsset: route.sourceAsset,
++                destinationAsset: route.destinationAsset,
++                transport: contract.transport,
++                hasSend: typeof contract.send === "function",
++                hasQuoteSend: typeof contract.quoteSend === "function",
++                hasQuoteOFT: typeof contract.quoteOFT === "function",
++            },
++        );
++        return contract;
+     };
+ 
+     public getContract = async (
+@@ -424,12 +451,45 @@ export class OftBridgeDriver extends BridgeDriver {
+         sendParam: BridgeSendParam;
+         msgFee: BridgeMsgFee;
+         refundAddress: string;
+-    }): Promise<BridgeTransaction> =>
+-        await (args.contract as OftTransportClient).send(
+-            args.sendParam as SendParam,
+-            args.msgFee,
+-            args.refundAddress,
+-        );
++    }): Promise<BridgeTransaction> => {
++        const sendParam = args.sendParam as SendParam;
++        getLogger().info("[PHANTOM_DEBUG] OftBridgeDriver sendTransport", {
++            refundAddress: args.refundAddress,
++            contractTransport: (args.contract as OftTransportClient).transport,
++            msgFee: args.msgFee.map((fee) => fee.toString()),
++            sendParam: {
++                dstEid: sendParam[0],
++                to: sendParam[1],
++                amountLd: sendParam[2].toString(),
++                minAmountLd: sendParam[3].toString(),
++                extraOptionsByteLength: sendParam[4].length,
++                hasComposeMsg: sendParam[5] !== "0x",
++                oftCmd: sendParam[6],
++            },
++        });
++
++        try {
++            const result = await (args.contract as OftTransportClient).send(
++                sendParam,
++                args.msgFee,
++                args.refundAddress,
++            );
++            getLogger().info(
++                "[PHANTOM_DEBUG] OftBridgeDriver sendTransport returned",
++                { result },
++            );
++            return result;
++        } catch (error) {
++            getLogger().warn(
++                "[PHANTOM_DEBUG] OftBridgeDriver sendTransport failed",
++                {
++                    formattedError: formatError(error),
++                    rawError: error,
++                },
++            );
++            throw error;
++        }
++    };
+ 
+     public encodeRouterExecuteData = (args: EncodeRouterExecuteArgs): Hex => {
+         const sendData = this.toSendData(args.sendParam);
+diff --git a/packages/boltz-swaps/src/cctp/solana.ts b/packages/boltz-swaps/src/cctp/solana.ts
+index db5aa566..35ec3fb8 100644
+--- a/packages/boltz-swaps/src/cctp/solana.ts
++++ b/packages/boltz-swaps/src/cctp/solana.ts
+@@ -14,6 +14,11 @@ import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
+ import { formatError, isWalletRejectionError } from "../errors.ts";
+ import { constructRequestOptions } from "../helper.ts";
+ import { getLogger } from "../logger.ts";
++import {
++    getPhantomSimulationWarningComplianceDebugInfo,
++    getSolanaVersionedTransactionDebugInfo,
++    getSolanaWalletProviderDebugInfo,
++} from "../solana/debug.ts";
+ import {
+     derivePda,
+     formatSolanaLogsMessage,
+@@ -162,14 +167,60 @@ export const tryFetchSolburnAllocation = async (
+     }
+ };
+ 
+-const getContext = async (config: SolanaCctpConfig): Promise<Context> => ({
+-    modules: await lazySolanaCctp.get(),
+-    asset: config.asset,
+-    connection: await getSolanaConnection(config.asset),
+-    tokenMint: config.tokenMint,
+-    walletProvider: config.walletProvider,
+-    ...requireSolanaCctpProgramIds(config.asset),
+-});
++const getContext = async (config: SolanaCctpConfig): Promise<Context> => {
++    getLogger().info("[PHANTOM_DEBUG] Solana CCTP context init start", {
++        sourceAsset: config.asset,
++        tokenMint: config.tokenMint,
++        walletProvider: getSolanaWalletProviderDebugInfo(
++            config.walletProvider,
++        ),
++    });
++
++    try {
++        const modules = await lazySolanaCctp.get();
++        getLogger().info("[PHANTOM_DEBUG] Solana CCTP context modules loaded", {
++            sourceAsset: config.asset,
++            tokenMint: config.tokenMint,
++        });
++
++        const connection = await getSolanaConnection(config.asset);
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana CCTP context connection ready",
++            {
++                sourceAsset: config.asset,
++                tokenMint: config.tokenMint,
++                rpcEndpoint: connection.rpcEndpoint,
++            },
++        );
++
++        const programIds = requireSolanaCctpProgramIds(config.asset);
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana CCTP context program ids resolved",
++            {
++                sourceAsset: config.asset,
++                tokenMint: config.tokenMint,
++                ...programIds,
++            },
++        );
++
++        return {
++            modules,
++            asset: config.asset,
++            connection,
++            tokenMint: config.tokenMint,
++            walletProvider: config.walletProvider,
++            ...programIds,
++        };
++    } catch (error) {
++        getLogger().warn("[PHANTOM_DEBUG] Solana CCTP context init failed", {
++            sourceAsset: config.asset,
++            tokenMint: config.tokenMint,
++            formattedError: formatError(error),
++            rawError: error,
++        });
++        throw error;
++    }
++};
+ 
+ const createTransaction = async (
+     context: Context,
+@@ -324,12 +375,29 @@ const send = async (
+         );
+     }
+ 
++    const { solburnUrl } = getBoltzSwapsConfig();
++    getLogger().info("[PHANTOM_DEBUG] Solana CCTP send start", {
++        sourceAsset: context.asset,
++        signerAddress,
++        tokenMint: context.tokenMint,
++        tokenMessenger: context.tokenMessenger,
++        messageTransmitter: context.messageTransmitter,
++        solburnConfigured: solburnUrl !== "",
++        walletProvider: getSolanaWalletProviderDebugInfo(walletProvider),
++        sendParam: {
++            amount: sendParam.amount.toString(),
++            destinationDomain: sendParam.destinationDomain,
++            maxFee: sendParam.maxFee.toString(),
++            minFinalityThreshold: sendParam.minFinalityThreshold,
++            hookDataEmpty: sendParam.hookData === cctpEmptyHookData,
++        },
++    });
++
+     // Try to obtain ephemeral keypairs from solburn so the MessageSent rent
+     // can be reclaimed 5 days after the burn lands. On any failure (network,
+     // service, missing config), fall back to the legacy path: user wallet
+     // pays the rent directly via a locally-generated MessageSentEventData
+     // and the rent stays stuck on chain.
+-    const { solburnUrl } = getBoltzSwapsConfig();
+     const allocation = solburnUrl
+         ? await tryFetchSolburnAllocation(solburnUrl)
+         : null;
+@@ -388,6 +456,31 @@ const send = async (
+     if (eventRentPayer !== null) {
+         signers.push(eventRentPayer);
+     }
++    const localSignerPublicKeys = signers.map((signer) =>
++        signer.publicKey.toBase58(),
++    );
++
++    getLogger().info(
++        "[PHANTOM_DEBUG] Solana CCTP transaction built before simulation",
++        {
++            sourceAsset: context.asset,
++            signerAddress,
++            localSignerPublicKeys,
++            eventRentPayerAddress,
++            messageSentEventDataAddress:
++                messageSentEventData.publicKey.toBase58(),
++            allocationSource: allocation === null ? "local" : "solburn",
++            latestBlockhash,
++            rpcEndpoint: context.connection.rpcEndpoint,
++            transaction: await getSolanaVersionedTransactionDebugInfo(
++                transaction,
++                {
++                    connection: context.connection,
++                    includeSerializedBase64: true,
++                },
++            ),
++        },
++    );
+ 
+     const simulation = await context.connection.simulateTransaction(
+         transaction,
+@@ -397,7 +490,101 @@ const send = async (
+             commitment: "confirmed",
+         },
+     );
++    getLogger().info("[PHANTOM_DEBUG] Solana CCTP local simulation result", {
++        sourceAsset: context.asset,
++        signerAddress,
++        simulationOptions: {
++            commitment: "confirmed",
++            replaceRecentBlockhash: true,
++            sigVerify: false,
++        },
++        err: simulation.value.err,
++        logs: simulation.value.logs,
++        unitsConsumed: simulation.value.unitsConsumed,
++        returnData: simulation.value.returnData,
++    });
++    let exactBlockhashSimulation:
++        | {
++              err: unknown;
++              logs?: string[] | null;
++              returnData?: unknown;
++              unitsConsumed?: number;
++          }
++        | undefined;
++    let exactBlockhashSimulationError: string | undefined;
++    try {
++        const exactBlockhashSimulationResult =
++            await context.connection.simulateTransaction(transaction, {
++                sigVerify: false,
++                replaceRecentBlockhash: false,
++                commitment: "confirmed",
++            });
++        exactBlockhashSimulation = exactBlockhashSimulationResult.value;
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana CCTP exact-blockhash local simulation result",
++            {
++                sourceAsset: context.asset,
++                signerAddress,
++                simulationOptions: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: false,
++                    sigVerify: false,
++                },
++                err: exactBlockhashSimulation.err,
++                logs: exactBlockhashSimulation.logs,
++                unitsConsumed: exactBlockhashSimulation.unitsConsumed,
++                returnData: exactBlockhashSimulation.returnData,
++                rpcEndpoint: context.connection.rpcEndpoint,
++            },
++        );
++    } catch (error) {
++        exactBlockhashSimulationError = formatError(error);
++        getLogger().warn(
++            "[PHANTOM_DEBUG] Solana CCTP exact-blockhash local simulation threw",
++            {
++                sourceAsset: context.asset,
++                signerAddress,
++                simulationOptions: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: false,
++                    sigVerify: false,
++                },
++                formattedError: exactBlockhashSimulationError,
++                rawError: error,
++                rpcEndpoint: context.connection.rpcEndpoint,
++            },
++        );
++    }
++
++    const logPhantomDocsCompliance = async (
++        selectedSigningMethod: "signAndSendTransaction" | "signTransaction",
++        localSignaturesAppliedBeforeWallet: boolean,
++    ) => {
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana CCTP Phantom docs compliance checkpoint",
++            {
++                sourceAsset: context.asset,
++                signerAddress,
++                selectedSigningMethod,
++                localSignaturesAppliedBeforeWallet,
++                compliance:
++                    await getPhantomSimulationWarningComplianceDebugInfo({
++                        connection: context.connection,
++                        exactBlockhashSimulation,
++                        exactBlockhashSimulationError,
++                        localSignerPublicKeys,
++                        localSignaturesAppliedBeforeWallet,
++                        selectedSigningMethod,
++                        simulation: simulation.value,
++                        transaction,
++                        walletSignerAddress: signerAddress,
++                    }),
++            },
++        );
++    };
++
+     if (simulation.value.err !== null) {
++        await logPhantomDocsCompliance("signTransaction", false);
+         throw new Error(
+             `Simulation failed: ${JSON.stringify(simulation.value.err)}${formatSolanaLogsMessage(simulation.value.logs)}`,
+         );
+@@ -407,8 +594,43 @@ const send = async (
+         skipPreflight: true,
+         preflightCommitment: "confirmed",
+     };
+-    const sendWithWallet = async (): Promise<BridgeTransaction> => {
++    const sendWithWallet = async (reason: string): Promise<BridgeTransaction> => {
++        await logPhantomDocsCompliance("signAndSendTransaction", false);
++        getLogger().warn(
++            "[PHANTOM_DEBUG] Solana CCTP selected wallet-managed signing path",
++            {
++                sourceAsset: context.asset,
++                signerAddress,
++                selectedSigningMethod: "signAndSendTransaction",
++                reason,
++                localSignerPublicKeys,
++                transactionBeforeLocalSigning:
++                    await getSolanaVersionedTransactionDebugInfo(
++                        transaction,
++                        {
++                            connection: context.connection,
++                        },
++                    ),
++            },
++        );
+         transaction.sign(signers);
++        await logPhantomDocsCompliance("signAndSendTransaction", true);
++        getLogger().warn(
++            "[PHANTOM_DEBUG] Solana CCTP transaction passed to wallet after local signatures",
++            {
++                sourceAsset: context.asset,
++                signerAddress,
++                selectedSigningMethod: "signAndSendTransaction",
++                reason,
++                transaction: await getSolanaVersionedTransactionDebugInfo(
++                    transaction,
++                    {
++                        connection: context.connection,
++                        includeSerializedBase64: true,
++                    },
++                ),
++            },
++        );
+         const signature = await walletProvider.signAndSendTransaction(
+             transaction,
+             sendOptions,
+@@ -431,18 +653,75 @@ const send = async (
+             sender: signerAddress,
+             reason: "Connected Solana wallet does not support signing transactions without broadcasting",
+         });
+-        return await sendWithWallet();
++        return await sendWithWallet("signTransaction method missing");
+     }
+ 
+     try {
+         let signature: string;
+         let serializedSignedTransaction: Uint8Array;
+         try {
++            await logPhantomDocsCompliance("signTransaction", false);
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana CCTP transaction passed to wallet",
++                {
++                    sourceAsset: context.asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    localSignerPublicKeys,
++                    transaction: await getSolanaVersionedTransactionDebugInfo(
++                        transaction,
++                        {
++                            connection: context.connection,
++                            includeSerializedBase64: true,
++                        },
++                    ),
++                },
++            );
+             const signedTransaction = await signTransaction(transaction);
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana CCTP wallet returned signed transaction",
++                {
++                    sourceAsset: context.asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    transaction: await getSolanaVersionedTransactionDebugInfo(
++                        signedTransaction as VersionedTransaction,
++                        {
++                            connection: context.connection,
++                        },
++                    ),
++                },
++            );
+             signature = getSignedTransactionSignature(signedTransaction);
+             signedTransaction.sign(signers);
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana CCTP transaction after app local signatures",
++                {
++                    sourceAsset: context.asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    localSignerPublicKeys,
++                    transaction: await getSolanaVersionedTransactionDebugInfo(
++                        signedTransaction as VersionedTransaction,
++                        {
++                            connection: context.connection,
++                        },
++                    ),
++                },
++            );
+             serializedSignedTransaction = signedTransaction.serialize();
+         } catch (error) {
++            getLogger().warn(
++                "[PHANTOM_DEBUG] Solana CCTP signTransaction failed",
++                {
++                    sourceAsset: context.asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    isWalletRejection: isWalletRejectionError(error),
++                    formattedError: formatError(error),
++                    rawError: error,
++                },
++            );
+             if (isWalletRejectionError(error)) {
+                 throw error;
+             }
+@@ -455,7 +734,7 @@ const send = async (
+                     reason: formatError(error),
+                 },
+             );
+-            return await sendWithWallet();
++            return await sendWithWallet("signTransaction threw non-rejection");
+         }
+ 
+         const pendingSend: PendingSolanaCctpBridgeSend = {
+@@ -518,6 +797,16 @@ const send = async (
+             const logs = await error
+                 .getLogs(context.connection)
+                 .catch(() => error.logs);
++            getLogger().error(
++                "[PHANTOM_DEBUG] Solana CCTP send failed with SendTransactionError",
++                {
++                    sourceAsset: context.asset,
++                    signerAddress,
++                    formattedError: formatError(error),
++                    logs,
++                    rawError: error,
++                },
++            );
+             throw new Error(
+                 `${error.message}${formatSolanaLogsMessage(logs)}`,
+                 {
+@@ -525,6 +814,13 @@ const send = async (
+                 },
+             );
+         }
++        getLogger().warn("[PHANTOM_DEBUG] Solana CCTP send failed", {
++            sourceAsset: context.asset,
++            signerAddress,
++            isWalletRejection: isWalletRejectionError(error),
++            formattedError: formatError(error),
++            rawError: error,
++        });
+         throw error;
+     }
+ };
+@@ -556,11 +852,95 @@ export const getSolanaCctpTokenBalance = async (
+ export const createSolanaCctpContract = (
+     config: SolanaCctpConfig,
+ ): SolanaCctpTransportClient => {
++    getLogger().info("[PHANTOM_DEBUG] createSolanaCctpContract called", {
++        sourceAsset: config.asset,
++        tokenMint: config.tokenMint,
++        walletProvider: getSolanaWalletProviderDebugInfo(
++            config.walletProvider,
++        ),
++    });
+     const contextPromise = getContext(config);
+ 
+     return {
+         transport: NetworkTransport.Solana,
+-        send: async (sendParam, _msgFee, _refundAddress, overrides) =>
+-            await send(await contextPromise, sendParam, overrides),
++        send: async (sendParam, msgFee, refundAddress, overrides) => {
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana CCTP transport client send invoked",
++                {
++                    sourceAsset: config.asset,
++                    tokenMint: config.tokenMint,
++                    refundAddress,
++                    msgFee: msgFee.map((fee) => fee.toString()),
++                    sendParam: {
++                        amount: sendParam.amount.toString(),
++                        destinationDomain: sendParam.destinationDomain,
++                        mintRecipient: sendParam.mintRecipient,
++                        destinationCaller: sendParam.destinationCaller,
++                        maxFee: sendParam.maxFee.toString(),
++                        minFinalityThreshold:
++                            sendParam.minFinalityThreshold,
++                        hookDataByteLength:
++                            hex.decode(stripHexPrefix(sendParam.hookData))
++                                .length,
++                    },
++                    hasPendingSendCallbacks:
++                        overrides?.pendingSendCallbacks !== undefined,
++                    walletProvider: getSolanaWalletProviderDebugInfo(
++                        config.walletProvider,
++                    ),
++                },
++            );
++
++            let context: Context;
++            try {
++                context = await contextPromise;
++                getLogger().info(
++                    "[PHANTOM_DEBUG] Solana CCTP transport client context resolved",
++                    {
++                        sourceAsset: config.asset,
++                        signerFromProvider:
++                            context.walletProvider === undefined
++                                ? undefined
++                                : await getConnectedSolanaWalletAddress(
++                                      context.walletProvider,
++                                  ),
++                        rpcEndpoint: context.connection.rpcEndpoint,
++                    },
++                );
++            } catch (error) {
++                getLogger().warn(
++                    "[PHANTOM_DEBUG] Solana CCTP transport client context failed",
++                    {
++                        sourceAsset: config.asset,
++                        formattedError: formatError(error),
++                        rawError: error,
++                    },
++                );
++                throw error;
++            }
++
++            try {
++                const result = await send(context, sendParam, overrides);
++                getLogger().info(
++                    "[PHANTOM_DEBUG] Solana CCTP transport client send returned",
++                    {
++                        sourceAsset: config.asset,
++                        result,
++                    },
++                );
++                return result;
++            } catch (error) {
++                getLogger().warn(
++                    "[PHANTOM_DEBUG] Solana CCTP transport client send failed",
++                    {
++                        sourceAsset: config.asset,
++                        isWalletRejection: isWalletRejectionError(error),
++                        formattedError: formatError(error),
++                        rawError: error,
++                    },
++                );
++                throw error;
++            }
++        },
+     };
+ };
+diff --git a/packages/boltz-swaps/src/oft/oft.ts b/packages/boltz-swaps/src/oft/oft.ts
+index 8f0faebe..17225be4 100644
+--- a/packages/boltz-swaps/src/oft/oft.ts
++++ b/packages/boltz-swaps/src/oft/oft.ts
+@@ -256,9 +256,31 @@ export const createOftContract = async (
+ ): Promise<OftTransportClient> => {
+     const sourceTransport = getOftTransport(route.sourceAsset);
+     const oftContract = await getOftContract(route, oftName);
++    getLogger().info("[PHANTOM_DEBUG] createOftContract route resolved", {
++        sourceAsset: route.sourceAsset,
++        destinationAsset: route.destinationAsset,
++        sourceTransport,
++        oftName,
++        contractAddress: oftContract.address,
++        runnerType: typeof runner,
++        runnerHasSignTransaction:
++            typeof (runner as SolanaWalletProvider | undefined)
++                ?.signTransaction === "function",
++        runnerHasSignAndSendTransaction:
++            typeof (runner as SolanaWalletProvider | undefined)
++                ?.signAndSendTransaction === "function",
++    });
+ 
+     switch (sourceTransport) {
+         case NetworkTransport.Evm:
++            getLogger().info(
++                "[PHANTOM_DEBUG] createOftContract using EVM branch",
++                {
++                    sourceAsset: route.sourceAsset,
++                    destinationAsset: route.destinationAsset,
++                    contractAddress: oftContract.address,
++                },
++            );
+             return createEvmOftContract(
+                 oftContract.address,
+                 getEvmOftRunner(route, runner),
+@@ -266,6 +288,15 @@ export const createOftContract = async (
+ 
+         case NetworkTransport.Solana: {
+             const oftStore = await getOftStoreContract(route, oftName);
++            getLogger().info(
++                "[PHANTOM_DEBUG] createOftContract using Solana branch",
++                {
++                    sourceAsset: route.sourceAsset,
++                    destinationAsset: route.destinationAsset,
++                    programAddress: oftContract.address,
++                    storeAddress: oftStore.address,
++                },
++            );
+             return createSolanaOftContract({
+                 asset: route.sourceAsset,
+                 programAddress: oftContract.address,
+@@ -275,6 +306,14 @@ export const createOftContract = async (
+         }
+ 
+         case NetworkTransport.Tron:
++            getLogger().info(
++                "[PHANTOM_DEBUG] createOftContract using Tron branch",
++                {
++                    sourceAsset: route.sourceAsset,
++                    destinationAsset: route.destinationAsset,
++                    contractAddress: oftContract.address,
++                },
++            );
+             return createTronOftContract({
+                 sourceAsset: route.sourceAsset,
+                 contractAddress: oftContract.address,
+diff --git a/packages/boltz-swaps/src/oft/solana.ts b/packages/boltz-swaps/src/oft/solana.ts
+index a8e8b697..6b2bcb81 100644
+--- a/packages/boltz-swaps/src/oft/solana.ts
++++ b/packages/boltz-swaps/src/oft/solana.ts
+@@ -19,6 +19,11 @@ import { getBoltzSwapsConfig } from "../config.ts";
+ import { formatError, isWalletRejectionError } from "../errors.ts";
+ import { prefix0x } from "../evm/prefix0x.ts";
+ import { getLogger } from "../logger.ts";
++import {
++    getPhantomSimulationWarningComplianceDebugInfo,
++    getSolanaVersionedTransactionDebugInfo,
++    getSolanaWalletProviderDebugInfo,
++} from "../solana/debug.ts";
+ import {
+     derivePda,
+     formatSolanaLogsMessage,
+@@ -233,14 +238,44 @@ export const getSolanaLegacyMeshContext = async ({
+     storeAddress,
+     walletProvider,
+ }: SolanaLegacyMeshConfig): Promise<Context> => {
+-    const modules = await lazySolanaOft.get();
++    getLogger().info("[PHANTOM_DEBUG] Solana OFT context init start", {
++        sourceAsset: asset,
++        programAddress,
++        storeAddress,
++        walletProvider: getSolanaWalletProviderDebugInfo(walletProvider),
++    });
++
+     try {
++        const modules = await lazySolanaOft.get();
++        getLogger().info("[PHANTOM_DEBUG] Solana OFT context modules loaded", {
++            sourceAsset: asset,
++            programAddress,
++            storeAddress,
++        });
++
+         const connection = await getSolanaConnection(asset);
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana OFT context connection ready",
++            {
++                sourceAsset: asset,
++                programAddress,
++                storeAddress,
++                rpcEndpoint: connection.rpcEndpoint,
++            },
++        );
++
+         const accountInfo = await getSolanaAccountInfo(
+             asset,
+             storeAddress,
+             connection,
+         );
++        getLogger().info("[PHANTOM_DEBUG] Solana OFT store account loaded", {
++            sourceAsset: asset,
++            programAddress,
++            storeAddress,
++            found: accountInfo !== null,
++            dataLength: accountInfo?.data.length,
++        });
+         if (accountInfo === null) {
+             throw new Error(`missing Solana OFT store account ${storeAddress}`);
+         }
+@@ -250,6 +285,13 @@ export const getSolanaLegacyMeshContext = async ({
+             connection,
+             walletProvider,
+         );
++        getLogger().info("[PHANTOM_DEBUG] Solana OFT UMI context ready", {
++            sourceAsset: asset,
++            programAddress,
++            storeAddress,
++            walletAdapterPublicKey: walletAdapter?.publicKey?.toBase58(),
++        });
++
+         const storeInfo = modules.generated
+             .getOFTStoreDecoder()
+             .decode(accountInfo.data);
+@@ -261,6 +303,18 @@ export const getSolanaLegacyMeshContext = async ({
+         )
+             ? String(storeInfo.alt.value)
+             : undefined;
++        const quotePayer = await getQuotePayer(asset, walletProvider);
++
++        getLogger().info("[PHANTOM_DEBUG] Solana OFT context decoded", {
++            sourceAsset: asset,
++            programAddress,
++            storeAddress,
++            tokenMint,
++            tokenEscrow,
++            endpointProgram,
++            addressLookupTableAddress,
++            quotePayer,
++        });
+ 
+         return {
+             modules,
+@@ -279,14 +333,19 @@ export const getSolanaLegacyMeshContext = async ({
+             tokenMint,
+             tokenEscrow,
+             endpointProgram,
+-            quotePayer: await getQuotePayer(asset, walletProvider),
++            quotePayer,
+             addressLookupTableAddress,
+         };
+     } catch (error) {
+         getLogger().warn(
+-            "Failed to initialize Solana OFT context",
+-            asset,
+-            formatError(error),
++            "[PHANTOM_DEBUG] Failed to initialize Solana OFT context",
++            {
++                sourceAsset: asset,
++                programAddress,
++                storeAddress,
++                formattedError: formatError(error),
++                rawError: error,
++            },
+         );
+         throw new Error(
+             `Failed to initialize Solana OFT context for ${asset}: ${formatError(error)}`,
+@@ -724,6 +783,31 @@ const sendLegacyMesh = async (
+         );
+     }
+ 
++    getLogger().info("[PHANTOM_DEBUG] Solana OFT send start", {
++        sourceAsset: asset,
++        signerAddress,
++        programAddress: context.programAddress,
++        storeAddress: context.storeAddress,
++        tokenMint: context.tokenMint,
++        tokenEscrow: context.tokenEscrow,
++        endpointProgram: context.endpointProgram,
++        quotePayer: context.quotePayer,
++        addressLookupTableAddress: context.addressLookupTableAddress,
++        walletAdapterPublicKey: context.walletAdapter?.publicKey?.toBase58(),
++        walletProvider: getSolanaWalletProviderDebugInfo(walletProvider),
++        sendParam: {
++            dstEid: sendParam[0],
++            amountLd: sendParam[2].toString(),
++            minAmountLd: sendParam[3].toString(),
++            hasComposeMsg: sendParam[5] !== "0x",
++            extraOptionsByteLength: hexToBytes(sendParam[4]).length,
++        },
++        msgFee: {
++            nativeFee: msgFee[0].toString(),
++            lzTokenFee: msgFee[1].toString(),
++        },
++    });
++
+     const receiver = await getLegacyPeerReceiver(context, sendParam[0]);
+     const remainingAccounts = await getRemainingAccounts(
+         "send",
+@@ -750,6 +834,33 @@ const sendLegacyMesh = async (
+         instructions,
+         signerAddress,
+     );
++    getLogger().info(
++        "[PHANTOM_DEBUG] Solana OFT transaction built before simulation",
++        {
++            sourceAsset: asset,
++            signerAddress,
++            receiver: hex.encode(receiver),
++            remainingAccountCount: remainingAccounts.length,
++            remainingSignerAccounts: remainingAccounts
++                .filter((account) => account.isSigner)
++                .map((account) => account.pubkey.toBase58()),
++            remainingAccounts: remainingAccounts.map((account, index) => ({
++                index,
++                pubkey: account.pubkey.toBase58(),
++                isSigner: account.isSigner,
++                isWritable: account.isWritable,
++            })),
++            latestBlockhash,
++            rpcEndpoint: context.connection.rpcEndpoint,
++            transaction: await getSolanaVersionedTransactionDebugInfo(
++                transaction,
++                {
++                    connection: context.connection,
++                    includeSerializedBase64: true,
++                },
++            ),
++        },
++    );
+     const simulation = await context.connection.simulateTransaction(
+         transaction,
+         {
+@@ -758,7 +869,101 @@ const sendLegacyMesh = async (
+             commitment: "confirmed",
+         },
+     );
++    getLogger().info("[PHANTOM_DEBUG] Solana OFT local simulation result", {
++        sourceAsset: asset,
++        signerAddress,
++        simulationOptions: {
++            commitment: "confirmed",
++            replaceRecentBlockhash: true,
++            sigVerify: false,
++        },
++        err: simulation.value.err,
++        logs: simulation.value.logs,
++        unitsConsumed: simulation.value.unitsConsumed,
++        returnData: simulation.value.returnData,
++    });
++    let exactBlockhashSimulation:
++        | {
++              err: unknown;
++              logs?: string[] | null;
++              returnData?: unknown;
++              unitsConsumed?: number;
++          }
++        | undefined;
++    let exactBlockhashSimulationError: string | undefined;
++    try {
++        const exactBlockhashSimulationResult =
++            await context.connection.simulateTransaction(transaction, {
++                sigVerify: false,
++                replaceRecentBlockhash: false,
++                commitment: "confirmed",
++            });
++        exactBlockhashSimulation = exactBlockhashSimulationResult.value;
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana OFT exact-blockhash local simulation result",
++            {
++                sourceAsset: asset,
++                signerAddress,
++                simulationOptions: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: false,
++                    sigVerify: false,
++                },
++                err: exactBlockhashSimulation.err,
++                logs: exactBlockhashSimulation.logs,
++                unitsConsumed: exactBlockhashSimulation.unitsConsumed,
++                returnData: exactBlockhashSimulation.returnData,
++                rpcEndpoint: context.connection.rpcEndpoint,
++            },
++        );
++    } catch (error) {
++        exactBlockhashSimulationError = formatError(error);
++        getLogger().warn(
++            "[PHANTOM_DEBUG] Solana OFT exact-blockhash local simulation threw",
++            {
++                sourceAsset: asset,
++                signerAddress,
++                simulationOptions: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: false,
++                    sigVerify: false,
++                },
++                formattedError: exactBlockhashSimulationError,
++                rawError: error,
++                rpcEndpoint: context.connection.rpcEndpoint,
++            },
++        );
++    }
++
++    const logPhantomDocsCompliance = async (
++        selectedSigningMethod: "signAndSendTransaction" | "signTransaction",
++        localSignaturesAppliedBeforeWallet: boolean,
++    ) => {
++        getLogger().info(
++            "[PHANTOM_DEBUG] Solana OFT Phantom docs compliance checkpoint",
++            {
++                sourceAsset: asset,
++                signerAddress,
++                selectedSigningMethod,
++                localSignaturesAppliedBeforeWallet,
++                compliance:
++                    await getPhantomSimulationWarningComplianceDebugInfo({
++                        connection: context.connection,
++                        exactBlockhashSimulation,
++                        exactBlockhashSimulationError,
++                        localSignerPublicKeys: [],
++                        localSignaturesAppliedBeforeWallet,
++                        selectedSigningMethod,
++                        simulation: simulation.value,
++                        transaction,
++                        walletSignerAddress: signerAddress,
++                    }),
++            },
++        );
++    };
++
+     if (simulation.value.err !== null) {
++        await logPhantomDocsCompliance("signTransaction", false);
+         throw new Error(
+             `Simulation failed: ${JSON.stringify(simulation.value.err)}${formatSolanaLogsMessage(simulation.value.logs)}`,
+         );
+@@ -768,7 +973,24 @@ const sendLegacyMesh = async (
+         skipPreflight: true,
+         preflightCommitment: "confirmed",
+     };
+-    const sendWithWallet = async (): Promise<BridgeTransaction> => {
++    const sendWithWallet = async (reason: string): Promise<BridgeTransaction> => {
++        await logPhantomDocsCompliance("signAndSendTransaction", false);
++        getLogger().warn(
++            "[PHANTOM_DEBUG] Solana OFT selected wallet-managed signing path",
++            {
++                sourceAsset: asset,
++                signerAddress,
++                selectedSigningMethod: "signAndSendTransaction",
++                reason,
++                transaction: await getSolanaVersionedTransactionDebugInfo(
++                    transaction,
++                    {
++                        connection: context.connection,
++                        includeSerializedBase64: true,
++                    },
++                ),
++            },
++        );
+         const signature = await walletProvider.signAndSendTransaction(
+             transaction,
+             sendOptions,
+@@ -791,17 +1013,58 @@ const sendLegacyMesh = async (
+             sender: signerAddress,
+             reason: "Connected Solana wallet does not support signing transactions without broadcasting",
+         });
+-        return await sendWithWallet();
++        return await sendWithWallet("signTransaction method missing");
+     }
+ 
+     try {
+         let signature: string;
+         let serializedSignedTransaction: Uint8Array;
+         try {
++            await logPhantomDocsCompliance("signTransaction", false);
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana OFT transaction passed to wallet",
++                {
++                    sourceAsset: asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    transaction: await getSolanaVersionedTransactionDebugInfo(
++                        transaction,
++                        {
++                            connection: context.connection,
++                            includeSerializedBase64: true,
++                        },
++                    ),
++                },
++            );
+             const signedTransaction = await signTransaction(transaction);
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana OFT wallet returned signed transaction",
++                {
++                    sourceAsset: asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    transaction: await getSolanaVersionedTransactionDebugInfo(
++                        signedTransaction as VersionedTransaction,
++                        {
++                            connection: context.connection,
++                        },
++                    ),
++                },
++            );
+             signature = getSignedTransactionSignature(signedTransaction);
+             serializedSignedTransaction = signedTransaction.serialize();
+         } catch (error) {
++            getLogger().warn(
++                "[PHANTOM_DEBUG] Solana OFT signTransaction failed",
++                {
++                    sourceAsset: asset,
++                    signerAddress,
++                    selectedSigningMethod: "signTransaction",
++                    isWalletRejection: isWalletRejectionError(error),
++                    formattedError: formatError(error),
++                    rawError: error,
++                },
++            );
+             if (isWalletRejectionError(error)) {
+                 throw error;
+             }
+@@ -811,7 +1074,7 @@ const sendLegacyMesh = async (
+                 sender: signerAddress,
+                 reason: formatError(error),
+             });
+-            return await sendWithWallet();
++            return await sendWithWallet("signTransaction threw non-rejection");
+         }
+ 
+         const pendingSend: PendingSolanaOftBridgeSend = {
+@@ -876,6 +1139,16 @@ const sendLegacyMesh = async (
+             const logs = await error
+                 .getLogs(context.connection)
+                 .catch(() => error.logs);
++            getLogger().error(
++                "[PHANTOM_DEBUG] Solana OFT send failed with SendTransactionError",
++                {
++                    sourceAsset: asset,
++                    signerAddress,
++                    formattedError: formatError(error),
++                    logs,
++                    rawError: error,
++                },
++            );
+             throw new Error(
+                 `${error.message}${formatSolanaLogsMessage(logs)}`,
+                 {
+@@ -883,6 +1156,13 @@ const sendLegacyMesh = async (
+                 },
+             );
+         }
++        getLogger().warn("[PHANTOM_DEBUG] Solana OFT send failed", {
++            sourceAsset: asset,
++            signerAddress,
++            isWalletRejection: isWalletRejectionError(error),
++            formattedError: formatError(error),
++            rawError: error,
++        });
+         throw error;
+     }
+ };
+@@ -931,6 +1211,14 @@ export const getSolanaTokenBalance = async (
+ export const createSolanaOftContract = (
+     contextConfig: SolanaLegacyMeshConfig,
+ ): OftTransportClient => {
++    getLogger().info("[PHANTOM_DEBUG] createSolanaOftContract called", {
++        sourceAsset: contextConfig.asset,
++        programAddress: contextConfig.programAddress,
++        storeAddress: contextConfig.storeAddress,
++        walletProvider: getSolanaWalletProviderDebugInfo(
++            contextConfig.walletProvider,
++        ),
++    });
+     const contextPromise = getSolanaLegacyMeshContext(contextConfig);
+ 
+     return {
+@@ -939,13 +1227,100 @@ export const createSolanaOftContract = (
+             await quoteOft(await contextPromise, sendParam),
+         quoteSend: async (sendParam, payInLzToken) =>
+             await quoteSend(await contextPromise, sendParam, payInLzToken),
+-        send: async (sendParam, msgFee, _refundAddress, overrides) =>
+-            await sendLegacyMesh(
+-                contextConfig.asset,
+-                await contextPromise,
+-                sendParam,
+-                msgFee,
+-                overrides?.pendingSendCallbacks,
+-            ),
++        send: async (sendParam, msgFee, refundAddress, overrides) => {
++            getLogger().info(
++                "[PHANTOM_DEBUG] Solana OFT transport client send invoked",
++                {
++                    sourceAsset: contextConfig.asset,
++                    programAddress: contextConfig.programAddress,
++                    storeAddress: contextConfig.storeAddress,
++                    refundAddress,
++                    msgFee: msgFee.map((fee) => fee.toString()),
++                    sendParam: {
++                        dstEid: sendParam[0],
++                        to: sendParam[1],
++                        amountLd: sendParam[2].toString(),
++                        minAmountLd: sendParam[3].toString(),
++                        extraOptionsByteLength:
++                            sendParam[4] === "0x"
++                                ? 0
++                                : hex.decode(sendParam[4].replace(/^0x/, ""))
++                                      .length,
++                        hasComposeMsg: sendParam[5] !== "0x",
++                        oftCmd: sendParam[6],
++                    },
++                    hasPendingSendCallbacks:
++                        overrides?.pendingSendCallbacks !== undefined,
++                    walletProvider: getSolanaWalletProviderDebugInfo(
++                        contextConfig.walletProvider,
++                    ),
++                },
++            );
++
++            let context: Context;
++            try {
++                context = await contextPromise;
++                getLogger().info(
++                    "[PHANTOM_DEBUG] Solana OFT transport client context resolved",
++                    {
++                        sourceAsset: contextConfig.asset,
++                        signerFromProvider:
++                            context.walletProvider === undefined
++                                ? undefined
++                                : await getConnectedSolanaWalletAddress(
++                                      context.walletProvider,
++                                  ),
++                        walletAdapterPublicKey:
++                            context.walletAdapter?.publicKey?.toBase58(),
++                        rpcEndpoint: context.connection.rpcEndpoint,
++                        tokenMint: context.tokenMint,
++                        tokenEscrow: context.tokenEscrow,
++                        endpointProgram: context.endpointProgram,
++                        quotePayer: context.quotePayer,
++                        addressLookupTableAddress:
++                            context.addressLookupTableAddress,
++                    },
++                );
++            } catch (error) {
++                getLogger().warn(
++                    "[PHANTOM_DEBUG] Solana OFT transport client context failed",
++                    {
++                        sourceAsset: contextConfig.asset,
++                        formattedError: formatError(error),
++                        rawError: error,
++                    },
++                );
++                throw error;
++            }
++
++            try {
++                const result = await sendLegacyMesh(
++                    contextConfig.asset,
++                    context,
++                    sendParam,
++                    msgFee,
++                    overrides?.pendingSendCallbacks,
++                );
++                getLogger().info(
++                    "[PHANTOM_DEBUG] Solana OFT transport client send returned",
++                    {
++                        sourceAsset: contextConfig.asset,
++                        result,
++                    },
++                );
++                return result;
++            } catch (error) {
++                getLogger().warn(
++                    "[PHANTOM_DEBUG] Solana OFT transport client send failed",
++                    {
++                        sourceAsset: contextConfig.asset,
++                        isWalletRejection: isWalletRejectionError(error),
++                        formattedError: formatError(error),
++                        rawError: error,
++                    },
++                );
++                throw error;
++            }
++        },
+     };
+ };
+diff --git a/packages/boltz-swaps/src/solana/debug.ts b/packages/boltz-swaps/src/solana/debug.ts
+new file mode 100644
+index 00000000..e377be53
+--- /dev/null
++++ b/packages/boltz-swaps/src/solana/debug.ts
+@@ -0,0 +1,527 @@
++import { hex } from "@scure/base";
++import type {
++    Connection,
++    PublicKey,
++    VersionedTransaction,
++} from "@solana/web3.js";
++
++type SolanaDebugMessage = {
++    header: {
++        numReadonlySignedAccounts: number;
++        numReadonlyUnsignedAccounts: number;
++        numRequiredSignatures: number;
++    };
++    staticAccountKeys: PublicKey[];
++    recentBlockhash: string;
++    compiledInstructions: Array<{
++        accountKeyIndexes: Uint8Array | number[];
++        data: Uint8Array;
++        programIdIndex: number;
++    }>;
++    addressTableLookups?: Array<{
++        accountKey: PublicKey;
++        readonlyIndexes: Uint8Array | number[];
++        writableIndexes: Uint8Array | number[];
++    }>;
++};
++
++type SolanaTransactionDebugOptions =
++    | boolean
++    | {
++          connection?: Connection;
++          includeSerializedBase64?: boolean;
++      };
++
++type SolanaSimulationDebugResult = {
++    err: unknown;
++    logs?: string[] | null;
++    returnData?: unknown;
++    unitsConsumed?: number;
++};
++
++type PhantomSimulationWarningComplianceInput = {
++    connection?: Connection;
++    exactBlockhashSimulation?: SolanaSimulationDebugResult;
++    exactBlockhashSimulationError?: string;
++    localSignerPublicKeys?: string[];
++    localSignaturesAppliedBeforeWallet: boolean;
++    selectedSigningMethod: "signAndSendTransaction" | "signTransaction";
++    simulation: SolanaSimulationDebugResult;
++    transaction: VersionedTransaction;
++    walletSignerAddress: string;
++};
++
++type ProviderRecord = Record<string, unknown>;
++const solanaTransactionSizeLimitBytes = 1232;
++const solanaTransactionNearSizeLimitBytes = 1100;
++
++const toArray = (value: Uint8Array | number[]): number[] =>
++    Array.from(value);
++
++const isRecord = (value: unknown): value is ProviderRecord =>
++    typeof value === "object" && value !== null;
++
++const getString = (value: unknown): string | undefined =>
++    typeof value === "string" ? value : undefined;
++
++const getBase58 = (value: unknown): string | undefined => {
++    if (isRecord(value) && typeof value.toBase58 === "function") {
++        return String(value.toBase58());
++    }
++    return undefined;
++};
++
++const getConstructorName = (value: unknown): string | undefined => {
++    if (!isRecord(value)) {
++        return undefined;
++    }
++    const constructor = value.constructor;
++    return isRecord(constructor) || typeof constructor === "function"
++        ? getString(Reflect.get(constructor, "name"))
++        : undefined;
++};
++
++const getMethodPresence = (
++    provider: ProviderRecord,
++): Record<string, boolean> =>
++    Object.fromEntries(
++        [
++            "connect",
++            "disconnect",
++            "getAccounts",
++            "request",
++            "sendTransaction",
++            "setDefaultChain",
++            "signAllTransactions",
++            "signAndSendTransaction",
++            "signMessage",
++            "signTransaction",
++        ].map((method) => [method, typeof provider[method] === "function"]),
++    );
++
++const getSessionDebugInfo = (session: unknown) => {
++    if (!isRecord(session)) {
++        return undefined;
++    }
++
++    const namespaces = isRecord(session.namespaces)
++        ? session.namespaces
++        : undefined;
++    const solanaNamespace = isRecord(namespaces?.solana)
++        ? namespaces.solana
++        : undefined;
++    const peer = isRecord(session.peer) ? session.peer : undefined;
++    const metadata = isRecord(peer?.metadata) ? peer.metadata : undefined;
++
++    return {
++        solanaAccounts: Array.isArray(solanaNamespace?.accounts)
++            ? solanaNamespace.accounts
++            : undefined,
++        solanaChains: Array.isArray(solanaNamespace?.chains)
++            ? solanaNamespace.chains
++            : undefined,
++        solanaMethods: Array.isArray(solanaNamespace?.methods)
++            ? solanaNamespace.methods
++            : undefined,
++        peerMetadata: metadata
++            ? {
++                  name: getString(metadata.name),
++                  url: getString(metadata.url),
++                  description: getString(metadata.description),
++              }
++            : undefined,
++    };
++};
++
++export const getSolanaWalletProviderDebugInfo = (provider: unknown) => {
++    if (!isRecord(provider)) {
++        return {
++            type: typeof provider,
++        };
++    }
++
++    const chains = Reflect.get(provider, "chains");
++
++    return {
++        constructorName: getConstructorName(provider),
++        chain: getString(provider.chain),
++        id: getString(provider.id),
++        name: getString(provider.name),
++        providerType: getString(provider.type),
++        publicKey: getBase58(provider.publicKey),
++        methods: getMethodPresence(provider),
++        chains: Array.isArray(chains)
++            ? chains.map((chain) =>
++                  isRecord(chain)
++                      ? {
++                            id: chain.id,
++                            caipNetworkId: chain.caipNetworkId,
++                            name: chain.name,
++                        }
++                      : chain,
++              )
++            : undefined,
++        session: getSessionDebugInfo(provider.session),
++    };
++};
++
++const sha256Hex = async (bytes: Uint8Array): Promise<string | undefined> => {
++    if (globalThis.crypto?.subtle === undefined) {
++        return undefined;
++    }
++
++    const digestInput = new Uint8Array(bytes);
++    const digest = await globalThis.crypto.subtle.digest(
++        "SHA-256",
++        digestInput.buffer,
++    );
++    return hex.encode(new Uint8Array(digest));
++};
++
++const bytesToBase64 = (bytes: Uint8Array): string => {
++    if (typeof globalThis.btoa === "function") {
++        let binary = "";
++        const chunkSize = 0x8000;
++
++        for (let i = 0; i < bytes.length; i += chunkSize) {
++            binary += String.fromCharCode(
++                ...bytes.subarray(i, i + chunkSize),
++            );
++        }
++
++        return globalThis.btoa(binary);
++    }
++
++    return Buffer.from(bytes).toString("base64");
++};
++
++const normalizeOptions = (
++    options: SolanaTransactionDebugOptions = false,
++): { connection?: Connection; includeSerializedBase64: boolean } => {
++    if (typeof options === "boolean") {
++        return {
++            includeSerializedBase64: options,
++        };
++    }
++
++    return {
++        connection: options.connection,
++        includeSerializedBase64: options.includeSerializedBase64 ?? false,
++    };
++};
++
++const formatDebugError = (error: unknown): string =>
++    error instanceof Error
++        ? `${error.name}: ${error.message}`
++        : String(error);
++
++const getStaticAccountRole = (
++    message: SolanaDebugMessage,
++    accountIndex: number,
++) => {
++    const { header, staticAccountKeys } = message;
++    const signedWritableCount =
++        header.numRequiredSignatures - header.numReadonlySignedAccounts;
++    const unsignedWritableCount =
++        staticAccountKeys.length -
++        header.numRequiredSignatures -
++        header.numReadonlyUnsignedAccounts;
++    const isSigner = accountIndex < header.numRequiredSignatures;
++    const isWritable = isSigner
++        ? accountIndex < signedWritableCount
++        : accountIndex <
++          header.numRequiredSignatures + unsignedWritableCount;
++
++    return {
++        isSigner,
++        isWritable,
++        isReadonly: !isWritable,
++    };
++};
++
++const getAddressTableLookupDebugInfo = async (
++    message: SolanaDebugMessage,
++    connection?: Connection,
++) => {
++    const lookups = message.addressTableLookups ?? [];
++
++    return await Promise.all(
++        lookups.map(async (lookup, lookupIndex) => {
++            const writableIndexes = toArray(lookup.writableIndexes);
++            const readonlyIndexes = toArray(lookup.readonlyIndexes);
++            let tableAddresses: string[] | undefined;
++            let resolutionError: string | undefined;
++
++            if (connection !== undefined) {
++                try {
++                    const result = await connection.getAddressLookupTable(
++                        lookup.accountKey,
++                    );
++                    tableAddresses = result.value?.state.addresses.map(
++                        (address) => address.toBase58(),
++                    );
++                    if (result.value === null) {
++                        resolutionError = "lookup table account not found";
++                    }
++                } catch (error) {
++                    resolutionError = formatDebugError(error);
++                }
++            }
++
++            return {
++                index: lookupIndex,
++                accountKey: lookup.accountKey.toBase58(),
++                writableIndexes,
++                readonlyIndexes,
++                writableAddresses: writableIndexes.map((addressIndex) => ({
++                    addressIndex,
++                    publicKey: tableAddresses?.[addressIndex],
++                })),
++                readonlyAddresses: readonlyIndexes.map((addressIndex) => ({
++                    addressIndex,
++                    publicKey: tableAddresses?.[addressIndex],
++                })),
++                resolutionError,
++            };
++        }),
++    );
++};
++
++export const getSolanaVersionedTransactionDebugInfo = async (
++    transaction: VersionedTransaction,
++    options: SolanaTransactionDebugOptions = false,
++) => {
++    const { connection, includeSerializedBase64 } = normalizeOptions(options);
++    const message = transaction.message as SolanaDebugMessage;
++    const serialized = transaction.serialize();
++    const staticAccountKeys = message.staticAccountKeys.map((key) =>
++        key.toBase58(),
++    );
++    const requiredSignatures = message.header.numRequiredSignatures;
++    const addressTableLookups = await getAddressTableLookupDebugInfo(
++        message,
++        connection,
++    );
++    const staticAccounts = staticAccountKeys.map((publicKey, index) => ({
++        index,
++        publicKey,
++        source: "static",
++        ...getStaticAccountRole(message, index),
++    }));
++    const loadedWritableAccounts = addressTableLookups.flatMap((lookup) =>
++        lookup.writableAddresses.map((address) => ({
++            lookupTable: lookup.accountKey,
++            lookupTableAccountIndex: address.addressIndex,
++            publicKey: address.publicKey,
++            source: "addressLookupTableWritable",
++            isSigner: false,
++            isWritable: true,
++            isReadonly: false,
++        })),
++    );
++    const loadedReadonlyAccounts = addressTableLookups.flatMap((lookup) =>
++        lookup.readonlyAddresses.map((address) => ({
++            lookupTable: lookup.accountKey,
++            lookupTableAccountIndex: address.addressIndex,
++            publicKey: address.publicKey,
++            source: "addressLookupTableReadonly",
++            isSigner: false,
++            isWritable: false,
++            isReadonly: true,
++        })),
++    );
++    const resolvedAccountKeys = [
++        ...staticAccounts,
++        ...loadedWritableAccounts.map((account, offset) => ({
++            index: staticAccounts.length + offset,
++            ...account,
++        })),
++        ...loadedReadonlyAccounts.map((account, offset) => ({
++            index:
++                staticAccounts.length +
++                loadedWritableAccounts.length +
++                offset,
++            ...account,
++        })),
++    ];
++    const getResolvedAccount = (accountIndex: number) =>
++        resolvedAccountKeys[accountIndex] ?? {
++            index: accountIndex,
++            publicKey: undefined,
++            source: "unresolved",
++            isSigner: false,
++            isWritable: false,
++            isReadonly: false,
++        };
++
++    return {
++        messageHeader: message.header,
++        recentBlockhash: message.recentBlockhash,
++        requiredSignatures,
++        signerPublicKeys: staticAccountKeys.slice(0, requiredSignatures),
++        signatures: transaction.signatures.map((signature, index) => ({
++            index,
++            publicKey: staticAccountKeys[index],
++            present: signature.some((byte) => byte !== 0),
++        })),
++        staticAccountKeyCount: staticAccountKeys.length,
++        staticAccountKeys,
++        resolvedAccountKeyCount: resolvedAccountKeys.length,
++        resolvedAccountKeys,
++        addressTableLookupCount: addressTableLookups.length,
++        addressTableLookups,
++        instructionCount: message.compiledInstructions.length,
++        instructions: message.compiledInstructions.map(
++            (instruction, index) => ({
++                index,
++                programIdIndex: instruction.programIdIndex,
++                programId: getResolvedAccount(instruction.programIdIndex)
++                    .publicKey,
++                program: getResolvedAccount(instruction.programIdIndex),
++                accounts: toArray(instruction.accountKeyIndexes).map(
++                    (accountIndex, accountPosition) => ({
++                        accountPosition,
++                        accountIndex,
++                        ...getResolvedAccount(accountIndex),
++                    }),
++                ),
++                dataLength: instruction.data.length,
++                dataHex: hex.encode(instruction.data),
++                dataBase64: bytesToBase64(instruction.data),
++            }),
++        ),
++        serializedLength: serialized.length,
++        serializedSha256: await sha256Hex(serialized),
++        serializedBase64: includeSerializedBase64
++            ? bytesToBase64(serialized)
++            : undefined,
++    };
++};
++
++export const getPhantomSimulationWarningComplianceDebugInfo = async ({
++    connection,
++    exactBlockhashSimulation,
++    exactBlockhashSimulationError,
++    localSignerPublicKeys = [],
++    localSignaturesAppliedBeforeWallet,
++    selectedSigningMethod,
++    simulation,
++    transaction,
++    walletSignerAddress,
++}: PhantomSimulationWarningComplianceInput) => {
++    const transactionInfo = await getSolanaVersionedTransactionDebugInfo(
++        transaction,
++        { connection },
++    );
++    const signerPublicKeys = transactionInfo.signerPublicKeys;
++    const requiredSignatures = transactionInfo.requiredSignatures;
++    const serializedLength = transactionInfo.serializedLength;
++    const walletSignerIndex = signerPublicKeys.indexOf(walletSignerAddress);
++    const localSignerSignatureStates = localSignerPublicKeys.map(
++        (publicKey) => {
++            const signature = transactionInfo.signatures.find(
++                (entry) => entry.publicKey === publicKey,
++            );
++            return {
++                publicKey,
++                requiredSigner: signerPublicKeys.includes(publicKey),
++                signaturePresentBeforeWallet: signature?.present ?? false,
++            };
++        },
++    );
++    const nonWalletSignerPublicKeys = signerPublicKeys.filter(
++        (publicKey) => publicKey !== walletSignerAddress,
++    );
++    const multipleSignerMitigationCompliant =
++        requiredSignatures <= 1 ||
++        (selectedSigningMethod === "signTransaction" &&
++            !localSignaturesAppliedBeforeWallet);
++    const nearSizeLimit =
++        serializedLength >= solanaTransactionNearSizeLimitBytes;
++    const usesAddressLookupTables = transactionInfo.addressTableLookupCount > 0;
++    const sizeGuidanceStatus = nearSizeLimit
++        ? usesAddressLookupTables
++            ? "near_limit_with_address_lookup_tables"
++            : "near_limit_without_address_lookup_tables_review_required"
++        : "not_near_limit";
++    const primarySimulationPassed = simulation.err === null;
++    const exactBlockhashSimulationPassed =
++        exactBlockhashSimulation?.err === null;
++
++    return {
++        docsUrl:
++            "https://docs.phantom.com/developer-powertools/domain-and-transaction-warnings#transaction-simulation-warning",
++        docsLastChecked: "2026-06-04",
++        documentedChecks: {
++            signerCount: {
++                requiredSignatures,
++                signerPublicKeys,
++                walletSignerAddress,
++                walletSignerIndex,
++                singleSignerPreferredByDocs: requiredSignatures === 1,
++            },
++            multipleSignerFlow: {
++                applicable: requiredSignatures > 1,
++                selectedSigningMethod,
++                localSignaturesAppliedBeforeWallet,
++                localSignerPublicKeys,
++                localSignerSignatureStates,
++                nonWalletSignerPublicKeys,
++                compliant:
++                    requiredSignatures <= 1 ||
++                    multipleSignerMitigationCompliant,
++                requirement:
++                    "For multi-signer transactions, Phantom should sign first using signTransaction, then the app should collect/apply other signatures.",
++            },
++            transactionSize: {
++                serializedLength,
++                solanaTransactionSizeLimitBytes,
++                solanaTransactionNearSizeLimitBytes,
++                nearSizeLimit,
++                addressTableLookupCount:
++                    transactionInfo.addressTableLookupCount,
++                usesAddressLookupTables,
++                status: sizeGuidanceStatus,
++                withinSolanaSizeLimit:
++                    serializedLength <= solanaTransactionSizeLimitBytes,
++                note: "Phantom docs say to split requests or use ALTs if the transaction approaches Solana's size limit; they do not define an exact 'approaches' threshold.",
++            },
++            preSigningSimulation: {
++                ranBeforeWalletPrompt: true,
++                options: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: true,
++                    sigVerify: false,
++                },
++                passed: primarySimulationPassed,
++                err: simulation.err,
++                unitsConsumed: simulation.unitsConsumed,
++                logCount: simulation.logs?.length,
++            },
++            exactBlockhashSimulation: {
++                ranBeforeWalletPrompt:
++                    exactBlockhashSimulation !== undefined ||
++                    exactBlockhashSimulationError !== undefined,
++                options: {
++                    commitment: "confirmed",
++                    replaceRecentBlockhash: false,
++                    sigVerify: false,
++                },
++                passed: exactBlockhashSimulationPassed,
++                err: exactBlockhashSimulation?.err,
++                error: exactBlockhashSimulationError,
++                unitsConsumed: exactBlockhashSimulation?.unitsConsumed,
++                logCount: exactBlockhashSimulation?.logs?.length,
++            },
++        },
++        appSideDocsCompliance: {
++            signerGuidanceCompliant: multipleSignerMitigationCompliant,
++            simulationGuidanceCompliant: primarySimulationPassed,
++            sizeGuidanceStatus,
++            allNonAmbiguousChecksPass:
++                multipleSignerMitigationCompliant &&
++                primarySimulationPassed &&
++                serializedLength <= solanaTransactionSizeLimitBytes,
++        },
++    };
++};
+diff --git a/src/components/SendToBridge.tsx b/src/components/SendToBridge.tsx
+index f0e1de3c..93d0b58a 100644
+--- a/src/components/SendToBridge.tsx
++++ b/src/components/SendToBridge.tsx
+@@ -61,6 +61,148 @@ const evmSendCandidateBlockLookback = 5n;
+ const evmSendCandidateRecoveryTimeoutMs = 120_000;
+ const transactionHashPattern = /^0x[0-9a-fA-F]{64}$/;
+ 
++const isRecord = (value: unknown): value is Record<string, unknown> =>
++    typeof value === "object" && value !== null;
++
++const readProviderValue = (
++    provider: Record<string, unknown>,
++    key: string,
++): unknown => {
++    try {
++        return Reflect.get(provider, key);
++    } catch (error) {
++        return `threw: ${String(error)}`;
++    }
++};
++
++const getBase58 = (value: unknown): string | undefined =>
++    isRecord(value) && typeof value.toBase58 === "function"
++        ? String(value.toBase58())
++        : undefined;
++
++const getWalletConnectSolanaProviderDebugInfo = (provider: unknown) => {
++    if (!isRecord(provider)) {
++        return { type: typeof provider };
++    }
++
++    const constructor = readProviderValue(provider, "constructor");
++    const chains = readProviderValue(provider, "chains");
++    const session = readProviderValue(provider, "session");
++    const namespaces =
++        isRecord(session) && isRecord(session.namespaces)
++            ? session.namespaces
++            : undefined;
++    const solanaNamespace = isRecord(namespaces?.solana)
++        ? namespaces.solana
++        : undefined;
++
++    return {
++        constructorName:
++            (isRecord(constructor) || typeof constructor === "function") &&
++            typeof Reflect.get(constructor, "name") === "string"
++                ? Reflect.get(constructor, "name")
++                : undefined,
++        providerType: readProviderValue(provider, "type"),
++        name: readProviderValue(provider, "name"),
++        id: readProviderValue(provider, "id"),
++        chain: readProviderValue(provider, "chain"),
++        publicKey: getBase58(readProviderValue(provider, "publicKey")),
++        methods: Object.fromEntries(
++            [
++                "connect",
++                "disconnect",
++                "getAccounts",
++                "request",
++                "sendTransaction",
++                "setDefaultChain",
++                "signAllTransactions",
++                "signAndSendTransaction",
++                "signMessage",
++                "signTransaction",
++            ].map((method) => [
++                method,
++                typeof readProviderValue(provider, method) === "function",
++            ]),
++        ),
++        chains: Array.isArray(chains)
++            ? chains.map((chain) =>
++                  isRecord(chain)
++                      ? {
++                            id: chain.id,
++                            caipNetworkId: chain.caipNetworkId,
++                            name: chain.name,
++                        }
++                      : chain,
++              )
++            : chains,
++        sessionSolanaAccounts: Array.isArray(solanaNamespace?.accounts)
++            ? solanaNamespace.accounts
++            : undefined,
++        sessionSolanaChains: Array.isArray(solanaNamespace?.chains)
++            ? solanaNamespace.chains
++            : undefined,
++        sessionSolanaMethods: Array.isArray(solanaNamespace?.methods)
++            ? solanaNamespace.methods
++            : undefined,
++    };
++};
++
++const getBridgeContractDebugInfo = (contract: unknown) => {
++    if (!isRecord(contract)) {
++        return { type: typeof contract };
++    }
++
++    const constructor = readProviderValue(contract, "constructor");
++
++    return {
++        constructorName:
++            (isRecord(constructor) || typeof constructor === "function") &&
++            typeof Reflect.get(constructor, "name") === "string"
++                ? Reflect.get(constructor, "name")
++                : undefined,
++        transport: readProviderValue(contract, "transport"),
++        methods: Object.fromEntries(
++            [
++                "send",
++                "quoteSend",
++                "quoteOFT",
++                "populateTransaction",
++                "read",
++                "write",
++            ].map((method) => [
++                method,
++                typeof readProviderValue(contract, method) === "function",
++            ]),
++        ),
++        keys: Object.keys(contract).sort(),
++    };
++};
++
++const stringifyDebugValue = (value: unknown): unknown => {
++    if (typeof value === "bigint") {
++        return value.toString();
++    }
++    if (Array.isArray(value)) {
++        return value.map(stringifyDebugValue);
++    }
++    if (isRecord(value)) {
++        return Object.fromEntries(
++            Object.entries(value).map(([key, entry]) => [
++                key,
++                stringifyDebugValue(entry),
++            ]),
++        );
++    }
++
++    return value;
++};
++
++const getBridgeSendParamDebugInfo = (sendParam: BridgeSendParam): unknown =>
++    stringifyDebugValue(sendParam);
++
++const getBridgeMsgFeeDebugInfo = (msgFee: BridgeMsgFee): unknown =>
++    stringifyDebugValue(msgFee);
++
+ const getTransactionHashFromError = (
+     error: unknown,
+     depth = 0,
+@@ -221,23 +363,110 @@ const SendToBridge = (props: {
+         msgFee: BridgeMsgFee;
+         refundAddress: string;
+     }): Promise<BridgeTransaction> => {
+-        if (props.bridge.kind === BridgeKind.Cctp && "send" in args.contract) {
+-            return await (args.contract as SolanaCctpTransportClient).send(
+-                args.sendParam as CctpSendParam,
+-                args.msgFee,
+-                args.refundAddress,
+-                { pendingSendCallbacks },
++        log.info("[PHANTOM_DEBUG] App sendTransport entered", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            refundAddress: args.refundAddress,
++            hasDirectSendMethod:
++                isRecord(args.contract) &&
++                typeof readProviderValue(args.contract, "send") === "function",
++            contract: getBridgeContractDebugInfo(args.contract),
++            sendParam: getBridgeSendParamDebugInfo(args.sendParam),
++            msgFee: getBridgeMsgFeeDebugInfo(args.msgFee),
++        });
++
++        try {
++            if (
++                props.bridge.kind === BridgeKind.Cctp &&
++                "send" in args.contract
++            ) {
++                log.info(
++                    "[PHANTOM_DEBUG] App sendTransport dispatching direct Solana CCTP contract send",
++                    {
++                        swapId: props.swapId,
++                        sourceAsset: props.bridge.sourceAsset,
++                        destinationAsset: props.bridge.destinationAsset,
++                    },
++                );
++                const result = await (
++                    args.contract as SolanaCctpTransportClient
++                ).send(args.sendParam as CctpSendParam, args.msgFee, args.refundAddress, {
++                    pendingSendCallbacks,
++                });
++                log.info(
++                    "[PHANTOM_DEBUG] App sendTransport direct Solana CCTP contract send returned",
++                    {
++                        swapId: props.swapId,
++                        sourceAsset: props.bridge.sourceAsset,
++                        destinationAsset: props.bridge.destinationAsset,
++                        result,
++                    },
++                );
++                return result;
++            }
++            if (props.bridge.kind === BridgeKind.Oft) {
++                log.info(
++                    "[PHANTOM_DEBUG] App sendTransport dispatching direct OFT contract send",
++                    {
++                        swapId: props.swapId,
++                        sourceAsset: props.bridge.sourceAsset,
++                        destinationAsset: props.bridge.destinationAsset,
++                    },
++                );
++                const result = await (args.contract as OftTransportClient).send(
++                    args.sendParam as SendParam,
++                    args.msgFee,
++                    args.refundAddress,
++                    { pendingSendCallbacks },
++                );
++                log.info(
++                    "[PHANTOM_DEBUG] App sendTransport direct OFT contract send returned",
++                    {
++                        swapId: props.swapId,
++                        sourceAsset: props.bridge.sourceAsset,
++                        destinationAsset: props.bridge.destinationAsset,
++                        result,
++                    },
++                );
++                return result;
++            }
++
++            log.info(
++                "[PHANTOM_DEBUG] App sendTransport dispatching bridge driver fallback",
++                {
++                    swapId: props.swapId,
++                    bridgeKind: props.bridge.kind,
++                    sourceAsset: props.bridge.sourceAsset,
++                    destinationAsset: props.bridge.destinationAsset,
++                },
+             );
+-        }
+-        if (props.bridge.kind === BridgeKind.Oft) {
+-            return await (args.contract as OftTransportClient).send(
+-                args.sendParam as SendParam,
+-                args.msgFee,
+-                args.refundAddress,
+-                { pendingSendCallbacks },
++            const result = await bridgeDriver().sendTransport(args);
++            log.info(
++                "[PHANTOM_DEBUG] App sendTransport bridge driver fallback returned",
++                {
++                    swapId: props.swapId,
++                    bridgeKind: props.bridge.kind,
++                    sourceAsset: props.bridge.sourceAsset,
++                    destinationAsset: props.bridge.destinationAsset,
++                    result,
++                },
+             );
++            return result;
++        } catch (error) {
++            log.warn("[PHANTOM_DEBUG] App sendTransport failed", {
++                swapId: props.swapId,
++                bridgeKind: props.bridge.kind,
++                sourceAsset: props.bridge.sourceAsset,
++                destinationAsset: props.bridge.destinationAsset,
++                errorName: error instanceof Error ? error.name : undefined,
++                errorMessage:
++                    error instanceof Error ? error.message : String(error),
++                error,
++            });
++            throw error;
+         }
+-        return await bridgeDriver().sendTransport(args);
+     };
+ 
+     const sendPreparedEvmBridgeTransaction = async (
+@@ -626,18 +855,86 @@ const SendToBridge = (props: {
+             `Sending bridge ${props.bridge.destinationAsset} to ${recipient}`,
+         );
+ 
++        const solanaProvider = WalletConnectProvider.getSolanaProvider();
++        log.info("[PHANTOM_DEBUG] App Solana bridge send context", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            walletAddress: wallet.address,
++            recipient,
++            cctpReceiveMode: cctpReceiveMode(),
++            solanaProvider:
++                getWalletConnectSolanaProviderDebugInfo(solanaProvider),
++        });
++
++        log.info("[PHANTOM_DEBUG] App Solana getQuotedContract start", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++        });
+         const quotedBridgeInstance = await bridgeDriver().getQuotedContract(
+             props.bridge,
+         );
++        log.info("[PHANTOM_DEBUG] App Solana getQuotedContract returned", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            contract: getBridgeContractDebugInfo(quotedBridgeInstance),
++        });
++
++        log.info("[PHANTOM_DEBUG] App Solana quoteAmountIn start", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            requestedAmountOut: props.amount.toString(),
++            cctpReceiveMode: cctpReceiveMode(),
++        });
+         const tokenAmount = await bridgeDriver().quoteAmountInForAmountOut(
+             props.bridge,
+             props.amount,
+             { cctpReceiveMode: cctpReceiveMode() },
+         );
++        log.info("[PHANTOM_DEBUG] App Solana quoteAmountIn returned", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            tokenAmount: tokenAmount.toString(),
++        });
++
++        log.info("[PHANTOM_DEBUG] App Solana createContract start", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            solanaProvider:
++                getWalletConnectSolanaProviderDebugInfo(solanaProvider),
++        });
+         const bridgeInstance = await bridgeDriver().createContract(
+             props.bridge,
+-            WalletConnectProvider.getSolanaProvider(),
++            solanaProvider,
+         );
++        log.info("[PHANTOM_DEBUG] App Solana createContract returned", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            contract: getBridgeContractDebugInfo(bridgeInstance),
++        });
++
++        log.info("[PHANTOM_DEBUG] App Solana quoteSend start", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            recipient,
++            tokenAmount: tokenAmount.toString(),
++            cctpReceiveMode: cctpReceiveMode(),
++        });
+         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
+             quotedBridgeInstance,
+             props.bridge,
+@@ -645,6 +942,16 @@ const SendToBridge = (props: {
+             tokenAmount,
+             { cctpReceiveMode: cctpReceiveMode() },
+         );
++        log.info("[PHANTOM_DEBUG] App Solana quoteSend returned", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            recipient,
++            tokenAmount: tokenAmount.toString(),
++            sendParam: getBridgeSendParamDebugInfo(sendParam),
++            msgFee: getBridgeMsgFeeDebugInfo(msgFee),
++        });
+ 
+         log.debug("Quoted bridge send", {
+             swapId: props.swapId,
+@@ -656,6 +963,16 @@ const SendToBridge = (props: {
+             lzTokenFee: msgFee[1].toString(),
+         });
+ 
++        log.info("[PHANTOM_DEBUG] App Solana sendTransport start", {
++            swapId: props.swapId,
++            bridgeKind: props.bridge.kind,
++            sourceAsset: props.bridge.sourceAsset,
++            destinationAsset: props.bridge.destinationAsset,
++            refundAddress: wallet.address,
++            contract: getBridgeContractDebugInfo(bridgeInstance),
++            sendParam: getBridgeSendParamDebugInfo(sendParam),
++            msgFee: getBridgeMsgFeeDebugInfo(msgFee),
++        });
+         return await sendTransport({
+             contract: bridgeInstance,
+             sendParam,

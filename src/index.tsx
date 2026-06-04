@@ -50,9 +50,10 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
+import { persistedLoglevelLogger } from "./utils/logs";
 import "./utils/patches";
 
-setLogger(log);
+setLogger(persistedLoglevelLogger);
 configureBoltzSwaps();
 
 if ("serviceWorker" in navigator) {
