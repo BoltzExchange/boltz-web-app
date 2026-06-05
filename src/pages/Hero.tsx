@@ -7,7 +7,7 @@ import { Show, createSignal, onMount } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import rbtc from "../assets/rootstock-icon.svg";
+import rbtc from "../assets/rbtc-icon.svg";
 import tbtc from "../assets/tbtc-icon.svg";
 import usdc from "../assets/usdc.svg";
 import usdt from "../assets/usdt-icon.svg";
@@ -108,7 +108,11 @@ export const Hero = () => {
                                 alt="Liquid Bitcoin"
                                 class="padded"
                             />
-                            <img src={rbtc} alt="Rootstock Bitcoin" />
+                            <img
+                                src={rbtc}
+                                alt="Rootstock Bitcoin"
+                                class="rbtc"
+                            />
                             <div class="hero-icons-break" />
                             <img src={tbtc} alt="tBTC" class="full-bleed" />
                             <img src={wbtc} alt="WBTC" class="full-bleed" />
