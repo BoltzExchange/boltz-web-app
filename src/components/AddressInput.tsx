@@ -1,31 +1,17 @@
-import { isKnownTokenAddress } from "boltz-swaps/evm";
-import { isValidSolanaAddress } from "boltz-swaps/solana";
-import { isValidTronAddress } from "boltz-swaps/tron";
-import { NetworkTransport, SwapType } from "boltz-swaps/types";
+import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
-import { getAddress, isAddress } from "viem";
 
-import {
-    LN,
-    getNetworkTransport,
-    isBitcoinOnlyAsset,
-    isEvmAsset,
-} from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import Pair from "../utils/Pair";
-import { probeUserInput } from "../utils/compat";
-import { btcToSat } from "../utils/denomination";
-import { formatError } from "../utils/errors";
 import {
-    decodeInvoice,
-    extractAddress,
-    extractBip21Amount,
-    extractInvoice,
-    isInvoice,
-} from "../utils/invoice";
+    DestinationInputStatus,
+    DestinationInputType,
+    parseDestinationInput,
+} from "../utils/destinationInput";
+import { formatError } from "../utils/errors";
 
 const AddressInput = () => {
     let inputRef!: HTMLInputElement;
@@ -54,162 +40,57 @@ const AddressInput = () => {
             requestId !== validationRequest ||
             input.value.trim() !== inputValue;
 
-        setOnchainAddress(inputValue);
-        setAddressValid(false);
         input.classList.remove("invalid");
         input.setCustomValidity("");
 
-        if (inputValue.length === 0) {
+        setOnchainAddress(inputValue);
+        setAddressValid(false);
+
+        const result = await parseDestinationInput(
+            inputValue,
+            pair(),
+            pairs(),
+            regularPairs(),
+            minerFee(),
+            bitcoinOnly(),
+            isStale,
+        );
+
+        if (result.status === DestinationInputStatus.Invalid) {
+            log.debug(
+                `Invalid address input: ${formatError(
+                    result.cause ?? result.error,
+                )}`,
+            );
+
+            const msg = t("invalid_address", {
+                asset: pair().toAsset,
+            });
+            input.classList.add("invalid");
+            input.setCustomValidity(msg);
+        }
+
+        if (result.status !== DestinationInputStatus.Valid) {
             return;
         }
 
-        const address = extractAddress(inputValue);
-        const invoice = extractInvoice(inputValue) ?? "";
+        if (result.amount !== undefined) {
+            setAmountChanged(Side.Receive);
+            setReceiveAmount(result.amount.receiveAmount);
+            setSendAmount(result.amount.sendAmount);
+        }
 
-        try {
-            const currentPair = pair();
-            const assetName = currentPair.toAsset;
+        if (result.switched) {
+            setPair(result.nextPair);
+            notify("success", t("switch_paste"));
+        }
 
-            if (isKnownTokenAddress(assetName, address)) {
-                throw new Error("token address");
-            }
-
-            const acceptAddress = (nextAddress: string) => {
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(nextAddress);
-            };
-
-            if (isEvmAsset(assetName)) {
-                if (isAddress(address)) {
-                    acceptAddress(getAddress(address));
-                    return;
-                }
-            }
-
-            const transport = getNetworkTransport(assetName);
-            if (transport === NetworkTransport.Solana) {
-                if (isValidSolanaAddress(address)) {
-                    acceptAddress(address);
-                    return;
-                }
-            }
-
-            if (transport === NetworkTransport.Tron) {
-                if (isValidTronAddress(address)) {
-                    acceptAddress(address);
-                    return;
-                }
-            }
-
-            const actualAsset =
-                probeUserInput(assetName, invoice) ??
-                probeUserInput(assetName, address);
-
-            if (isStale()) {
-                return;
-            }
-
-            const bip21Amount = extractBip21Amount(inputValue);
-            const shouldApplyBip21Amount =
-                bip21Amount !== null &&
-                !(
-                    actualAsset === LN &&
-                    invoice !== null &&
-                    isInvoice(invoice) &&
-                    decodeInvoice(invoice).satoshis > 0
-                );
-
-            let nextPair = currentPair;
-
-            switch (actualAsset) {
-                case LN:
-                    nextPair = new Pair(
-                        pairs(),
-                        currentPair.fromAsset === LN
-                            ? assetName
-                            : currentPair.fromAsset,
-                        LN,
-                        regularPairs(),
-                    );
-                    break;
-
-                case null:
-                    throw new Error();
-
-                default:
-                    if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
-                        throw new Error();
-                    }
-
-                    if (assetName !== actualAsset) {
-                        nextPair = new Pair(
-                            pairs(),
-                            currentPair.toAsset,
-                            actualAsset,
-                            regularPairs(),
-                        );
-                    }
-            }
-
-            if (shouldApplyBip21Amount) {
-                const satAmount = btcToSat(bip21Amount);
-                setAmountChanged(Side.Receive);
-                setReceiveAmount(satAmount);
-                const sendAmt = await nextPair.calculateSendAmount(
-                    satAmount,
-                    minerFee(),
-                );
-                if (isStale()) {
-                    return;
-                }
-                setSendAmount(sendAmt);
-            }
-
-            switch (actualAsset) {
-                case LN: {
-                    setPair(nextPair);
-                    setOnchainAddress("");
-                    setInvoice(invoice);
-                    notify("success", t("switch_paste"));
-                    break;
-                }
-
-                case null:
-                    break;
-                case undefined:
-                    break;
-
-                default: {
-                    if (assetName !== actualAsset) {
-                        setPair(nextPair);
-                        notify("success", t("switch_paste"));
-                    }
-
-                    input.setCustomValidity("");
-                    input.classList.remove("invalid");
-                    setAddressValid(true);
-                    setOnchainAddress(address);
-                    break;
-                }
-            }
-        } catch (e) {
-            if (isStale()) {
-                return;
-            }
-
-            setAddressValid(false);
-
-            if (inputValue.length !== 0) {
-                log.debug(`Invalid address input: ${formatError(e)}`);
-
-                const msg = t("invalid_address", {
-                    asset: pair().toAsset,
-                });
-                input.classList.add("invalid");
-                input.setCustomValidity(msg);
-            }
+        if (result.destination.type === DestinationInputType.Invoice) {
+            setOnchainAddress("");
+            setInvoice(result.destination.invoice);
+        } else {
+            setAddressValid(true);
+            setOnchainAddress(result.destination.address);
         }
     };
 
