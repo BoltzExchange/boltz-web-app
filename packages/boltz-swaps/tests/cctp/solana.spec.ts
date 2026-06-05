@@ -5,8 +5,11 @@ import {
     isWritableRole,
 } from "@solana/kit";
 import { PublicKey } from "@solana/web3.js";
-import { addressToBytes32, cctpZeroBytes32 } from "boltz-swaps/cctp";
-import { tryFetchSolburnAllocation } from "boltz-swaps/cctp";
+import {
+    addressToBytes32,
+    cctpZeroBytes32,
+    tryFetchSolburnAllocation,
+} from "boltz-swaps/cctp";
 import {
     getDepositForBurnInstruction,
     parseDepositForBurnInstruction,

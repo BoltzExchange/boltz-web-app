@@ -1,4 +1,10 @@
 import {
+    type AlchemyCall,
+    type SendAlchemyTransactionOptions,
+    sendAlchemyTransaction,
+    toAlchemyCall,
+} from "boltz-swaps/evm";
+import {
     type ClaimResult,
     type ClaimAssetParams as LibClaimAssetParams,
     type PopulatedEvmTransaction,
@@ -9,12 +15,6 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import type { Hash } from "viem";
 
-import {
-    type AlchemyCall,
-    type SendAlchemyTransactionOptions,
-    sendTransaction as sendAlchemyTransaction,
-    toAlchemyCall,
-} from "../alchemy/Alchemy";
 import type { Signer } from "../context/Web3";
 import { relayClaimTransaction } from "../rif/Signer";
 

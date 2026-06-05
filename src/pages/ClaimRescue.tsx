@@ -6,7 +6,7 @@ import {
     type ChainSwapDetails,
     type RestorableSwap,
     type ReversePairTypeTaproot,
-    type SwapStatus,
+    type SwapStatusResponse,
     getRestorableSwaps,
     getSwapStatus,
 } from "boltz-swaps/client";
@@ -50,10 +50,11 @@ const mapClaimableSwap = ({
     pair,
 }: {
     swap: RestorableSwap &
-        Pick<SwapStatus, "transaction"> & { preimage?: string };
+        Pick<SwapStatusResponse, "transaction"> & { preimage?: string };
     pair: ChainPairTypeTaproot | ReversePairTypeTaproot;
 }):
-    | (Partial<ChainSwap | ReverseSwap> & Pick<SwapStatus, "transaction">)
+    | (Partial<ChainSwap | ReverseSwap> &
+          Pick<SwapStatusResponse, "transaction">)
     | undefined => {
     if (swap === undefined) {
         return undefined;

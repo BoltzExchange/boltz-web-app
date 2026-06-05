@@ -12,6 +12,7 @@ import type { PendingSolanaCctpBridgeSend } from "../bridge/pendingSend.ts";
 import { PendingBridgeSendKind } from "../bridge/types.ts";
 import { getAssetBridge, getBoltzSwapsConfig } from "../config.ts";
 import { formatError, isWalletRejectionError } from "../errors.ts";
+import { stripHexPrefix } from "../evm/prefix0x.ts";
 import { constructRequestOptions } from "../helper.ts";
 import { getLogger } from "../logger.ts";
 import {
@@ -80,9 +81,6 @@ const solanaCctpComputeUnitLimit = 300_000;
 export const solanaCctpMessageSentAccountSize = 428;
 
 const textEncoder = new TextEncoder();
-
-const stripHexPrefix = (value: string): string =>
-    value.startsWith("0x") || value.startsWith("0X") ? value.slice(2) : value;
 
 const hexBytes32ToSolanaAddress = (
     modules: SolanaCctpModules,

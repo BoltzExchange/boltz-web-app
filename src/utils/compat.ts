@@ -1,42 +1,32 @@
-import { hex } from "@scure/base";
+import type { Transaction as BtcTransaction } from "@scure/btc-signer";
+import { equalBytes } from "@scure/btc-signer/utils.js";
 import {
-    Address,
-    Transaction as BtcTransaction,
-    OutScript,
-} from "@scure/btc-signer";
-import type { TransactionOutput } from "@scure/btc-signer/psbt.js";
-import { type BTC_NETWORK, equalBytes } from "@scure/btc-signer/utils.js";
-import {
-    type ClaimDetails,
-    Networks,
     type RefundDetails,
-    constructClaimTransaction,
     constructRefundTransaction,
     targetFee,
 } from "boltz-core";
 import {
-    type LiquidClaimDetails,
     type LiquidRefundDetails,
-    constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/liquid";
 import { isValidSolanaAddress } from "boltz-swaps/solana";
 import { isValidTronAddress } from "boltz-swaps/tron";
 import { NetworkTransport } from "boltz-swaps/types";
+import {
+    type UtxoNetwork,
+    decodeAddress as utxoDecodeAddress,
+    getNetwork as utxoGetNetwork,
+} from "boltz-swaps/utxo";
 import { Buffer } from "buffer";
 import {
     address as LiquidAddress,
-    networks as LiquidNetworks,
-    Transaction as LiquidTransaction,
-    type TxOutput as LiquidTransactionOutput,
-    confidential,
+    type Transaction as LiquidTransaction,
 } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import { isAddress } from "viem";
 
 import { config } from "../config";
 import { BTC, LBTC, LN, getNetworkTransport } from "../consts/Assets";
-import secp from "../lazy/secp";
 import {
     extractAddress,
     extractInvoice,
@@ -45,60 +35,13 @@ import {
     isLnurl,
 } from "./invoice";
 
-type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
-    blindingPrivateKey?: Buffer;
-};
-
-type DecodedAddress = { script: Uint8Array; blindingKey?: Buffer };
-
 const possibleUserInputTypes = [LN, LBTC, BTC];
 
-const getBtcNetwork = (network?: string): BTC_NETWORK => {
-    switch (network ?? config.network) {
-        case "mainnet":
-            return Networks.bitcoin;
-        case "testnet":
-            return Networks.testnet;
-        case "regtest":
-            return Networks.regtest;
-        default:
-            throw new Error(`unknown network: ${network}`);
-    }
-};
+const decodeAddress = (asset: string, addr: string) =>
+    utxoDecodeAddress(asset, addr, config.network as UtxoNetwork);
 
-const decodeAddress = (asset: string, addr: string): DecodedAddress => {
-    if (asset === LBTC) {
-        const liquidNet =
-            config.network === "mainnet" ? "liquid" : config.network;
-        const network = LiquidNetworks[liquidNet] as LiquidNetwork;
-        const script = LiquidAddress.toOutputScript(addr, network);
-
-        // This throws for unconfidential addresses -> fallback to output script decoding
-        try {
-            const decoded = LiquidAddress.fromConfidential(addr);
-
-            return {
-                script,
-                blindingKey: decoded.blindingKey,
-            };
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            /* empty */
-        }
-
-        return { script };
-    }
-
-    const btcAddr = Address(getBtcNetwork());
-    const decoded = btcAddr.decode(addr);
-    if (decoded === undefined) {
-        throw new Error(`could not decode address: ${addr}`);
-    }
-    const script = OutScript.encode(decoded);
-
-    return { script };
-};
+const getNetwork = (asset: string, network?: string) =>
+    utxoGetNetwork(asset, (network ?? config.network) as UtxoNetwork);
 
 const validateAddress = (asset: string, addr: string): boolean => {
     try {
@@ -167,67 +110,6 @@ const probeUserInput = (
     return null;
 };
 
-const getNetwork = (
-    asset: string,
-    network?: string,
-): BTC_NETWORK | LiquidNetwork => {
-    const resolvedNetwork = network ?? config.network;
-    if (asset === LBTC) {
-        const liquidNet =
-            resolvedNetwork === "mainnet" ? "liquid" : resolvedNetwork;
-        return LiquidNetworks[
-            liquidNet as keyof typeof LiquidNetworks
-        ] as LiquidNetwork;
-    } else {
-        return getBtcNetwork(resolvedNetwork);
-    }
-};
-
-const getTransaction = (asset: string) => {
-    if (asset === LBTC) {
-        return {
-            fromHex: (hexStr: string) => LiquidTransaction.fromHex(hexStr),
-        };
-    } else {
-        return {
-            fromHex: (hexStr: string) =>
-                BtcTransaction.fromRaw(hex.decode(hexStr), {
-                    allowUnknownOutputs: true,
-                    allowUnknownInputs: true,
-                }),
-        };
-    }
-};
-
-const getConstructClaimTransaction = (asset: string) => {
-    return (
-        utxos: ClaimDetails[] | LiquidClaimDetails[],
-        destinationScript: Uint8Array,
-        fee: number,
-        isRbf?: boolean,
-        liquidNetwork?: LiquidNetwork,
-        blindingKey?: Buffer,
-    ) => {
-        if (asset === LBTC) {
-            return lcCT(
-                utxos as LiquidClaimDetails[],
-                destinationScript as Buffer,
-                BigInt(fee),
-                isRbf,
-                liquidNetwork,
-                blindingKey,
-            );
-        } else {
-            return constructClaimTransaction(
-                utxos as ClaimDetails[],
-                destinationScript,
-                BigInt(fee),
-                isRbf,
-            );
-        }
-    };
-};
-
 const getConstructRefundTransaction = (
     asset: string,
     addOneSatBuffer: boolean,
@@ -270,34 +152,6 @@ const getConstructRefundTransaction = (
     };
 };
 
-const getOutputAmount = async (
-    asset: string,
-    output: TransactionOutput | LiquidTransactionOutputWithKey,
-): Promise<number> => {
-    if (asset !== LBTC) {
-        return Number((output as TransactionOutput).amount);
-    }
-
-    const liquidOutput = output as LiquidTransactionOutputWithKey;
-
-    if (
-        liquidOutput.rangeProof !== undefined &&
-        liquidOutput.rangeProof.length > 0
-    ) {
-        const { confidential } = await secp.get();
-        if (liquidOutput.blindingPrivateKey === undefined) {
-            throw new Error("missing blinding private key for output");
-        }
-        const unblinded = confidential.unblindOutputWithKey(
-            liquidOutput,
-            liquidOutput.blindingPrivateKey,
-        );
-        return Number(unblinded.value);
-    } else {
-        return confidential.confidentialValueToSatoshi(liquidOutput.value);
-    }
-};
-
 const findOutputByScript = (
     asset: string,
     tx: BtcTransaction | LiquidTransaction,
@@ -319,46 +173,11 @@ const findOutputByScript = (
     }
 };
 
-type TransactionInterface = BtcTransaction | LiquidTransaction;
-
-const txToHex = (transaction: TransactionInterface): string =>
-    transaction instanceof LiquidTransaction
-        ? transaction.toHex()
-        : (transaction as BtcTransaction).hex;
-
-const txToId = (transaction: TransactionInterface): string =>
-    transaction instanceof LiquidTransaction
-        ? transaction.getId()
-        : (transaction as BtcTransaction).id;
-
-const setCooperativeWitness = (
-    tx: TransactionInterface,
-    index: number,
-    witness: Uint8Array,
-) => {
-    if (tx instanceof LiquidTransaction) {
-        tx.ins[index].witness = [Buffer.from(witness)];
-    } else {
-        (tx as BtcTransaction).updateInput(index, {
-            finalScriptWitness: [witness],
-        });
-    }
-};
-
 export {
     findOutputByScript,
     validateAddress,
     getNetwork,
     decodeAddress,
-    getTransaction,
-    DecodedAddress,
-    getOutputAmount,
-    getConstructClaimTransaction,
     getConstructRefundTransaction,
-    LiquidTransactionOutputWithKey,
-    TransactionInterface,
-    txToHex,
-    txToId,
-    setCooperativeWitness,
     probeUserInput,
 };

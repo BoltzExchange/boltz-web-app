@@ -73,8 +73,8 @@ vi.mock("../../src/utils/claim", () => ({
     createTheirPartialChainSwapSignature: vi.fn(),
     findSwapOutputVout: vi.fn(),
 }));
-vi.mock("../../src/utils/compat", async () => {
-    const actual = await vi.importActual("../../src/utils/compat");
+vi.mock("boltz-swaps/utxo", async () => {
+    const actual = await vi.importActual("boltz-swaps/utxo");
     return {
         ...actual,
         getTransaction: vi.fn(() => ({

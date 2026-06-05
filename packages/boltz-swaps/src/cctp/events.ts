@@ -1,6 +1,6 @@
 import { type Hex, keccak256, toBytes } from "viem";
 
-import { prefix0x } from "../evm/prefix0x.ts";
+import { prefix0x, stripHexPrefix } from "../evm/prefix0x.ts";
 
 // keccak256("MessageSent(bytes)") — event on `MessageTransmitterV2` emitted
 // once per `depositForBurn*` call.
@@ -33,14 +33,11 @@ type LogLike = {
     logIndex?: number | null;
 };
 
-const stripPrefix = (value: string): string =>
-    value.startsWith("0x") || value.startsWith("0X") ? value.slice(2) : value;
-
 // Extract `bytes` payload from a non-indexed `MessageSent(bytes)` log. The
 // data is ABI-encoded (bytes, offset, length, content) — the raw message
 // sits at offset 64 with a length prefix.
 const decodeMessageBytes = (data: string): string => {
-    const hex = stripPrefix(data);
+    const hex = stripHexPrefix(data);
     // hex layout: [32 bytes offset][32 bytes length][message bytes padded to 32]
     const lengthHex = hex.slice(64, 128);
     const messageLengthBytes = Number.parseInt(lengthHex, 16);
@@ -53,18 +50,18 @@ const decodeMessageBytes = (data: string): string => {
 };
 
 const readUint32 = (message: string, byteOffset: number): number => {
-    const hex = stripPrefix(message);
+    const hex = stripHexPrefix(message);
     const slice = hex.slice(byteOffset * 2, byteOffset * 2 + 8);
     return Number.parseInt(slice, 16);
 };
 
 const readBytes32 = (message: string, byteOffset: number): Hex => {
-    const hex = stripPrefix(message);
+    const hex = stripHexPrefix(message);
     return prefix0x(hex.slice(byteOffset * 2, byteOffset * 2 + 64));
 };
 
 const readUint256 = (data: string, byteOffset: number): bigint => {
-    const hex = stripPrefix(data);
+    const hex = stripHexPrefix(data);
     return BigInt(prefix0x(hex.slice(byteOffset * 2, byteOffset * 2 + 64)));
 };
 

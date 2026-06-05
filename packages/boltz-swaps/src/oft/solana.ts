@@ -17,7 +17,7 @@ import { PendingBridgeSendKind } from "../bridge/types.ts";
 import { getCachedValue } from "../cache.ts";
 import { getBoltzSwapsConfig } from "../config.ts";
 import { formatError, isWalletRejectionError } from "../errors.ts";
-import { prefix0x } from "../evm/prefix0x.ts";
+import { prefix0x, stripHexPrefix } from "../evm/prefix0x.ts";
 import { getLogger } from "../logger.ts";
 import {
     derivePda,
@@ -96,9 +96,7 @@ const encodeU32 = (value: number, littleEndian = true): Uint8Array => {
 };
 
 const hexToBytes = (value: string): Uint8Array =>
-    value === "0x"
-        ? new Uint8Array()
-        : hex.decode(value.startsWith("0x") ? value.slice(2) : value);
+    value === "0x" ? new Uint8Array() : hex.decode(stripHexPrefix(value));
 
 const getCacheScope = (context: Context): string =>
     [

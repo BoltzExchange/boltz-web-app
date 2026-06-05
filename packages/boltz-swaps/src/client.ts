@@ -194,7 +194,7 @@ export type LockupTransaction = {
     timeoutEta?: number;
 };
 
-export type SwapStatus = {
+export type SwapStatusResponse = {
     status: string;
     failureReason?: string;
     zeroConfRejected?: boolean;
@@ -514,7 +514,7 @@ export const getReverseTransaction = (id: string) =>
     }>(`/v2/swap/reverse/${id}/transaction`);
 
 export const getSwapStatus = (id: string) =>
-    fetcher<SwapStatus>(`/v2/swap/${id}`);
+    fetcher<SwapStatusResponse>(`/v2/swap/${id}`);
 
 export const getChainSwapClaimDetails = (id: string) =>
     fetcher<{

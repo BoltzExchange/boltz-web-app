@@ -91,6 +91,14 @@ export type RouteQuote<A extends string = string> = {
     legs: RouteLeg<A>[];
 };
 
+export type RoutePlan<A extends string = string> = {
+    from: A;
+    to: A;
+    chainSwap: { from: A; to: A };
+    dex?: { chain: string; tokenIn: string; tokenOut: string };
+    bridge?: { sourceAsset: A; destinationAsset: A };
+};
+
 type RouteQuoteSharedArgs<A extends string> = {
     from: A;
     to: A;
@@ -279,6 +287,50 @@ const planLegs = (from: string, to: string, pairs: Pairs): PlanStep[] => {
         steps.push(bridge);
     }
     return steps;
+};
+
+export const planRoute = <A extends string = string>(
+    from: A,
+    to: A,
+    pairs: Pairs,
+): RoutePlan<A> => {
+    const steps = planLegs(from, to, pairs);
+    const chainSwapStep = steps.find(
+        (step): step is ChainSwapStep => step.kind === RouteLegKind.ChainSwap,
+    );
+    if (chainSwapStep === undefined) {
+        throw new RouteUnavailableError("no chain-swap leg planned", from, to);
+    }
+    const dexStep = steps.find(
+        (step): step is DexStep => step.kind === RouteLegKind.Dex,
+    );
+    const bridgeStep = steps.find(
+        (step): step is BridgeStep => step.kind === RouteLegKind.Bridge,
+    );
+
+    return {
+        from,
+        to,
+        chainSwap: {
+            from: chainSwapStep.from as A,
+            to: chainSwapStep.to as A,
+        },
+        dex:
+            dexStep !== undefined
+                ? {
+                      chain: dexStep.chain,
+                      tokenIn: dexStep.tokenIn,
+                      tokenOut: dexStep.tokenOut,
+                  }
+                : undefined,
+        bridge:
+            bridgeStep !== undefined
+                ? {
+                      sourceAsset: bridgeStep.route.sourceAsset as A,
+                      destinationAsset: bridgeStep.route.destinationAsset as A,
+                  }
+                : undefined,
+    };
 };
 
 const buildChainSwapLeg = (

@@ -5,6 +5,7 @@ import {
     postChainSwapDetails,
 } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
+import { getTransaction } from "boltz-swaps/utxo";
 import log from "loglevel";
 import {
     type Accessor,
@@ -27,7 +28,6 @@ import {
     createTheirPartialChainSwapSignature,
     findSwapOutputVout,
 } from "../utils/claim";
-import { getTransaction } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { getPair } from "../utils/helper";
 import { isSwapClaimable } from "../utils/rescue";

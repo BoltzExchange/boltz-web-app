@@ -4,7 +4,9 @@ import {
     getChainSwapNewQuote,
     getChainSwapTransactions,
 } from "boltz-swaps/client";
+import { calculateAmountOutMin } from "boltz-swaps/helper";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { getOutputAmount, getTransaction } from "boltz-swaps/utxo";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import {
@@ -25,13 +27,7 @@ import { usePayContext } from "../context/Pay";
 import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import Pair from "../utils/Pair";
-import { calculateAmountOutMin } from "../utils/calculate";
-import {
-    decodeAddress,
-    findOutputByScript,
-    getOutputAmount,
-    getTransaction,
-} from "../utils/compat";
+import { decodeAddress, findOutputByScript } from "../utils/compat";
 import {
     formatAmount,
     formatDenomination,

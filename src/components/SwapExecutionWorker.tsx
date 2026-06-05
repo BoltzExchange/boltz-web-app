@@ -13,10 +13,13 @@ import {
 } from "boltz-swaps/cctp";
 import { encodeDexQuote, getCommitmentLockupDetails } from "boltz-swaps/client";
 import {
+    type AlchemyCall,
     assetAmountToSats,
     createAssetProvider,
     prefix0x,
     satsToAssetAmount,
+    toAlchemyCall,
+    waitForPreparedCallTransactionHash,
 } from "boltz-swaps/evm";
 import {
     emptyPreimageHash,
@@ -29,6 +32,7 @@ import {
     erc20SwapAbi,
     routerAbi,
 } from "boltz-swaps/generated/evm-abis";
+import { calculateAmountOutMin } from "boltz-swaps/helper";
 import { getTronOftGuidFromTransactionInfo } from "boltz-swaps/oft";
 import { getSolanaConnection } from "boltz-swaps/solana";
 import {
@@ -54,18 +58,12 @@ import {
     isAddressEqual,
 } from "viem";
 
-import {
-    type AlchemyCall,
-    toAlchemyCall,
-    waitForPreparedCallTransactionHash,
-} from "../alchemy/Alchemy";
 import { config } from "../config";
 import { USDC, getAssetBridge, getTokenAddress } from "../consts/Assets";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import { calculateAmountOutMin } from "../utils/calculate";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";

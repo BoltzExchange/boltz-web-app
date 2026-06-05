@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import type { AlchemyCall } from "boltz-swaps/evm";
 import { SwapPosition } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import type { AlchemyCall } from "../../src/alchemy/Alchemy";
 import type { Signer } from "../../src/context/Web3";
 import type { sendPopulatedTransaction as sendPopulatedTransactionFn } from "../../src/utils/evmTransaction";
 import {

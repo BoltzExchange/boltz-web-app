@@ -1,6 +1,6 @@
+import type * as EvmModule from "boltz-swaps/evm";
 import { prefix0x } from "boltz-swaps/evm";
 
-import type * as AlchemyModule from "../../src/alchemy/Alchemy";
 import type { Signer } from "../../src/context/Web3";
 import { sendPopulatedTransaction } from "../../src/utils/evmTransaction";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
@@ -8,13 +8,11 @@ import { GasAbstractionType } from "../../src/utils/swapCreator";
 const mockAlchemySendTransaction =
     vi.fn<(...args: unknown[]) => Promise<string>>();
 
-vi.mock("../../src/alchemy/Alchemy", async () => {
-    const actual = await vi.importActual<typeof AlchemyModule>(
-        "../../src/alchemy/Alchemy",
-    );
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual<typeof EvmModule>("boltz-swaps/evm");
     return {
         ...actual,
-        sendTransaction: (...args: unknown[]) =>
+        sendAlchemyTransaction: (...args: unknown[]) =>
             mockAlchemySendTransaction(...args),
     };
 });

@@ -1,9 +1,9 @@
 import { hex } from "@scure/base";
+import type { LiquidTransactionOutputWithKey } from "boltz-swaps/utxo";
 import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import secp from "../lazy/secp";
-import type { LiquidTransactionOutputWithKey } from "./compat";
 
 // Per blinded output, the Blockstream explorer expects a comma separated tuple
 // in its "#blinded=" URL fragment:
