@@ -295,6 +295,8 @@ describe("InvoiceInput", () => {
 
         setPairAssets(BTC, LN);
 
+        signals.setReceiveAmount(BigNumber(5000));
+
         const invoiceInput = (await screen.findByTestId(
             "invoice",
         )) as HTMLInputElement;
@@ -307,6 +309,8 @@ describe("InvoiceInput", () => {
             expect(signals.onchainAddress()).toEqual(expectedAddress);
             expect(signals.pair().toAsset).toEqual(BTC);
         });
+        // An amountless BIP21 URI must not reset the amounts
+        expect(signals.receiveAmount().toNumber()).toEqual(5000);
     });
 
     test.each`

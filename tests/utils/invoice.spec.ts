@@ -1,5 +1,6 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
+import BigNumber from "bignumber.js";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
 import type * as ClientModule from "boltz-swaps/client";
@@ -8,6 +9,7 @@ import { vi } from "vitest";
 import {
     decodeInvoice,
     extractAddress,
+    extractBip21Amount,
     extractInvoice,
     fetchBip353,
     isBip21,
@@ -97,6 +99,21 @@ describe("invoice", () => {
         ${"liquidnetwork:el1qq2hwpl8uvskkjrznyltjlamk86nh7r69amjmj2kvfwe7pxmfjxl5wjnhvd5am8s7mnv5rtnwflkcgfwesnz2gz8qau0ghppzehf4grt89szq8tex5keq?amount=0.00100135&label=Send%20to%20BTC%20lightning&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225"}
     `("should not return invoice on bip21 address: $bip21", ({ bip21 }) => {
         expect(extractInvoice(bip21)).toEqual(null);
+    });
+
+    test.each`
+        data                                                                               | amount
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=0.00001&label=lunch"} | ${BigNumber("0.00001")}
+        ${"liquidnetwork:ert1qhtlluwskenvrf4w8hwds70w9wdwem4fwsd0pk8?amount=0.00100135"}   | ${BigNumber("0.00100135")}
+        ${"BITCOIN:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?AMOUNT=0.00001&LABEL=LUNCH"} | ${BigNumber("0.00001")}
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?label=lunch"}                | ${null}
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U"}                            | ${null}
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount="}                    | ${null}
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=junk"}                | ${null}
+        ${"bc1qylh3u67j673h6y6alv70m0pl2yz53tzhvxgg7u"}                                    | ${null}
+        ${"lnbcrt4986620n1pjgkj07pp5zl"}                                                   | ${null}
+    `("should extract bip21 amount of $data -> $amount", ({ data, amount }) => {
+        expect(extractBip21Amount(data)).toEqual(amount);
     });
 
     describe("isInvoice", () => {

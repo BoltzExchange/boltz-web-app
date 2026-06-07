@@ -42,7 +42,6 @@ const QrScan = () => {
         const scannedValue = data.trim();
         log.debug("scanned qr code:", scannedValue);
 
-        setOnchainAddress(scannedValue);
         setAddressValid(false);
 
         const result = await parseDestinationInput(

@@ -18,6 +18,8 @@ import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import Pair from "../../src/utils/Pair";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
+import type * as HelperModule from "../../src/utils/helper";
+import { isMobile } from "../../src/utils/helper";
 import {
     TestComponent,
     contextWrapper,
@@ -44,6 +46,13 @@ vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
 }));
 vi.mock("../../src/components/ConnectWallet", () => ({
     default: () => <div data-testid="connect-wallet" />,
+}));
+vi.mock("qr-scanner", () => ({
+    default: { hasCamera: vi.fn(() => Promise.resolve(true)) },
+}));
+vi.mock("../../src/utils/helper", async (importActual) => ({
+    ...(await importActual<typeof HelperModule>()),
+    isMobile: vi.fn(() => false),
 }));
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
@@ -1395,4 +1404,40 @@ describe("Create", () => {
             expect(signals.sendAmount()).toEqual(BigNumber(0));
         });
     });
+
+    test.each`
+        mobile   | fromAsset | toAsset | visible
+        ${true}  | ${BTC}    | ${LN}   | ${true}
+        ${true}  | ${LN}     | ${BTC}  | ${true}
+        ${true}  | ${LN}     | ${RBTC} | ${false}
+        ${false} | ${BTC}    | ${LN}   | ${false}
+    `(
+        "should show QR scanner for mobile: $mobile, toAsset: $toAsset -> $visible",
+        async ({ mobile, fromAsset, toAsset, visible }) => {
+            vi.mocked(isMobile).mockReturnValue(mobile);
+
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+            setPairAssets(fromAsset, toAsset);
+
+            const buttonText = globalSignals.t("scan_qr_code");
+            if (visible) {
+                expect(await screen.findByText(buttonText)).not.toBeNull();
+            } else {
+                // Flush the async camera availability check before
+                // asserting the scanner is absent
+                await new Promise((resolve) => setTimeout(resolve, 0));
+                expect(screen.queryByText(buttonText)).toBeNull();
+            }
+        },
+    );
 });
