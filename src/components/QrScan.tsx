@@ -1,18 +1,33 @@
-import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
+import {
+    DestinationInputStatus,
+    DestinationInputType,
+    parseDestinationInput,
+} from "../utils/destinationInput";
 
 const QrScan = () => {
     let qrRef!: HTMLVideoElement;
     let qrScanner: QrScanner | undefined;
 
-    const { pair, setInvoice, setOnchainAddress } = useCreateContext();
-    const { t, notify } = useGlobalContext();
+    const {
+        pair,
+        setPair,
+        minerFee,
+        setAddressValid,
+        setOnchainAddress,
+        setInvoice,
+        setAmountChanged,
+        setReceiveAmount,
+        setSendAmount,
+    } = useCreateContext();
+    const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
 
     const [camera, setCamera] = createSignal<boolean>(false);
     const [scanning, setScanning] = createSignal(false);
@@ -23,19 +38,55 @@ const QrScan = () => {
         setCamera(hasCamera);
     });
 
+    const handleScan = async (data: string) => {
+        const scannedValue = data.trim();
+        log.debug("scanned qr code:", scannedValue);
+
+        setAddressValid(false);
+
+        const result = await parseDestinationInput(
+            scannedValue,
+            pair(),
+            pairs(),
+            regularPairs(),
+            minerFee(),
+            bitcoinOnly(),
+        );
+
+        if (result.status === DestinationInputStatus.Invalid) {
+            notify("error", t("invalid_address", { asset: pair().toAsset }));
+        }
+
+        if (result.status !== DestinationInputStatus.Valid) {
+            return;
+        }
+
+        if (result.amount !== undefined) {
+            setAmountChanged(Side.Receive);
+            setReceiveAmount(result.amount.receiveAmount);
+            setSendAmount(result.amount.sendAmount);
+        }
+
+        if (result.switched) {
+            setPair(result.nextPair);
+            notify("success", t("switch_paste"));
+        }
+
+        if (result.destination.type === DestinationInputType.Invoice) {
+            setOnchainAddress("");
+            setInvoice(result.destination.invoice);
+        } else {
+            setAddressValid(true);
+            setOnchainAddress(result.destination.address);
+        }
+    };
+
     const startScan = () => {
         if (qrScanner === undefined) {
             qrScanner = new QrScanner(
                 qrRef,
                 (result) => {
-                    log.debug("scanned qr code:", result.data);
-                    if (pair().swapToCreate?.type === SwapType.Submarine) {
-                        setInvoice("");
-                        setInvoice(result.data);
-                    } else {
-                        setOnchainAddress("");
-                        setOnchainAddress(result.data);
-                    }
+                    void handleScan(result.data);
                     stopScan();
                 },
                 {

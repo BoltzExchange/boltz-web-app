@@ -338,6 +338,19 @@ export const isBip21 = (data: string) => {
     );
 };
 
+// BIP-321 makes query parameter keys case-insensitive,
+// which is common practice for all-uppercase URIs in QR codes
+const getBip21Param = (url: URL, key: string): string | null => {
+    const keyLower = key.toLowerCase();
+
+    for (const [paramKey, value] of url.searchParams) {
+        if (paramKey.toLowerCase() === keyLower) {
+            return value;
+        }
+    }
+    return null;
+};
+
 export const extractInvoice = (data: string) => {
     if (typeof data !== "string") {
         return null;
@@ -370,7 +383,19 @@ export const extractAddress = (data: string) => {
 export const extractBip21Amount = (data: string) => {
     if (isBip21(data)) {
         const url = new URL(data);
-        return BigNumber(url.searchParams.get("amount") ?? 0);
+        const amount = getBip21Param(url, "amount");
+        if (amount === null) {
+            return null;
+        }
+
+        try {
+            const value = BigNumber(amount);
+            // Treat empty or malformed amounts as absent instead of
+            // failing the whole URI
+            return value.isNaN() ? null : value;
+        } catch {
+            return null;
+        }
     }
     return null;
 };

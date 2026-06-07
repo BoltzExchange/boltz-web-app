@@ -914,7 +914,10 @@ const Create = () => {
                 <Show
                     when={
                         isMobile() &&
-                        config.assets?.[pair().toAsset]?.type === AssetKind.UTXO
+                        !destinationLocked() &&
+                        (pair().toAsset === LN ||
+                            config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.UTXO)
                     }>
                     <QrScan />
                     <hr class="spacer" />
