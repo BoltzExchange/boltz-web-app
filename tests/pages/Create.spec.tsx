@@ -1440,4 +1440,38 @@ describe("Create", () => {
             }
         },
     );
+
+    test("should hide QR scanner for locked Lightning destinations on mobile", async () => {
+        vi.mocked(isMobile).mockReturnValue(true);
+
+        const LockedCreate = () => {
+            const [showCreate, setShowCreate] = createSignal(false);
+
+            onMount(() => {
+                signals.setPair(new Pair(pairs, BTC, LN, pairs));
+                signals.setDestinationLocked(true);
+                setShowCreate(true);
+            });
+
+            return (
+                <>
+                    <TestComponent />
+                    <Show when={showCreate()}>
+                        <Create />
+                    </Show>
+                </>
+            );
+        };
+
+        render(() => <LockedCreate />, {
+            wrapper: contextWrapper,
+        });
+
+        await waitFor(() => {
+            expect(signals.destinationLocked()).toBe(true);
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        expect(screen.queryByText(globalSignals.t("scan_qr_code"))).toBeNull();
+    });
 });

@@ -341,8 +341,10 @@ export const isBip21 = (data: string) => {
 // BIP-321 makes query parameter keys case-insensitive,
 // which is common practice for all-uppercase URIs in QR codes
 const getBip21Param = (url: URL, key: string): string | null => {
+    const keyLower = key.toLowerCase();
+
     for (const [paramKey, value] of url.searchParams) {
-        if (paramKey.toLowerCase() === key) {
+        if (paramKey.toLowerCase() === keyLower) {
             return value;
         }
     }

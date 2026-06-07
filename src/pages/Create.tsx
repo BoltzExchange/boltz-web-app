@@ -914,6 +914,7 @@ const Create = () => {
                 <Show
                     when={
                         isMobile() &&
+                        !destinationLocked() &&
                         (pair().toAsset === LN ||
                             config.assets?.[pair().toAsset]?.type ===
                                 AssetKind.UTXO)
