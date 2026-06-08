@@ -7,6 +7,10 @@ const mainnetPreset = buildMainnetConfig({
     rpcUrls: envRpcUrls,
     canSend: usdt0CanSendOverrides,
     btcMempoolApiUrl: import.meta.env.VITE_MEMPOOL_API_URL || undefined,
+    // The SDK exposes the Arkade chain-swap source (asset id "ARK"), but the web
+    // app has no Arkade wallet support yet, so keep it out of the app's asset
+    // list (selector and `sendAsset`/`receiveAsset` URL params).
+    filterAssets: (asset) => asset !== "ARK",
 });
 
 const config = {
