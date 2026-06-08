@@ -290,6 +290,7 @@ export const createSubmarineSwap = (
     invoice: string,
     pairHash: string,
     refundPublicKey?: string,
+    metadata?: string,
 ): Promise<SubmarineCreatedResponse> =>
     fetcher("/v2/swap/submarine", {
         from,
@@ -298,6 +299,7 @@ export const createSubmarineSwap = (
         refundPublicKey,
         pairHash,
         referralId: getReferralId(),
+        metadata,
     });
 
 export const createReverseSwap = (
@@ -308,6 +310,7 @@ export const createReverseSwap = (
     pairHash: string,
     claimPublicKey?: string,
     claimAddress?: string,
+    metadata?: string,
 ): Promise<ReverseCreatedResponse> =>
     fetcher("/v2/swap/reverse", {
         from,
@@ -318,6 +321,7 @@ export const createReverseSwap = (
         claimAddress,
         referralId: getReferralId(),
         pairHash,
+        metadata,
     });
 
 export const createChainSwap = (
@@ -329,6 +333,7 @@ export const createChainSwap = (
     refundPublicKey: string | undefined,
     claimAddress: string | undefined,
     pairHash: string,
+    metadata?: string,
 ): Promise<ChainSwapCreatedResponse> =>
     fetcher("/v2/swap/chain", {
         from,
@@ -340,6 +345,7 @@ export const createChainSwap = (
         pairHash,
         referralId: getReferralId(),
         userLockAmount,
+        metadata,
     });
 
 export const getPartialRefundSignature = async (

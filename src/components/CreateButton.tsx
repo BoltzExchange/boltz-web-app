@@ -43,7 +43,7 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop } from "../utils/Pair";
+import Pair, { type CreationData, type EncodedHop } from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -77,6 +77,10 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
+import {
+    buildSwapMetadataPayload,
+    encryptSwapMetadata,
+} from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
@@ -111,6 +115,46 @@ const buildBridgeDetail = (
     }
 
     return driver.getRoutePosition(route, position);
+};
+
+export const buildEncryptedSwapMetadata = async ({
+    assetSend,
+    assetReceive,
+    hops,
+    hopsPosition,
+    sendAmount,
+    receiveAmount,
+    mnemonic,
+}: {
+    assetSend: string;
+    assetReceive: string;
+    hops: EncodedHop[];
+    hopsPosition: SwapPosition | undefined;
+    sendAmount: number;
+    receiveAmount: number;
+    mnemonic: string | undefined;
+}): Promise<string | undefined> => {
+    const bridge =
+        buildBridgeDetail(assetSend, SwapPosition.Pre) ??
+        buildBridgeDetail(assetReceive, SwapPosition.Post);
+
+    const payload = buildSwapMetadataPayload({
+        hops,
+        hopsPosition,
+        bridge,
+        sendAmount,
+        receiveAmount,
+    });
+
+    if (payload === undefined) {
+        return undefined;
+    }
+
+    if (mnemonic === undefined || mnemonic === "") {
+        throw new Error("missing rescue file for routed swap metadata");
+    }
+
+    return await encryptSwapMetadata(mnemonic, payload);
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
@@ -571,6 +615,20 @@ const CreateButton = () => {
         }
     };
 
+    const buildCreationMetadata = (
+        creationData: CreationData,
+        mnemonic = rescueFile()?.mnemonic,
+    ): Promise<string | undefined> =>
+        buildEncryptedSwapMetadata({
+            assetSend: assetSend(),
+            assetReceive: assetReceive(),
+            hops: creationData.hops,
+            hopsPosition: creationData.hopsPosition,
+            sendAmount: Number(creationData.sendAmount),
+            receiveAmount: Number(creationData.receiveAmount),
+            mnemonic,
+        });
+
     const createSwap = async (
         claimAddress: string,
         gasAbstraction: GasAbstraction,
@@ -592,6 +650,8 @@ const CreateButton = () => {
                         }
                         hops = creationData.hops;
                         hopsPosition = creationData.hopsPosition;
+                        const metadata =
+                            await buildCreationMetadata(creationData);
                         data = await createSubmarine(
                             creationData.from,
                             creationData.to,
@@ -602,6 +662,7 @@ const CreateButton = () => {
                             gasAbstraction,
                             newKey,
                             originalDestination(),
+                            metadata,
                         );
                     };
 
@@ -775,6 +836,10 @@ const CreateButton = () => {
                     }
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
+                    const metadata = await buildCreationMetadata(
+                        creationData,
+                        rescue.mnemonic,
+                    );
                     data = await createReverse(
                         creationData.from,
                         creationData.to,
@@ -786,6 +851,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
+                        metadata,
                     );
                     break;
                 }
@@ -804,6 +870,10 @@ const CreateButton = () => {
                     }
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
+                    const metadata = await buildCreationMetadata(
+                        creationData,
+                        rescue.mnemonic,
+                    );
                     data = await createChain(
                         creationData.from,
                         creationData.to,
@@ -815,6 +885,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
+                        metadata,
                     );
                     break;
                 }

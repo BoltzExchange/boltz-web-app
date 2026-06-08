@@ -1,8 +1,11 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import type { Pairs } from "boltz-swaps/client";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
 import CreateButton, {
+    buildEncryptedSwapMetadata,
     getClaimAddress,
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
@@ -19,11 +22,12 @@ import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
-import Pair from "../../src/utils/Pair";
+import Pair, { type EncodedHop } from "../../src/utils/Pair";
 import {
     GasAbstractionType,
     createUniformGasAbstraction,
 } from "../../src/utils/swapCreator";
+import { decryptSwapMetadata } from "../../src/utils/swapMetadata";
 import {
     TestComponent,
     contextWrapper,
@@ -153,6 +157,197 @@ const setPairAssetsWithPairs = (
 ) => {
     signals.setPair(new Pair(pairs, fromAsset, toAsset, pairs));
 };
+
+describe("buildEncryptedSwapMetadata", () => {
+    const mnemonic =
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    const dexHops: EncodedHop[] = [
+        { type: SwapType.Dex, from: WBTC, to: TBTC },
+    ];
+
+    // Make bridge detection deterministic and independent of the live bridge
+    // registry/config: "USDT0-POL" gets a route, everything else does not.
+    const bridgeAsset = "USDT0-POL";
+    const stubBridgeRegistry = () => {
+        const route = { sourceAsset: bridgeAsset, destinationAsset: USDT0 };
+        const driver = {
+            getRoutePosition: (
+                r: { sourceAsset: string; destinationAsset: string },
+                position: SwapPosition,
+            ) => ({ ...r, kind: BridgeKind.Cctp, position }),
+        };
+        vi.spyOn(bridgeRegistry, "getPreRoute").mockImplementation((asset) =>
+            asset === bridgeAsset ? route : undefined,
+        );
+        vi.spyOn(bridgeRegistry, "getPostRoute").mockImplementation((asset) =>
+            asset === bridgeAsset ? route : undefined,
+        );
+        vi.spyOn(bridgeRegistry, "getDriverForAsset").mockImplementation(
+            (asset) => (asset === bridgeAsset ? (driver as never) : undefined),
+        );
+    };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test("encrypts metadata for a DEX pre-route using sendAmount", async () => {
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: BTC,
+            assetReceive: LN,
+            hops: dexHops,
+            hopsPosition: SwapPosition.Pre,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+        });
+
+        expect(metadata).toBeTypeOf("string");
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload).toEqual({
+            hops: dexHops,
+            position: SwapPosition.Pre,
+            quoteAmount: 1000,
+        });
+    });
+
+    test("encrypts metadata for a DEX post-route using receiveAmount", async () => {
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: LN,
+            assetReceive: BTC,
+            hops: dexHops,
+            hopsPosition: SwapPosition.Post,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.position).toBe(SwapPosition.Post);
+        expect(payload.quoteAmount).toBe(900);
+        expect(payload.bridge).toBeUndefined();
+    });
+
+    test("encrypts metadata for a pre-bridge send asset", async () => {
+        stubBridgeRegistry();
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: bridgeAsset,
+            assetReceive: LN,
+            hops: [],
+            hopsPosition: undefined,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.hops).toBeUndefined();
+        expect(payload.bridge?.position).toBe(SwapPosition.Pre);
+    });
+
+    test("encrypts metadata for a post-bridge receive asset", async () => {
+        stubBridgeRegistry();
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: LN,
+            assetReceive: bridgeAsset,
+            hops: [],
+            hopsPosition: undefined,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.bridge?.position).toBe(SwapPosition.Post);
+    });
+
+    test("combines DEX and bridge into a single metadata payload", async () => {
+        stubBridgeRegistry();
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: bridgeAsset,
+            assetReceive: LN,
+            hops: dexHops,
+            hopsPosition: SwapPosition.Pre,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.hops).toEqual(dexHops);
+        expect(payload.bridge).toBeDefined();
+    });
+
+    test("returns undefined for a direct pair without DEX or bridge", async () => {
+        await expect(
+            buildEncryptedSwapMetadata({
+                assetSend: BTC,
+                assetReceive: LN,
+                hops: [],
+                hopsPosition: undefined,
+                sendAmount: 1000,
+                receiveAmount: 900,
+                mnemonic,
+            }),
+        ).resolves.toBeUndefined();
+    });
+
+    test("aborts when a routed swap is missing the rescue mnemonic", async () => {
+        await expect(
+            buildEncryptedSwapMetadata({
+                assetSend: BTC,
+                assetReceive: LN,
+                hops: dexHops,
+                hopsPosition: SwapPosition.Pre,
+                sendAmount: 1000,
+                receiveAmount: 900,
+                mnemonic: undefined,
+            }),
+        ).rejects.toThrow(/rescue file/);
+    });
+
+    const intermediateHops: EncodedHop[] = [
+        { type: SwapType.Dex, from: TBTC, to: USDT0 },
+    ];
+
+    test("derives the post-bridge from the final receive asset, not the DEX hop", async () => {
+        stubBridgeRegistry();
+
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: LBTC,
+            assetReceive: bridgeAsset,
+            hops: intermediateHops,
+            hopsPosition: SwapPosition.Post,
+            sendAmount: 1000,
+            receiveAmount: 971,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.bridge?.position).toBe(SwapPosition.Post);
+        expect(payload.bridge?.destinationAsset).toBe(USDT0);
+        expect(payload.hops?.[payload.hops.length - 1]?.to).toBe(USDT0);
+    });
+
+    test("drops the bridge when keyed off the DEX hop's intermediate asset", async () => {
+        stubBridgeRegistry();
+
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: LBTC,
+            assetReceive: USDT0,
+            hops: intermediateHops,
+            hopsPosition: SwapPosition.Post,
+            sendAmount: 1000,
+            receiveAmount: 971,
+            mnemonic,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.bridge).toBeUndefined();
+        expect(payload.hops?.[payload.hops.length - 1]?.to).toBe(USDT0);
+    });
+});
 
 describe("CreateButton", () => {
     afterEach(() => {
