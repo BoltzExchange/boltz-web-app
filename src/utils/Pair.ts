@@ -41,6 +41,11 @@ import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "./calculate";
+import {
+    formatAssetAmountForLog,
+    formatNativeAmountForLog,
+    formatSwapAmountForLog,
+} from "./denomination";
 import { coalesceLn } from "./helper";
 import {
     fetchDexQuote,
@@ -718,8 +723,20 @@ export default class Pair {
     ) => {
         return nativeDropFailure?.reason === "exceeds_cap"
             ? {
-                  amount: nativeDropFailure.amount?.toString(),
-                  cap: nativeDropFailure.cap?.toString(),
+                  amount:
+                      nativeDropFailure.amount === undefined
+                          ? undefined
+                          : formatNativeAmountForLog(
+                                nativeDropFailure.amount,
+                                this.to,
+                            ),
+                  cap:
+                      nativeDropFailure.cap === undefined
+                          ? undefined
+                          : formatNativeAmountForLog(
+                                nativeDropFailure.cap,
+                                this.to,
+                            ),
               }
             : {};
     };
@@ -840,6 +857,18 @@ export default class Pair {
         }
     };
 
+    // OFT messaging fee is in the native gas token; CCTP's transfer fee is in
+    // the bridged token.
+    private formatMessagingFeeForLog = (
+        quote: BridgeReceiveQuote,
+        asset: string,
+    ): string => {
+        const amount = quote.messagingFee?.amount ?? 0n;
+        return quote.messagingFee?.token !== undefined
+            ? formatNativeAmountForLog(amount, asset)
+            : formatAssetAmountForLog(amount, asset);
+    };
+
     private applyPreBridgeQuote = async (
         sendAmount: BigNumber,
         sendAmountKey?: string,
@@ -951,10 +980,12 @@ export default class Pair {
                 return claimAmount;
             }
 
+            const claimLogAsset =
+                this.postBridgeClaimAsset ?? post.route.sourceAsset;
             log.info("Applying post-bridge quote", {
                 sourceAsset: post.route.sourceAsset,
                 destinationAsset: this.to,
-                claimAmount: claimAmount.toFixed(),
+                claimAmount: formatSwapAmountForLog(claimAmount, claimLogAsset),
                 getGasToken,
                 postBridgeRecipient,
             });
@@ -978,17 +1009,32 @@ export default class Pair {
 
             log.info("Applied post-bridge quote", {
                 destinationAsset: this.to,
-                quotedBridgeAmount: quotedBridgeAmount.toFixed(),
-                messagingFee: bridgeMessagingFee.toString(),
-                messagingFeeCost: messagingFeeCost.toFixed(),
-                quotedAmountOut: quote.amountOut.toString(),
+                quotedBridgeAmount: formatSwapAmountForLog(
+                    quotedBridgeAmount,
+                    post.route.sourceAsset,
+                ),
+                messagingFee: this.formatMessagingFeeForLog(
+                    quote,
+                    post.route.sourceAsset,
+                ),
+                messagingFeeCost: formatSwapAmountForLog(
+                    messagingFeeCost,
+                    claimLogAsset,
+                ),
+                quotedAmountOut: formatAssetAmountForLog(
+                    quote.amountOut,
+                    this.to,
+                ),
             });
 
             const adjustedClaimAmount = claimAmount.minus(messagingFeeCost);
             if (adjustedClaimAmount.isLessThanOrEqualTo(0)) {
                 log.info("Post-bridge quote reduced amount to zero", {
                     destinationAsset: this.to,
-                    adjustedClaimAmount: adjustedClaimAmount.toFixed(),
+                    adjustedClaimAmount: formatSwapAmountForLog(
+                        adjustedClaimAmount,
+                        claimLogAsset,
+                    ),
                 });
                 return BigNumber(0);
             }
@@ -1049,10 +1095,12 @@ export default class Pair {
                 return { amount };
             }
 
+            const claimLogAsset =
+                this.postBridgeClaimAsset ?? post.route.sourceAsset;
             log.info("Inverting post-bridge quote", {
                 sourceAsset: post.route.sourceAsset,
                 destinationAsset: this.to,
-                requestedAmount: amount.toFixed(),
+                requestedAmount: formatSwapAmountForLog(amount, this.to),
                 getGasToken,
                 postBridgeRecipient,
             });
@@ -1083,10 +1131,22 @@ export default class Pair {
             );
             log.info("Inverted post-bridge quote", {
                 destinationAsset: this.to,
-                requiredAmount: requiredAmount.toString(),
-                requiredClaimAmount: requiredClaimAmount.toFixed(),
-                messagingFee: bridgeMessagingFee.toString(),
-                messagingFeeCost: messagingFeeCost.toFixed(),
+                requiredAmount: formatAssetAmountForLog(
+                    requiredAmount,
+                    post.route.sourceAsset,
+                ),
+                requiredClaimAmount: formatSwapAmountForLog(
+                    requiredClaimAmount,
+                    claimLogAsset,
+                ),
+                messagingFee: this.formatMessagingFeeForLog(
+                    quote,
+                    post.route.sourceAsset,
+                ),
+                messagingFeeCost: formatSwapAmountForLog(
+                    messagingFeeCost,
+                    claimLogAsset,
+                ),
             });
 
             return {

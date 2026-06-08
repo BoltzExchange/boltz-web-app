@@ -2,12 +2,19 @@ import { BigNumber } from "bignumber.js";
 import { AssetKind } from "boltz-swaps/types";
 
 import { config } from "../config";
-import { WBTC, getAssetDisplaySymbol, isBridgeAsset } from "../consts/Assets";
+import {
+    LN,
+    WBTC,
+    getAssetDisplaySymbol,
+    isBridgeAsset,
+} from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
 const satDecimals = 8;
 const satFactor = 100_000_000;
+
+type LogAmount = BigNumber | bigint | number | string;
 
 export const getValidationRegex = (maximum: number): RegExp => {
     const digits = maximum.toString().length;
@@ -142,6 +149,77 @@ export const calculateDigits = (
     }
 
     return digits;
+};
+
+// On-chain amount in the asset's smallest unit (ERC20 base units, wei or sats).
+export const formatAssetAmountForLog = (
+    amount: LogAmount,
+    asset: string,
+): string => {
+    try {
+        const assetConfig = config.assets?.[asset];
+        if (asset === LN || assetConfig?.type === AssetKind.UTXO) {
+            return `${amount.toString()} sats`;
+        }
+
+        const decimals =
+            assetConfig?.type === AssetKind.EVMNative
+                ? assetConfig.network?.nativeCurrency?.decimals
+                : assetConfig?.token?.decimals;
+        if (decimals === undefined) {
+            throw new Error(`missing decimals for ${asset}`);
+        }
+
+        const formatted = BigNumber(amount.toString()).div(
+            BigNumber(10).pow(decimals),
+        );
+        return `${formatted.toFixed()} ${getAssetDisplaySymbol(asset)}`;
+    } catch {
+        // Logging must never throw; fall back to the raw amount.
+        return `${amount.toString()} ${asset}`;
+    }
+};
+
+// Amount in the network's native gas currency (wei).
+export const formatNativeAmountForLog = (
+    amount: LogAmount,
+    asset: string,
+): string => {
+    try {
+        const nativeCurrency = config.assets?.[asset]?.network?.nativeCurrency;
+        if (nativeCurrency?.decimals === undefined) {
+            throw new Error(`missing native decimals for ${asset}`);
+        }
+
+        const formatted = BigNumber(amount.toString()).div(
+            BigNumber(10).pow(nativeCurrency.decimals),
+        );
+        return `${formatted.toFixed()} ${nativeCurrency.symbol}`;
+    } catch {
+        return `${amount.toString()} ${asset}`;
+    }
+};
+
+// Boltz swap-denomination amount: sats for BTC-pegged assets (incl. RBTC),
+// token units for ERC20. RBTC differs from formatAssetAmountForLog, which uses
+// on-chain wei.
+export const formatSwapAmountForLog = (
+    amount: LogAmount,
+    asset: string,
+): string => {
+    try {
+        const { isErc20, decimals } = getDecimals(asset);
+        const value = BigNumber(amount.toString());
+        const formatted = isErc20
+            ? value.div(BigNumber(10).pow(decimals))
+            : value;
+        return `${formatted.toFixed()} ${formatDenomination(
+            Denomination.Sat,
+            asset,
+        )}`;
+    } catch {
+        return `${amount.toString()} ${asset}`;
+    }
 };
 
 export const btcToSat = (btc: BigNumber) => {

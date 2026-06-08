@@ -50,6 +50,7 @@ import {
     convertAmount,
     formatAmount,
     formatDenomination,
+    formatNativeAmountForLog,
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
@@ -219,8 +220,11 @@ const Create = () => {
                 log.info("Gas top-up balance check", {
                     asset,
                     address,
-                    balance: balance.toString(),
-                    gasTokenCostWei: gasTokenCostWei.toString(),
+                    balance: formatNativeAmountForLog(balance, asset),
+                    gasTokenCost: formatNativeAmountForLog(
+                        gasTokenCostWei,
+                        asset,
+                    ),
                     connectedDestination: connectedDestination(),
                 });
                 if (balance < gasTokenCostWei && connectedDestination()) {

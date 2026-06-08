@@ -6,6 +6,10 @@ import { zeroAddress } from "viem";
 import { config } from "../config";
 import { getNetworkTransport } from "../consts/Assets";
 import {
+    formatAssetAmountForLog,
+    formatNativeAmountForLog,
+} from "./denomination";
+import {
     getGasTokenPriceFailover,
     hasGasTokenPriceLookup,
     usdCentsToBaseUnits,
@@ -17,6 +21,41 @@ const enum Direction {
 }
 
 export const gasTokenToGetUsdCents = 10;
+
+const normalizeTokenAddress = (address: string) => {
+    const trimmed = address.trim();
+    return trimmed.startsWith("0x") ? trimmed.toLowerCase() : trimmed;
+};
+
+const getAssetForTokenAddress = (
+    tokenAddress: string,
+    chain: string,
+): string | undefined => {
+    const normalizedTokenAddress = normalizeTokenAddress(tokenAddress);
+    const matches = Object.entries(config.assets ?? {}).filter(
+        ([, assetConfig]) =>
+            assetConfig.type === AssetKind.ERC20 &&
+            assetConfig.token?.address !== undefined &&
+            normalizeTokenAddress(assetConfig.token.address) ===
+                normalizedTokenAddress,
+    );
+
+    const chainMatch = matches.find(
+        ([, assetConfig]) => assetConfig.network?.symbol === chain,
+    );
+
+    return chainMatch?.[0] ?? matches[0]?.[0];
+};
+
+const formatTokenAmountForLog = (
+    amount: bigint,
+    tokenAddress: string,
+    chain: string,
+) =>
+    formatAssetAmountForLog(
+        amount,
+        getAssetForTokenAddress(tokenAddress, chain) ?? tokenAddress,
+    );
 
 export const getGasTopUpToken = (asset: string): string | undefined =>
     config.assets?.[asset]?.network?.gasToken;
@@ -70,10 +109,13 @@ export const getGasTopUpNativeAmount = async (
         asset,
         gasToken,
         nativeDecimals,
-        minGasAmount: minGasAmount?.toString(),
+        minGasAmount:
+            minGasAmount === undefined
+                ? undefined
+                : formatNativeAmountForLog(minGasAmount, asset),
         gasTokenPrice: gasTokenPrice.toString(),
-        gasTokenAmount: gasTokenAmount.toString(),
-        gasTopUpAmount: gasTopUpAmount.toString(),
+        gasTokenAmount: formatNativeAmountForLog(gasTokenAmount, asset),
+        gasTopUpAmount: formatNativeAmountForLog(gasTopUpAmount, asset),
         usdCents: gasTokenToGetUsdCents,
     });
     return gasTopUpAmount;
@@ -111,7 +153,11 @@ export const fetchDexQuote = async (
         const tradeAmountIn = amountIn - gasToken.amountIn;
 
         log.info(
-            `Spending ${gasToken.amountIn.toString()} ${hop.tokenIn} on gas`,
+            `Spending ${formatTokenAmountForLog(
+                gasToken.amountIn,
+                hop.tokenIn,
+                hop.chain,
+            )} on gas`,
         );
 
         if (tradeAmountIn <= 0n) {
@@ -141,8 +187,13 @@ const fetchQuote = async (
         )(hop.chain, hop.tokenIn, hop.tokenOut, amount)
     )[0];
     const quoteAmount = BigInt(quote.quote);
+    const quoteToken = direction === Direction.In ? hop.tokenOut : hop.tokenIn;
     log.info(
-        `Got ${direction} quote (${hop.tokenIn} -> ${hop.tokenOut}): ${quoteAmount.toString()}`,
+        `Got ${direction} quote (${hop.tokenIn} -> ${hop.tokenOut}): ${formatTokenAmountForLog(
+            quoteAmount,
+            quoteToken,
+            hop.chain,
+        )}`,
         quote.data,
     );
     return {

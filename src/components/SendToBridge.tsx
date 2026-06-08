@@ -47,6 +47,10 @@ import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
+import {
+    formatAssetAmountForLog,
+    formatNativeAmountForLog,
+} from "../utils/denomination";
 import { type BridgeDetail, GasAbstractionType } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ApproveTrc20 from "./ApproveTrc20";
@@ -356,15 +360,24 @@ const SendToBridge = (props: {
 
         log.info(`${logLabel} signer token balance check`, {
             asset: props.bridge.sourceAsset,
-            balance: balance.toString(),
-            requiredAmount: requiredTokenAmount.toString(),
+            balance: formatAssetAmountForLog(balance, props.bridge.sourceAsset),
+            requiredAmount: formatAssetAmountForLog(
+                requiredTokenAmount,
+                props.bridge.sourceAsset,
+            ),
             sufficient: hasEnoughTokenBalance,
         });
         log.info(`${logLabel} signer native balance check`, {
             asset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
-            nativeBalance: nativeBalance.toString(),
-            requiredMsgFee: requiredNativeBalance.toString(),
+            nativeBalance: formatNativeAmountForLog(
+                nativeBalance,
+                props.bridge.sourceAsset,
+            ),
+            requiredMsgFee: formatNativeAmountForLog(
+                requiredNativeBalance,
+                props.bridge.sourceAsset,
+            ),
             sufficient: hasEnoughMsgFee,
         });
 
@@ -447,6 +460,7 @@ const SendToBridge = (props: {
         return {
             directSendTarget,
             recipient,
+            tokenAmount,
             sendParam,
             msgFee,
             hasEnoughTokenBalance,
@@ -651,8 +665,14 @@ const SendToBridge = (props: {
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: tokenAmount.toString(),
-            nativeFee: msgFee[0].toString(),
+            amount: formatAssetAmountForLog(
+                tokenAmount,
+                props.bridge.sourceAsset,
+            ),
+            nativeFee: formatNativeAmountForLog(
+                msgFee[0],
+                props.bridge.sourceAsset,
+            ),
             lzTokenFee: msgFee[1].toString(),
         });
 
@@ -706,15 +726,22 @@ const SendToBridge = (props: {
             props.bridge,
             WalletConnectProvider.getTronProvider(),
         );
-        const { sendParam, msgFee } = await quoteBridgeSendState(recipient);
+        const { tokenAmount, sendParam, msgFee } =
+            await quoteBridgeSendState(recipient);
 
         log.debug("Quoted bridge send", {
             swapId: props.swapId,
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: props.amount.toString(),
-            nativeFee: msgFee[0].toString(),
+            amount: formatAssetAmountForLog(
+                tokenAmount,
+                props.bridge.sourceAsset,
+            ),
+            nativeFee: formatNativeAmountForLog(
+                msgFee[0],
+                props.bridge.sourceAsset,
+            ),
             lzTokenFee: msgFee[1].toString(),
         });
 
@@ -735,6 +762,7 @@ const SendToBridge = (props: {
         const {
             directSendTarget,
             recipient,
+            tokenAmount,
             sendParam,
             msgFee,
             signerAddress,
@@ -768,8 +796,14 @@ const SendToBridge = (props: {
             sourceAsset: props.bridge.sourceAsset,
             destinationAsset: props.bridge.destinationAsset,
             recipient,
-            amount: props.amount.toString(),
-            nativeFee: msgFee[0].toString(),
+            amount: formatAssetAmountForLog(
+                tokenAmount,
+                props.bridge.sourceAsset,
+            ),
+            nativeFee: formatNativeAmountForLog(
+                msgFee[0],
+                props.bridge.sourceAsset,
+            ),
             lzTokenFee: msgFee[1].toString(),
         });
 
