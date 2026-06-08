@@ -7,6 +7,7 @@ import {
     buildSwapMetadataPayload,
     decryptSwapMetadata,
     encryptSwapMetadata,
+    swapMetadataToLocalFields,
 } from "../../src/utils/swapMetadata";
 
 const mnemonic =
@@ -140,5 +141,43 @@ describe("buildSwapMetadataPayload", () => {
         });
         expect(payload?.hops).toBeDefined();
         expect(payload?.bridge).toBeDefined();
+    });
+});
+
+describe("swapMetadataToLocalFields", () => {
+    test("maps a full payload to dex and bridge fields", () => {
+        expect(swapMetadataToLocalFields(samplePayload)).toEqual({
+            dex: {
+                hops: samplePayload.hops,
+                position: SwapPosition.Post,
+                quoteAmount: 12345,
+            },
+            bridge: {
+                sourceAsset: "USDC",
+                destinationAsset: "USDC-BASE",
+                kind: BridgeKind.Cctp,
+                position: SwapPosition.Post,
+            },
+        });
+    });
+
+    test("omits dex when there are no hops", () => {
+        expect(
+            swapMetadataToLocalFields({
+                bridge: {
+                    sourceAsset: "USDC",
+                    destinationAsset: "USDC-BASE",
+                    kind: BridgeKind.Cctp,
+                    position: SwapPosition.Pre,
+                },
+            }),
+        ).toEqual({
+            bridge: {
+                sourceAsset: "USDC",
+                destinationAsset: "USDC-BASE",
+                kind: BridgeKind.Cctp,
+                position: SwapPosition.Pre,
+            },
+        });
     });
 });

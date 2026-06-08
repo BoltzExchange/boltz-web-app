@@ -16,6 +16,14 @@ export type SwapMetadataPayload = {
     };
 };
 
+export type SwapMetadataLocalFields = {
+    dex?: {
+        hops: EncodedHop[];
+        position: SwapPosition;
+        quoteAmount: number | string;
+    };
+    bridge?: BridgeDetail;
+};
 
 const IV_LENGTH = 12;
 
@@ -132,4 +140,31 @@ export const buildSwapMetadataPayload = ({
     }
 
     return payload;
+};
+
+// Converts a decrypted payload back into the local swap fields. Used during
+// restore to repopulate DEX/bridge routes the backend does not store.
+export const swapMetadataToLocalFields = (
+    payload: SwapMetadataPayload,
+): SwapMetadataLocalFields => {
+    const fields: SwapMetadataLocalFields = {};
+
+    if (payload.position !== undefined && payload.hops !== undefined) {
+        fields.dex = {
+            hops: payload.hops,
+            position: payload.position,
+            quoteAmount: payload.quoteAmount ?? 0,
+        };
+    }
+
+    if (payload.bridge !== undefined) {
+        fields.bridge = {
+            sourceAsset: payload.bridge.sourceAsset,
+            destinationAsset: payload.bridge.destinationAsset,
+            kind: payload.bridge.kind,
+            position: payload.bridge.position,
+        };
+    }
+
+    return fields;
 };

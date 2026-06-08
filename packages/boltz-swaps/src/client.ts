@@ -185,6 +185,7 @@ export type RestorableSwap = {
     claimPrivateKey?: string;
     claimDetails?: RestorableSwapDetails;
     refundDetails?: RestorableSwapDetails;
+    metadata?: string;
 };
 
 export type LockupTransaction = {
