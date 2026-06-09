@@ -21,13 +21,21 @@ const BlockExplorer = (props: {
         | "claim_tx"
         | "refund_tx"
         | "bridge_status";
+    // Liquid only: "#blinded=" fragment appended to view the tx unblinded
+    blinded?: string;
 }) => {
     const { t } = useGlobalContext();
 
-    const href = () =>
-        props.kind === BlockExplorerTargetKind.Tx
-            ? blockExplorerLink(props.asset, true, props.id, props.explorer)
-            : blockExplorerLink(props.asset, false, props.id);
+    const href = () => {
+        const base =
+            props.kind === BlockExplorerTargetKind.Tx
+                ? blockExplorerLink(props.asset, true, props.id, props.explorer)
+                : blockExplorerLink(props.asset, false, props.id);
+        if (base !== undefined && props.blinded !== undefined) {
+            return `${base}#blinded=${props.blinded}`;
+        }
+        return base;
+    };
 
     const typeLabel = () =>
         props.typeLabel ||

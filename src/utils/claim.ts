@@ -11,7 +11,9 @@ import {
 import type { LiquidClaimDetails } from "boltz-core/liquid";
 import {
     getChainSwapClaimDetails,
+    getChainSwapTransactions,
     getPartialReverseClaimSignature,
+    getReverseTransaction,
     getSubmarineClaimDetails,
     postChainSwapDetails,
     postSubmarineClaimDetails,
@@ -24,8 +26,10 @@ import log from "loglevel";
 import { type AssetType, LBTC, RBTC, isEvmAsset } from "../consts/Assets";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
+import { getClaimBlindingData } from "./blindedExplorer";
 import { broadcastTransaction } from "./blockchain";
 import {
+    type LiquidTransactionOutputWithKey,
     type TransactionInterface,
     decodeAddress,
     getConstructClaimTransaction,
@@ -43,6 +47,7 @@ import { decodeInvoice } from "./invoice";
 import {
     type ChainSwap,
     type ReverseSwap,
+    type SomeSwap,
     type SubmarineSwap,
     getRelevantAssetForSwap,
 } from "./swapCreator";
@@ -388,6 +393,54 @@ export const findSwapOutputVout = (
 ): number | undefined => {
     const { tweaked } = getClaimTaprootContext(deriveKey, swap);
     return findSwapOutput(tweaked, lockupTx)?.vout;
+};
+
+// Builds the Blockstream "#blinded=" fragment for a Liquid claim transaction on
+// demand: it re-fetches the lockup output the claim spent and unblinds it with
+// the swap's blinding key. Returns undefined for non-Liquid swaps, before the
+// claim exists, or if anything required is missing.
+export const getClaimTransactionBlindingData = async (
+    deriveKey: deriveKeyFn,
+    swap: SomeSwap,
+): Promise<string | undefined> => {
+    if (
+        swap.assetReceive !== LBTC ||
+        swap.claimTx === undefined ||
+        (swap.type !== SwapType.Reverse && swap.type !== SwapType.Chain)
+    ) {
+        return undefined;
+    }
+
+    try {
+        const claimableSwap = swap as ClaimableSwap;
+
+        // The claim spends the server's lockup output: the reverse lockup for
+        // reverse swaps, the server lockup leg for chain swaps. (The chain
+        // userLock is the asset we sent, not the one we claim.)
+        const lockupHex =
+            swap.type === SwapType.Reverse
+                ? (await getReverseTransaction(swap.id)).hex
+                : (await getChainSwapTransactions(swap.id)).serverLock
+                      .transaction.hex;
+        if (lockupHex === undefined) {
+            return undefined;
+        }
+
+        const lockupTx = getTransaction(swap.assetReceive).fromHex(lockupHex);
+        const { tweaked } = getClaimTaprootContext(deriveKey, claimableSwap);
+        const swapOutput = findSwapOutput(tweaked, lockupTx);
+        if (swapOutput === undefined) {
+            return undefined;
+        }
+
+        return getClaimBlindingData(swap.assetReceive, {
+            ...swapOutput,
+            blindingPrivateKey: parseBlindingKey(claimableSwap, false),
+        } as unknown as LiquidTransactionOutputWithKey);
+    } catch (e) {
+        log.warn("Could not build claim unblinding data", e);
+        return undefined;
+    }
 };
 
 export const claim = async <T extends ReverseSwap | ChainSwap>(
