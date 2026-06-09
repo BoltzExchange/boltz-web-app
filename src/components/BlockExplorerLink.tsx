@@ -1,8 +1,17 @@
 import { bridgeRegistry } from "boltz-swaps/bridge";
 import { ExplorerKind, SwapType } from "boltz-swaps/types";
-import { type Accessor, Match, Show, Switch, createMemo } from "solid-js";
+import {
+    type Accessor,
+    Match,
+    Show,
+    Switch,
+    createMemo,
+    createResource,
+} from "solid-js";
 
-import { isEvmAsset } from "../consts/Assets";
+import { LBTC, isEvmAsset } from "../consts/Assets";
+import { useGlobalContext } from "../context/Global";
+import { getClaimTransactionBlindingData } from "../utils/claim";
 import {
     type SomeSwap,
     getPostBridgeDetail,
@@ -20,6 +29,7 @@ const claimTxLabel = (explorer: ExplorerKind | undefined) =>
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
+    blinded: Accessor<string | undefined>;
 }) => {
     const hasBeenClaimed = () => props.swap().claimTx !== undefined;
 
@@ -52,6 +62,7 @@ const ChainSwapLink = (props: {
                     typeLabel={
                         hasBeenClaimed() ? claimTxLabel(explorer()) : undefined
                     }
+                    blinded={props.blinded()}
                 />
             }>
             {/* Showing addresses makes no sense for EVM based chains.
@@ -72,6 +83,8 @@ const BlockExplorerLinkInner = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
+    const { deriveKey } = useGlobalContext();
+
     const bridgeSendPending = () => {
         const s = props.swap();
         return (
@@ -80,6 +93,17 @@ const BlockExplorerLinkInner = (props: {
             s.commitmentLockupTxHash === undefined
         );
     };
+
+    // Liquid claim transactions are confidential. Build the explorer
+    // "#blinded=" fragment on demand so the claim link reveals its amount.
+    const [blinded] = createResource(
+        () =>
+            props.swap().assetReceive === LBTC &&
+            props.swap().claimTx !== undefined
+                ? props.swap()
+                : undefined,
+        (swap) => getClaimTransactionBlindingData(deriveKey, swap),
+    );
 
     return (
         <Show
@@ -101,6 +125,7 @@ const BlockExplorerLinkInner = (props: {
                     <ChainSwapLink
                         swap={props.swap}
                         swapStatus={props.swapStatus}
+                        blinded={blinded}
                     />
                 }>
                 <Switch>
@@ -128,6 +153,7 @@ const BlockExplorerLinkInner = (props: {
                                 explorer={bridgeRegistry.getExplorerKind(
                                     props.swap().bridge,
                                 )}
+                                blinded={blinded()}
                             />
                         </Show>
                     </Match>

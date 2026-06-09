@@ -50,7 +50,11 @@ test.describe("Chain Swap 0-amount", () => {
 
         const txIdLink = page.getByText("open claim transaction");
 
-        const txId = (await txIdLink.getAttribute("href"))!.split("/").pop();
+        // Liquid claim links carry a "#blinded=" fragment; strip it for the txid
+        const txId = (await txIdLink.getAttribute("href"))!
+            .split("/")
+            .pop()!
+            .split("#")[0];
         expect(txId).toBeDefined();
 
         const txInfo = JSON.parse(await getElementsWalletTx(txId!));
