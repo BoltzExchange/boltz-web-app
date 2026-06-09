@@ -1,4 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import { loadEnv } from "vite";
+
+Object.entries(loadEnv("development", __dirname, "")).forEach(
+    ([key, value]) => {
+        process.env[key] ??= value;
+    },
+);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
