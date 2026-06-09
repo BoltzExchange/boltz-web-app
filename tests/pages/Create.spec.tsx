@@ -247,7 +247,12 @@ const selectMaximumCommitmentSwap = async () => {
         expect(signals.valid()).toBe(false);
         expect(createButton.disabled).toBe(false);
         expect(createButton.textContent).toBe(i18n.en.create_swap);
-        expect(screen.queryByTestId("invoice")).toBeNull();
+        const invoiceInput = screen.getByTestId("invoice") as HTMLInputElement;
+        expect(invoiceInput.disabled).toBe(true);
+        expect(invoiceInput.placeholder).toBe(i18n.en.create_and_paste);
+        expect(
+            screen.getByTestId("commitment-invoice-clear"),
+        ).toBeInTheDocument();
 
         expect(
             Array.from(
@@ -257,6 +262,17 @@ const selectMaximumCommitmentSwap = async () => {
             ).map((node) => node.getAttribute("data-testid")),
         ).toEqual(["connect-wallet", "create-swap-button"]);
     });
+
+    const clearInvoiceTarget = screen.getByTestId("commitment-invoice-clear");
+    fireEvent.mouseEnter(clearInvoiceTarget);
+
+    await waitFor(() => {
+        expect(
+            (screen.getByTestId("invoice") as HTMLInputElement).placeholder,
+        ).toBe(i18n.en.clear_amounts);
+    });
+
+    fireEvent.mouseLeave(clearInvoiceTarget);
 
     fireEvent.click(createButton);
 };

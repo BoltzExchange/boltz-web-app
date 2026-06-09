@@ -24,7 +24,8 @@ import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LockupEvm from "../components/LockupEvm";
 import RefundButton from "../components/RefundButton";
-import { Denomination } from "../consts/Enums";
+import { Denomination, InvoiceValidation } from "../consts/Enums";
+import type { ButtonLabelParams } from "../consts/Types";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
@@ -34,6 +35,7 @@ import {
     formatAmount,
     formatDenomination,
     getDecimals,
+    miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { blockExplorerLink } from "../utils/explorerLink";
@@ -76,6 +78,12 @@ const invoiceFetchTimeout = 25_000;
 
 const getInvoiceSats = (amounts: CommitmentAmounts) =>
     Math.floor(amounts.receiveAmount.toNumber());
+
+const isInvoiceValidationError = (message: string) =>
+    (Object.values(InvoiceValidation) as string[]).includes(message);
+
+const isInvoiceInputError = (message: string): message is DictKey =>
+    message === "invalid_invoice" || message === "invalid_0_amount";
 
 export const validateCommitmentInvoiceInput = (
     value: string,
@@ -267,10 +275,16 @@ const CommitmentCreated = () => {
     const [invoice, setInvoice] = createSignal(
         untrack(() => commitment().originalDestination ?? ""),
     );
-    const [invoiceError, setInvoiceError] = createSignal<string | undefined>();
+    const [invoiceError, setInvoiceError] = createSignal<
+        ButtonLabelParams | undefined
+    >();
     const [loading, setLoading] = createSignal(false);
     const [loadError, setLoadError] = createSignal<string | undefined>();
     const hasInvoice = () => invoice().trim().length > 0;
+    const invoiceErrorText = () => {
+        const error = invoiceError();
+        return error === undefined ? undefined : t(error.key, error.params);
+    };
 
     const lockupHops = () => {
         const dex = commitment().dex;
@@ -363,6 +377,62 @@ const CommitmentCreated = () => {
             ? undefined
             : formatError(committedAmounts.error));
 
+    const destinationAmountError = (
+        error: Error,
+    ): ButtonLabelParams | undefined => {
+        if (!isInvoiceValidationError(error.message)) {
+            return undefined;
+        }
+
+        const satsAmount = miliSatToSat(
+            BigNumber(error.cause as BigNumber.Value),
+        );
+        const minOrMax =
+            InvoiceValidation.MinAmount === error.message ? "min" : "max";
+
+        return {
+            key: `${minOrMax}_amount_destination`,
+            params: {
+                amount: formatAmount(
+                    BigNumber(satsAmount),
+                    Denomination.Sat,
+                    separator(),
+                    commitment().initialReceiveAsset,
+                ),
+                denomination: formatDenomination(
+                    Denomination.Sat,
+                    commitment().initialReceiveAsset,
+                ),
+            },
+        };
+    };
+
+    const validationErrorLabel = (
+        error: unknown,
+    ): ButtonLabelParams | undefined => {
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (error instanceof Error) {
+            const destinationLabel = destinationAmountError(error);
+            if (destinationLabel !== undefined) {
+                return destinationLabel;
+            }
+        }
+
+        if (isInvoiceInputError(message)) {
+            return { key: message };
+        }
+
+        return undefined;
+    };
+
+    const setInvoiceInputError = (error: ButtonLabelParams | undefined) => {
+        setInvoiceError(error);
+        const message = error === undefined ? "" : t(error.key, error.params);
+        invoiceInput?.setCustomValidity(message);
+        invoiceInput?.classList.toggle("invalid", error !== undefined);
+    };
+
     const validateCurrentInvoice = () => {
         const amounts = committedAmounts();
         if (amounts === undefined) {
@@ -372,9 +442,7 @@ const CommitmentCreated = () => {
         const value = invoice().trim();
         setInvoice(value);
         if (value.length === 0) {
-            invoiceInput?.setCustomValidity("");
-            invoiceInput?.classList.remove("invalid");
-            setInvoiceError(undefined);
+            setInvoiceInputError(undefined);
             return undefined;
         }
 
@@ -384,17 +452,13 @@ const CommitmentCreated = () => {
                 amounts,
             );
 
-            invoiceInput?.setCustomValidity("");
-            invoiceInput?.classList.remove("invalid");
             setInvoice(validatedInvoice.invoice);
-            setInvoiceError(undefined);
+            setInvoiceInputError(undefined);
             return validatedInvoice;
         } catch (error) {
-            invoiceInput?.classList.add("invalid");
-            const message =
-                error instanceof Error ? error.message : String(error);
-            invoiceInput?.setCustomValidity(t(message as DictKey));
-            setInvoiceError(message);
+            setInvoiceInputError(
+                validationErrorLabel(error) ?? { key: "invalid_invoice" },
+            );
             return undefined;
         }
     };
@@ -451,6 +515,12 @@ const CommitmentCreated = () => {
             await deleteSwap(current.id);
             navigate(`/swap/${submarine.id}`);
         } catch (error) {
+            const errorLabel = validationErrorLabel(error);
+            if (errorLabel !== undefined) {
+                setInvoiceInputError(errorLabel);
+                return;
+            }
+
             log.error("Creating committed submarine swap failed", error);
             notify("error", formatError(error));
         } finally {
@@ -523,12 +593,7 @@ const CommitmentCreated = () => {
                                     }}
                                 />
                                 <button
-                                    class={
-                                        invoiceError() !== undefined &&
-                                        hasInvoice()
-                                            ? "btn btn-error commitment-invoice-submit"
-                                            : "btn commitment-invoice-submit"
-                                    }
+                                    class="btn commitment-invoice-submit"
                                     disabled={
                                         loading() ||
                                         invoiceError() !== undefined ||
@@ -537,9 +602,9 @@ const CommitmentCreated = () => {
                                     onClick={completeSwap}>
                                     {loading() ? (
                                         <LoadingSpinner class="inner-spinner" />
-                                    ) : invoiceError() !== undefined &&
+                                    ) : invoiceErrorText() !== undefined &&
                                       hasInvoice() ? (
-                                        t(invoiceError() as DictKey)
+                                        invoiceErrorText()
                                     ) : (
                                         t("continue")
                                     )}

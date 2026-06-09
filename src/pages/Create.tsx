@@ -124,6 +124,8 @@ const Create = () => {
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
+    const [commitmentInvoiceHovered, setCommitmentInvoiceHovered] =
+        createSignal(false);
 
     const connectedDestination = () => {
         const walletAddress = connectedWallet()?.address;
@@ -171,8 +173,13 @@ const Create = () => {
                 (bolt12Offer() !== undefined && invoice() === bolt12Offer())) &&
             invoiceError() === undefined,
     );
-    const hideInvoiceInput = createMemo(
+    const commitmentInvoiceDisabled = createMemo(
         () => requiresInvoiceInput() && usesCommittedSendAmount(),
+    );
+    const invoiceInputPlaceholder = createMemo(() =>
+        commitmentInvoiceDisabled() && commitmentInvoiceHovered()
+            ? t("clear_amounts")
+            : t("create_and_paste"),
     );
 
     const gasTopUpTrigger = createMemo(() => {
@@ -628,6 +635,29 @@ const Create = () => {
         setAmount(selectedAmount);
     };
 
+    const clearCommittedAmounts = () => {
+        if (!commitmentInvoiceDisabled()) {
+            return;
+        }
+
+        ++quoteRequestId;
+        clearQuoteDebounce();
+        setQuoteLoading(false);
+        setCommitmentInvoiceHovered(false);
+        resetAmounts();
+        setAmountValid(false);
+        setAmountChanged(Side.Send);
+    };
+
+    const clearCommittedAmountsOnKeyDown = (evt: KeyboardEvent) => {
+        if (evt.key !== "Enter" && evt.key !== " ") {
+            return;
+        }
+
+        evt.preventDefault();
+        clearCommittedAmounts();
+    };
+
     onMount(() => {
         sendAmountRef?.focus();
     });
@@ -770,11 +800,32 @@ const Create = () => {
 
     const InvoiceInputSlot = () => (
         <>
-            <Show when={webln()}>
+            <Show when={webln() && !commitmentInvoiceDisabled()}>
                 <WeblnButton />
                 <hr class="spacer" />
             </Show>
-            <InvoiceInput />
+            <Show
+                when={commitmentInvoiceDisabled()}
+                fallback={<InvoiceInput />}>
+                <div
+                    role="button"
+                    tabIndex={0}
+                    class="commitment-invoice-disabled"
+                    data-testid="commitment-invoice-clear"
+                    aria-label={t("clear_amounts")}
+                    onClick={clearCommittedAmounts}
+                    onKeyDown={clearCommittedAmountsOnKeyDown}
+                    onMouseEnter={() => setCommitmentInvoiceHovered(true)}
+                    onMouseLeave={() => setCommitmentInvoiceHovered(false)}
+                    onFocus={() => setCommitmentInvoiceHovered(true)}
+                    onBlur={() => setCommitmentInvoiceHovered(false)}>
+                    <InvoiceInput
+                        class="commitment-invoice-disabled-input"
+                        disabled={commitmentInvoiceDisabled}
+                        placeholder={invoiceInputPlaceholder}
+                    />
+                </div>
+            </Show>
         </>
     );
 
@@ -974,12 +1025,7 @@ const Create = () => {
                         <hr class="spacer" />
                     </Show>
                 </Show>
-                <Show
-                    when={
-                        requiresInvoiceInput() &&
-                        !hideInvoiceInput() &&
-                        !destinationLocked()
-                    }>
+                <Show when={requiresInvoiceInput() && !destinationLocked()}>
                     <InvoiceInputSlot />
                     <hr class="spacer" />
                 </Show>

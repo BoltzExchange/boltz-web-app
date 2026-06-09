@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { SwapType } from "boltz-swaps/types";
-import { createEffect, on } from "solid-js";
+import { type Accessor, createEffect, on } from "solid-js";
 
 import { LN, isBitcoinOnlyAsset } from "../consts/Assets";
 import { Side } from "../consts/Enums";
@@ -19,9 +19,16 @@ import {
 } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 
-const InvoiceInput = () => {
+type InvoiceInputProps = {
+    class?: string;
+    disabled?: Accessor<boolean>;
+    placeholder?: Accessor<string>;
+};
+
+const InvoiceInput = (props: InvoiceInputProps = {}) => {
     let inputRef!: HTMLInputElement;
     let validationRequest = 0;
+    const disabled = () => props.disabled?.() ?? false;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
@@ -180,7 +187,11 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice, pair, minerFee], async () => {
+        on([amountValid, invoice, pair, minerFee, disabled], async () => {
+            if (disabled()) {
+                return;
+            }
+
             if (
                 pair().swapToCreate?.type === SwapType.Submarine ||
                 pair().toAsset === LN
@@ -196,12 +207,14 @@ const InvoiceInput = () => {
             ref={inputRef}
             onInput={(e) => validate(e.currentTarget)}
             type="text"
+            class={props.class}
             id="invoice"
             data-testid="invoice"
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste")}
+            disabled={disabled()}
+            placeholder={props.placeholder?.() ?? t("create_and_paste")}
         />
     );
 };

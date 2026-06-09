@@ -68,6 +68,7 @@ const dict = {
             "Enter a Lightning Invoice for {{ amount }} {{ denomination }}",
         create_and_paste:
             "Paste a Lightning invoice, BOLT12 or LNURL to receive funds",
+        clear_amounts: "Clear Amounts",
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
@@ -593,6 +594,7 @@ const dict = {
             "Lightning-Rechnung über {{ amount }} {{ denomination }} eingeben",
         create_and_paste:
             "Füge eine Lightning-Rechnung, BOLT12 oder LNURL des Empfängers ein",
+        clear_amounts: "Beträge löschen",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
@@ -1135,6 +1137,7 @@ const dict = {
             "Introduce una factura Lightning por {{ amount }} {{ denomination }}",
         create_and_paste:
             "Pega una factura Lightning, una dirección BOLT12 o una LNURL para recibir los fondos",
+        clear_amounts: "Borrar importes",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
@@ -1674,6 +1677,7 @@ const dict = {
             "Insira um invoice Lightning de {{ amount }} {{ denomination }}",
         create_and_paste:
             "Cole um invoice Lightning, um endereço BOLT12 ou um LNURL para receber os fundos",
+        clear_amounts: "Limpar valores",
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
@@ -2203,6 +2207,7 @@ const dict = {
         commitment_invoice_heading:
             "输入 {{ amount }} {{ denomination }} 的闪电发票",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
+        clear_amounts: "清除金额",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         timeout_eta: "超过预期时间",
@@ -2688,6 +2693,7 @@ const dict = {
             "{{ amount }} {{ denomination }} のライトニングインボイスを入力してください",
         create_and_paste:
             "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
+        clear_amounts: "金額をクリア",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         timeout_eta: "タイムアウト予想時間",

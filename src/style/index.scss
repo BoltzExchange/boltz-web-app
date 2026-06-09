@@ -672,6 +672,51 @@ textarea.invalid {
     outline: none;
     border-color: var(--color-error-500);
 }
+.commitment-invoice-disabled {
+    cursor: pointer;
+    border-radius: var(--border-radius-md);
+}
+.commitment-invoice-disabled:focus-visible {
+    outline: none;
+}
+.commitment-invoice-disabled:focus-visible input {
+    border-color: var(--color-primary-60);
+}
+.commitment-invoice-disabled input {
+    pointer-events: none;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease;
+}
+.commitment-invoice-disabled input:disabled {
+    opacity: 0.68;
+    background: color-mix(
+        in srgb,
+        var(--color-secondary-800) 72%,
+        var(--color-medium-gray)
+    );
+    border-color: var(--color-white-10);
+    color: var(--color-white-30);
+    -webkit-text-fill-color: var(--color-white-30);
+}
+.commitment-invoice-disabled input:disabled::placeholder {
+    color: var(--color-white-30);
+}
+.commitment-invoice-disabled:hover input:disabled,
+.commitment-invoice-disabled:focus-visible input:disabled {
+    opacity: 1;
+    background: var(--color-secondary-800);
+    border-color: var(--color-white-15);
+    color: var(--color-text);
+    -webkit-text-fill-color: var(--color-text);
+    font-weight: 600;
+}
+.commitment-invoice-disabled:hover input:disabled::placeholder,
+.commitment-invoice-disabled:focus-visible input:disabled::placeholder {
+    color: var(--color-text);
+}
 .fees-dyn label {
     display: block;
     margin: 0;
