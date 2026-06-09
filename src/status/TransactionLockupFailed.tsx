@@ -6,7 +6,6 @@ import {
 } from "boltz-swaps/client";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
-import { ImArrowDown } from "solid-icons/im";
 import {
     type Accessor,
     type Setter,
@@ -19,10 +18,10 @@ import {
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton, { incorrectAssetError } from "../components/RefundButton";
+import SwapAmountSummary from "../components/SwapAmountSummary";
 import { isEvmAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import Pair from "../utils/Pair";
 import { calculateAmountOutMin } from "../utils/calculate";
@@ -32,11 +31,6 @@ import {
     getOutputAmount,
     getTransaction,
 } from "../utils/compat";
-import {
-    formatAmount,
-    formatDenomination,
-    getDecimals,
-} from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
 import { isRefundableSwapType } from "../utils/rescue";
@@ -47,39 +41,6 @@ import {
     getFinalAssetSend,
 } from "../utils/swapCreator";
 import SwapRefunded from "./SwapRefunded";
-
-const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
-    const { t, denomination, separator } = useGlobalContext();
-    const isErc20 = () => getDecimals(props.asset).isErc20;
-
-    return (
-        <div>
-            <div>{t(props.label)}</div>
-            <span>
-                {`${
-                    formatAmount(
-                        new BigNumber(props.amount),
-                        denomination(),
-                        separator(),
-                        props.asset,
-                    ) || 0
-                }`}
-                <Show
-                    when={!isErc20()}
-                    fallback={
-                        <span class="asset-fallback">
-                            {formatDenomination(denomination(), props.asset)}
-                        </span>
-                    }>
-                    <span
-                        class="denominator"
-                        data-denominator={denomination()}
-                    />
-                </Show>
-            </span>
-        </div>
-    );
-};
 
 const TransactionLockupFailed = (props: {
     setStatusOverride: Setter<string | undefined>;
@@ -340,24 +301,26 @@ const TransactionLockupFailed = (props: {
                             </Show>
                         </>
                     }>
-                    <div class="quote">
-                        <Amount
-                            label={"sent"}
-                            amount={newQuote()!.sentAmount}
-                            asset={
-                                (swap() as ChainSwap).dex?.position ===
-                                SwapPosition.Pre
-                                    ? getFinalAssetSend(swap() as ChainSwap)
-                                    : swap()!.assetSend
-                            }
-                        />
-                        <ImArrowDown size={15} style={{ opacity: 0.5 }} />
-                        <Amount
-                            label={"will_receive"}
-                            amount={newQuote()!.receiveAmount}
-                            asset={getFinalAssetReceive(swap() as ChainSwap)}
-                        />
-                    </div>
+                    <SwapAmountSummary
+                        items={[
+                            {
+                                label: "sent",
+                                amount: newQuote()!.sentAmount,
+                                asset:
+                                    (swap() as ChainSwap).dex?.position ===
+                                    SwapPosition.Pre
+                                        ? getFinalAssetSend(swap() as ChainSwap)
+                                        : swap()!.assetSend,
+                            },
+                            {
+                                label: "will_receive",
+                                amount: newQuote()!.receiveAmount,
+                                asset: getFinalAssetReceive(
+                                    swap() as ChainSwap,
+                                ),
+                            },
+                        ]}
+                    />
 
                     <div class="btns btns-space-between">
                         <button

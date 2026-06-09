@@ -37,13 +37,23 @@ const paymentValidationUrl = (invoice: string, preimage: string): string => {
 const TransactionClaimed = () => {
     const navigate = useNavigate();
 
-    const { notify } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator, setSwapStorage } = useGlobalContext();
+    const { t, denomination, notify, separator, setSwapStorage } =
+        useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
     >(undefined);
+    const claimedAmount = () => {
+        const current = swap();
+        if (current === null) {
+            return 0;
+        }
+        if (current.dex?.position === SwapPosition.Post) {
+            return current.dex.quoteAmount;
+        }
+        return "receiveAmount" in current ? current.receiveAmount : 0;
+    };
 
     const [preimage] = createResource(async () => {
         const submarine = swap() as SubmarineSwap;
@@ -90,11 +100,7 @@ const TransactionClaimed = () => {
                 <p>
                     {t("successfully_swapped", {
                         amount: formatAmount(
-                            BigNumber(
-                                (swap()!.dex?.position === SwapPosition.Post
-                                    ? swap()!.dex?.quoteAmount
-                                    : swap()!.receiveAmount) ?? 0,
-                            ),
+                            BigNumber(claimedAmount()),
                             denomination(),
                             separator(),
                             getFinalAssetReceive(swap()!),

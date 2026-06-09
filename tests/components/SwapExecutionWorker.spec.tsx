@@ -49,6 +49,20 @@ const mockSendPopulatedTransaction = vi
 const mockPostCommitmentSignatureForTransaction = vi
     .fn<(...args: unknown[]) => Promise<void>>()
     .mockResolvedValue(undefined);
+type MockDexQuote = {
+    trade: {
+        amountOut: bigint;
+        data: string;
+    };
+};
+const mockFetchDexQuote = vi
+    .fn<(...args: unknown[]) => Promise<MockDexQuote>>()
+    .mockResolvedValue({
+        trade: {
+            amountOut: 150n,
+            data: "0xquote",
+        },
+    });
 const createMockErc20Swap = () => {
     return {
         address: "0x8000000000000000000000000000000000000000",
@@ -184,6 +198,10 @@ afterAll(() => {
 });
 
 vi.mock("../../src/consts/Assets", () => ({
+    AssetKind: {
+        ERC20: "ERC20",
+        EVMNative: "EVM_NATIVE",
+    },
     USDC: "USDC",
     getAssetBridge: (asset: string) =>
         asset === "CCTP-SRC"
@@ -219,6 +237,7 @@ vi.mock("../../src/consts/Assets", () => ({
                   }
                 : undefined,
     getNetworkTransport: () => "evm",
+    getKindForAsset: () => "ERC20",
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -244,6 +263,7 @@ vi.mock("../../src/context/Pay", () => ({
 vi.mock("../../src/context/Web3", () => ({
     useWeb3Signer: () => ({
         getErc20Swap: vi.fn(() => createMockErc20Swap()),
+        getEtherSwap: vi.fn(() => createMockErc20Swap()),
         getGasAbstractionSigner: vi.fn((asset: string) => ({
             address:
                 asset === "DST" || asset === "USDC"
@@ -378,12 +398,7 @@ vi.mock("boltz-swaps/oft", async (importActual) => ({
 }));
 
 vi.mock("../../src/utils/quoter", () => ({
-    fetchDexQuote: vi.fn().mockResolvedValue({
-        trade: {
-            amountOut: 150n,
-            data: "0xquote",
-        },
-    }),
+    fetchDexQuote: (...args: unknown[]) => mockFetchDexQuote(...args),
 }));
 
 vi.mock("boltz-swaps/evm", async (importActual) => ({
@@ -475,6 +490,12 @@ describe("SwapExecutionWorker", () => {
         mockPostCommitmentSignatureForTransaction
             .mockReset()
             .mockResolvedValue(undefined);
+        mockFetchDexQuote.mockReset().mockResolvedValue({
+            trade: {
+                amountOut: 150n,
+                data: "0xquote",
+            },
+        });
         mockQueryFilter.mockReset().mockResolvedValue([]);
         Object.defineProperty(window.navigator, "locks", {
             configurable: true,
@@ -533,11 +554,64 @@ describe("SwapExecutionWorker", () => {
             expect(mockSendPopulatedTransaction).toHaveBeenCalled();
             expect(
                 mockPostCommitmentSignatureForTransaction,
-            ).toHaveBeenCalled();
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    asset: "FINAL",
+                    commitmentAsset: "FINAL",
+                    signer: expect.objectContaining({
+                        address: "0x9000000000000000000000000000000000000000",
+                    }),
+                }),
+            );
             expect(mockSetSwapStorage).toHaveBeenCalledTimes(2);
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
         });
+    });
+
+    test("should post an unsubmitted commitment after a local mempool status", async () => {
+        currentSwap = {
+            ...currentSwap,
+            status: "transaction.mempool",
+            commitmentLockupTxHash: "0xcommitment",
+            commitmentSignatureSubmitted: false,
+        };
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commitmentTxHash: "0xcommitment",
+                }),
+            );
+            expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+        });
+    });
+
+    test("should not lock a created pre-OFT swap below its expected amount", async () => {
+        mockFetchDexQuote.mockResolvedValueOnce({
+            trade: {
+                amountOut: 99n,
+                data: "0xquote",
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockFetchDexQuote).toHaveBeenCalled();
+        });
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+        expect(
+            mockPostCommitmentSignatureForTransaction,
+        ).not.toHaveBeenCalled();
+        expect(currentSwap.commitmentLockupTxHash).toBeUndefined();
     });
 
     test("should mint manual CCTP before executing the pre-bridge lockup", async () => {

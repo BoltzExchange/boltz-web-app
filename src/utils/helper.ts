@@ -69,6 +69,17 @@ export const cropString = (str: string, maxLen = 40, subStrSize = 19) => {
     );
 };
 
+export const formatSwapId = (swap: { id: string; type: SwapType }) => {
+    if (swap.type !== SwapType.Commitment) {
+        return swap.id;
+    }
+
+    const legacyPrefix = "commitment-";
+    return swap.id.startsWith(legacyPrefix)
+        ? swap.id.slice(legacyPrefix.length, legacyPrefix.length + 8)
+        : swap.id;
+};
+
 export const formatAddress = (
     address?: string | null,
     groupSize = 5,
@@ -109,7 +120,7 @@ export const getPair = <
 ): T | undefined => {
     if (pairs === undefined) return undefined;
 
-    if (swapType === SwapType.Dex) {
+    if (swapType === SwapType.Dex || swapType === SwapType.Commitment) {
         return undefined;
     }
     const pairSwapType = pairs[swapType];
@@ -226,6 +237,10 @@ export const getDestinationAddress = (
     swap: SomeSwap | null | undefined,
 ): string => {
     if (swap === null || swap === undefined) {
+        return "";
+    }
+
+    if (swap.type === SwapType.Commitment) {
         return "";
     }
 

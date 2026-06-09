@@ -1,5 +1,5 @@
 import type * as SolidRouter from "@solidjs/router";
-import { useLocation } from "@solidjs/router";
+import { useLocation, useParams } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
@@ -29,6 +29,7 @@ import type {
     ChainSwap,
     ReverseSwap,
     SomeSwap,
+    SubmarineSwap,
 } from "../../src/utils/swapCreator";
 import {
     TestComponent,
@@ -90,6 +91,9 @@ vi.mock("../../src/utils/rescue", () => ({
 vi.mock("../../src/components/QrCode", () => ({
     default: () => <div data-testid="mock-qrcode" />,
 }));
+vi.mock("../../src/status/CommitmentCreated", () => ({
+    default: () => <div data-testid="commitment-created" />,
+}));
 
 const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
@@ -123,6 +127,7 @@ vi.mock("localforage", () => ({
 }));
 
 const mockUseLocation = vi.mocked(useLocation);
+const mockUseParams = vi.mocked(useParams);
 mockUseLocation.mockReturnValue({
     hash: "",
     key: "",
@@ -158,6 +163,9 @@ describe("Pay", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.history.replaceState({}, "", "/");
+        mockUseParams.mockReturnValue({
+            id: "123",
+        } as ReturnType<typeof useParams>);
         swapsGetItemMock.mockResolvedValue({
             id: "123",
             type: SwapType.Chain,
@@ -175,6 +183,26 @@ describe("Pay", () => {
         mockGetSwapStatus.mockResolvedValue({
             status: swapStatusFailed.TransactionRefunded,
         });
+    });
+
+    test("should not show commitment ids in the title", async () => {
+        const commitmentId = "commitment-12345678-1234-1234-1234-123456789abc";
+        mockUseParams.mockReturnValue({
+            id: commitmentId,
+        } as ReturnType<typeof useParams>);
+        swapsGetItemMock.mockResolvedValue({
+            id: commitmentId,
+            type: SwapType.Commitment,
+            assetReceive: BTC,
+            assetSend: LBTC,
+        } as SomeSwap);
+
+        renderPay();
+
+        const title = await screen.findByRole("heading", { name: /^Swap$/ });
+        expect(title).toHaveTextContent("Swap");
+        expect(title).not.toHaveTextContent("12345678");
+        expect(title).not.toHaveTextContent(commitmentId);
     });
 
     test("should rename `transaction.refunded` to `swap.waitingForRefund` on ChainSwap", async () => {
@@ -292,6 +320,28 @@ describe("Pay", () => {
             expect(mockGetSwapStatus).toHaveBeenCalledWith("123");
         });
         expect(await screen.findByText("swap.created")).toBeVisible();
+    });
+
+    test("should skip initial funding screens for commitment-backed swaps with a lockup tx", async () => {
+        mockGetSwapStatus.mockResolvedValue({
+            status: swapStatusPending.InvoiceSet,
+        });
+        swapsGetItemMock.mockResolvedValue({
+            id: "123",
+            type: SwapType.Submarine,
+            assetReceive: BTC,
+            assetSend: LBTC,
+            version: OutputType.Taproot,
+            invoice: "invoice",
+            address: "address",
+            commitmentLockup: true,
+            commitmentLockupTxHash: "0xcommitment",
+        } as SubmarineSwap);
+
+        renderPay();
+
+        expect(await screen.findByText(dict.en.tx_in_mempool)).toBeVisible();
+        expect(screen.queryByText("invoice.set")).toBeNull();
     });
 
     test.each([

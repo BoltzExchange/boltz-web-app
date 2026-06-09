@@ -45,6 +45,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
+import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
 import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
@@ -54,7 +55,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { decodeInvoice, isLnurl } from "../utils/invoice";
+import { decodeInvoice, isBolt12Offer, isLnurl } from "../utils/invoice";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -90,9 +91,13 @@ const Create = () => {
         assetSelection,
         assetSelected,
         invoice,
+        lnurl,
+        bolt12Offer,
         setInvoice,
         invoiceValid,
         setInvoiceValid,
+        invoiceError,
+        setInvoiceError,
         addressValid,
         sendAmount,
         setSendAmount,
@@ -138,14 +143,36 @@ const Create = () => {
         isWalletConnectableAsset(pair().toAsset)
             ? pair().toAsset
             : pair().fromAsset;
+    const showsWalletConnect = createMemo(
+        () =>
+            isWalletConnectableAsset(pair().fromAsset) ||
+            isWalletConnectableAsset(pair().toAsset),
+    );
     const receiveAmountQuoteLoading = createMemo(
         () => quoteLoading() && amountChanged() === Side.Send,
     );
     const sendAmountQuoteLoading = createMemo(
         () => quoteLoading() && amountChanged() === Side.Receive,
     );
-    const limitActionsLoading = createMemo(
-        () => limitsLoading() || quoteLoading(),
+    const limitActionsLoading = createMemo(() => limitsLoading());
+    const requiresInvoiceInput = createMemo(
+        () =>
+            pair().requiredInput === RequiredInput.Invoice ||
+            (pair().requiredInput === RequiredInput.Unknown &&
+                pair().toAsset === LN),
+    );
+    const usesCommittedSendAmount = createMemo(
+        () =>
+            canCommitSubmarineSendAmount(pair(), amountChanged()) &&
+            sendAmount().isFinite() &&
+            sendAmount().isGreaterThan(0) &&
+            lnurl() === "" &&
+            (invoice() === "" ||
+                (bolt12Offer() !== undefined && invoice() === bolt12Offer())) &&
+            invoiceError() === undefined,
+    );
+    const hideInvoiceInput = createMemo(
+        () => requiresInvoiceInput() && usesCommittedSendAmount(),
     );
 
     const gasTopUpTrigger = createMemo(() => {
@@ -328,7 +355,11 @@ const Create = () => {
     };
 
     const clearStaleInvoice = () => {
-        if (invoice() === "" || isLnurl(invoice())) {
+        if (
+            invoice() === "" ||
+            isLnurl(invoice()) ||
+            isBolt12Offer(invoice())
+        ) {
             return;
         }
         try {
@@ -339,7 +370,9 @@ const Create = () => {
             setInvoice("");
             setInvoiceValid(false);
         } catch {
-            // not a valid invoice, nothing to clear
+            setInvoice("");
+            setInvoiceValid(false);
+            setInvoiceError(undefined);
         }
     };
 
@@ -735,6 +768,16 @@ const Create = () => {
         void fetchBtcPrice();
     });
 
+    const InvoiceInputSlot = () => (
+        <>
+            <Show when={webln()}>
+                <WeblnButton />
+                <hr class="spacer" />
+            </Show>
+            <InvoiceInput />
+        </>
+    );
+
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div class="frame">
@@ -933,18 +976,12 @@ const Create = () => {
                 </Show>
                 <Show
                     when={
-                        pair().requiredInput === RequiredInput.Invoice ||
-                        (pair().requiredInput === RequiredInput.Unknown &&
-                            pair().toAsset === LN)
+                        requiresInvoiceInput() &&
+                        !hideInvoiceInput() &&
+                        !destinationLocked()
                     }>
-                    <Show when={webln()}>
-                        <WeblnButton />
-                        <hr class="spacer" />
-                    </Show>
-                    <Show when={!destinationLocked()}>
-                        <InvoiceInput />
-                        <hr class="spacer" />
-                    </Show>
+                    <InvoiceInputSlot />
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={
@@ -957,10 +994,7 @@ const Create = () => {
                     <QrScan />
                     <hr class="spacer" />
                 </Show>
-                <Show
-                    when={[pair().fromAsset, pair().toAsset].some(
-                        isWalletConnectableAsset,
-                    )}>
+                <Show when={showsWalletConnect()}>
                     {/* We have no gas abstraction for RBTC */}
                     <Show
                         when={

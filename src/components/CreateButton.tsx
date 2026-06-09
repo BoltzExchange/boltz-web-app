@@ -38,8 +38,13 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop, toDexAmount } from "../utils/Pair";
+import Pair, {
+    type CreationData,
+    type EncodedHop,
+    toDexAmount,
+} from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";
+import { canCreateSubmarineCommitmentSwap } from "../utils/commitmentSwap";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
     btcToSat,
@@ -66,11 +71,14 @@ import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
     type BridgeDetail,
+    type ChainSwap,
     type DexDetail,
     type GasAbstraction,
     GasAbstractionType,
-    type SomeSwap,
+    type ReverseSwap,
+    type SubmarineSwap,
     createChain,
+    createCommitmentSwap,
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
@@ -151,6 +159,10 @@ const buildDexDetail = (
         ).toString(),
     };
 };
+
+const hasPreCommitmentDex = (creationData: CreationData) =>
+    creationData.hopsPosition === SwapPosition.Pre &&
+    creationData.hops.length > 0;
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
     const asset = getCanonicalAsset(assetSend);
@@ -318,6 +330,20 @@ const CreateButton = () => {
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
+    const canCreateCommitmentSwap = () =>
+        canCreateSubmarineCommitmentSwap({
+            pair: pair(),
+            amountChanged: amountChanged(),
+            sendAmount: sendAmount(),
+            minimum: minimum(),
+            maximum: maximum(),
+            invoice: invoice(),
+            lnurl: lnurl(),
+            bolt12Offer: bolt12Offer(),
+            invoiceError: invoiceError(),
+        });
+    const canCreateSwap = () =>
+        valid() || validWayToFetchInvoice() || canCreateCommitmentSwap();
     const getSwapCreationLogContext = (
         claimAddress?: string,
         gasAbstraction?: GasAbstraction,
@@ -345,6 +371,7 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
+                amountChanged,
                 pair,
                 lnurl,
                 online,
@@ -400,6 +427,7 @@ const CreateButton = () => {
                     // Chain swaps with 0-amount that do not have RBTC as sending asset
                     // can skip this check
                     !isChainSwapWithZeroAmount() &&
+                    !canCreateCommitmentSwap() &&
                     (isSubmarineSwapInvoiceValid() ||
                         swapType() !== SwapType.Submarine) &&
                     !(sendAmount().isZero() && hasInvalidDestinationInput());
@@ -445,6 +473,10 @@ const CreateButton = () => {
                         return;
                     }
                 } else {
+                    if (canCreateCommitmentSwap()) {
+                        setButtonLabel({ key: "create_swap" });
+                        return;
+                    }
                     if (validWayToFetchInvoice()) {
                         setButtonLabel({ key: "create_swap" });
                         return;
@@ -613,7 +645,7 @@ const CreateButton = () => {
         gasAbstraction: GasAbstraction,
     ): Promise<boolean> => {
         try {
-            let data!: SomeSwap;
+            let data!: SubmarineSwap | ReverseSwap | ChainSwap;
             let hops!: EncodedHop[];
             let hopsPosition: SwapPosition | undefined;
 
@@ -869,7 +901,7 @@ const CreateButton = () => {
                 buildBridgeDetail(
                     assetSend(),
                     SwapPosition.Pre,
-                    amountChanged() === Side.Send ? sendAmount() : undefined,
+                    sendAmount(),
                 ) ?? buildBridgeDetail(assetReceive(), SwapPosition.Post);
 
             await setSwapStorage({
@@ -933,9 +965,74 @@ const CreateButton = () => {
         }
     };
 
+    const createLocalCommitmentSwap = async () => {
+        const creationData = await pair().creationData(
+            sendAmount(),
+            pair().minerFees,
+        );
+        if (creationData === undefined) {
+            throw new Error("missing swap creation data");
+        }
+        if (!hasPreCommitmentDex(creationData)) {
+            throw new Error("commitment swap requires a pre-swap DEX route");
+        }
+
+        const { gasAbstraction } = await getClaimAddress(
+            assetReceive,
+            assetSend,
+            signer,
+            onchainAddress,
+            getGasAbstractionSigner,
+            getGasToken(),
+        );
+
+        const dex =
+            creationData.hopsPosition === SwapPosition.Pre
+                ? {
+                      hops: creationData.hops,
+                      position: SwapPosition.Pre,
+                      quoteAmount: sendAmount().toFixed(0),
+                      sourceAmount: sendAmount().toFixed(0),
+                  }
+                : undefined;
+        const bridge = buildBridgeDetail(
+            assetSend(),
+            SwapPosition.Pre,
+            sendAmount(),
+        );
+        if (pair().hasPreBridge && bridge === undefined) {
+            throw new Error("missing pre-bridge details for commitment swap");
+        }
+
+        const commitmentSwap = createCommitmentSwap(
+            creationData.from,
+            creationData.to,
+            assetReceive(),
+            assetSend(),
+            sendAmount(),
+            creationData.sendAmount,
+            creationData.pairHash,
+            gasAbstraction,
+            dex,
+            bridge,
+            bolt12Offer(),
+        );
+
+        await setSwapStorage({
+            ...commitmentSwap,
+            getGasToken: getGasToken(),
+        });
+        navigate("/swap/" + commitmentSwap.id);
+    };
+
     const buttonClick = async () => {
         setLoading(true);
         try {
+            if (canCreateCommitmentSwap()) {
+                await createLocalCommitmentSwap();
+                return;
+            }
+
             if (validWayToFetchInvoice()) {
                 await fetchInvoice();
             }
@@ -962,7 +1059,7 @@ const CreateButton = () => {
                 return;
             }
 
-            if (!valid()) return;
+            if (!canCreateSwap()) return;
 
             log.debug("Creating with EVM address", claimAddress);
 
@@ -990,7 +1087,7 @@ const CreateButton = () => {
             disabled={
                 !online() ||
                 pairsLoading() ||
-                !(valid() || validWayToFetchInvoice()) ||
+                !canCreateSwap() ||
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
@@ -999,7 +1096,8 @@ const CreateButton = () => {
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&
-                    lnurl() === "")
+                    lnurl() === "" &&
+                    !canCreateCommitmentSwap())
             }
             onClick={buttonClick}>
             {(pairsLoading() ||

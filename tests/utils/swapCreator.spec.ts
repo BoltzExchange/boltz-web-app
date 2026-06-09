@@ -1,9 +1,11 @@
+import BigNumber from "bignumber.js";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
     type SwapBase,
+    createCommitmentSwap,
     getFinalAssetReceive,
     getFinalAssetSend,
     getPostBridgeDetail,
@@ -163,5 +165,22 @@ describe("getFinalAssetReceive", () => {
     test("falls back to swap.assetReceive when there's no bridge or post-DEX", () => {
         const swap = makeSwap({ assetReceive: LBTC });
         expect(getFinalAssetReceive(swap)).toBe(LBTC);
+    });
+});
+
+describe("createCommitmentSwap", () => {
+    test("creates an eight character local id", () => {
+        const swap = createCommitmentSwap(
+            LBTC,
+            BTC,
+            LN,
+            LBTC,
+            BigNumber(100_000),
+            BigNumber(100_000),
+            "pair-hash",
+            noGasAbstraction(),
+        );
+
+        expect(swap.id).toMatch(/^[0-9a-f]{8}$/);
     });
 });

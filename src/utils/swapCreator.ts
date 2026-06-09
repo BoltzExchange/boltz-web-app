@@ -74,14 +74,12 @@ export const createUniformGasAbstraction = (
 export const noGasAbstraction = (): GasAbstraction =>
     createUniformGasAbstraction(GasAbstractionType.None);
 
-export type SwapBase = {
+export type SwapBaseData = {
     type: SwapType;
     status?: string;
     assetSend: string;
     assetReceive: string;
     getGasToken?: boolean;
-    sendAmount: number;
-    receiveAmount: number;
     version: number;
     date: number;
 
@@ -89,6 +87,7 @@ export type SwapBase = {
     claimTx?: string;
     refundTx?: string;
     lockupTx?: string;
+    commitmentLockup?: boolean;
     commitmentLockupTxHash?: string;
     commitmentLockupCallId?: string;
     commitmentSignatureSubmitted?: boolean;
@@ -106,6 +105,11 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
+};
+
+export type SwapBase = SwapBaseData & {
+    sendAmount: number;
+    receiveAmount: number;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -144,17 +148,33 @@ export type ChainSwap = SwapBase &
         refundPrivateKey?: string;
     };
 
-export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
+export type CommitmentSwap = SwapBaseData & {
+    type: SwapType.Commitment;
+    id: string;
+    pairHash: string;
+    initialReceiveAsset: string;
+    sourceAsset: string;
+    sourceAmount: string;
+    lockupAmount?: string;
+};
 
-export const getLockupGasAbstraction = (swap: SwapBase): GasAbstractionType =>
-    swap.gasAbstraction.lockup;
+export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap | CommitmentSwap;
 
-export const getClaimGasAbstraction = (swap: SwapBase): GasAbstractionType =>
-    swap.gasAbstraction.claim;
+export const isCommitmentSwap = (swap: SwapBaseData): swap is CommitmentSwap =>
+    swap.type === SwapType.Commitment;
 
-export const getRelevantAssetForSwap = (swap: SwapBase) => {
+export const getLockupGasAbstraction = (
+    swap: SwapBaseData,
+): GasAbstractionType => swap.gasAbstraction.lockup;
+
+export const getClaimGasAbstraction = (
+    swap: SwapBaseData,
+): GasAbstractionType => swap.gasAbstraction.claim;
+
+export const getRelevantAssetForSwap = (swap: SwapBaseData) => {
     switch (swap.type) {
         case SwapType.Submarine:
+        case SwapType.Commitment:
             return swap.assetSend;
 
         default:
@@ -165,18 +185,24 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 export const getSwapAddress = (swap: SomeSwap): string => {
     switch (swap.type) {
         case SwapType.Submarine:
-            return swap.address;
+            return String(swap.address);
         case SwapType.Reverse:
-            return swap.lockupAddress;
+            return String(swap.lockupAddress);
         case SwapType.Chain:
-            return swap.lockupDetails.lockupAddress;
+            return String(swap.lockupDetails.lockupAddress);
+        case SwapType.Commitment:
+            return "";
     }
 };
 
 export const getFinalAssetSend = (
-    swap: SwapBase,
+    swap: SwapBaseData,
     coalesceLn: boolean = false,
 ): string => {
+    if (isCommitmentSwap(swap)) {
+        return swap.sourceAsset;
+    }
+
     if (swap.bridge?.position === SwapPosition.Pre) {
         return swap.bridge.sourceAsset;
     }
@@ -193,9 +219,13 @@ export const getFinalAssetSend = (
 };
 
 export const getFinalAssetReceive = (
-    swap: SwapBase,
+    swap: SwapBaseData,
     coalesceLn: boolean = false,
 ): string => {
+    if (isCommitmentSwap(swap)) {
+        return swap.initialReceiveAsset;
+    }
+
     if (swap.bridge?.position === SwapPosition.Post) {
         return swap.bridge.destinationAsset;
     }
@@ -237,6 +267,47 @@ const generatePreimage = ({
 }) => {
     return derivePreimageFromRescueKey(rescueFile, keyIndex, asset);
 };
+
+const createLocalSwapId = () => {
+    if (globalThis.crypto?.getRandomValues !== undefined) {
+        return hex.encode(globalThis.crypto.getRandomValues(new Uint8Array(4)));
+    }
+
+    return Math.floor(Math.random() * 0x1_0000_0000)
+        .toString(16)
+        .padStart(8, "0");
+};
+
+export const createCommitmentSwap = (
+    assetSend: string,
+    assetReceive: string,
+    initialReceiveAsset: string,
+    sourceAsset: string,
+    sourceAmount: BigNumber,
+    lockupAmount: BigNumber,
+    pairHash: string,
+    gasAbstraction: GasAbstraction,
+    dex?: DexDetail,
+    bridge?: BridgeDetail,
+    originalDestination?: string,
+): CommitmentSwap => ({
+    ...annotateSwapData(
+        { id: createLocalSwapId() },
+        SwapType.Commitment,
+        assetSend,
+        assetReceive,
+        gasAbstraction,
+    ),
+    pairHash,
+    initialReceiveAsset,
+    sourceAsset,
+    sourceAmount: sourceAmount.toFixed(0),
+    lockupAmount: lockupAmount.toFixed(0),
+    commitmentLockup: true,
+    dex,
+    bridge,
+    originalDestination,
+});
 
 export const createSubmarine = async (
     assetSend: string,
@@ -396,4 +467,20 @@ const annotateSwapBaseData = <T, K extends SwapType>(
     version: OutputType.Taproot,
     sendAmount: Number(sendAmount),
     receiveAmount: Number(receiveAmount),
+});
+
+const annotateSwapData = <T, K extends SwapType>(
+    createdResponse: T,
+    type: K,
+    assetSend: string,
+    assetReceive: string,
+    gasAbstraction: GasAbstraction,
+): T & SwapBaseData & { type: K } => ({
+    ...createdResponse,
+    type,
+    gasAbstraction,
+    assetSend,
+    assetReceive,
+    date: new Date().getTime(),
+    version: OutputType.Taproot,
 });

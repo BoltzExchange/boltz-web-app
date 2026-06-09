@@ -309,28 +309,30 @@ const SendToBridge = (props: {
             ? CctpReceiveMode.Manual
             : CctpReceiveMode.Forwarded;
 
+    const preBridgeSourceAmount = () =>
+        props.bridge.position === SwapPosition.Pre &&
+        props.bridge.sourceAmount !== undefined
+            ? BigInt(props.bridge.sourceAmount)
+            : undefined;
+
+    const getBridgeSourceAmount = async (bridgeRoute: BridgeDetail) => {
+        const sourceAmount = preBridgeSourceAmount();
+        if (sourceAmount !== undefined) {
+            return sourceAmount;
+        }
+
+        return await bridgeDriver().quoteAmountInForAmountOut(
+            bridgeRoute,
+            props.amount,
+            { cctpReceiveMode: cctpReceiveMode() },
+        );
+    };
+
     const quoteBridgeSendState = async (recipient: string) => {
         const bridgeRoute = props.bridge;
         const quotedBridgeInstance =
             await bridgeDriver().getQuotedContract(bridgeRoute);
-
-        // we don't want to refetch a quote if we previously committed to
-        // a fixed source amount, e.g. for sweeping the wallet.
-        let sourceAmount = BigInt(bridgeRoute.sourceAmount ?? 0);
-
-        // `props.amount` is the amount Boltz needs to arrive on the destination
-        // chain (it was computed by the pair/DEX step on the far side). Bridges
-        // that charge fees in the bridged asset (CCTP) must burn more than
-        // that so the arrival matches. OFT typically returns `amount`
-        // unchanged when there's no token-side fee.
-        if (sourceAmount === 0n) {
-            sourceAmount = await bridgeDriver().quoteAmountInForAmountOut(
-                bridgeRoute,
-                props.amount,
-                { cctpReceiveMode: cctpReceiveMode() },
-            );
-        }
-
+        const sourceAmount = await getBridgeSourceAmount(bridgeRoute);
         const { sendParam, msgFee } = await bridgeDriver().quoteSend(
             quotedBridgeInstance,
             bridgeRoute,

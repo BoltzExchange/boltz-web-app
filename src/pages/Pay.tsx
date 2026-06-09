@@ -43,6 +43,7 @@ import {
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import CommitmentCreated from "../status/CommitmentCreated";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -68,6 +69,7 @@ import {
     isRefundableSwapType,
 } from "../utils/rescue";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { getCommitmentLockupDisplayStatus } from "../utils/swapStatus";
 import { getUrlParam } from "../utils/urlParams";
 
 const Pay = () => {
@@ -160,6 +162,7 @@ const Pay = () => {
         return (
             currentSwap !== null &&
             currentSwap.type !== SwapType.Reverse &&
+            currentSwap.type !== SwapType.Commitment &&
             !rescueFileBackupDone()
         );
     });
@@ -196,6 +199,7 @@ const Pay = () => {
             return {
                 backupDone: rescueFileBackupDone(),
                 id: currentSwap.id,
+                status: currentSwap.status,
                 timedOutRefundable: timedOutRefundable(),
                 type: currentSwap.type,
             };
@@ -203,6 +207,7 @@ const Pay = () => {
         async (currentSwap) => {
             if (
                 currentSwap.type !== SwapType.Reverse &&
+                currentSwap.type !== SwapType.Commitment &&
                 !currentSwap.backupDone
             ) {
                 return;
@@ -213,6 +218,11 @@ const Pay = () => {
                     `Refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
                 );
                 setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
+                return;
+            }
+
+            if (currentSwap.type === SwapType.Commitment) {
+                setSwapStatus(currentSwap.status ?? "commitment.created");
                 return;
             }
 
@@ -229,6 +239,9 @@ const Pay = () => {
         const currentSwap = swap();
 
         if (currentSwap === null || backupVerificationRequired()) {
+            return;
+        }
+        if (currentSwap.type === SwapType.Commitment) {
             return;
         }
         const swapValue = currentSwap;
@@ -404,9 +417,24 @@ const Pay = () => {
         return status;
     };
 
-    const status = createMemo(
-        () => statusOverride() || renameSwapStatus(swapStatus()),
+    const displaySwapStatus = createMemo(() =>
+        getCommitmentLockupDisplayStatus(swap(), swapStatus()),
     );
+
+    const status = createMemo(
+        () => statusOverride() || renameSwapStatus(displaySwapStatus()),
+    );
+    const displaySwapId = () => {
+        if (privacyMode()) {
+            return hiddenInformation;
+        }
+
+        return swap()?.id ?? params.id!;
+    };
+    const title = () =>
+        swap()?.type === SwapType.Commitment
+            ? t("swap")
+            : t("pay_invoice", { id: displaySwapId() });
 
     return (
         <Show
@@ -431,11 +459,7 @@ const Pay = () => {
                 <div data-status={status()} class="frame">
                     <span class="frame-header">
                         <h2>
-                            {t("pay_invoice", {
-                                id: privacyMode()
-                                    ? hiddenInformation
-                                    : params.id!,
-                            })}
+                            {title()}
                             <Show when={swap()}>
                                 <SwapIcons swap={swap()!} />
                             </Show>
@@ -458,59 +482,68 @@ const Pay = () => {
                             <Show
                                 when={swapStatus()}
                                 fallback={<LoadingSpinner />}>
-                                <div class="swap-status">
-                                    {t("status")}:
-                                    <span class="btn-small">{status()}</span>
-                                    <Show
-                                        when={
-                                            getDestinationAddress(swap()) &&
-                                            (swapStatus() ===
-                                                swapStatusPending.SwapCreated ||
-                                                swapStatus() ===
-                                                    swapStatusPending.InvoiceSet)
-                                        }>
-                                        <span class="vertical-line" />
-                                        <Tooltip
-                                            pxDistance={20}
-                                            label={{
-                                                key: "destination_address",
-                                                variables: {
-                                                    address: cropString(
-                                                        getDestinationAddress(
-                                                            swap(),
+                                <Show
+                                    when={swap()?.type !== SwapType.Commitment}>
+                                    <div class="swap-status">
+                                        {t("status")}:
+                                        <span class="btn-small">
+                                            {status()}
+                                        </span>
+                                        <Show
+                                            when={
+                                                getDestinationAddress(swap()) &&
+                                                (displaySwapStatus() ===
+                                                    swapStatusPending.SwapCreated ||
+                                                    displaySwapStatus() ===
+                                                        swapStatusPending.InvoiceSet)
+                                            }>
+                                            <span class="vertical-line" />
+                                            <Tooltip
+                                                pxDistance={20}
+                                                label={{
+                                                    key: "destination_address",
+                                                    variables: {
+                                                        address: cropString(
+                                                            getDestinationAddress(
+                                                                swap(),
+                                                            ),
+                                                            14,
+                                                            8,
                                                         ),
-                                                        14,
-                                                        8,
-                                                    ),
-                                                },
-                                            }}
-                                            direction={[
-                                                "top",
-                                                isMobile() ? "left" : "right",
-                                            ]}>
-                                            <button
-                                                id="copy-destination"
-                                                onClick={() =>
-                                                    copyBoxText(
-                                                        getDestinationAddress(
-                                                            swap(),
-                                                        ),
-                                                    )
-                                                }>
-                                                <Show
-                                                    when={copyDestinationActive()}
-                                                    fallback={
-                                                        <BiRegularCopy
+                                                    },
+                                                }}
+                                                direction={[
+                                                    "top",
+                                                    isMobile()
+                                                        ? "left"
+                                                        : "right",
+                                                ]}>
+                                                <button
+                                                    id="copy-destination"
+                                                    onClick={() =>
+                                                        copyBoxText(
+                                                            getDestinationAddress(
+                                                                swap(),
+                                                            ),
+                                                        )
+                                                    }>
+                                                    <Show
+                                                        when={copyDestinationActive()}
+                                                        fallback={
+                                                            <BiRegularCopy
+                                                                size={14}
+                                                            />
+                                                        }>
+                                                        <IoCheckmark
                                                             size={14}
                                                         />
-                                                    }>
-                                                    <IoCheckmark size={14} />
-                                                </Show>
-                                                {t("destination")}
-                                            </button>
-                                        </Tooltip>
-                                    </Show>
-                                </div>
+                                                    </Show>
+                                                    {t("destination")}
+                                                </button>
+                                            </Tooltip>
+                                        </Show>
+                                    </div>
+                                </Show>
                                 <hr />
                             </Show>
                             <Show
@@ -557,29 +590,35 @@ const Pay = () => {
                                 <Switch>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            swap()?.type === SwapType.Commitment
+                                        }>
+                                        <CommitmentCreated />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            displaySwapStatus() ===
                                                 swapStatusSuccess.TransactionClaimed ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusSuccess.InvoiceSettled ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.TransactionClaimPending ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.InvoicePaid
                                         }>
                                         <TransactionClaimed />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusFailed.InvoiceFailedToPay
                                         }>
                                         <InvoiceFailedToPay />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusFailed.TransactionLockupFailed ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusFailed.TransactionFailed
                                         }>
                                         <TransactionLockupFailed
@@ -603,62 +642,65 @@ const Pay = () => {
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusFailed.SwapExpired
                                         }>
                                         <SwapExpired />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusFailed.InvoiceExpired
                                         }>
                                         <InvoiceExpired />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.TransactionConfirmed ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.TransactionServerConfirmed
                                         }>
                                         <TransactionConfirmed />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.TransactionMempool ||
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                                 swapStatusPending.TransactionServerMempool
                                         }>
                                         <TransactionMempool swap={swap} />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusPending.InvoiceSet
                                         }>
                                         <InvoiceSet />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusPending.InvoicePending
                                         }>
                                         <InvoicePending />
                                     </Match>
                                     <Match
                                         when={
-                                            swapStatus() ===
+                                            displaySwapStatus() ===
                                             swapStatusPending.SwapCreated
                                         }>
                                         <SwapCreated />
                                     </Match>
                                 </Switch>
-                                <BlockExplorerLink
-                                    swap={swap as Accessor<SomeSwap>}
-                                    swapStatus={swapStatus}
-                                />
+                                <Show
+                                    when={swap()?.type !== SwapType.Commitment}>
+                                    <BlockExplorerLink
+                                        swap={swap as Accessor<SomeSwap>}
+                                        swapStatus={displaySwapStatus}
+                                    />
+                                </Show>
                             </Show>
                         </Show>
                     </Show>

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 
 import SwapList, { type Swap } from "../../src/components/SwapList";
 import { BTC, LN } from "../../src/consts/Assets";
@@ -77,6 +78,26 @@ describe("SwapList", () => {
         const item = screen.getByTestId(`swaplist-item-${swap.id}`);
         expect(item.tagName).toEqual("A");
         expect(item.getAttribute("href")).toEqual(`/swap/${swap.id}`);
+    });
+
+    it("should display local commitment ids as eight characters without changing the link target", () => {
+        const swap = {
+            id: "commitment-12345678-1234-1234-1234-123456789abc",
+            type: SwapType.Commitment,
+            date: new Date().getTime(),
+            assetSend: BTC,
+            assetReceive: LN,
+        } as SomeSwap;
+
+        render(
+            () => <SwapList swapsSignal={() => [swap]} action={() => "view"} />,
+            { wrapper: contextWrapper },
+        );
+
+        const item = screen.getByTestId(`swaplist-item-${swap.id}`);
+        expect(item.getAttribute("href")).toEqual(`/swap/${swap.id}`);
+        expect(item.textContent).toContain("12345678");
+        expect(item.textContent).not.toContain(swap.id);
     });
 
     it("should not render rows as links when a custom onClick is provided", () => {

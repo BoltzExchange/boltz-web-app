@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import {
     bridgeRegistry,
     toRouterCalls,
@@ -32,7 +31,6 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 import log from "loglevel";
-import { ImArrowDown } from "solid-icons/im";
 import {
     type Accessor,
     Show,
@@ -51,19 +49,19 @@ import {
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
+import SwapAmountSummary from "../components/SwapAmountSummary";
 import { config } from "../config";
 import { getKindForAsset, getTokenAddress, isEvmAsset } from "../consts/Assets";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
 } from "../utils/calculate";
-import { formatAmount, getDecimals } from "../utils/denomination";
+import { getDecimals } from "../utils/denomination";
 import { formatError, isWalletRejectionError } from "../utils/errors";
 import { claimAsset, sendPopulatedTransaction } from "../utils/evmTransaction";
 import { retryWithBackoff } from "../utils/promise";
@@ -730,39 +728,6 @@ const claimHops = async (
     );
 };
 
-const Amount = (props: {
-    label: DictKey;
-    amount: number | string | bigint;
-    asset: string;
-}) => {
-    const isErc20 = () => getDecimals(props.asset).isErc20;
-    const { t, denomination, separator } = useGlobalContext();
-
-    return (
-        <div>
-            <div>{t(props.label)}</div>
-            <span>
-                {formatAmount(
-                    new BigNumber(props.amount.toString()),
-                    denomination(),
-                    separator(),
-                    props.asset,
-                ) || 0}
-                <Show
-                    when={!isErc20()}
-                    fallback={
-                        <span class="asset-fallback">{props.asset}</span>
-                    }>
-                    <span
-                        class="denominator"
-                        data-denominator={denomination()}
-                    />
-                </Show>
-            </span>
-        </div>
-    );
-};
-
 const AutoClaimHops = (props: {
     amount: number;
     swapId: string;
@@ -802,6 +767,12 @@ const AutoClaimHops = (props: {
         getClaimAssetForRoute(props.assetReceive, props.dex);
     const isOutsideSlippage = (quoteAmount: bigint) =>
         quoteAmount < quoteThreshold();
+    const currentSendAmount = () => {
+        const current = swap();
+        return current !== null && "sendAmount" in current
+            ? current.sendAmount
+            : 0;
+    };
 
     const needsApproval = () => {
         const quote = freshQuote();
@@ -1002,19 +973,20 @@ const AutoClaimHops = (props: {
                     </Show>
                 }>
                 <h2>{t("dex_quote_changed")}</h2>
-                <div class="quote">
-                    <Amount
-                        label={"sent"}
-                        amount={swap()!.sendAmount}
-                        asset={props.assetSend}
-                    />
-                    <ImArrowDown size={15} style={{ opacity: 0.5 }} />
-                    <Amount
-                        label={"will_receive"}
-                        amount={freshQuote()!.amount}
-                        asset={getFinalAssetReceive(swap()!, true)}
-                    />
-                </div>
+                <SwapAmountSummary
+                    items={[
+                        {
+                            label: "sent",
+                            amount: currentSendAmount(),
+                            asset: props.assetSend,
+                        },
+                        {
+                            label: "will_receive",
+                            amount: freshQuote()!.amount,
+                            asset: getFinalAssetReceive(swap()!, true),
+                        },
+                    ]}
+                />
 
                 <div class="btns btns-space-between">
                     <button
@@ -1146,12 +1118,14 @@ const ClaimEvm = (props: {
             return;
         }
         currentSwap.claimTx = transactionHash;
-        currentSwap.receiveAmount = Number(
-            normalizePersistedReceiveAmount(
-                receiveAmount,
-                getFinalAssetReceive(currentSwap),
-            ),
-        );
+        if ("receiveAmount" in currentSwap) {
+            currentSwap.receiveAmount = Number(
+                normalizePersistedReceiveAmount(
+                    receiveAmount,
+                    getFinalAssetReceive(currentSwap),
+                ),
+            );
+        }
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
     };

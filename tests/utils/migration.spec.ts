@@ -1,7 +1,8 @@
-import { SwapPosition } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 
 import { LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import {
+    migrateCommitmentSwapAmounts,
     migrateSwapBridgeShape,
     migrateSwapDexPositionShape,
     migrateSwapGasAbstraction,
@@ -146,7 +147,8 @@ describe("migration", () => {
                     kind: "future-bridge",
                     sourceAsset: "FOO",
                     destinationAsset: "FOO-BAR",
-                    position: SwapPosition.Post,
+                    position: SwapPosition.Pre,
+                    sourceAmount: "123",
                 },
             },
         ];
@@ -158,7 +160,8 @@ describe("migration", () => {
                     kind: "future-bridge",
                     sourceAsset: "FOO",
                     destinationAsset: "FOO-BAR",
-                    position: SwapPosition.Post,
+                    position: SwapPosition.Pre,
+                    sourceAmount: "123",
                 },
             },
         ]);
@@ -204,5 +207,30 @@ describe("migration", () => {
                 },
             },
         ]);
+    });
+
+    test("should remove derived amounts from commitment swaps", () => {
+        expect(
+            migrateCommitmentSwapAmounts({
+                id: "commitment",
+                type: SwapType.Commitment,
+                assetSend: "TBTC",
+                assetReceive: "BTC",
+                initialReceiveAsset: LN,
+                sourceAsset: "USDC-SOL",
+                sourceAmount: "1000000",
+                sendAmount: 1309,
+                receiveAmount: 774,
+            }),
+        ).toEqual({
+            id: "commitment",
+            type: SwapType.Commitment,
+            assetSend: "TBTC",
+            assetReceive: "BTC",
+            initialReceiveAsset: LN,
+            sourceAsset: "USDC-SOL",
+            sourceAmount: "1000000",
+            lockupAmount: "1309",
+        });
     });
 });

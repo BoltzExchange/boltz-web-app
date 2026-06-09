@@ -29,7 +29,7 @@ import { erc20SwapCodeHashes, etherSwapCodeHashes } from "../context/Web3";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
-import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { decodeInvoice, extractInvoice, isInvoice, isLnurl } from "./invoice";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -413,4 +413,14 @@ export const validateInvoice = (inputValue: string): number => {
         }
     }
     throw new Error("invalid_invoice");
+};
+
+export const validateInvoiceInput = (
+    inputValue: string,
+): { invoice: string; sats: number } => {
+    const invoice = extractInvoice(inputValue.trim()) ?? "";
+    return {
+        invoice,
+        sats: validateInvoice(invoice),
+    };
 };

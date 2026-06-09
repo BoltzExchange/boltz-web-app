@@ -7,6 +7,7 @@ import {
     quoteDexAmountOut,
 } from "boltz-swaps/client";
 import { prefix0x, satsToAssetAmount } from "boltz-swaps/evm";
+import { emptyPreimageHash } from "boltz-swaps/evm/commitment";
 import {
     createRouterContract,
     createTokenContract,
@@ -17,7 +18,7 @@ import {
     etherSwapAbi,
     routerAbi,
 } from "boltz-swaps/generated/evm-abis";
-import { AssetKind } from "boltz-swaps/types";
+import { AssetKind, SwapPosition } from "boltz-swaps/types";
 import { randomBytes } from "crypto";
 import log from "loglevel";
 import {
@@ -412,6 +413,7 @@ const lockupWithHops = async (
             throw new Error(`missing swap ${swapId} for lockup persistence`);
         }
         currentSwap.commitmentLockupTxHash = transactionHash;
+        currentSwap.commitmentLockupCallId = undefined;
         currentSwap.commitmentSignatureSubmitted = false;
         currentSwap.signer = ownerAddress;
         setSwap(currentSwap);
@@ -425,8 +427,7 @@ const lockupWithHops = async (
         return transactionHash;
     };
 
-    let commitmentTxHash: string | undefined = (await getSwap(swapId))
-        ?.commitmentLockupTxHash;
+    let commitmentTxHash = (await getSwap(swapId))?.commitmentLockupTxHash;
     if (commitmentTxHash === undefined) {
         commitmentTxHash = await lockup();
     } else {
@@ -455,6 +456,7 @@ const LockupTransaction = (props: {
     approvalTarget?: Address;
     hops?: EncodedHop[];
     hopInputAmount?: bigint;
+    commitment?: boolean;
 }) => {
     const { setSwap } = usePayContext();
     const { t, slippage, getSwap, setSwapStorage } = useGlobalContext();
@@ -492,7 +494,6 @@ const LockupTransaction = (props: {
                         );
                     }
 
-                    let transactionHash: string;
                     const transactionSigner = getSignerForGasAbstraction(
                         props.gasAbstraction,
                         connectedSigner,
@@ -504,6 +505,15 @@ const LockupTransaction = (props: {
                         );
                     }
 
+                    const existingSwap = await getSwap(props.swapId);
+                    if (
+                        props.commitment &&
+                        existingSwap?.commitmentLockupTxHash !== undefined
+                    ) {
+                        return;
+                    }
+
+                    let transactionHash: string;
                     if (props.hops !== undefined && props.hops.length > 0) {
                         transactionHash = await lockupWithHops(
                             props.hops,
@@ -519,46 +529,23 @@ const LockupTransaction = (props: {
                             setSwapStorage,
                             props.hopInputAmount,
                         );
-                    } else if (
-                        getKindForAsset(props.asset) === AssetKind.EVMNative
-                    ) {
-                        const contract = getEtherSwap(props.asset);
-                        const tx = {
-                            to: contract.address,
-                            data: encodeFunctionData({
-                                abi: etherSwapAbi,
-                                functionName: "lock",
-                                args: [
-                                    prefix0x(props.preimageHash),
-                                    getAddress(props.claimAddress),
-                                    BigInt(props.timeoutBlockHeight),
-                                ],
-                            }),
-                            value: props.value(),
-                        };
-                        transactionHash = await sendPopulatedTransaction(
-                            props.gasAbstraction,
-                            transactionSigner,
-                            tx,
-                        );
                     } else {
-                        if (props.gasAbstraction === GasAbstractionType.None) {
-                            const contract = getErc20Swap(props.asset);
+                        if (
+                            getKindForAsset(props.asset) === AssetKind.EVMNative
+                        ) {
+                            const contract = getEtherSwap(props.asset);
                             const tx = {
                                 to: contract.address,
                                 data: encodeFunctionData({
-                                    abi: erc20SwapAbi,
+                                    abi: etherSwapAbi,
                                     functionName: "lock",
                                     args: [
                                         prefix0x(props.preimageHash),
-                                        props.value(),
-                                        getAddress(
-                                            getTokenAddress(props.asset),
-                                        ),
                                         getAddress(props.claimAddress),
                                         BigInt(props.timeoutBlockHeight),
                                     ],
                                 }),
+                                value: props.value(),
                             };
                             transactionHash = await sendPopulatedTransaction(
                                 props.gasAbstraction,
@@ -566,16 +553,59 @@ const LockupTransaction = (props: {
                                 tx,
                             );
                         } else {
-                            transactionHash = await lockupErc20WithPermit2(
-                                props.gasAbstraction,
-                                props.asset,
-                                props.value(),
-                                props.preimageHash,
-                                props.claimAddress,
-                                props.timeoutBlockHeight,
-                                connectedSigner,
-                                transactionSigner,
+                            const commitmentLockupDetails = props.commitment
+                                ? await getCommitmentLockupDetails(props.asset)
+                                : undefined;
+                            const preimageHash =
+                                commitmentLockupDetails === undefined
+                                    ? props.preimageHash
+                                    : emptyPreimageHash.slice(2);
+                            const claimAddress = getAddress(
+                                commitmentLockupDetails?.claimAddress ??
+                                    props.claimAddress,
                             );
+                            const timeoutBlockHeight =
+                                commitmentLockupDetails?.timelock ??
+                                props.timeoutBlockHeight;
+
+                            if (
+                                props.gasAbstraction === GasAbstractionType.None
+                            ) {
+                                const contract = getErc20Swap(props.asset);
+                                const tx = {
+                                    to: contract.address,
+                                    data: encodeFunctionData({
+                                        abi: erc20SwapAbi,
+                                        functionName: "lock",
+                                        args: [
+                                            prefix0x(preimageHash),
+                                            props.value(),
+                                            getAddress(
+                                                getTokenAddress(props.asset),
+                                            ),
+                                            claimAddress,
+                                            BigInt(timeoutBlockHeight),
+                                        ],
+                                    }),
+                                };
+                                transactionHash =
+                                    await sendPopulatedTransaction(
+                                        props.gasAbstraction,
+                                        transactionSigner,
+                                        tx,
+                                    );
+                            } else {
+                                transactionHash = await lockupErc20WithPermit2(
+                                    props.gasAbstraction,
+                                    props.asset,
+                                    props.value(),
+                                    preimageHash,
+                                    claimAddress,
+                                    timeoutBlockHeight,
+                                    connectedSigner,
+                                    transactionSigner,
+                                );
+                            }
                         }
                     }
 
@@ -585,7 +615,13 @@ const LockupTransaction = (props: {
                             `missing swap ${props.swapId} for lockup persistence`,
                         );
                     }
-                    currentSwap.lockupTx = transactionHash;
+                    if (props.commitment) {
+                        currentSwap.commitmentLockupTxHash = transactionHash;
+                        currentSwap.commitmentLockupCallId = undefined;
+                        currentSwap.commitmentSignatureSubmitted = false;
+                    } else {
+                        currentSwap.lockupTx = transactionHash;
+                    }
                     currentSwap.signer = connectedSigner.address;
 
                     if (
@@ -623,6 +659,7 @@ const LockupEvm = (props: {
     hops?: EncodedHop[];
     hopInputAmount?: string;
     bridge?: BridgeDetail;
+    commitment?: boolean;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
@@ -635,6 +672,12 @@ const LockupEvm = (props: {
 
     const hasHopsBefore = () =>
         props.hops !== undefined && props.hops.length > 0;
+    const useCommitmentLockup = () => props.commitment || hasHopsBefore();
+    const preBridgeSourceAmount = () =>
+        props.bridge?.position === SwapPosition.Pre &&
+        props.bridge.sourceAmount !== undefined
+            ? BigInt(props.bridge.sourceAmount)
+            : undefined;
 
     // The actual asset the user needs to hold (hop input token or boltz asset)
     const userAsset = () =>
@@ -662,19 +705,17 @@ const LockupEvm = (props: {
     createEffect(() => {
         void (async () => {
             if (props.bridge !== undefined) {
-                if (!hasHopsBefore() || props.hops === undefined) {
-                    throw new Error(
-                        `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,
-                    );
-                }
                 setBridgeValue(
-                    (
-                        await getHopExecutionQuote(
-                            props.hops[0],
-                            value(),
-                            slippage(),
-                        )
-                    ).amountIn,
+                    preBridgeSourceAmount() ??
+                        (hasHopsBefore() && props.hops !== undefined
+                            ? (
+                                  await getHopExecutionQuote(
+                                      props.hops[0],
+                                      value(),
+                                      slippage(),
+                                  )
+                              ).amountIn
+                            : value()),
                 );
                 return;
             }
@@ -843,6 +884,7 @@ const LockupEvm = (props: {
                             approvalTarget={approvalTarget()}
                             hops={hasHopsBefore() ? props.hops : undefined}
                             hopInputAmount={hopInputValue()}
+                            commitment={useCommitmentLockup()}
                         />
                     </Show>
                 </Show>

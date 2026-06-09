@@ -8,6 +8,7 @@ import { BTC } from "../../src/consts/Assets";
 import { ECPair } from "../../src/utils/ecpair";
 import {
     formatAddress,
+    formatSwapId,
     getDestinationAddress,
     getPair,
     getReferral,
@@ -51,6 +52,15 @@ vi.mock("../../src/config", async () => {
 });
 
 describe("helper", () => {
+    test.each`
+        swap                                                             | expected
+        ${{ id: "backend-swap1", type: SwapType.Submarine }}             | ${"backend-swap1"}
+        ${{ id: "12345678", type: SwapType.Commitment }}                 | ${"12345678"}
+        ${{ id: "commitment-12345678-1234", type: SwapType.Commitment }} | ${"12345678"}
+    `("formats swap ids", ({ swap, expected }) => {
+        expect(formatSwapId(swap)).toEqual(expected);
+    });
+
     test.each`
         swapType       | assetSend     | assetReceive  | expected
         ${"submarine"} | ${"notFound"} | ${"notFound"} | ${undefined}

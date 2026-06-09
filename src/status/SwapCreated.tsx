@@ -64,6 +64,7 @@ const SwapCreated = () => {
                             : undefined
                     }
                     bridge={getPreBridgeDetail(chain.bridge)}
+                    commitment={chain.commitmentLockup}
                 />
             </Show>
         </Show>

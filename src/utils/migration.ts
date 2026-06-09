@@ -1,5 +1,5 @@
 import { makePersisted } from "@solid-primitives/storage";
-import { BridgeKind, SwapPosition } from "boltz-swaps/types";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
@@ -10,7 +10,7 @@ import {
     type SomeSwap,
 } from "./swapCreator";
 
-export const latestStorageVersion = 7;
+export const latestStorageVersion = 9;
 
 const storageVersionKey = "version";
 
@@ -238,6 +238,7 @@ export const migrateSwapBridgeShape = (
                   position?: string;
                   pre?: Record<string, unknown>;
                   post?: Record<string, unknown>;
+                  sourceAmount?: string;
                   txHash?: string;
               })
             | undefined) ??
@@ -249,6 +250,7 @@ export const migrateSwapBridgeShape = (
                   position?: string;
                   pre?: Record<string, unknown>;
                   post?: Record<string, unknown>;
+                  sourceAmount?: string;
                   txHash?: string;
               })
             | undefined);
@@ -274,6 +276,9 @@ export const migrateSwapBridgeShape = (
             sourceAsset: detail.sourceAsset,
             destinationAsset: detail.destinationAsset,
             position,
+            ...(typeof detail.sourceAmount === "string"
+                ? { sourceAmount: detail.sourceAmount }
+                : {}),
             ...(typeof detail.txHash === "string"
                 ? { txHash: detail.txHash }
                 : {}),
@@ -292,6 +297,9 @@ export const migrateSwapBridgeShape = (
                       bridge.position === SwapPosition.Pre
                           ? SwapPosition.Pre
                           : SwapPosition.Post,
+                  ...(typeof bridge.sourceAmount === "string"
+                      ? { sourceAmount: bridge.sourceAmount }
+                      : {}),
                   ...(typeof bridge.txHash === "string"
                       ? { txHash: bridge.txHash }
                       : {}),
@@ -317,6 +325,47 @@ const migrateStorageBridgeShape = async (swapsForage: LocalForage) => {
     }
 
     return swaps.length;
+};
+
+export const migrateCommitmentSwapAmounts = (
+    swap: Record<string, unknown>,
+): SomeSwap => {
+    if (swap.type !== SwapType.Commitment) {
+        return swap as SomeSwap;
+    }
+
+    const migratedSwap = { ...swap };
+    if (typeof migratedSwap.lockupAmount !== "string") {
+        if (
+            typeof swap.sendAmount === "number" ||
+            typeof swap.sendAmount === "string"
+        ) {
+            migratedSwap.lockupAmount = String(swap.sendAmount);
+        } else if (typeof swap.sourceAmount === "string") {
+            migratedSwap.lockupAmount = swap.sourceAmount;
+        }
+    }
+    delete migratedSwap.sendAmount;
+    delete migratedSwap.receiveAmount;
+    return migratedSwap as SomeSwap;
+};
+
+const migrateStorageCommitmentSwapAmounts = async (
+    swapsForage: LocalForage,
+) => {
+    const swaps = await swapsForage.keys();
+    let migratedSwaps = 0;
+
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        if (swap === null || swap.type !== SwapType.Commitment) {
+            continue;
+        }
+        await swapsForage.setItem(swapId, migrateCommitmentSwapAmounts(swap));
+        migratedSwaps += 1;
+    }
+
+    return migratedSwaps;
 };
 
 const migrateLocalForage = async (
@@ -403,6 +452,32 @@ const migrateLocalForage = async (
             );
 
             await paramsForage.setItem(storageVersionKey, 7);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
+
+        case 7: {
+            log.info(`Removing derived amounts from commitment swaps`);
+            const migratedSwaps =
+                await migrateStorageCommitmentSwapAmounts(swapsForage);
+            log.info(
+                `Removed derived amounts from ${migratedSwaps} commitment swap records`,
+            );
+
+            await paramsForage.setItem(storageVersionKey, 8);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
+
+        case 8: {
+            log.info(`Backfilling commitment lockup amounts`);
+            const migratedSwaps =
+                await migrateStorageCommitmentSwapAmounts(swapsForage);
+            log.info(
+                `Backfilled lockup amounts for ${migratedSwaps} commitment swap records`,
+            );
+
+            await paramsForage.setItem(storageVersionKey, 9);
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }

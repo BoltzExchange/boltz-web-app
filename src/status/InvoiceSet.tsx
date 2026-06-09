@@ -53,6 +53,7 @@ const InvoiceSet = () => {
                         : undefined
                 }
                 bridge={getPreBridgeDetail(submarine.bridge)}
+                commitment={submarine.commitmentLockup}
             />
         </Show>
     );

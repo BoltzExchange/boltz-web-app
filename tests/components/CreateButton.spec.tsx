@@ -1,20 +1,25 @@
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import type { Pairs } from "boltz-swaps/client";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
 import CreateButton, {
     getClaimAddress,
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
+import type * as MainnetConfigModule from "../../src/configs/mainnet";
 import {
     BTC,
     LBTC,
     LN,
     RBTC,
     TBTC,
+    USDC,
     USDT0,
     WBTC,
 } from "../../src/consts/Assets";
+import { Side } from "../../src/consts/Enums";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
@@ -35,6 +40,9 @@ import { pairs as testPairs } from "../pairs";
 vi.mock("../../src/config", async () => {
     const actual =
         await vi.importActual<typeof ConfigModule>("../../src/config");
+    const { config: mainnetConfig } = await vi.importActual<
+        typeof MainnetConfigModule
+    >("../../src/configs/mainnet");
 
     return {
         ...actual,
@@ -42,6 +50,9 @@ vi.mock("../../src/config", async () => {
             ...actual.config,
             assets: {
                 ...actual.config.assets!,
+                USDC:
+                    actual.config.assets!.USDC ??
+                    structuredClone(mainnetConfig.assets!.USDC),
                 "USDT0-POL": {
                     ...actual.config.assets!.USDT0,
                     canSend: true,
@@ -112,6 +123,10 @@ vi.mock("../../src/config", async () => {
                         address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
                     },
                 },
+                "USDC-SOL": {
+                    ...structuredClone(mainnetConfig.assets!["USDC-SOL"]),
+                    canSend: true,
+                },
             },
         },
     };
@@ -122,6 +137,43 @@ const invoice =
 
 const usdt0Pairs: Pairs = {
     submarine: {
+        TBTC: {
+            BTC: {
+                hash: "tbtc-ln-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: 0,
+                },
+            },
+        },
+    },
+    reverse: {},
+    chain: {},
+};
+
+const rbtcSubmarinePairs: Pairs = {
+    submarine: {
+        RBTC: {
+            BTC: {
+                hash: "rbtc-ln-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: 0,
+                },
+            },
+        },
         TBTC: {
             BTC: {
                 hash: "tbtc-ln-pair-hash",
@@ -155,6 +207,19 @@ const setPairAssetsWithPairs = (
 };
 
 describe("CreateButton", () => {
+    beforeEach(() => {
+        window.history.pushState({}, "", "/");
+        Object.defineProperty(window.navigator, "locks", {
+            configurable: true,
+            value: {
+                request: vi.fn(
+                    async (_name: string, callback: () => Promise<unknown>) =>
+                        await callback(),
+                ),
+            },
+        });
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
     });
@@ -648,6 +713,267 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(btn).not.toBeUndefined();
         expect(btn.disabled).toBeTruthy();
+    });
+
+    test.each([RBTC, TBTC])(
+        "should require an invoice for direct max %s submarine swaps",
+        async (asset) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <CreateButton />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            await globalSignals.clearSwaps();
+            globalSignals.setOnline(true);
+            signals.setSendAmount(BigNumber(100_000));
+            signals.setReceiveAmount(BigNumber(99_000));
+            signals.setAmountValid(true);
+            signals.setInvoice("");
+            signals.setInvoiceValid(false);
+            setPairAssetsWithPairs(rbtcSubmarinePairs, asset, LN);
+
+            const btn = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            await waitFor(() => {
+                expect(signals.valid()).toBe(false);
+                expect(btn.disabled).toBe(true);
+            });
+
+            await expect(globalSignals.getSwaps()).resolves.toEqual([]);
+        },
+    );
+
+    test("should require an invoice when an ERC20 asset resolves to a direct submarine route", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        await globalSignals.clearSwaps();
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setReceiveAmount(BigNumber(99_000));
+        signals.setAmountChanged(Side.Send);
+        signals.setAmountValid(true);
+        signals.setInvoice("");
+        signals.setInvoiceValid(false);
+        setPairAssetsWithPairs(
+            {
+                submarine: {
+                    ...usdt0Pairs.submarine,
+                    [USDC]: {
+                        [BTC]: usdt0Pairs.submarine.TBTC.BTC,
+                    },
+                },
+                reverse: {},
+                chain: {},
+            },
+            USDC,
+            LN,
+        );
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(false);
+            expect(btn.disabled).toBe(true);
+        });
+        await expect(globalSignals.getSwaps()).resolves.toEqual([]);
+    });
+
+    test("should create a local commitment swap for send-side pre-dex submarine without invoice", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        await globalSignals.clearSwaps();
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setReceiveAmount(BigNumber(99_000));
+        signals.setAmountChanged(Side.Send);
+        signals.setAmountValid(true);
+        signals.setInvoice("");
+        signals.setInvoiceValid(false);
+        setPairAssetsWithPairs(usdt0Pairs, USDC, LN);
+        signals.pair().creationData = vi.fn().mockResolvedValue({
+            type: SwapType.Submarine,
+            from: TBTC,
+            to: BTC,
+            sendAmount: BigNumber(80_000),
+            receiveAmount: BigNumber(79_000),
+            pairHash: "tbtc-ln-pair-hash",
+            hops: [
+                {
+                    type: SwapType.Dex,
+                    from: USDC,
+                    to: TBTC,
+                },
+            ],
+            hopsPosition: SwapPosition.Pre,
+        });
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(false);
+            expect(btn.disabled).toBe(false);
+        });
+        fireEvent.click(btn);
+
+        await waitFor(async () => {
+            const [swap] = await globalSignals.getSwaps();
+            expect(swap).toMatchObject({
+                type: SwapType.Commitment,
+                assetSend: TBTC,
+                assetReceive: BTC,
+                initialReceiveAsset: LN,
+                sourceAsset: USDC,
+                sourceAmount: "100000",
+                lockupAmount: "80000",
+                pairHash: "tbtc-ln-pair-hash",
+                commitmentLockup: true,
+                dex: {
+                    position: SwapPosition.Pre,
+                    quoteAmount: "100000",
+                    sourceAmount: "100000",
+                    hops: [
+                        {
+                            from: USDC,
+                            to: TBTC,
+                        },
+                    ],
+                },
+            });
+        });
+    });
+
+    test("should create a local commitment swap for max pre-bridge submarine without invoice", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        await globalSignals.clearSwaps();
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(1_000_000));
+        signals.setReceiveAmount(BigNumber(99_000));
+        signals.setAmountValid(true);
+        signals.setInvoice("");
+        signals.setInvoiceValid(false);
+        const route = {
+            sourceAsset: "USDC-SOL",
+            destinationAsset: USDC,
+        };
+        vi.spyOn(bridgeRegistry, "getPreRoute").mockImplementation((asset) =>
+            asset === "USDC-SOL" ? route : undefined,
+        );
+        vi.spyOn(bridgeRegistry, "getDriverForAsset").mockImplementation(
+            (asset) =>
+                asset === "USDC-SOL"
+                    ? ({
+                          getPreRoute: () => route,
+                          getRoutePosition: () => ({
+                              ...route,
+                              kind: BridgeKind.Cctp,
+                              position: SwapPosition.Pre,
+                          }),
+                      } as never)
+                    : undefined,
+        );
+        setPairAssetsWithPairs(usdt0Pairs, "USDC-SOL", LN);
+        signals.pair().creationData = vi.fn().mockResolvedValue({
+            type: SwapType.Submarine,
+            from: TBTC,
+            to: BTC,
+            sendAmount: BigNumber(1_000_000),
+            receiveAmount: BigNumber(1_000_000),
+            pairHash: "tbtc-ln-pair-hash",
+            hops: [
+                {
+                    type: SwapType.Dex,
+                    from: USDC,
+                    to: TBTC,
+                    dexDetails: {
+                        chain: "ARB",
+                        tokenIn: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                        tokenOut: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                    },
+                },
+            ],
+            hopsPosition: "pre",
+        });
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(false);
+            expect(btn.disabled).toBe(false);
+        });
+        fireEvent.click(btn);
+
+        await waitFor(async () => {
+            const [swap] = await globalSignals.getSwaps();
+            expect(swap).toMatchObject({
+                type: SwapType.Commitment,
+                assetSend: TBTC,
+                assetReceive: BTC,
+                initialReceiveAsset: LN,
+                sourceAsset: "USDC-SOL",
+                sourceAmount: "1000000",
+                lockupAmount: "1000000",
+                pairHash: "tbtc-ln-pair-hash",
+                commitmentLockup: true,
+                bridge: {
+                    sourceAsset: "USDC-SOL",
+                    destinationAsset: USDC,
+                    position: "pre",
+                    sourceAmount: "1000000",
+                },
+                dex: {
+                    position: "pre",
+                    quoteAmount: "1000000",
+                    sourceAmount: "1000000",
+                    hops: [
+                        {
+                            from: USDC,
+                            to: TBTC,
+                        },
+                    ],
+                },
+            });
+            expect(swap).not.toHaveProperty("sendAmount");
+            expect(swap).not.toHaveProperty("receiveAmount");
+            expect(swap.commitmentLockupTxHash).toBeUndefined();
+        });
     });
 
     test("should be disabled on empty address", async () => {
