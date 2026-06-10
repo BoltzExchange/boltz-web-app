@@ -3,7 +3,10 @@ import type { Accessor } from "solid-js";
 import { downloadJson } from "./download";
 import type { RescueFile } from "./rescueFile";
 
-export const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";
+const rescueFileNamePrefix = "boltz-rescue-key-DO-NOT-DELETE";
+
+export const getRescueFileName = (date = new Date()) =>
+    `${rescueFileNamePrefix}-${Math.floor(date.getTime() / 1000)}`;
 
 export const downloadRescueFile = (rescueFile: Accessor<RescueFile | null>) => {
     const currentRescueFile = rescueFile();
@@ -11,5 +14,5 @@ export const downloadRescueFile = (rescueFile: Accessor<RescueFile | null>) => {
         throw new Error("rescue file unavailable");
     }
 
-    downloadJson(rescueFileName, currentRescueFile);
+    downloadJson(getRescueFileName(), currentRescueFile);
 };
