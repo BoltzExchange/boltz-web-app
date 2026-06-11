@@ -55,6 +55,30 @@ export type PendingBridgeSendCallbacks = {
     persist: (pending: PendingBridgeSend) => Promise<void>;
 };
 
+export type PreBridgeRecoveryCall = {
+    to: string;
+    value?: string;
+    data?: string;
+};
+
+export enum PreBridgeRecoveryStatus {
+    Blocked = "blocked",
+    Retrying = "retrying",
+    Recovered = "recovered",
+}
+
+export type PreBridgeRecovery = {
+    status: PreBridgeRecoveryStatus;
+    asset: string;
+    amount: string;
+    receiveCall?: PreBridgeRecoveryCall;
+    txHash?: string;
+};
+
+export type SwapExecutionState = {
+    preBridgeRecovery?: PreBridgeRecovery;
+};
+
 export type GasAbstraction = {
     lockup: GasAbstractionType;
     claim: GasAbstractionType;
@@ -102,6 +126,10 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
+
+    // Local execution state for client-side swap steps that are not backend
+    // statuses.
+    execution?: SwapExecutionState;
 };
 
 export type SubmarineSwap = SwapBase &

@@ -49,6 +49,12 @@ import {
 } from "../utils/swapCreator";
 import SwapRefunded from "./SwapRefunded";
 
+type ReplacementQuote = {
+    sentAmount: number;
+    quote: number;
+    receiveAmount: number;
+};
+
 const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
     const { t, denomination, separator } = useGlobalContext();
     const isErc20 = () => getDecimals(props.asset).isErc20;
@@ -94,7 +100,7 @@ const TransactionLockupFailed = (props: {
     >(undefined);
 
     const [newQuote, newQuoteActions] = createResource<
-        { sentAmount: number; quote: number; receiveAmount: number } | undefined
+        ReplacementQuote | undefined
     >(async () => {
         if (swap() === null || swap()!.type !== SwapType.Chain) {
             return undefined;
@@ -228,7 +234,7 @@ const TransactionLockupFailed = (props: {
 
     const acceptQuote = async (
         currentSwap: ChainSwap,
-        quoteData: { sentAmount: number; quote: number; receiveAmount: number },
+        quoteData: ReplacementQuote,
     ) => {
         log.info(
             `Accepting replacement quote for chain swap ${currentSwap.id}`,
@@ -246,20 +252,19 @@ const TransactionLockupFailed = (props: {
             },
         );
         setLoading(true);
-        currentSwap.receiveAmount = quoteData.receiveAmount;
-        currentSwap.claimDetails.amount = quoteData.quote;
-        if (currentSwap.dex !== undefined) {
-            currentSwap.dex.quoteAmount =
-                currentSwap.dex.position === SwapPosition.Pre
-                    ? quoteData.sentAmount
-                    : quoteData.receiveAmount;
-        }
-
-        await setSwapStorage(currentSwap);
-        setSwap(currentSwap);
-
         try {
             await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
+            currentSwap.receiveAmount = quoteData.receiveAmount;
+            currentSwap.claimDetails.amount = quoteData.quote;
+            if (currentSwap.dex !== undefined) {
+                currentSwap.dex.quoteAmount =
+                    currentSwap.dex.position === SwapPosition.Pre
+                        ? quoteData.sentAmount
+                        : quoteData.receiveAmount;
+            }
+
+            await setSwapStorage(currentSwap);
+            setSwap(currentSwap);
             setAutoAcceptedQuote(quoteData.quote);
             log.info(
                 `Accepted replacement quote for chain swap ${currentSwap.id}`,
@@ -369,7 +374,6 @@ const TransactionLockupFailed = (props: {
                                             >
                                         }
                                     />
-                                    <hr />
                                 </Show>
                             </Show>
                             <Show when={swap()?.refundTx !== undefined}>
@@ -426,7 +430,6 @@ const TransactionLockupFailed = (props: {
                             {t("refund")}
                         </button>
                     </div>
-                    <hr />
                 </Show>
             </Show>
         </Show>

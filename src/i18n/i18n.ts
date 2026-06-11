@@ -142,6 +142,8 @@ const dict = {
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "Claiming transaction now...",
         refunded: "Swap has been refunded successfully!",
+        refunded_bridge_pending:
+            "Swap has been refunded. Your {{ denomination }} is being bridged back to {{ network }} and may take some time to arrive.",
         locktime_not_satisfied: "Locktime requirement not satisfied",
         already_refunded: "Swap already refunded",
         api_offline: "API is offline",
@@ -236,6 +238,14 @@ const dict = {
         oft_transfer_in_progress: "Transfer in progress",
         waiting_for_bridge: "Waiting for {{ symbol }} bridge",
         dex_quote_changed: "DEX quote has changed",
+        pre_bridge_dex_quote_blocked: "Quote has changed",
+        pre_bridge_dex_quote_blocked_line:
+            "Prices changed while your funds were bridging, so the quote is no longer enough to complete the swap. Please try again or refund your funds.",
+        recovering_bridged_funds: "Refunding...",
+        pre_bridge_refund_initiated:
+            "Your funds are being bridged back to your original address and will arrive shortly.",
+        retry_quote: "Retry",
+        retrying_quote: "Checking quote...",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Accept transactions that are not yet confirmed in a block",
@@ -667,6 +677,8 @@ const dict = {
         tx_confirmed: "Transaktion bestätigt!",
         tx_ready_to_claim: "Claime die Transaktion jetzt...",
         refunded: "Swap wurde erfolgreich erstattet!",
+        refunded_bridge_pending:
+            "Swap wurde erstattet. Dein {{ denomination }} wird zurück nach {{ network }} gebridged und kann einige Zeit dauern.",
         locktime_not_satisfied: "Locktime-Anforderung nicht erfüllt.",
         already_refunded: "Swap wurde bereits erstattet!",
         api_offline: "API ist offline",
@@ -765,6 +777,14 @@ const dict = {
         oft_transfer_in_progress: "Übertragung läuft",
         waiting_for_bridge: "Warte auf {{ symbol }}-Bridge",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
+        pre_bridge_dex_quote_blocked: "Der Kurs hat sich geändert",
+        pre_bridge_dex_quote_blocked_line:
+            "Die Preise haben sich während der Bridge-Übertragung geändert, daher reicht der Kurs nicht mehr aus, um den Swap abzuschließen. Bitte versuche es erneut oder lass dir dein Guthaben erstatten.",
+        recovering_bridged_funds: "Rückerstattung läuft...",
+        pre_bridge_refund_initiated:
+            "Deine Gelder werden über die Bridge an deine ursprüngliche Adresse zurückgesendet und treffen in Kürze ein.",
+        retry_quote: "Erneut versuchen",
+        retrying_quote: "Angebot wird geprüft...",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Akzeptiere Transaktionen, die noch nicht in einem Block bestätigt sind",
@@ -1207,6 +1227,8 @@ const dict = {
         tx_confirmed: "Transacción confirmada!",
         tx_ready_to_claim: "Reclamando la transacción ahora...",
         refunded: "El intercambio ha sido reembolsado!",
+        refunded_bridge_pending:
+            "El intercambio ha sido reembolsado. Tu {{ denomination }} se está puenteando de vuelta a {{ network }} y puede tardar algún tiempo en llegar.",
         locktime_not_satisfied:
             "No se cumple el requisito de tiempo de bloqueo!",
         already_refunded: "El intercambio ya ha sido reembolsado!",
@@ -1305,6 +1327,14 @@ const dict = {
         oft_transfer_in_progress: "Transferencia en curso",
         waiting_for_bridge: "Esperando el puente {{ symbol }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
+        pre_bridge_dex_quote_blocked: "La cotización ha cambiado",
+        pre_bridge_dex_quote_blocked_line:
+            "Los precios cambiaron mientras tus fondos se transferían por el puente, por lo que la cotización ya no es suficiente para completar el swap. Inténtalo de nuevo o reembolsa tus fondos.",
+        recovering_bridged_funds: "Reembolsando...",
+        pre_bridge_refund_initiated:
+            "Tus fondos se están enviando de vuelta a tu dirección original a través del puente y llegarán en breve.",
+        retry_quote: "Reintentar",
+        retrying_quote: "Comprobando cotización...",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceptar transacciones que aún no están confirmadas en un bloque",
@@ -1743,6 +1773,8 @@ const dict = {
         tx_confirmed: "Transação confirmada",
         tx_ready_to_claim: "Reivindicando transação agora...",
         refunded: "Troca reembolsada com sucesso!",
+        refunded_bridge_pending:
+            "Troca reembolsada. Seu {{ denomination }} está sendo enviado de volta pela ponte para {{ network }} e pode levar algum tempo para chegar.",
         locktime_not_satisfied: "O prazo de lockup não foi cumprido",
         already_refunded: "A troca já foi reembolsada",
         api_offline: "A API está offline",
@@ -1838,6 +1870,14 @@ const dict = {
         oft_transfer_in_progress: "Transferência em andamento",
         waiting_for_bridge: "Aguardando a ponte {{ symbol }}",
         dex_quote_changed: "A cotação da DEX mudou",
+        pre_bridge_dex_quote_blocked: "A cotação mudou",
+        pre_bridge_dex_quote_blocked_line:
+            "Os preços mudaram enquanto seus fundos eram transferidos pela ponte, então a cotação não é mais suficiente para completar o swap. Tente novamente ou reembolse seus fundos.",
+        recovering_bridged_funds: "Reembolsando...",
+        pre_bridge_refund_initiated:
+            "Os seus fundos estão a ser enviados de volta para o seu endereço original através da ponte e chegarão em breve.",
+        retry_quote: "Tentar novamente",
+        retrying_quote: "Verificando cotação...",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceitar transações que ainda não foram confirmadas num bloco",
@@ -2099,7 +2139,7 @@ const dict = {
         refund_scan_required:
             "Para reembolsar este saldo, volte e escaneie com o arquivo de resgate carregado.",
         refund_destination_hint:
-            "Os fundos serão reembolsados como {{ symbol }} no {{ network }} para sua carteira EVM conectada.",
+            "Os fundos serão reembolsados como {{ symbol }} via {{ network }} para sua carteira EVM conectada.",
         invalid_rescue_key_evm:
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
@@ -2260,6 +2300,8 @@ const dict = {
         tx_confirmed: "交易已确认",
         tx_ready_to_claim: "现在要求交换……",
         refunded: "交换已退还",
+        refunded_bridge_pending:
+            "交换已退还。您的 {{ denomination }} 正在桥接回 {{ network }}，可能还需一些时间到账。",
         locktime_not_satisfied: "未满足锁定时间要求",
         already_refunded: "交换已经退还",
         api_offline: "API离线",
@@ -2346,6 +2388,14 @@ const dict = {
         oft_transfer_in_progress: "转账进行中",
         waiting_for_bridge: "等待 {{ symbol }} 桥接",
         dex_quote_changed: "DEX 报价已变更",
+        pre_bridge_dex_quote_blocked: "报价已变更",
+        pre_bridge_dex_quote_blocked_line:
+            "您的资金在桥接期间价格发生了变动，因此报价已不足以完成兑换。请重试，或退还您的资金。",
+        recovering_bridged_funds: "正在退款...",
+        pre_bridge_refund_initiated:
+            "您的资金正在通过跨链桥退回到您的原始地址，将很快到账。",
+        retry_quote: "重试",
+        retrying_quote: "正在检查报价...",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
         on: "开",
@@ -2753,6 +2803,8 @@ const dict = {
         tx_confirmed: "トランザクションが確認されました",
         tx_ready_to_claim: "トランザクションを実行中...",
         refunded: "このスワップを返金しました",
+        refunded_bridge_pending:
+            "スワップを返金しました。{{ denomination }} は {{ network }} へブリッジで返金中で、到着まで時間がかかる場合があります。",
         locktime_not_satisfied: "ロックタイムの条件を満たしていません",
         already_refunded: "スワップはすでに返金されています",
         api_offline: "APIがオフラインです",
@@ -2848,6 +2900,14 @@ const dict = {
         oft_transfer_in_progress: "転送中",
         waiting_for_bridge: "{{ symbol }}ブリッジを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
+        pre_bridge_dex_quote_blocked: "見積もりが変更されました",
+        pre_bridge_dex_quote_blocked_line:
+            "ブリッジ中に価格が変動したため、見積もりではスワップを完了できなくなりました。もう一度お試しいただくか、資金を返金してください。",
+        recovering_bridged_funds: "返金中...",
+        pre_bridge_refund_initiated:
+            "資金は元のアドレスへブリッジ経由で返金されており、まもなく着金します。",
+        retry_quote: "再試行",
+        retrying_quote: "クオートを確認しています...",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
         on: "オン",

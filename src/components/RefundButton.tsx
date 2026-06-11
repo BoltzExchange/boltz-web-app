@@ -58,7 +58,12 @@ import {
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
-import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
+import {
+    type AssetType,
+    getKindForAsset,
+    getTokenAddress,
+    isEvmAsset,
+} from "../consts/Assets";
 import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
@@ -126,6 +131,197 @@ export const sendRefundTransaction = async (
     return transactionHash;
 };
 
+const resolveBridgeSender = async (bridge: BridgeDetail): Promise<string> => {
+    if (bridge.txHash === undefined) {
+        throw new Error(
+            "missing bridge transaction hash for pre-bridge refund",
+        );
+    }
+
+    const forwardDriver = bridgeRegistry.requireDriverForRoute(bridge);
+    const sender = await forwardDriver.getTransactionSender(
+        bridge.sourceAsset,
+        bridge.txHash,
+    );
+    if (sender === undefined) {
+        throw new Error(
+            `could not resolve original sender from bridge transaction: ${bridge.txHash}`,
+        );
+    }
+
+    return sender;
+};
+
+const buildReverseBridgeCalls = async ({
+    transactionSigner,
+    bridge,
+    recipient,
+    sourceToken,
+    amount,
+    quoteChain,
+    refundAddress,
+    slippage,
+    trade,
+}: {
+    transactionSigner: Signer;
+    bridge: BridgeDetail;
+    recipient: string;
+    sourceToken: string;
+    amount: bigint;
+    quoteChain: string;
+    refundAddress: string;
+    slippage: number;
+    trade?: { desiredToken: string };
+}): Promise<AlchemyCall[]> => {
+    const route = {
+        sourceAsset: bridge.destinationAsset,
+        destinationAsset: bridge.sourceAsset,
+    };
+    const driver = bridgeRegistry.requireDriverForRoute(route);
+    const router = createRouterContract(route.sourceAsset, transactionSigner);
+    const [bridgeContract, quotedBridge] = await Promise.all([
+        driver.getContract(route),
+        driver.getQuotedContract(route),
+    ]);
+
+    const fetchTradeQuote = async (amountIn: bigint, toToken: string) => {
+        const [quote] = await quoteDexAmountIn(
+            quoteChain,
+            sourceToken,
+            toToken,
+            amountIn,
+        );
+        if (quote === undefined) {
+            throw new Error("could not get DEX quote for refund");
+        }
+        return quote;
+    };
+
+    const feeQuoteAmount =
+        trade === undefined
+            ? amount
+            : BigInt((await fetchTradeQuote(amount, trade.desiredToken)).quote);
+    const { msgFee } = await driver.quoteSend(
+        quotedBridge,
+        route,
+        recipient,
+        feeQuoteAmount,
+    );
+
+    let postFeeAmount = amount;
+    let msgFeeCalls: AlchemyCall[] = [];
+    if (msgFee[0] > 0n) {
+        const msgFeeAmountOut = calculateAmountWithSlippage(
+            msgFee[0],
+            slippage,
+        );
+        const [msgFeeQuote] = await quoteDexAmountOut(
+            quoteChain,
+            sourceToken,
+            zeroAddress,
+            msgFeeAmountOut,
+        );
+        if (msgFeeQuote === undefined) {
+            throw new Error("could not get DEX quote for bridge messaging fee");
+        }
+
+        postFeeAmount -= BigInt(msgFeeQuote.quote);
+        if (postFeeAmount <= 0n) {
+            throw new Error("amount too small to cover bridge messaging fee");
+        }
+
+        const msgFeeCalldata = await encodeDexQuote(
+            quoteChain,
+            router.address,
+            BigInt(msgFeeQuote.quote),
+            msgFee[0],
+            msgFeeQuote.data,
+        );
+        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
+    }
+
+    let approvalAmount = postFeeAmount;
+    let bridgeAmount = postFeeAmount;
+    let tradeCalls: AlchemyCall[] = [];
+    if (trade !== undefined) {
+        const tradeQuote = await fetchTradeQuote(
+            postFeeAmount,
+            trade.desiredToken,
+        );
+        approvalAmount = BigInt(tradeQuote.quote);
+        bridgeAmount = calculateAmountOutMin(approvalAmount, slippage);
+        const tradeCalldata = await encodeDexQuote(
+            quoteChain,
+            router.address,
+            postFeeAmount,
+            bridgeAmount,
+            tradeQuote.data,
+        );
+        tradeCalls = tradeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
+    }
+
+    const routerCalls = [...tradeCalls, ...msgFeeCalls].map((call) => ({
+        target: call.to,
+        value: call.value ?? "0",
+        callData: prefix0x(call.data ?? "0x"),
+    }));
+
+    const approvalCall = await driver.buildApprovalCall(
+        route,
+        router.address,
+        approvalAmount,
+        transactionSigner,
+    );
+    if (approvalCall !== undefined) {
+        routerCalls.push({
+            target: approvalCall.to,
+            value: approvalCall.value ?? "0",
+            callData: prefix0x(approvalCall.data ?? "0x"),
+        });
+    }
+
+    const { sendParam, minAmount } = await driver.quoteSend(
+        quotedBridge,
+        route,
+        recipient,
+        bridgeAmount,
+    );
+    const minAmountLd = calculateAmountOutMin(minAmount, slippage);
+    const executeBridgeData = driver.encodeRouterExecuteData({
+        router,
+        route,
+        bridgeContract,
+        routerCalls,
+        sendParam,
+        minAmountLd,
+        lzTokenFee: msgFee[1],
+        refundAddress,
+    });
+
+    return [
+        {
+            to: getAddress(sourceToken),
+            data: encodeFunctionData({
+                abi: erc20Abi,
+                functionName: "transfer",
+                args: [getAddress(router.address), amount],
+            }),
+        },
+        {
+            to: router.address,
+            data: executeBridgeData,
+        },
+    ];
+};
+
 const buildRefundFollowUpCalls = async (
     transactionSigner: Signer,
     refundData: LockupEvent,
@@ -138,12 +334,6 @@ const buildRefundFollowUpCalls = async (
     const isPreBridge = bridge?.position === SwapPosition.Pre;
 
     if (isPreBridge) {
-        if (bridge.txHash === undefined) {
-            throw new Error(
-                "missing bridge transaction hash for pre-bridge refund",
-            );
-        }
-
         if (
             dexDetails === undefined ||
             dexDetails.position !== SwapPosition.Pre
@@ -153,18 +343,7 @@ const buildRefundFollowUpCalls = async (
             );
         }
 
-        const bridgeDriver = bridgeRegistry.requireDriverForRoute(bridge);
-        const sender = await bridgeDriver.getTransactionSender(
-            bridge.sourceAsset,
-            bridge.txHash,
-        );
-        if (sender === undefined) {
-            throw new Error(
-                `could not resolve original sender from bridge transaction: ${bridge.txHash}`,
-            );
-        }
-
-        resolvedDestination = sender;
+        resolvedDestination = await resolveBridgeSender(bridge);
     }
 
     if (dexDetails === undefined || dexDetails.position !== SwapPosition.Pre) {
@@ -184,37 +363,30 @@ const buildRefundFollowUpCalls = async (
     if (refundData.tokenAddress === undefined) {
         throw new Error("missing token address for refund");
     }
-    const [quote] = await quoteDexAmountIn(
-        quoteChain,
-        refundData.tokenAddress,
-        desiredToken,
-        refundData.amount,
-    );
-    if (quote === undefined) {
-        throw new Error("could not get DEX quote for refund");
-    }
-
-    const quoteAmount = BigInt(quote.quote);
-    const amountOutMin = calculateAmountOutMin(quoteAmount, slippage);
-    const dexRecipient = isPreBridge
-        ? refundData.refundAddress
-        : resolvedDestination;
-
-    log.debug(
-        isPreBridge
-            ? `Refunding via DEX and bridge to ${resolvedDestination}`
-            : `Refunding via DEX to ${desiredToken}`,
-    );
 
     if (!isPreBridge) {
+        const [quote] = await quoteDexAmountIn(
+            quoteChain,
+            refundData.tokenAddress,
+            desiredToken,
+            refundData.amount,
+        );
+        if (quote === undefined) {
+            throw new Error("could not get DEX quote for refund");
+        }
+        const amountOutMin = calculateAmountOutMin(
+            BigInt(quote.quote),
+            slippage,
+        );
+
+        log.debug(`Refunding via DEX to ${desiredToken}`);
         const calldata = await encodeDexQuote(
             quoteChain,
-            dexRecipient,
+            resolvedDestination,
             refundData.amount,
             amountOutMin,
             quote.data,
         );
-
         return calldata.calls.map((call) => ({
             to: call.to,
             value: call.value,
@@ -222,142 +394,54 @@ const buildRefundFollowUpCalls = async (
         }));
     }
 
-    const reverseBridgeRoute = {
-        sourceAsset: bridge.destinationAsset,
-        destinationAsset: bridge.sourceAsset,
-    };
-    const bridgeDriver =
-        bridgeRegistry.requireDriverForRoute(reverseBridgeRoute);
-    const router = createRouterContract(
-        reverseBridgeRoute.sourceAsset,
+    log.debug(`Refunding via DEX and bridge to ${resolvedDestination}`);
+    return buildReverseBridgeCalls({
         transactionSigner,
-    );
-    const [bridgeContract, quotedBridge] = await Promise.all([
-        bridgeDriver.getContract(reverseBridgeRoute),
-        bridgeDriver.getQuotedContract(reverseBridgeRoute),
-    ]);
-    const { msgFee } = await bridgeDriver.quoteSend(
-        quotedBridge,
-        reverseBridgeRoute,
-        resolvedDestination,
-        quoteAmount,
-    );
-
-    let tradeAmountIn = refundData.amount;
-    let msgFeeCalls: AlchemyCall[] = [];
-    if (msgFee[0] > 0n) {
-        const msgFeeAmountOut = calculateAmountWithSlippage(
-            msgFee[0],
-            slippage,
-        );
-        const [msgFeeQuote] = await quoteDexAmountOut(
-            quoteChain,
-            refundData.tokenAddress,
-            zeroAddress,
-            msgFeeAmountOut,
-        );
-        if (msgFeeQuote === undefined) {
-            throw new Error("could not get DEX quote for bridge messaging fee");
-        }
-
-        const msgFeeAmountIn = BigInt(msgFeeQuote.quote);
-        tradeAmountIn -= msgFeeAmountIn;
-        if (tradeAmountIn <= 0n) {
-            throw new Error("amount too small to cover bridge messaging fee");
-        }
-
-        const msgFeeCalldata = await encodeDexQuote(
-            quoteChain,
-            router.address,
-            msgFeeAmountIn,
-            msgFee[0],
-            msgFeeQuote.data,
-        );
-        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
-            to: call.to,
-            value: call.value,
-            data: call.data,
-        }));
-    }
-
-    const [tradeQuote] = await quoteDexAmountIn(
+        bridge,
+        recipient: resolvedDestination,
+        sourceToken: refundData.tokenAddress,
+        amount: refundData.amount,
         quoteChain,
-        refundData.tokenAddress,
-        desiredToken,
-        tradeAmountIn,
-    );
-    if (tradeQuote === undefined) {
-        throw new Error("could not get DEX quote for refund");
-    }
-
-    const tradeAmountOutMin = calculateAmountOutMin(
-        BigInt(tradeQuote.quote),
-        slippage,
-    );
-    const tradeCalldata = await encodeDexQuote(
-        quoteChain,
-        router.address,
-        tradeAmountIn,
-        tradeAmountOutMin,
-        tradeQuote.data,
-    );
-    const tradeCalls: AlchemyCall[] = tradeCalldata.calls.map((call) => ({
-        to: call.to,
-        value: call.value,
-        data: call.data,
-    }));
-    const routerCalls = [...tradeCalls, ...msgFeeCalls].map((call) => ({
-        target: call.to,
-        value: call.value ?? "0",
-        callData: prefix0x(call.data ?? "0x"),
-    }));
-
-    const approvalCall = await bridgeDriver.buildApprovalCall(
-        reverseBridgeRoute,
-        router.address,
-        BigInt(tradeQuote.quote),
-        transactionSigner,
-    );
-    if (approvalCall !== undefined) {
-        routerCalls.push({
-            target: approvalCall.to,
-            value: approvalCall.value ?? "0",
-            callData: prefix0x(approvalCall.data ?? "0x"),
-        });
-    }
-
-    const { sendParam, minAmount } = await bridgeDriver.quoteSend(
-        quotedBridge,
-        reverseBridgeRoute,
-        resolvedDestination,
-        tradeAmountOutMin,
-    );
-    const minAmountLd = calculateAmountOutMin(minAmount, slippage);
-    const executeBridgeData = bridgeDriver.encodeRouterExecuteData({
-        router,
-        route: reverseBridgeRoute,
-        bridgeContract,
-        routerCalls,
-        sendParam,
-        minAmountLd,
-        lzTokenFee: msgFee[1],
         refundAddress: refundData.refundAddress,
+        slippage,
+        trade: { desiredToken },
     });
+};
 
-    return [
-        {
-            to: refundData.tokenAddress,
-            data: encodeFunctionData({
-                abi: erc20Abi,
-                functionName: "transfer",
-                args: [getAddress(router.address), refundData.amount],
-            }),
-        },
-        {
-            to: router.address,
-            data: executeBridgeData,
-        },
-    ];
+export const buildPreBridgeReverseBridgeRefundCalls = async ({
+    transactionSigner,
+    asset,
+    amount,
+    slippage,
+    dexDetails,
+    bridge,
+}: {
+    transactionSigner: Signer;
+    asset: string;
+    amount: bigint;
+    slippage: number;
+    dexDetails: DexDetail;
+    bridge: BridgeDetail;
+}): Promise<AlchemyCall[]> => {
+    if (bridge.position !== SwapPosition.Pre) {
+        throw new Error("reverse-bridge refund requires a pre-bridge route");
+    }
+
+    const hopDexDetails = dexDetails.hops[0]?.dexDetails;
+    if (hopDexDetails === undefined) {
+        throw new Error("missing DEX details for pre-bridge refund");
+    }
+
+    return buildReverseBridgeCalls({
+        transactionSigner,
+        bridge,
+        recipient: await resolveBridgeSender(bridge),
+        sourceToken: getAddress(getTokenAddress(asset)),
+        amount,
+        quoteChain: hopDexDetails.chain,
+        refundAddress: getAddress(transactionSigner.address),
+        slippage,
+    });
 };
 
 const buildErc20RefundTransaction = async ({

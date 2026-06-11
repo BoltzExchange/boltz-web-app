@@ -43,6 +43,18 @@ const mockSetSwap = vi.fn((swap: Record<string, unknown>) => {
 });
 const mockGetSwap = vi.fn(() => Promise.resolve(currentSwap));
 const mockGetSwaps = vi.fn(() => Promise.resolve([currentSwap]));
+const mockFetchPairs = vi.fn().mockResolvedValue(undefined);
+const mockPairs = vi.fn(() => ({
+    chain: {
+        FINAL: {
+            BTC: {
+                limits: {
+                    minimal: 100,
+                },
+            },
+        },
+    },
+}));
 const mockSendPopulatedTransaction = vi
     .fn<(...args: unknown[]) => Promise<string>>()
     .mockResolvedValue("0xcommitment");
@@ -231,6 +243,8 @@ vi.mock("../../src/context/Global", () => ({
         getSwaps: mockGetSwaps,
         setSwapStorage: mockSetSwapStorage,
         slippage: () => 0.5,
+        fetchPairs: mockFetchPairs,
+        pairs: mockPairs,
     }),
 }));
 
@@ -281,8 +295,10 @@ vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
 }));
 
 vi.mock("../../src/utils/calculate", () => ({
-    calculateAmountOutMin: (amount: bigint) => amount,
-    calculateAmountWithSlippage: (amount: bigint) => amount,
+    calculateAmountOutMin: (amount: bigint, slippage: number) =>
+        amount - BigInt(Math.floor(Number(amount) * slippage)),
+    calculateAmountWithSlippage: (amount: bigint, slippage: number) =>
+        amount + BigInt(Math.floor(Number(amount) * slippage)),
 }));
 
 vi.mock("boltz-swaps/solana", () => ({
@@ -389,12 +405,14 @@ vi.mock("../../src/utils/quoter", () => ({
 vi.mock("boltz-swaps/evm", async (importActual) => ({
     ...(await importActual<typeof EvmModule>()),
     satsToAssetAmount: (value: number) => BigInt(value),
+    assetAmountToSats: (value: bigint) => value,
     createAssetProvider: mockCreateAssetProvider,
 }));
 
 const { SwapExecutionWorker } =
     await import("../../src/components/SwapExecutionWorker");
 const oftUtils = await import("boltz-swaps/oft");
+const quoter = await import("../../src/utils/quoter");
 
 const cctpMessageSentTopic =
     "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";
@@ -472,6 +490,15 @@ describe("SwapExecutionWorker", () => {
         mockSendPopulatedTransaction
             .mockReset()
             .mockResolvedValue("0xcommitment");
+        vi.mocked(quoter.fetchDexQuote)
+            .mockReset()
+            .mockResolvedValue({
+                trade: {
+                    amountIn: 150n,
+                    amountOut: 150n,
+                    data: "0xquote",
+                },
+            });
         mockPostCommitmentSignatureForTransaction
             .mockReset()
             .mockResolvedValue(undefined);
@@ -490,6 +517,7 @@ describe("SwapExecutionWorker", () => {
             type: "chain",
             status: "invoice.set",
             assetSend: "FINAL",
+            assetReceive: "BTC",
             sendAmount: 100,
             gasAbstraction: {
                 lockup: "signer",
@@ -538,6 +566,115 @@ describe("SwapExecutionWorker", () => {
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
         });
+    });
+
+    test("should persist a blocked pre-bridge state when DEX quote stays below the lockup amount", async () => {
+        vi.useFakeTimers();
+        try {
+            vi.mocked(quoter.fetchDexQuote).mockResolvedValue({
+                trade: {
+                    amountIn: 150n,
+                    amountOut: 49n,
+                    data: "0xquote",
+                },
+            });
+
+            render(() => <SwapExecutionWorker />);
+
+            await vi.runAllTimersAsync();
+
+            expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(3);
+            expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+            expect(currentSwap.execution).toEqual({
+                preBridgeRecovery: expect.objectContaining({
+                    status: "blocked",
+                    asset: "DST",
+                    amount: "150",
+                }),
+            });
+            expect(mockSetSwapStorage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    execution: expect.objectContaining({
+                        preBridgeRecovery: expect.objectContaining({
+                            status: "blocked",
+                            asset: "DST",
+                            amount: "150",
+                        }),
+                    }),
+                }),
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("should execute pre-bridge lockup when the DEX quote is within slippage", async () => {
+        vi.mocked(quoter.fetchDexQuote).mockResolvedValueOnce({
+            trade: {
+                amountIn: 150n,
+                amountOut: 50n,
+                data: "0xquote",
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).toHaveBeenCalled();
+            expect(mockSetSwapStorage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commitmentLockupTxHash: "0xcommitment",
+                }),
+            );
+        });
+
+        expect(currentSwap.execution).toBeUndefined();
+    });
+
+    test("should lock immediately without retrying when the lockup clears the renegotiation minimum", async () => {
+        mockPairs.mockReturnValue({
+            chain: {
+                FINAL: {
+                    BTC: {
+                        limits: {
+                            minimal: 20,
+                        },
+                    },
+                },
+            },
+        });
+        // Below the slippage threshold (requiredAmount 50) but the resulting
+        // lockup (25) still clears the renegotiation minimum (20).
+        vi.mocked(quoter.fetchDexQuote).mockResolvedValue({
+            trade: {
+                amountIn: 150n,
+                amountOut: 49n,
+                data: "0xquote",
+            },
+        });
+
+        try {
+            render(() => <SwapExecutionWorker />);
+
+            await waitFor(() => {
+                expect(mockSendPopulatedTransaction).toHaveBeenCalled();
+            });
+
+            expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(1);
+            expect(currentSwap.execution).toBeUndefined();
+        } finally {
+            mockPairs.mockReturnValue({
+                chain: {
+                    FINAL: {
+                        BTC: {
+                            limits: {
+                                minimal: 100,
+                            },
+                        },
+                    },
+                },
+            });
+        }
     });
 
     test("should mint manual CCTP before executing the pre-bridge lockup", async () => {
