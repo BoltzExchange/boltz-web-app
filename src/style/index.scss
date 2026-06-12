@@ -672,50 +672,100 @@ textarea.invalid {
     outline: none;
     border-color: var(--color-error-500);
 }
-.commitment-invoice-disabled {
-    cursor: pointer;
-    border-radius: var(--border-radius-md);
+.invoice-input-slot {
+    position: relative;
 }
-.commitment-invoice-disabled:focus-visible {
-    outline: none;
+.committed-invoice-row {
+    position: relative;
 }
-.commitment-invoice-disabled:focus-visible input {
-    border-color: var(--color-primary-60);
-}
-.commitment-invoice-disabled input {
-    pointer-events: none;
-    cursor: pointer;
-    transition:
-        background-color 160ms ease,
-        border-color 160ms ease,
-        color 160ms ease;
-}
-.commitment-invoice-disabled input:disabled {
-    opacity: 0.68;
+.committed-invoice-input:disabled {
+    opacity: 1;
     background: color-mix(
         in srgb,
-        var(--color-secondary-800) 72%,
+        var(--color-secondary-800) 76%,
         var(--color-medium-gray)
     );
     border-color: var(--color-white-10);
     color: var(--color-white-30);
+    cursor: not-allowed;
     -webkit-text-fill-color: var(--color-white-30);
 }
-.commitment-invoice-disabled input:disabled::placeholder {
+.committed-invoice-input:disabled::placeholder {
     color: var(--color-white-30);
 }
-.commitment-invoice-disabled:hover input:disabled,
-.commitment-invoice-disabled:focus-visible input:disabled {
-    opacity: 1;
-    background: var(--color-secondary-800);
-    border-color: var(--color-white-15);
-    color: var(--color-text);
-    -webkit-text-fill-color: var(--color-text);
+.committed-invoice-row .invoice-slot-action {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    padding: 0 7px;
+    border-color: var(--color-white-05);
+    background: var(--color-white-05);
+    color: var(--color-white-50);
+    font-size: 0.75rem;
     font-weight: 600;
 }
-.commitment-invoice-disabled:hover input:disabled::placeholder,
-.commitment-invoice-disabled:focus-visible input:disabled::placeholder {
+.deferred-destination-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 0 10px;
+    border: 1px solid var(--color-white-10);
+    border-radius: var(--border-radius-md);
+    background: color-mix(
+        in srgb,
+        var(--color-secondary-800) 82%,
+        var(--color-medium-gray)
+    );
+    text-align: left;
+}
+
+.deferred-destination-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.deferred-destination-value {
+    overflow: hidden;
     color: var(--color-text);
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.invoice-slot-action {
+    flex: 0 0 auto;
+    border: 1px solid var(--color-white-15);
+    background: var(--color-secondary-700);
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+@media (hover: hover) {
+    .invoice-slot-action:hover {
+        background: var(--color-secondary-100);
+        color: var(--color-secondary-700);
+    }
+}
+.invoice-slot-action:focus-visible,
+.invoice-slot-action:active {
+    background: var(--color-secondary-100);
+    color: var(--color-secondary-700);
+}
+.committed-invoice-row .invoice-slot-action:focus-visible,
+.committed-invoice-row .invoice-slot-action:active {
+    border-color: var(--color-white-10);
+    background: var(--color-white-10);
+    color: var(--color-white-80);
+}
+@media (hover: hover) {
+    .committed-invoice-row .invoice-slot-action:hover {
+        border-color: var(--color-white-10);
+        background: var(--color-white-10);
+        color: var(--color-white-80);
+    }
 }
 .fees-dyn label {
     display: block;

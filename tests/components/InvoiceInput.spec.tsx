@@ -4,6 +4,7 @@ import { vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { Side } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
 import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
 import {
@@ -146,6 +147,53 @@ describe("InvoiceInput", () => {
 
         expect(input.value).toEqual(lnurl);
     });
+
+    test.each`
+        type        | destination
+        ${"LNURL"}  | ${"lnurl1dp68gurn8ghj7mrww4exctndd93ksct9dscnqvf39eshgtmpwp5j7mrww4excuqgy84zh"}
+        ${"BOLT12"} | ${"lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}
+    `(
+        "should keep $type neutral when the send amount changes",
+        async ({ destination }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <InvoiceInput />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+            setPairAssets(BTC, LN);
+
+            const input = (await screen.findByTestId(
+                "invoice",
+            )) as HTMLInputElement;
+
+            fireEvent.input(input, {
+                target: { value: destination },
+            });
+
+            await waitFor(() => {
+                expect(signals.invoice()).toEqual(destination);
+                expect(signals.invoiceValid()).toEqual(false);
+                expect(signals.invoiceError()).toBeUndefined();
+                expect(input.classList.contains("invalid")).toEqual(false);
+            });
+
+            signals.setAmountChanged(Side.Send);
+            signals.setSendAmount(BigNumber(10_000));
+            signals.setReceiveAmount(BigNumber(9_900));
+            signals.setAmountValid(true);
+
+            await waitFor(() => {
+                expect(signals.invoice()).toEqual(destination);
+                expect(signals.invoiceValid()).toEqual(false);
+                expect(signals.invoiceError()).toBeUndefined();
+                expect(input.classList.contains("invalid")).toEqual(false);
+            });
+        },
+    );
 
     test.each`
         lnurl

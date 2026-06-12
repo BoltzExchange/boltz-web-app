@@ -45,7 +45,10 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
-import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
+import {
+    canCommitSubmarineSendAmount,
+    hasCommitmentCompatibleDestination,
+} from "../utils/commitmentSwap";
 import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
@@ -94,6 +97,8 @@ const Create = () => {
         lnurl,
         bolt12Offer,
         setInvoice,
+        setLnurl,
+        setBolt12Offer,
         invoiceValid,
         setInvoiceValid,
         invoiceError,
@@ -124,7 +129,7 @@ const Create = () => {
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
-    const [commitmentInvoiceHovered, setCommitmentInvoiceHovered] =
+    const [deferredDestinationEditing, setDeferredDestinationEditing] =
         createSignal(false);
 
     const connectedDestination = () => {
@@ -168,18 +173,34 @@ const Create = () => {
             canCommitSubmarineSendAmount(pair(), amountChanged()) &&
             sendAmount().isFinite() &&
             sendAmount().isGreaterThan(0) &&
-            lnurl() === "" &&
-            (invoice() === "" ||
-                (bolt12Offer() !== undefined && invoice() === bolt12Offer())) &&
+            hasCommitmentCompatibleDestination({
+                invoice: invoice(),
+                lnurl: lnurl(),
+                bolt12Offer: bolt12Offer(),
+            }) &&
             invoiceError() === undefined,
     );
     const commitmentInvoiceDisabled = createMemo(
         () => requiresInvoiceInput() && usesCommittedSendAmount(),
     );
-    const invoiceInputPlaceholder = createMemo(() =>
-        commitmentInvoiceDisabled() && commitmentInvoiceHovered()
-            ? t("clear_amounts")
-            : t("create_and_paste"),
+    const deferredDestination = createMemo(() => {
+        const value = invoice();
+        if (lnurl() !== "" && value === lnurl()) {
+            return value;
+        }
+
+        const offer = bolt12Offer();
+        if (offer !== undefined && value === offer) {
+            return value;
+        }
+
+        return undefined;
+    });
+    const shownDeferredDestination = createMemo(() =>
+        deferredDestinationEditing() ? undefined : deferredDestination(),
+    );
+    const showsInvoiceInputSlot = createMemo(
+        () => requiresInvoiceInput() && !destinationLocked(),
     );
 
     const gasTopUpTrigger = createMemo(() => {
@@ -376,10 +397,13 @@ const Create = () => {
             }
             setInvoice("");
             setInvoiceValid(false);
+            setInvoiceError(undefined);
+            notify("success", t("invoice_cleared_amount_changed"));
         } catch {
             setInvoice("");
             setInvoiceValid(false);
             setInvoiceError(undefined);
+            notify("success", t("invoice_cleared_amount_changed"));
         }
     };
 
@@ -606,16 +630,14 @@ const Create = () => {
 
     const setMaxAmount = async () => {
         const selectedPair = pair();
-        let amount: number | undefined;
+        let connectedMaximum: BigNumber | undefined;
 
         try {
-            amount = (
-                await getConnectedMaximum({
-                    fromAsset: selectedPair.fromAsset,
-                    connectedWallet: connectedWallet(),
-                    signer: signer(),
-                })
-            )?.toNumber();
+            connectedMaximum = await getConnectedMaximum({
+                fromAsset: selectedPair.fromAsset,
+                connectedWallet: connectedWallet(),
+                signer: signer(),
+            });
         } catch (error) {
             log.warn("failed to resolve connected wallet max amount", {
                 asset: selectedPair.fromAsset,
@@ -629,9 +651,11 @@ const Create = () => {
 
         const limit = maximum();
         const selectedAmount =
-            amount === undefined || (limit > 0 && amount > limit)
+            connectedMaximum === undefined ||
+            !connectedMaximum.isGreaterThan(0) ||
+            (limit > 0 && connectedMaximum.isGreaterThan(limit))
                 ? limit
-                : amount;
+                : connectedMaximum.toNumber();
         setAmount(selectedAmount);
     };
 
@@ -643,20 +667,26 @@ const Create = () => {
         ++quoteRequestId;
         clearQuoteDebounce();
         setQuoteLoading(false);
-        setCommitmentInvoiceHovered(false);
         resetAmounts();
         setAmountValid(false);
         setAmountChanged(Side.Send);
     };
 
-    const clearCommittedAmountsOnKeyDown = (evt: KeyboardEvent) => {
-        if (evt.key !== "Enter" && evt.key !== " ") {
-            return;
-        }
-
-        evt.preventDefault();
+    const changeDeferredDestination = () => {
         clearCommittedAmounts();
+        setInvoice("");
+        setLnurl("");
+        setBolt12Offer(undefined);
+        setInvoiceValid(false);
+        setInvoiceError(undefined);
+        setDeferredDestinationEditing(true);
     };
+
+    createEffect(
+        on([invoice, lnurl, bolt12Offer], () => {
+            setDeferredDestinationEditing(false);
+        }),
+    );
 
     onMount(() => {
         sendAmountRef?.focus();
@@ -798,35 +828,71 @@ const Create = () => {
         void fetchBtcPrice();
     });
 
+    const DeferredDestinationSummary = () => (
+        <Show when={shownDeferredDestination()}>
+            {(destination) => (
+                <div
+                    class="deferred-destination-summary"
+                    data-testid="deferred-destination-summary">
+                    <div class="deferred-destination-content">
+                        <div
+                            class="deferred-destination-value monospace"
+                            title={destination()}>
+                            {destination()}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn-small invoice-slot-action"
+                        data-testid="deferred-destination-change"
+                        onClick={changeDeferredDestination}>
+                        {t("deferred_destination_change")}
+                    </button>
+                </div>
+            )}
+        </Show>
+    );
+
+    const CommittedInvoiceInput = () => (
+        <div class="committed-invoice-row" data-testid="committed-invoice-row">
+            <InvoiceInput
+                class="committed-invoice-input"
+                disabled={commitmentInvoiceDisabled}
+                placeholder={() => t("commitment_invoice_deferred")}
+            />
+            <button
+                type="button"
+                class="btn-small invoice-slot-action"
+                data-testid="committed-invoice-clear"
+                onClick={clearCommittedAmounts}>
+                {t("clear_amount")}
+            </button>
+        </div>
+    );
+
     const InvoiceInputSlot = () => (
-        <>
-            <Show when={webln() && !commitmentInvoiceDisabled()}>
+        <div class="invoice-input-slot">
+            <Show
+                when={
+                    webln() &&
+                    !commitmentInvoiceDisabled() &&
+                    shownDeferredDestination() === undefined
+                }>
                 <WeblnButton />
                 <hr class="spacer" />
             </Show>
             <Show
-                when={commitmentInvoiceDisabled()}
-                fallback={<InvoiceInput />}>
-                <div
-                    role="button"
-                    tabIndex={0}
-                    class="commitment-invoice-disabled"
-                    data-testid="commitment-invoice-clear"
-                    aria-label={t("clear_amounts")}
-                    onClick={clearCommittedAmounts}
-                    onKeyDown={clearCommittedAmountsOnKeyDown}
-                    onMouseEnter={() => setCommitmentInvoiceHovered(true)}
-                    onMouseLeave={() => setCommitmentInvoiceHovered(false)}
-                    onFocus={() => setCommitmentInvoiceHovered(true)}
-                    onBlur={() => setCommitmentInvoiceHovered(false)}>
-                    <InvoiceInput
-                        class="commitment-invoice-disabled-input"
-                        disabled={commitmentInvoiceDisabled}
-                        placeholder={invoiceInputPlaceholder}
-                    />
-                </div>
+                when={shownDeferredDestination()}
+                fallback={
+                    <Show
+                        when={commitmentInvoiceDisabled()}
+                        fallback={<InvoiceInput />}>
+                        <CommittedInvoiceInput />
+                    </Show>
+                }>
+                <DeferredDestinationSummary />
             </Show>
-        </>
+        </div>
     );
 
     return (
@@ -1025,13 +1091,15 @@ const Create = () => {
                         <hr class="spacer" />
                     </Show>
                 </Show>
-                <Show when={requiresInvoiceInput() && !destinationLocked()}>
+                <Show when={showsInvoiceInputSlot()}>
                     <InvoiceInputSlot />
                     <hr class="spacer" />
                 </Show>
                 <Show
                     when={
                         isMobile() &&
+                        !commitmentInvoiceDisabled() &&
+                        shownDeferredDestination() === undefined &&
                         !destinationLocked() &&
                         (pair().toAsset === LN ||
                             config.assets?.[pair().toAsset]?.type ===

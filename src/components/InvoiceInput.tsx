@@ -63,6 +63,23 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         setLnurl("");
     };
 
+    const setDeferredInvoiceDestination = (
+        input: HTMLInputElement,
+        destination: string,
+        type: "bolt12" | "lnurl",
+    ) => {
+        setInvoice(destination);
+        setInvoiceValid(false);
+        if (type === "lnurl") {
+            setLnurl(destination);
+            setBolt12Offer(undefined);
+        } else {
+            setBolt12Offer(destination);
+            setLnurl("");
+        }
+        clearInputError(input);
+    };
+
     const validate = async (input: HTMLInputElement) => {
         const requestId = ++validationRequest;
         const getCurrentInputValue = () => input.value.trim();
@@ -127,8 +144,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
             }
 
             if (isLnurl(invoiceValue)) {
-                setLnurl(invoiceValue);
-                setInvoice(invoiceValue);
+                setDeferredInvoiceDestination(input, invoiceValue, "lnurl");
             } else {
                 setBolt12Loading(true);
                 let isBolt12: boolean;
@@ -144,8 +160,11 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
                 }
 
                 if (isBolt12) {
-                    setBolt12Offer(invoiceValue);
-                    setInvoice(invoiceValue);
+                    setDeferredInvoiceDestination(
+                        input,
+                        invoiceValue,
+                        "bolt12",
+                    );
                 } else {
                     const sats = validateInvoice(invoiceValue);
                     setAmountChanged(Side.Receive);

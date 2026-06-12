@@ -26,6 +26,7 @@ import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import Pair from "../../src/utils/Pair";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
+import * as connectedMaximum from "../../src/utils/connectedMaximum";
 import type * as HelperModule from "../../src/utils/helper";
 import { isMobile } from "../../src/utils/helper";
 import {
@@ -67,6 +68,13 @@ vi.mock("../../src/utils/helper", async (importActual) => ({
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
+
+const invoice =
+    "lnbcrt600u1p5ynhmgpp5l8j7lnaql4mqeukvcqmhr8zp9vh3rngfgmla6km2fh9vf8pt678sdqqcqzzsxqrpwusp56gha98s9xk2f4eeyhs7dcsx4j4rt79llks72nf6l6hc9cna6vfgs9qxpqysgqqnt8lqcrujmuuv3ajvrlu5z7ydvvge4efv39hj28etf8v72vpcl597evz5e0tvq04tv3z089wxtugee4xh5hvu6309ymrfddrlzfhzgqumsrpk";
+const lnurl =
+    "lnurl1dp68gurn8ghj7mrww4exctndd93ksct9dscnqvf39eshgtmpwp5j7mrww4excuqgy84zh";
+const bolt12Offer =
+    "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
 
 const flushQuoteDebounce = async () => {
     await vi.runOnlyPendingTimersAsync();
@@ -214,7 +222,9 @@ const createPreBridgeDriver = (
     getTransferFeeAsset: () => commitmentRoute.sourceAsset,
 });
 
-const selectMaximumCommitmentSwap = async () => {
+const selectMaximumCommitmentSwap = async ({
+    createSwap = true,
+}: { createSwap?: boolean } = {}) => {
     window.history.pushState({}, "", "/");
     const currentPair = createCommitmentPair();
     renderCreate();
@@ -248,11 +258,14 @@ const selectMaximumCommitmentSwap = async () => {
         expect(createButton.disabled).toBe(false);
         expect(createButton.textContent).toBe(i18n.en.create_swap);
         const invoiceInput = screen.getByTestId("invoice") as HTMLInputElement;
-        expect(invoiceInput.disabled).toBe(true);
-        expect(invoiceInput.placeholder).toBe(i18n.en.create_and_paste);
-        expect(
-            screen.getByTestId("commitment-invoice-clear"),
-        ).toBeInTheDocument();
+        expect(invoiceInput).toBeDisabled();
+        expect(invoiceInput.placeholder).toBe(
+            i18n.en.commitment_invoice_deferred,
+        );
+        expect(screen.getByTestId("committed-invoice-clear")).toHaveTextContent(
+            i18n.en.clear_amount,
+        );
+        expect(screen.queryByTestId("deferred-destination-summary")).toBeNull();
 
         expect(
             Array.from(
@@ -263,18 +276,9 @@ const selectMaximumCommitmentSwap = async () => {
         ).toEqual(["connect-wallet", "create-swap-button"]);
     });
 
-    const clearInvoiceTarget = screen.getByTestId("commitment-invoice-clear");
-    fireEvent.mouseEnter(clearInvoiceTarget);
-
-    await waitFor(() => {
-        expect(
-            (screen.getByTestId("invoice") as HTMLInputElement).placeholder,
-        ).toBe(i18n.en.clear_amounts);
-    });
-
-    fireEvent.mouseLeave(clearInvoiceTarget);
-
-    fireEvent.click(createButton);
+    if (createSwap) {
+        fireEvent.click(createButton);
+    }
 };
 
 const assertCommitmentSwapCreated = async () => {
@@ -1018,6 +1022,42 @@ describe("Create", () => {
         );
     });
 
+    test("should use the swap maximum when connected wallet maximum is zero", async () => {
+        const getConnectedMaximum = vi
+            .spyOn(connectedMaximum, "getConnectedMaximum")
+            .mockResolvedValue(BigNumber(0));
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            globalSignals.setPairs(pairs);
+
+            await waitFor(() => {
+                expect(signals.maximum()).toBeGreaterThan(0);
+            });
+            const amount = signals.maximum();
+
+            fireEvent.click(await screen.findByTestId("limit-max-button"));
+
+            await waitFor(() => {
+                expect(signals.sendAmount()).toEqual(BigNumber(amount));
+            });
+            expect(getConnectedMaximum).toHaveBeenCalled();
+        } finally {
+            getConnectedMaximum.mockRestore();
+        }
+    });
+
     test("should update the loading target when selecting max", async () => {
         vi.useFakeTimers();
 
@@ -1269,6 +1309,41 @@ describe("Create", () => {
         });
     });
 
+    test("should explain when changing the amount clears a fixed invoice", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LN);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+
+        fireEvent.input(await screen.findByTestId("sendAmount"), {
+            target: { value: `${signals.minimum()}` },
+        });
+
+        await waitFor(() => {
+            expect(signals.invoice()).toBe("");
+            expect(globalSignals.notification()).toBe(
+                i18n.en.invoice_cleared_amount_changed,
+            );
+            expect(globalSignals.notificationType()).toBe("success");
+        });
+    });
+
     test("should require an invoice for direct max EVM submarine swaps", async () => {
         const useWeb3Signer = mockWalletConnectEvm();
 
@@ -1337,6 +1412,120 @@ describe("Create", () => {
             window.history.pushState({}, "", "/");
         }
     });
+
+    test("should clear a committed amount from the disabled invoice row", async () => {
+        const driver = createPreBridgeDriver(
+            vi
+                .fn<BridgeDriver["getSourceTokenBalance"]>()
+                .mockResolvedValue(1_000_000n),
+        );
+        const useWeb3Signer = mockWalletConnectEvm();
+        const bridgeMocks = mockPreBridgeDriver(driver);
+
+        try {
+            await selectMaximumCommitmentSwap({ createSwap: false });
+
+            fireEvent.click(screen.getByTestId("committed-invoice-clear"));
+
+            await waitFor(() => {
+                expect(signals.sendAmount().isZero()).toBe(true);
+                expect(signals.receiveAmount().isZero()).toBe(true);
+                expect(
+                    screen.queryByTestId("committed-invoice-row"),
+                ).toBeNull();
+                expect(
+                    screen.getByTestId("invoice") as HTMLInputElement,
+                ).not.toBeDisabled();
+            });
+        } finally {
+            useWeb3Signer.mockRestore();
+            bridgeMocks.getPreRoute.mockRestore();
+            bridgeMocks.requireDriverForRoute.mockRestore();
+            bridgeMocks.getDriverForAsset.mockRestore();
+            window.history.pushState({}, "", "/");
+        }
+    });
+
+    test.each`
+        type        | destination    | lnurlValue | bolt12Value
+        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
+        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
+    `(
+        "should show a visible $type destination for commitment swaps",
+        async ({ type, destination, lnurlValue, bolt12Value }) => {
+            const bridgeMocks = mockPreBridgeDriver(
+                createPreBridgeDriver(
+                    vi
+                        .fn<BridgeDriver["getSourceTokenBalance"]>()
+                        .mockResolvedValue(1_000_000n),
+                ),
+            );
+
+            try {
+                window.history.pushState({}, "", "/");
+                const currentPair = createCommitmentPair();
+                renderCreate();
+                await globalSignals.clearSwaps();
+                globalSignals.setOnline(true);
+                globalSignals.setPairs(commitmentSubmarinePairs);
+                globalSignals.setRegularPairs(commitmentSubmarinePairs);
+                await Promise.resolve();
+                signals.setPair(currentPair);
+
+                await waitFor(() => {
+                    expect(signals.maximum()).toBe(1_000_000);
+                });
+
+                signals.setInvoice(destination);
+                signals.setLnurl(lnurlValue);
+                signals.setBolt12Offer(bolt12Value);
+                signals.setInvoiceValid(false);
+                signals.setInvoiceError(undefined);
+
+                fireEvent.click(await screen.findByTestId("limit-max-button"));
+
+                let changeButton!: HTMLElement;
+                await waitFor(() => {
+                    expect(screen.queryByTestId("invoice")).toBeNull();
+
+                    const summary = screen.getByTestId(
+                        "deferred-destination-summary",
+                    );
+                    expect(summary).toHaveTextContent(destination);
+                    expect(summary).not.toHaveTextContent(i18n.en.destination);
+                    expect(summary).not.toHaveTextContent(type);
+                    changeButton = within(summary).getByTestId(
+                        "deferred-destination-change",
+                    );
+                });
+
+                signals.setAmountChanged(Side.Receive);
+                signals.setReceiveAmount(BigNumber(99_000));
+                signals.setSendAmount(BigNumber(100_000));
+
+                await waitFor(() => {
+                    expect(screen.queryByTestId("invoice")).toBeNull();
+                    expect(
+                        screen.getByTestId("deferred-destination-summary"),
+                    ).toHaveTextContent(destination);
+                });
+
+                fireEvent.click(changeButton);
+
+                await waitFor(() => {
+                    expect(screen.getByTestId("invoice")).toHaveValue("");
+                    expect(signals.invoice()).toBe("");
+                    expect(signals.lnurl()).toBe("");
+                    expect(signals.bolt12Offer()).toBeUndefined();
+                });
+            } finally {
+                bridgeMocks.getPreRoute.mockRestore();
+                bridgeMocks.requireDriverForRoute.mockRestore();
+                bridgeMocks.getDriverForAsset.mockRestore();
+                window.history.pushState({}, "", "/");
+            }
+        },
+    );
 
     test("should keep the max commitment flow when a pre-bridge balance lookup fails", async () => {
         const driver = createPreBridgeDriver(

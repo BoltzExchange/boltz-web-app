@@ -1,14 +1,18 @@
 import { BigNumber } from "bignumber.js";
-import bolt11 from "bolt11";
 
 import {
     type CommitmentAmounts,
     calculateCommittedSubmarineAmounts,
+    isDeferredCommitmentDestination,
     validateCommitmentInvoice,
     validateCommitmentInvoiceInput,
 } from "../../src/status/CommitmentCreated";
 import type Pair from "../../src/utils/Pair";
 import { validateInvoice } from "../../src/utils/validation";
+
+const invoice = "lnbcrt1mock";
+const amountlessInvoice = "lnbcrt1zero";
+const invoiceSats = 40_720;
 
 vi.mock("../../src/utils/invoice", async () => {
     const actual = await vi.importActual("../../src/utils/invoice");
@@ -18,27 +22,41 @@ vi.mock("../../src/utils/invoice", async () => {
     };
 });
 
+vi.mock("../../src/utils/validation", async () => {
+    const actual = await vi.importActual("../../src/utils/validation");
+    const validateInvoice = vi.fn((input: string) => {
+        if (input === amountlessInvoice) {
+            throw new Error("invalid_0_amount");
+        }
+        if (input === invoice) {
+            return invoiceSats;
+        }
+        throw new Error("invalid_invoice");
+    });
+
+    return {
+        ...actual,
+        validateInvoice,
+        validateInvoiceInput: vi.fn((input: string) => {
+            const invoice =
+                input.match(/^lightning:(.+)$/)?.[1] ??
+                input.match(/^bitcoin:\?lightning=([^&]+)$/)?.[1] ??
+                input;
+            return {
+                invoice,
+                sats: validateInvoice(invoice),
+            };
+        }),
+    };
+});
+
 describe("CommitmentCreated", () => {
-    const invoice = "lnbcrt1mock";
-    const invoiceSats = 40_720;
     const bolt12Offer =
         "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
-
-    const mockInvoiceDecode = () => {
-        vi.spyOn(bolt11, "decode").mockReturnValue({
-            millisatoshis: (invoiceSats * 1_000).toString(),
-            tags: [
-                {
-                    tagName: "payment_hash",
-                    data: "mock_hash",
-                },
-            ],
-        } as ReturnType<typeof bolt11.decode>);
-    };
 
     const commitmentAmountsForInvoice = (
         invoiceValue: string,
@@ -83,7 +101,6 @@ describe("CommitmentCreated", () => {
     });
 
     test("accepts lightning-prefixed invoices", () => {
-        mockInvoiceDecode();
         const amounts = commitmentAmountsForInvoice(invoice);
 
         expect(
@@ -95,7 +112,6 @@ describe("CommitmentCreated", () => {
     });
 
     test("accepts BIP21 invoices like the create page invoice input", () => {
-        mockInvoiceDecode();
         const amounts = commitmentAmountsForInvoice(invoice);
 
         expect(
@@ -127,19 +143,23 @@ describe("CommitmentCreated", () => {
         },
     );
 
-    test("rejects amountless invoices", () => {
-        vi.spyOn(bolt11, "decode").mockReturnValue({
-            millisatoshis: "0",
-            tags: [
-                {
-                    tagName: "payment_hash",
-                    data: "mock_hash",
-                },
-            ],
-        } as ReturnType<typeof bolt11.decode>);
+    test.each`
+        type              | input                            | expected
+        ${"LNURL"}        | ${"user@example.com"}            | ${true}
+        ${"BOLT12"}       | ${bolt12Offer}                   | ${true}
+        ${"BIP21 BOLT12"} | ${`bitcoin:?lno=${bolt12Offer}`} | ${true}
+        ${"BOLT11"}       | ${invoice}                       | ${false}
+        ${"empty"}        | ${undefined}                     | ${false}
+    `(
+        "detects $type auto-resolvable commitment destinations",
+        ({ input, expected }) => {
+            expect(isDeferredCommitmentDestination(input)).toEqual(expected);
+        },
+    );
 
+    test("rejects amountless invoices", () => {
         expect(() =>
-            validateCommitmentInvoice(invoice, {
+            validateCommitmentInvoice(amountlessInvoice, {
                 boltzFee: BigNumber(1),
                 lockupAmount: BigNumber(1),
                 networkFee: BigNumber(1),
@@ -150,8 +170,6 @@ describe("CommitmentCreated", () => {
     });
 
     test("rejects invoices with the wrong amount", () => {
-        mockInvoiceDecode();
-
         expect(() =>
             validateCommitmentInvoice(`lightning:${invoice}`, {
                 ...commitmentAmountsForInvoice(invoice),

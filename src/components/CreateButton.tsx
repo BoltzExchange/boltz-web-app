@@ -344,6 +344,8 @@ const CreateButton = () => {
         });
     const canCreateSwap = () =>
         valid() || validWayToFetchInvoice() || canCreateCommitmentSwap();
+    const commitmentOriginalDestination = () =>
+        bolt12Offer() ?? (lnurl() === "" ? undefined : lnurl());
     const getSwapCreationLogContext = (
         claimAddress?: string,
         gasAbstraction?: GasAbstraction,
@@ -1015,7 +1017,7 @@ const CreateButton = () => {
             gasAbstraction,
             dex,
             bridge,
-            bolt12Offer(),
+            commitmentOriginalDestination(),
         );
 
         await setSwapStorage({

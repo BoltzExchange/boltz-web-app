@@ -22,6 +22,19 @@ export const canCommitSubmarineSendAmount = (
     );
 };
 
+export const hasCommitmentCompatibleDestination = ({
+    invoice,
+    lnurl,
+    bolt12Offer,
+}: {
+    invoice: string;
+    lnurl: string;
+    bolt12Offer: string | undefined;
+}) =>
+    invoice === "" ||
+    (lnurl !== "" && invoice === lnurl) ||
+    (bolt12Offer !== undefined && invoice === bolt12Offer);
+
 export const canCreateSubmarineCommitmentSwap = ({
     pair,
     amountChanged,
@@ -48,7 +61,9 @@ export const canCreateSubmarineCommitmentSwap = ({
     sendAmount.isGreaterThan(0) &&
     (minimum <= 0 || sendAmount.isGreaterThanOrEqualTo(minimum)) &&
     (maximum <= 0 || sendAmount.isLessThanOrEqualTo(maximum)) &&
-    lnurl === "" &&
-    (invoice === "" ||
-        (bolt12Offer !== undefined && invoice === bolt12Offer)) &&
+    hasCommitmentCompatibleDestination({
+        invoice,
+        lnurl,
+        bolt12Offer,
+    }) &&
     invoiceError === undefined;

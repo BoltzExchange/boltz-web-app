@@ -85,11 +85,25 @@ const isInvoiceValidationError = (message: string) =>
 const isInvoiceInputError = (message: string): message is DictKey =>
     message === "invalid_invoice" || message === "invalid_0_amount";
 
+const extractCommitmentInvoiceInput = (value: string) =>
+    extractInvoice(value.trim()) ?? "";
+
+export const isDeferredCommitmentDestination = (
+    value: string | undefined,
+): value is string => {
+    if (value === undefined) {
+        return false;
+    }
+
+    const invoiceInput = extractCommitmentInvoiceInput(value);
+    return isLnurl(invoiceInput) || isBolt12Offer(invoiceInput);
+};
+
 export const validateCommitmentInvoiceInput = (
     value: string,
     amounts: CommitmentAmounts,
 ): CommitmentInvoiceValidation => {
-    const invoiceInput = extractInvoice(value.trim()) ?? "";
+    const invoiceInput = extractCommitmentInvoiceInput(value);
     if (isLnurl(invoiceInput) || isBolt12Offer(invoiceInput)) {
         return {
             invoice: invoiceInput,
@@ -527,6 +541,37 @@ const CommitmentCreated = () => {
             setLoading(false);
         }
     };
+
+    let autoCompletionAttempt: string | undefined;
+    createEffect(() => {
+        const current = commitment();
+        const amounts = committedAmounts();
+        if (
+            current.commitmentLockupTxHash === undefined ||
+            amounts === undefined ||
+            loading() ||
+            !isDeferredCommitmentDestination(current.originalDestination)
+        ) {
+            return;
+        }
+
+        const originalDestination = extractCommitmentInvoiceInput(
+            current.originalDestination,
+        );
+        if (extractCommitmentInvoiceInput(invoice()) !== originalDestination) {
+            return;
+        }
+
+        const attempt = `${current.id}:${originalDestination}:${getInvoiceSats(
+            amounts,
+        )}`;
+        if (autoCompletionAttempt === attempt) {
+            return;
+        }
+
+        autoCompletionAttempt = attempt;
+        void completeSwap();
+    });
 
     return (
         <Show
