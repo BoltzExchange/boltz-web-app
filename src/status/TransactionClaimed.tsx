@@ -3,18 +3,28 @@ import { BigNumber } from "bignumber.js";
 import { getSubmarinePreimage } from "boltz-swaps/client";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
-import { Show, createEffect, createResource, createSignal } from "solid-js";
+import {
+    type JSX,
+    Show,
+    createEffect,
+    createResource,
+    createSignal,
+} from "solid-js";
 
 import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
-import { isEvmAsset } from "../consts/Assets";
+import { getAssetNetwork, isEvmAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
-import { type SubmarineSwap, getFinalAssetReceive } from "../utils/swapCreator";
+import {
+    type SubmarineSwap,
+    getFinalAssetReceive,
+    getPostBridgeDetail,
+} from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -34,7 +44,7 @@ const paymentValidationUrl = (invoice: string, preimage: string): string => {
     return url.toString();
 };
 
-const TransactionClaimed = () => {
+const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
     const navigate = useNavigate();
 
     const { notify } = useGlobalContext();
@@ -83,28 +93,53 @@ const TransactionClaimed = () => {
         );
     });
 
+    const receiveAmount = () =>
+        formatAmount(
+            BigNumber(
+                (swap()!.dex?.position === SwapPosition.Post
+                    ? swap()!.dex?.quoteAmount
+                    : swap()!.receiveAmount) ?? 0,
+            ),
+            denomination(),
+            separator(),
+            getFinalAssetReceive(swap()!),
+        );
+
+    const receiveDenomination = () =>
+        formatDenomination(denomination(), getFinalAssetReceive(swap()!));
+
+    const postBridge = () => getPostBridgeDetail(swap()?.bridge);
+
     return (
         <div>
             <Show when={claimBroadcast() === true} fallback={<Broadcasting />}>
                 <h2>{t("congrats")}</h2>
-                <p>
-                    {t("successfully_swapped", {
-                        amount: formatAmount(
-                            BigNumber(
-                                (swap()!.dex?.position === SwapPosition.Post
-                                    ? swap()!.dex?.quoteAmount
-                                    : swap()!.receiveAmount) ?? 0,
-                            ),
-                            denomination(),
-                            separator(),
-                            getFinalAssetReceive(swap()!),
-                        ),
-                        denomination: formatDenomination(
-                            denomination(),
-                            getFinalAssetReceive(swap()!),
-                        ),
-                    })}
-                </p>
+                <Show
+                    when={postBridge()}
+                    fallback={
+                        <p>
+                            {t("successfully_swapped", {
+                                amount: receiveAmount(),
+                                denomination: receiveDenomination(),
+                            })}
+                        </p>
+                    }>
+                    {(bridge) => (
+                        <>
+                            <p>
+                                {t("bridge_transfer_pending", {
+                                    amount: receiveAmount(),
+                                    denomination: receiveDenomination(),
+                                    network:
+                                        getAssetNetwork(
+                                            bridge().destinationAsset,
+                                        ) ?? bridge().destinationAsset,
+                                })}
+                            </p>
+                            {props.bridgeStatusLink}
+                        </>
+                    )}
+                </Show>
                 <hr />
                 <span class="btn" onClick={() => navigate("/swap")}>
                     {t("new_swap")}

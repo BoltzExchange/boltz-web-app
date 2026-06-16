@@ -73,6 +73,7 @@ import {
     PreBridgeRecoveryStatus,
     type SomeSwap,
     type SubmarineSwap,
+    getPostBridgeDetail,
 } from "../utils/swapCreator";
 import { getUrlParam } from "../utils/urlParams";
 
@@ -414,6 +415,27 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
+    const isTransactionClaimedStatus = createMemo(
+        () =>
+            swapStatus() === swapStatusSuccess.TransactionClaimed ||
+            swapStatus() === swapStatusSuccess.InvoiceSettled ||
+            swapStatus() === swapStatusPending.TransactionClaimPending ||
+            swapStatus() === swapStatusPending.InvoicePaid,
+    );
+
+    const transactionClaimedPostBridge = createMemo(
+        () =>
+            isTransactionClaimedStatus() &&
+            getPostBridgeDetail(swap()?.bridge) !== undefined,
+    );
+
+    const blockExplorerLink = () => (
+        <BlockExplorerLink
+            swap={swap as Accessor<SomeSwap>}
+            swapStatus={swapStatus}
+        />
+    );
+
     return (
         <Show
             when={swap()}
@@ -573,18 +595,14 @@ const Pay = () => {
                                         }>
                                         <PreBridgeDexQuoteBlocked />
                                     </Match>
-                                    <Match
-                                        when={
-                                            swapStatus() ===
-                                                swapStatusSuccess.TransactionClaimed ||
-                                            swapStatus() ===
-                                                swapStatusSuccess.InvoiceSettled ||
-                                            swapStatus() ===
-                                                swapStatusPending.TransactionClaimPending ||
-                                            swapStatus() ===
-                                                swapStatusPending.InvoicePaid
-                                        }>
-                                        <TransactionClaimed />
+                                    <Match when={isTransactionClaimedStatus()}>
+                                        <TransactionClaimed
+                                            bridgeStatusLink={
+                                                transactionClaimedPostBridge()
+                                                    ? blockExplorerLink()
+                                                    : undefined
+                                            }
+                                        />
                                     </Match>
                                     <Match
                                         when={
@@ -675,13 +693,11 @@ const Pay = () => {
                                 </Switch>
                                 <Show
                                     when={
+                                        !transactionClaimedPostBridge() &&
                                         swap()?.bridge?.recovery?.status !==
-                                        PreBridgeRecoveryStatus.Recovered
+                                            PreBridgeRecoveryStatus.Recovered
                                     }>
-                                    <BlockExplorerLink
-                                        swap={swap as Accessor<SomeSwap>}
-                                        swapStatus={swapStatus}
-                                    />
+                                    {blockExplorerLink()}
                                 </Show>
                             </Show>
                         </Show>
