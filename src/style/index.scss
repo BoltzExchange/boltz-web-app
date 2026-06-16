@@ -705,36 +705,6 @@ textarea.invalid {
     font-size: 0.75rem;
     font-weight: 600;
 }
-.deferred-destination-summary {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 42px;
-    padding: 0 10px;
-    border: 1px solid var(--color-white-10);
-    border-radius: var(--border-radius-md);
-    background: color-mix(
-        in srgb,
-        var(--color-secondary-800) 82%,
-        var(--color-medium-gray)
-    );
-    text-align: left;
-}
-
-.deferred-destination-content {
-    min-width: 0;
-    flex: 1;
-}
-
-.deferred-destination-value {
-    overflow: hidden;
-    color: var(--color-text);
-    font-size: 0.8125rem;
-    line-height: 1.25;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .invoice-slot-action {
     flex: 0 0 auto;
     border: 1px solid var(--color-white-15);
@@ -742,7 +712,6 @@ textarea.invalid {
     color: var(--color-text);
     font-weight: 600;
 }
-
 @media (hover: hover) {
     .invoice-slot-action:hover {
         background: var(--color-secondary-100);

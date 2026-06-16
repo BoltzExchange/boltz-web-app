@@ -66,13 +66,12 @@ const dict = {
         commitment_invoice_hint: "Enter a Lightning Invoice",
         commitment_invoice_heading:
             "Enter a Lightning Invoice for {{ amount }} {{ denomination }}",
-        commitment_invoice_deferred: "Invoice after funding",
+        commitment_invoice_deferred: "Invoice to be entered after funding",
         clear_amount: "Clear",
         create_and_paste:
             "Paste a Lightning invoice, BOLT12 or LNURL to receive funds",
-        deferred_destination_change: "Change",
         invoice_cleared_amount_changed:
-            "Invoice cleared because the amount changed. Enter a new invoice for the updated amount.",
+            "Invoice cleared because the amount changed.",
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
@@ -596,13 +595,13 @@ const dict = {
         commitment_invoice_hint: "Lightning-Rechnung eingeben",
         commitment_invoice_heading:
             "Lightning-Rechnung über {{ amount }} {{ denomination }} eingeben",
-        commitment_invoice_deferred: "Rechnung nach Zahlung",
+        commitment_invoice_deferred:
+            "Rechnung wird nach der Zahlung eingegeben",
         clear_amount: "Löschen",
         create_and_paste:
             "Füge eine Lightning-Rechnung, BOLT12 oder LNURL des Empfängers ein",
-        deferred_destination_change: "Ändern",
         invoice_cleared_amount_changed:
-            "Rechnung gelöscht, weil sich der Betrag geändert hat. Gib eine neue Rechnung für den aktualisierten Betrag ein.",
+            "Rechnung gelöscht, weil sich der Betrag geändert hat.",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
@@ -1143,13 +1142,13 @@ const dict = {
         commitment_invoice_hint: "Introduce una factura Lightning",
         commitment_invoice_heading:
             "Introduce una factura Lightning por {{ amount }} {{ denomination }}",
-        commitment_invoice_deferred: "Factura después de financiar",
+        commitment_invoice_deferred:
+            "La factura se introducirá después de financiar",
         clear_amount: "Borrar",
         create_and_paste:
             "Pega una factura Lightning, una dirección BOLT12 o una LNURL para recibir los fondos",
-        deferred_destination_change: "Cambiar",
         invoice_cleared_amount_changed:
-            "La factura se borró porque cambió el importe. Introduce una nueva factura para el importe actualizado.",
+            "La factura se borró porque cambió el importe.",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
@@ -1687,13 +1686,13 @@ const dict = {
         commitment_invoice_hint: "Insira um invoice Lightning",
         commitment_invoice_heading:
             "Insira um invoice Lightning de {{ amount }} {{ denomination }}",
-        commitment_invoice_deferred: "Invoice após o envio",
+        commitment_invoice_deferred:
+            "Invoice será inserido após o envio dos fundos",
         clear_amount: "Limpar",
         create_and_paste:
             "Cole um invoice Lightning, um endereço BOLT12 ou um LNURL para receber os fundos",
-        deferred_destination_change: "Alterar",
         invoice_cleared_amount_changed:
-            "O invoice foi removido porque o valor mudou. Insira um novo invoice para o valor atualizado.",
+            "O invoice foi removido porque o valor mudou.",
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
@@ -2225,9 +2224,7 @@ const dict = {
         commitment_invoice_deferred: "资金发送后输入发票",
         clear_amount: "清除",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
-        deferred_destination_change: "更改",
-        invoice_cleared_amount_changed:
-            "金额已更改，发票已清除。请为更新后的金额输入新的发票。",
+        invoice_cleared_amount_changed: "金额已更改，发票已清除。",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         timeout_eta: "超过预期时间",
@@ -2711,13 +2708,12 @@ const dict = {
         commitment_invoice_hint: "ライトニングインボイスを入力してください",
         commitment_invoice_heading:
             "{{ amount }} {{ denomination }} のライトニングインボイスを入力してください",
-        commitment_invoice_deferred: "送金後にインボイス",
+        commitment_invoice_deferred: "送金後にインボイスを入力",
         clear_amount: "クリア",
         create_and_paste:
             "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
-        deferred_destination_change: "変更",
         invoice_cleared_amount_changed:
-            "金額が変更されたためインボイスをクリアしました。更新後の金額の新しいインボイスを入力してください。",
+            "金額が変更されたためインボイスをクリアしました。",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         timeout_eta: "タイムアウト予想時間",

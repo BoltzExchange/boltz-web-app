@@ -262,6 +262,7 @@ const selectMaximumCommitmentSwap = async ({
         expect(invoiceInput.placeholder).toBe(
             i18n.en.commitment_invoice_deferred,
         );
+        expect(screen.getByTestId("committed-invoice-row")).toBeInTheDocument();
         expect(screen.getByTestId("committed-invoice-clear")).toHaveTextContent(
             i18n.en.clear_amount,
         );
@@ -1344,6 +1345,115 @@ describe("Create", () => {
         });
     });
 
+    test.each`
+        type        | destination    | lnurlValue | bolt12Value
+        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
+        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
+    `(
+        "should keep a $type destination when changing the send amount",
+        async ({ destination, lnurlValue, bolt12Value }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+            globalSignals.setOnline(true);
+            globalSignals.setPairs(pairs);
+            setPairAssets(BTC, LN);
+            await waitFor(() => {
+                expect(signals.minimum()).toBeGreaterThan(0);
+            });
+
+            signals.setInvoice(destination);
+            signals.setLnurl(lnurlValue);
+            signals.setBolt12Offer(bolt12Value);
+            signals.setInvoiceValid(false);
+            signals.setInvoiceError(undefined);
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: `${signals.minimum()}` },
+            });
+
+            await waitFor(() => {
+                expect(signals.invoice()).toBe(destination);
+                expect(signals.lnurl()).toBe(lnurlValue);
+                expect(signals.bolt12Offer()).toBe(bolt12Value);
+                expect(screen.getByTestId("invoice")).toHaveValue(destination);
+            });
+        },
+    );
+
+    test.each`
+        type        | destination    | lnurlValue | bolt12Value
+        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
+        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
+    `(
+        "should keep a $type destination editable after selecting max for a commitment swap",
+        async ({ destination, lnurlValue, bolt12Value }) => {
+            const bridgeMocks = mockPreBridgeDriver(
+                createPreBridgeDriver(
+                    vi
+                        .fn<BridgeDriver["getSourceTokenBalance"]>()
+                        .mockResolvedValue(1_000_000n),
+                ),
+            );
+            const useWeb3Signer = mockWalletConnectEvm();
+
+            try {
+                window.history.pushState({}, "", "/");
+                const currentPair = createCommitmentPair();
+                renderCreate();
+                await globalSignals.clearSwaps();
+                globalSignals.setOnline(true);
+                globalSignals.setPairs(commitmentSubmarinePairs);
+                globalSignals.setRegularPairs(commitmentSubmarinePairs);
+                signals.setPair(currentPair);
+
+                await waitFor(() => {
+                    expect(signals.maximum()).toBe(1_000_000);
+                });
+
+                signals.setInvoice(destination);
+                signals.setLnurl(lnurlValue);
+                signals.setBolt12Offer(bolt12Value);
+                signals.setInvoiceValid(false);
+                signals.setInvoiceError(undefined);
+
+                fireEvent.click(await screen.findByTestId("limit-max-button"));
+
+                await waitFor(() => {
+                    const invoiceInput = screen.getByTestId(
+                        "invoice",
+                    ) as HTMLInputElement;
+                    expect(signals.sendAmount().toNumber()).toBe(1_000_000);
+                    expect(signals.invoice()).toBe(destination);
+                    expect(signals.lnurl()).toBe(lnurlValue);
+                    expect(signals.bolt12Offer()).toBe(bolt12Value);
+                    expect(invoiceInput).toHaveValue(destination);
+                    expect(invoiceInput).not.toBeDisabled();
+                    expect(screen.queryByTestId("committed-invoice-row")).toBe(
+                        null,
+                    );
+                    expect(
+                        screen.queryByTestId("deferred-destination-summary"),
+                    ).toBeNull();
+                });
+            } finally {
+                useWeb3Signer.mockRestore();
+                bridgeMocks.getPreRoute.mockRestore();
+                bridgeMocks.requireDriverForRoute.mockRestore();
+                bridgeMocks.getDriverForAsset.mockRestore();
+                window.history.pushState({}, "", "/");
+            }
+        },
+    );
+
     test("should require an invoice for direct max EVM submarine swaps", async () => {
         const useWeb3Signer = mockWalletConnectEvm();
 
@@ -1413,7 +1523,7 @@ describe("Create", () => {
         }
     });
 
-    test("should clear a committed amount from the disabled invoice row", async () => {
+    test("should clear committed amounts from the disabled invoice row", async () => {
         const driver = createPreBridgeDriver(
             vi
                 .fn<BridgeDriver["getSourceTokenBalance"]>()
@@ -1445,87 +1555,6 @@ describe("Create", () => {
             window.history.pushState({}, "", "/");
         }
     });
-
-    test.each`
-        type        | destination    | lnurlValue | bolt12Value
-        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
-        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
-    `(
-        "should show a visible $type destination for commitment swaps",
-        async ({ type, destination, lnurlValue, bolt12Value }) => {
-            const bridgeMocks = mockPreBridgeDriver(
-                createPreBridgeDriver(
-                    vi
-                        .fn<BridgeDriver["getSourceTokenBalance"]>()
-                        .mockResolvedValue(1_000_000n),
-                ),
-            );
-
-            try {
-                window.history.pushState({}, "", "/");
-                const currentPair = createCommitmentPair();
-                renderCreate();
-                await globalSignals.clearSwaps();
-                globalSignals.setOnline(true);
-                globalSignals.setPairs(commitmentSubmarinePairs);
-                globalSignals.setRegularPairs(commitmentSubmarinePairs);
-                await Promise.resolve();
-                signals.setPair(currentPair);
-
-                await waitFor(() => {
-                    expect(signals.maximum()).toBe(1_000_000);
-                });
-
-                signals.setInvoice(destination);
-                signals.setLnurl(lnurlValue);
-                signals.setBolt12Offer(bolt12Value);
-                signals.setInvoiceValid(false);
-                signals.setInvoiceError(undefined);
-
-                fireEvent.click(await screen.findByTestId("limit-max-button"));
-
-                let changeButton!: HTMLElement;
-                await waitFor(() => {
-                    expect(screen.queryByTestId("invoice")).toBeNull();
-
-                    const summary = screen.getByTestId(
-                        "deferred-destination-summary",
-                    );
-                    expect(summary).toHaveTextContent(destination);
-                    expect(summary).not.toHaveTextContent(i18n.en.destination);
-                    expect(summary).not.toHaveTextContent(type);
-                    changeButton = within(summary).getByTestId(
-                        "deferred-destination-change",
-                    );
-                });
-
-                signals.setAmountChanged(Side.Receive);
-                signals.setReceiveAmount(BigNumber(99_000));
-                signals.setSendAmount(BigNumber(100_000));
-
-                await waitFor(() => {
-                    expect(screen.queryByTestId("invoice")).toBeNull();
-                    expect(
-                        screen.getByTestId("deferred-destination-summary"),
-                    ).toHaveTextContent(destination);
-                });
-
-                fireEvent.click(changeButton);
-
-                await waitFor(() => {
-                    expect(screen.getByTestId("invoice")).toHaveValue("");
-                    expect(signals.invoice()).toBe("");
-                    expect(signals.lnurl()).toBe("");
-                    expect(signals.bolt12Offer()).toBeUndefined();
-                });
-            } finally {
-                bridgeMocks.getPreRoute.mockRestore();
-                bridgeMocks.requireDriverForRoute.mockRestore();
-                bridgeMocks.getDriverForAsset.mockRestore();
-                window.history.pushState({}, "", "/");
-            }
-        },
-    );
 
     test("should keep the max commitment flow when a pre-bridge balance lookup fails", async () => {
         const driver = createPreBridgeDriver(

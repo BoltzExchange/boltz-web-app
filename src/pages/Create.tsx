@@ -45,10 +45,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
-import {
-    canCommitSubmarineSendAmount,
-    hasCommitmentCompatibleDestination,
-} from "../utils/commitmentSwap";
+import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
 import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
@@ -97,11 +94,8 @@ const Create = () => {
         lnurl,
         bolt12Offer,
         setInvoice,
-        setLnurl,
-        setBolt12Offer,
         invoiceValid,
         setInvoiceValid,
-        invoiceError,
         setInvoiceError,
         addressValid,
         sendAmount,
@@ -129,8 +123,6 @@ const Create = () => {
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
-    const [deferredDestinationEditing, setDeferredDestinationEditing] =
-        createSignal(false);
 
     const connectedDestination = () => {
         const walletAddress = connectedWallet()?.address;
@@ -168,36 +160,22 @@ const Create = () => {
             (pair().requiredInput === RequiredInput.Unknown &&
                 pair().toAsset === LN),
     );
-    const usesCommittedSendAmount = createMemo(
+    const hasDeferredInvoiceDestination = createMemo(() => {
+        const currentInvoice = invoice();
+        return (
+            isLnurl(currentInvoice) ||
+            isBolt12Offer(currentInvoice) ||
+            (lnurl() !== "" && currentInvoice === lnurl()) ||
+            (bolt12Offer() !== undefined && currentInvoice === bolt12Offer())
+        );
+    });
+    const invoiceInputDisabled = createMemo(
         () =>
+            requiresInvoiceInput() &&
             canCommitSubmarineSendAmount(pair(), amountChanged()) &&
             sendAmount().isFinite() &&
             sendAmount().isGreaterThan(0) &&
-            hasCommitmentCompatibleDestination({
-                invoice: invoice(),
-                lnurl: lnurl(),
-                bolt12Offer: bolt12Offer(),
-            }) &&
-            invoiceError() === undefined,
-    );
-    const commitmentInvoiceDisabled = createMemo(
-        () => requiresInvoiceInput() && usesCommittedSendAmount(),
-    );
-    const deferredDestination = createMemo(() => {
-        const value = invoice();
-        if (lnurl() !== "" && value === lnurl()) {
-            return value;
-        }
-
-        const offer = bolt12Offer();
-        if (offer !== undefined && value === offer) {
-            return value;
-        }
-
-        return undefined;
-    });
-    const shownDeferredDestination = createMemo(() =>
-        deferredDestinationEditing() ? undefined : deferredDestination(),
+            !hasDeferredInvoiceDestination(),
     );
     const showsInvoiceInputSlot = createMemo(
         () => requiresInvoiceInput() && !destinationLocked(),
@@ -383,28 +361,28 @@ const Create = () => {
     };
 
     const clearStaleInvoice = () => {
+        const currentInvoice = invoice();
         if (
-            invoice() === "" ||
-            isLnurl(invoice()) ||
-            isBolt12Offer(invoice())
+            currentInvoice === "" ||
+            isLnurl(currentInvoice) ||
+            isBolt12Offer(currentInvoice)
         ) {
             return;
         }
-        try {
-            const invoiceSats = decodeInvoice(invoice()).satoshis;
-            if (invoiceSats === 0) {
-                return;
+        const hasFixedAmount = () => {
+            try {
+                return decodeInvoice(currentInvoice).satoshis !== 0;
+            } catch {
+                return true;
             }
-            setInvoice("");
-            setInvoiceValid(false);
-            setInvoiceError(undefined);
-            notify("success", t("invoice_cleared_amount_changed"));
-        } catch {
-            setInvoice("");
-            setInvoiceValid(false);
-            setInvoiceError(undefined);
-            notify("success", t("invoice_cleared_amount_changed"));
+        };
+        if (!hasFixedAmount()) {
+            return;
         }
+        setInvoice("");
+        setInvoiceValid(false);
+        setInvoiceError(undefined);
+        notify("success", t("invoice_cleared_amount_changed"));
     };
 
     const changeReceiveAmount = (evt: InputEvent) => {
@@ -660,7 +638,7 @@ const Create = () => {
     };
 
     const clearCommittedAmounts = () => {
-        if (!commitmentInvoiceDisabled()) {
+        if (!invoiceInputDisabled()) {
             return;
         }
 
@@ -671,22 +649,6 @@ const Create = () => {
         setAmountValid(false);
         setAmountChanged(Side.Send);
     };
-
-    const changeDeferredDestination = () => {
-        clearCommittedAmounts();
-        setInvoice("");
-        setLnurl("");
-        setBolt12Offer(undefined);
-        setInvoiceValid(false);
-        setInvoiceError(undefined);
-        setDeferredDestinationEditing(true);
-    };
-
-    createEffect(
-        on([invoice, lnurl, bolt12Offer], () => {
-            setDeferredDestinationEditing(false);
-        }),
-    );
 
     onMount(() => {
         sendAmountRef?.focus();
@@ -828,69 +790,36 @@ const Create = () => {
         void fetchBtcPrice();
     });
 
-    const DeferredDestinationSummary = () => (
-        <Show when={shownDeferredDestination()}>
-            {(destination) => (
-                <div
-                    class="deferred-destination-summary"
-                    data-testid="deferred-destination-summary">
-                    <div class="deferred-destination-content">
-                        <div
-                            class="deferred-destination-value monospace"
-                            title={destination()}>
-                            {destination()}
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        class="btn-small invoice-slot-action"
-                        data-testid="deferred-destination-change"
-                        onClick={changeDeferredDestination}>
-                        {t("deferred_destination_change")}
-                    </button>
-                </div>
-            )}
-        </Show>
-    );
-
-    const CommittedInvoiceInput = () => (
-        <div class="committed-invoice-row" data-testid="committed-invoice-row">
-            <InvoiceInput
-                class="committed-invoice-input"
-                disabled={commitmentInvoiceDisabled}
-                placeholder={() => t("commitment_invoice_deferred")}
-            />
-            <button
-                type="button"
-                class="btn-small invoice-slot-action"
-                data-testid="committed-invoice-clear"
-                onClick={clearCommittedAmounts}>
-                {t("clear_amount")}
-            </button>
-        </div>
-    );
-
     const InvoiceInputSlot = () => (
         <div class="invoice-input-slot">
-            <Show
-                when={
-                    webln() &&
-                    !commitmentInvoiceDisabled() &&
-                    shownDeferredDestination() === undefined
-                }>
+            <Show when={webln() && !invoiceInputDisabled()}>
                 <WeblnButton />
                 <hr class="spacer" />
             </Show>
             <Show
-                when={shownDeferredDestination()}
+                when={invoiceInputDisabled()}
                 fallback={
-                    <Show
-                        when={commitmentInvoiceDisabled()}
-                        fallback={<InvoiceInput />}>
-                        <CommittedInvoiceInput />
-                    </Show>
+                    <InvoiceInput
+                        class="committed-invoice-input"
+                        disabled={invoiceInputDisabled}
+                    />
                 }>
-                <DeferredDestinationSummary />
+                <div
+                    class="committed-invoice-row"
+                    data-testid="committed-invoice-row">
+                    <InvoiceInput
+                        class="committed-invoice-input"
+                        disabled={invoiceInputDisabled}
+                        placeholder={() => t("commitment_invoice_deferred")}
+                    />
+                    <button
+                        type="button"
+                        class="btn-small invoice-slot-action"
+                        data-testid="committed-invoice-clear"
+                        onClick={clearCommittedAmounts}>
+                        {t("clear_amount")}
+                    </button>
+                </div>
             </Show>
         </div>
     );
@@ -1098,8 +1027,7 @@ const Create = () => {
                 <Show
                     when={
                         isMobile() &&
-                        !commitmentInvoiceDisabled() &&
-                        shownDeferredDestination() === undefined &&
+                        !invoiceInputDisabled() &&
                         !destinationLocked() &&
                         (pair().toAsset === LN ||
                             config.assets?.[pair().toAsset]?.type ===
