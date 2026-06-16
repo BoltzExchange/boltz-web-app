@@ -65,6 +65,7 @@ import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { calculateAmountOutMin } from "../utils/calculate";
+import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import { fetchDexQuote } from "../utils/quoter";
@@ -446,7 +447,10 @@ export const SwapExecutionWorker = () => {
                 "Swap execution found manual CCTP attestation",
                 getSwapExecutionLogContext(currentSwap.id, {
                     guid,
-                    amountReceivedLD: burn.amountReceived.toString(),
+                    amountReceived: formatAssetAmountForLog(
+                        burn.amountReceived,
+                        bridge.destinationAsset,
+                    ),
                     sourceDomain: burn.sourceDomain,
                     destinationDomain: burn.destinationDomain,
                     nonceUsed,
@@ -769,8 +773,10 @@ export const SwapExecutionWorker = () => {
                     getSwapExecutionLogContext(swapId, {
                         destinationAsset,
                         guid,
-                        amountReceivedLD:
-                            receivedEvent.amountReceivedLD.toString(),
+                        amountReceived: formatAssetAmountForLog(
+                            receivedEvent.amountReceivedLD,
+                            destinationAsset,
+                        ),
                         logIndex: receivedEvent.logIndex,
                     }),
                 );
@@ -1007,9 +1013,18 @@ export const SwapExecutionWorker = () => {
             "Swap execution fetched pre-bridge DEX quote",
             getSwapExecutionLogContext(latestSwap.id, {
                 guid,
-                amountReceived: receivedAmount.toString(),
-                amountExpected: expectedAmount.toString(),
-                quotedAmountOut: quote.trade.amountOut.toString(),
+                amountReceived: formatAssetAmountForLog(
+                    receivedAmount,
+                    latestSwap.bridge.destinationAsset,
+                ),
+                amountExpected: formatAssetAmountForLog(
+                    expectedAmount,
+                    latestSwap.assetSend,
+                ),
+                quotedAmountOut: formatAssetAmountForLog(
+                    quote.trade.amountOut,
+                    latestSwap.assetSend,
+                ),
             }),
         );
 
@@ -1017,8 +1032,14 @@ export const SwapExecutionWorker = () => {
             log.warn("Bridge received amount is less than expected", {
                 swapId: latestSwap.id,
                 guid,
-                amountReceived: receivedAmount.toString(),
-                amountExpected: expectedAmount.toString(),
+                amountReceived: formatAssetAmountForLog(
+                    receivedAmount,
+                    latestSwap.bridge.destinationAsset,
+                ),
+                amountExpected: formatAssetAmountForLog(
+                    expectedAmount,
+                    latestSwap.assetSend,
+                ),
             });
             return;
         }
@@ -1059,7 +1080,10 @@ export const SwapExecutionWorker = () => {
                 guid,
                 destinationAsset: latestSwap.bridge.destinationAsset,
                 commitmentAsset: latestSwap.assetSend,
-                amountReceived: receivedAmount.toString(),
+                amountReceived: formatAssetAmountForLog(
+                    receivedAmount,
+                    latestSwap.bridge.destinationAsset,
+                ),
             }),
         );
         const preBridgeClaimAddress =

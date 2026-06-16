@@ -63,7 +63,11 @@ import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
 } from "../utils/calculate";
-import { formatAmount, getDecimals } from "../utils/denomination";
+import {
+    formatAmount,
+    formatAssetAmountForLog,
+    getDecimals,
+} from "../utils/denomination";
 import { formatError, isWalletRejectionError } from "../utils/errors";
 import { claimAsset, sendPopulatedTransaction } from "../utils/evmTransaction";
 import { retryWithBackoff } from "../utils/promise";
@@ -947,8 +951,21 @@ const AutoClaimHops = (props: {
                             await untrack(() => executeClaim(freshQuoteData));
                         });
                     } else {
+                        const finalReceiveAsset = getFinalAssetReceive(
+                            swap()!,
+                            true,
+                        );
                         log.info(
-                            `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
+                            `Claim quote ${formatAssetAmountForLog(
+                                quoteAmount,
+                                finalReceiveAsset,
+                            )} is below threshold ${formatAssetAmountForLog(
+                                quoteThreshold(),
+                                finalReceiveAsset,
+                            )} (expected ${formatAssetAmountForLog(
+                                props.dex.quoteAmount,
+                                finalReceiveAsset,
+                            )}, slippage ${slippage()})`,
                         );
                     }
                 } catch (e) {

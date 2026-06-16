@@ -44,7 +44,9 @@ import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
     btcToSat,
     formatAmount,
+    formatAssetAmountForLog,
     formatDenomination,
+    formatSwapAmountForLog,
     miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -142,10 +144,13 @@ export const getClaimAddress = async (
                 (data) => data.gasPrice ?? 0n,
             ),
         ]);
-        log.debug("RSK balance", balance);
+        log.debug("RSK balance", formatAssetAmountForLog(balance, RBTC));
 
         const balanceNeeded = gasPrice * GasNeededToClaim;
-        log.debug("RSK balance needed", balanceNeeded);
+        log.debug(
+            "RSK balance needed",
+            formatAssetAmountForLog(balanceNeeded, RBTC),
+        );
 
         if (balance <= balanceNeeded) {
             log.info("Using RIF smart wallet as claim address");
@@ -281,8 +286,8 @@ const CreateButton = () => {
         swapType: swapType() ?? "unknown",
         assetSend: assetSend(),
         assetReceive: assetReceive(),
-        sendAmount: String(sendAmount()),
-        receiveAmount: String(receiveAmount()),
+        sendAmount: formatSwapAmountForLog(sendAmount(), assetSend()),
+        receiveAmount: formatSwapAmountForLog(receiveAmount(), assetReceive()),
         onchainAddress: onchainAddress(),
         claimAddress,
         gasAbstraction,
@@ -631,6 +636,7 @@ const CreateButton = () => {
                     const bip21Amount = BigNumber(
                         bip21Decoded.searchParams.get("amount") ?? 0,
                     );
+                    const bip21AmountSats = btcToSat(bip21Amount);
 
                     try {
                         // Create swap using its Magic Routing Hint (MRH)
@@ -645,19 +651,29 @@ const CreateButton = () => {
                         );
                         if (
                             !chainPair ||
-                            btcToSat(bip21Amount).isLessThan(
-                                chainPair.limits.minimal,
-                            )
+                            bip21AmountSats.isLessThan(chainPair.limits.minimal)
                         ) {
                             log.debug(
-                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair?.limits?.minimal ?? 0} for chain swap. Creating submarine swap.`,
+                                `BIP21 amount ${formatSwapAmountForLog(
+                                    bip21AmountSats,
+                                    bip21Asset,
+                                )} is less than minimal ${
+                                    chainPair === undefined
+                                        ? "unknown"
+                                        : formatSwapAmountForLog(
+                                              BigNumber(
+                                                  chainPair.limits.minimal,
+                                              ),
+                                              bip21Asset,
+                                          )
+                                } for chain swap. Creating submarine swap.`,
                             );
                             await createSubmarineSwap();
                             break;
                         }
 
                         if (
-                            btcToSat(bip21Amount).isGreaterThan(
+                            bip21AmountSats.isGreaterThan(
                                 decodedInvoice.satoshis,
                             )
                         ) {
@@ -665,7 +681,7 @@ const CreateButton = () => {
                         }
 
                         const mrhSendAmount = calculateSendAmount(
-                            btcToSat(bip21Amount),
+                            bip21AmountSats,
                             chainPair.fees.percentage,
                             chainPair.fees.minerFees.server +
                                 chainPair.fees.minerFees.user.claim,
@@ -698,7 +714,7 @@ const CreateButton = () => {
                             ),
                         );
                         setOnchainAddress(chainAddress);
-                        setReceiveAmount(btcToSat(bip21Amount));
+                        setReceiveAmount(bip21AmountSats);
                         setSendAmount(mrhSendAmount);
 
                         log.debug("Creating MRH swap");
@@ -733,7 +749,10 @@ const CreateButton = () => {
                             ),
                             bip21Asset,
                             chainAddress,
-                            bip21Amount: bip21Amount.toString(),
+                            bip21Amount: formatSwapAmountForLog(
+                                bip21AmountSats,
+                                bip21Asset,
+                            ),
                             error: formatError(e),
                         });
                         throw new Error(t("invalid_invoice"), { cause: e });
@@ -818,7 +837,10 @@ const CreateButton = () => {
 
             log.debug(`Created swap ${data.id}:`, {
                 destination: getDestinationAddress(data),
-                receiveAmount: data.receiveAmount,
+                receiveAmount: formatSwapAmountForLog(
+                    data.receiveAmount,
+                    data.assetReceive,
+                ),
             });
 
             const bridge =

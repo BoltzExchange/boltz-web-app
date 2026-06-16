@@ -47,6 +47,7 @@ import {
 } from "../context/Web3";
 import type { EncodedHop } from "../utils/Pair";
 import { calculateAmountWithSlippage } from "../utils/calculate";
+import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
@@ -114,7 +115,10 @@ const getHopExecutionQuote = async (
     if (!Array.isArray(quotes) || quotes.length === 0) {
         log.error("No DEX quotes returned for lockup hop", {
             dexDetails: hop.dexDetails,
-            targetLockupAmount: targetLockupAmount.toString(),
+            targetLockupAmount: formatAssetAmountForLog(
+                targetLockupAmount,
+                hop.to,
+            ),
         });
         throw new Error("could not get DEX quote for lockup hop");
     }
@@ -268,7 +272,14 @@ const lockupWithHops = async (
 
         const { targetLockupAmount, quote, amountIn } =
             await getHopExecutionQuote(hop, lockupAmount, slippage);
-        log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
+        log.info("Got DEX quote for lockup hop", {
+            amountIn: formatAssetAmountForLog(amountIn, hop.from),
+            targetLockupAmount: formatAssetAmountForLog(
+                targetLockupAmount,
+                hop.to,
+            ),
+            quoteData: quote.data,
+        });
 
         const router = createRouterContract(hop.from, transactionSigner);
         const calldata = await encodeDexQuote(
@@ -366,8 +377,11 @@ const lockupWithHops = async (
             swapId,
             asset,
             gasAbstraction,
-            amountIn: amountIn.toString(),
-            targetLockupAmount: targetLockupAmount.toString(),
+            amountIn: formatAssetAmountForLog(amountIn, hop.from),
+            targetLockupAmount: formatAssetAmountForLog(
+                targetLockupAmount,
+                hop.to,
+            ),
             routerAddress: router.address,
         });
         const transactionHash = await sendPopulatedTransaction(
@@ -669,11 +683,17 @@ const LockupEvm = (props: {
                     ),
                 ]);
 
-                log.info("Hop input token balance", balance);
-                log.info(
-                    "Hop required amount (DEX quote + slippage)",
-                    requiredValue,
-                );
+                log.info("Hop input token balance", {
+                    asset: hop.from,
+                    balance: formatAssetAmountForLog(balance, hop.from),
+                });
+                log.info("Hop required amount (DEX quote + slippage)", {
+                    asset: hop.from,
+                    requiredAmount: formatAssetAmountForLog(
+                        requiredValue,
+                        hop.from,
+                    ),
+                });
 
                 setSignerBalance(balance);
                 setRequiredValue(requiredValue);
@@ -700,7 +720,13 @@ const LockupEvm = (props: {
                         throw new Error("missing gas price");
                     }
                     const spendable = balance - gasPrice * lockupGasUsage;
-                    log.info("EVM signer spendable balance", spendable);
+                    log.info("EVM signer spendable balance", {
+                        asset: props.asset,
+                        spendableBalance: formatAssetAmountForLog(
+                            spendable,
+                            props.asset,
+                        ),
+                    });
                     setSignerBalance(spendable);
                     setRequiredValue(value());
                     setNeedsApproval(false);
@@ -731,7 +757,10 @@ const LockupEvm = (props: {
                         ]),
                     ]);
 
-                    log.info("ERC20 signer balance", balance);
+                    log.info("ERC20 signer balance", {
+                        asset: props.asset,
+                        balance: formatAssetAmountForLog(balance, props.asset),
+                    });
 
                     const needsApproval = allowance < value();
                     log.info("ERC20 signer needs approval", needsApproval);

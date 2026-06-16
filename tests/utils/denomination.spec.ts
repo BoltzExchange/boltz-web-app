@@ -1,12 +1,23 @@
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC, TBTC, USDT0, WBTC } from "../../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    TBTC,
+    USDT0,
+    WBTC,
+} from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
+    formatAssetAmountForLog,
     formatDenomination,
+    formatNativeAmountForLog,
+    formatSwapAmountForLog,
     getDecimals,
     getValidationRegex,
 } from "../../src/utils/denomination";
@@ -174,5 +185,53 @@ describe("denomination utils", () => {
         ${Denomination.Btc} | ${WBTC}  | ${"WBTC"}
     `("should format denomination", ({ denomination, input, expected }) => {
         expect(formatDenomination(denomination, input)).toEqual(expected);
+    });
+
+    describe("format asset amount for logs", () => {
+        test.each`
+            amount              | asset    | expected
+            ${"2572605"}        | ${USDT0} | ${"2.572605 USDT"}
+            ${2572605n}         | ${USDT0} | ${"2.572605 USDT"}
+            ${"33480000000000"} | ${TBTC}  | ${"0.00003348 TBTC"}
+            ${33480000000000n}  | ${TBTC}  | ${"0.00003348 TBTC"}
+            ${10000000000000n}  | ${RBTC}  | ${"0.00001 RBTC"}
+            ${"1016"}           | ${BTC}   | ${"1016 sats"}
+            ${1016n}            | ${LBTC}  | ${"1016 sats"}
+            ${1016n}            | ${LN}    | ${"1016 sats"}
+        `(
+            "formats $amount of $asset as $expected",
+            ({ amount, asset, expected }) => {
+                expect(formatAssetAmountForLog(amount, asset)).toEqual(
+                    expected,
+                );
+            },
+        );
+
+        test("falls back to the raw amount for unknown assets", () => {
+            expect(formatAssetAmountForLog(150n, "UNKNOWN")).toEqual(
+                "150 UNKNOWN",
+            );
+        });
+
+        test("formats native amounts for logs", () => {
+            expect(formatNativeAmountForLog(10000000000000n, RBTC)).toEqual(
+                "0.00001 RBTC",
+            );
+        });
+
+        // Swap denomination: sats for BTC-pegged assets (incl. RBTC, unlike the
+        // on-chain wei above), token units for ERC20.
+        test.each`
+            amount            | asset    | expected
+            ${2572605n}       | ${USDT0} | ${"2.572605 USDT"}
+            ${3348n}          | ${TBTC}  | ${"3348 sats"}
+            ${1016n}          | ${RBTC}  | ${"1016 sats"}
+            ${BigNumber(101)} | ${BTC}   | ${"101 sats"}
+        `(
+            "formats internal $amount of $asset as $expected",
+            ({ amount, asset, expected }) => {
+                expect(formatSwapAmountForLog(amount, asset)).toEqual(expected);
+            },
+        );
     });
 });

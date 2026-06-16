@@ -35,6 +35,7 @@ import {
 import {
     formatAmount,
     formatDenomination,
+    formatSwapAmountForLog,
     getDecimals,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -178,11 +179,26 @@ const TransactionLockupFailed = (props: {
             log.info(
                 `Prepared replacement quote for chain swap ${chainSwap.id}`,
                 {
-                    rawQuoteAmount: quote.amount,
-                    claimFee,
-                    boltzReceiveAmount: boltzReceiveAmount.toFixed(),
-                    finalReceiveAmount: receiveAmount.toFixed(),
-                    sentAmount: outputAmount,
+                    rawQuoteAmount: formatSwapAmountForLog(
+                        quote.amount,
+                        chainSwap.assetReceive,
+                    ),
+                    claimFee: formatSwapAmountForLog(
+                        claimFee,
+                        chainSwap.assetReceive,
+                    ),
+                    boltzReceiveAmount: formatSwapAmountForLog(
+                        boltzReceiveAmount,
+                        chainSwap.assetReceive,
+                    ),
+                    finalReceiveAmount: formatSwapAmountForLog(
+                        receiveAmount,
+                        getFinalAssetReceive(chainSwap),
+                    ),
+                    sentAmount: formatSwapAmountForLog(
+                        outputAmount,
+                        chainSwap.assetSend,
+                    ),
                     sentAmountSource,
                     routedQuote: routePair.isRoutable,
                 },
@@ -217,8 +233,14 @@ const TransactionLockupFailed = (props: {
         log.info(
             `Accepting replacement quote for chain swap ${currentSwap.id}`,
             {
-                backendQuoteAmount: quoteData.quote,
-                finalReceiveAmount: quoteData.receiveAmount,
+                backendQuoteAmount: formatSwapAmountForLog(
+                    quoteData.quote,
+                    currentSwap.assetReceive,
+                ),
+                finalReceiveAmount: formatSwapAmountForLog(
+                    quoteData.receiveAmount,
+                    getFinalAssetReceive(currentSwap),
+                ),
                 hasDex: currentSwap.dex !== undefined,
                 hasBridge: currentSwap.bridge !== undefined,
             },
@@ -279,8 +301,14 @@ const TransactionLockupFailed = (props: {
             log.info(
                 `Skipping auto-accept for chain swap ${chainSwap.id}: quote outside slippage`,
                 {
-                    quotedReceiveAmount: quotedReceiveAmount.toString(),
-                    quoteThreshold: quoteThreshold.toString(),
+                    quotedReceiveAmount: formatSwapAmountForLog(
+                        quotedReceiveAmount,
+                        getFinalAssetReceive(chainSwap),
+                    ),
+                    quoteThreshold: formatSwapAmountForLog(
+                        quoteThreshold,
+                        getFinalAssetReceive(chainSwap),
+                    ),
                     slippage: slippage(),
                 },
             );
@@ -290,10 +318,19 @@ const TransactionLockupFailed = (props: {
         log.info(
             `Auto-accepting replacement quote for chain swap ${chainSwap.id}`,
             {
-                quotedReceiveAmount: quotedReceiveAmount.toString(),
-                quoteThreshold: quoteThreshold.toString(),
+                quotedReceiveAmount: formatSwapAmountForLog(
+                    quotedReceiveAmount,
+                    getFinalAssetReceive(chainSwap),
+                ),
+                quoteThreshold: formatSwapAmountForLog(
+                    quoteThreshold,
+                    getFinalAssetReceive(chainSwap),
+                ),
                 slippage: slippage(),
-                backendQuoteAmount: quoteData.quote,
+                backendQuoteAmount: formatSwapAmountForLog(
+                    quoteData.quote,
+                    chainSwap.assetReceive,
+                ),
             },
         );
         void acceptQuote(chainSwap, quoteData);
