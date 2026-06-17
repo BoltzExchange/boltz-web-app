@@ -5,3 +5,14 @@ export const trimPrefix = (str: string, prefix: string) => {
 
     return str;
 };
+
+// Splits text on `*...*` markers and wraps the marked segments in <strong>.
+export const emphasize = (text: string): (string | HTMLElement)[] =>
+    text.split(/\*(.+?)\*/).map((part, i) => {
+        if (i % 2 === 0) {
+            return part;
+        }
+        const strong = document.createElement("strong");
+        strong.textContent = part;
+        return strong;
+    });

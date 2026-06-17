@@ -4,6 +4,7 @@ import { Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { type RescueFile, validateRescueFile } from "../utils/rescueFile";
+import { emphasize } from "../utils/strings";
 import LoadingSpinner from "./LoadingSpinner";
 import RescueFileInput from "./RescueFileInput";
 
@@ -85,6 +86,7 @@ const BackupVerifyContent = (props: BackupVerifyContentProps) => {
                 disabled={inputProcessing()}
                 onChange={(e) => uploadChange(e)}
             />
+            <p>{emphasize(t("download_boltz_rescue_key_subline_privacy"))}</p>
             <Show when={inputProcessing()}>
                 <LoadingSpinner />
             </Show>
