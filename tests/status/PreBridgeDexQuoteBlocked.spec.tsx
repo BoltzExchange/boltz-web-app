@@ -137,7 +137,7 @@ const makeSwap = (): SomeSwap =>
                     to: messageTransmitter,
                     value: "0",
                     data: "0x1234",
-                },
+                } as AlchemyCall,
             },
         },
     }) as SomeSwap;

@@ -1,7 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show } from "solid-js";
-import { type Hex, getAddress } from "viem";
 
 import type { AlchemyCall } from "../alchemy/Alchemy";
 import BlockExplorer, {
@@ -20,14 +19,6 @@ import {
     PreBridgeRecoveryStatus,
     type SomeSwap,
 } from "../utils/swapCreator";
-
-const toAlchemyCall = (
-    call: NonNullable<PreBridgeRecovery["receiveCall"]>,
-): AlchemyCall => ({
-    to: getAddress(call.to),
-    value: call.value,
-    data: call.data as Hex | undefined,
-});
 
 const PreBridgeDexQuoteBlocked = () => {
     const navigate = useNavigate();
@@ -107,12 +98,11 @@ const PreBridgeDexQuoteBlocked = () => {
                 bridge: currentSwap.bridge,
             },
         );
-        const calls: AlchemyCall[] = [
-            ...(currentRecovery.receiveCall === undefined
-                ? []
-                : [toAlchemyCall(currentRecovery.receiveCall)]),
-            ...reverseBridgeCalls,
-        ];
+        const calls: AlchemyCall[] = [];
+        if (currentRecovery.receiveCall !== undefined) {
+            calls.push(currentRecovery.receiveCall);
+        }
+        calls.push(...reverseBridgeCalls);
 
         log.info(
             `Refunding bridged funds for swap ${currentSwap.id} to the original sender`,

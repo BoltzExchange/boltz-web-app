@@ -306,24 +306,30 @@ export const SwapExecutionWorker = () => {
         await persistSwap(latestSwap);
     };
 
-    // The backend can only renegotiate a chain swap whose locked amount still
-    // clears the pair minimum. When even the slippage-protected DEX output
-    // would fall below it, locking is pointless (renegotiation would be
-    // rejected), so the swap should block for a refund instead.
-    const preBridgeLockupClearsRenegotiationMinimum = async (
-        swap: ChainSwap,
-        lockupAmount: bigint,
+    // A pre-bridge quote below the slippage threshold can still be locked when
+    // the backend is able to renegotiate the shortfall. That is only possible
+    // for chain swaps whose lockup amount still clears the pair minimum;
+    // otherwise locking is pointless and the swap should block for a refund.
+    const shouldLockBelowThresholdQuote = async (
+        swap: SomeSwap,
+        quoteAmountOut: bigint,
     ): Promise<boolean> => {
-        await fetchPairs();
-        const minimal =
-            pairs()?.[SwapType.Chain]?.[swap.assetSend]?.[swap.assetReceive]
-                ?.limits.minimal;
-        if (minimal === undefined) {
-            return true;
+        if (swap.type !== SwapType.Chain) {
+            return false;
         }
 
+        const chainSwap = swap as ChainSwap;
+        const lockupAmount = calculateAmountOutMin(quoteAmountOut, slippage());
+        await fetchPairs();
+        const minimal =
+            pairs()?.[SwapType.Chain]?.[chainSwap.assetSend]?.[
+                chainSwap.assetReceive
+            ]?.limits.minimal;
+
         return (
-            assetAmountToSats(lockupAmount, swap.assetSend) >= BigInt(minimal)
+            minimal === undefined ||
+            assetAmountToSats(lockupAmount, chainSwap.assetSend) >=
+                BigInt(minimal)
         );
     };
 
@@ -383,19 +389,10 @@ export const SwapExecutionWorker = () => {
             });
 
             // Retrying only helps if the quote recovers above the slippage
-            // threshold. When the lockup already clears the chain swap
-            // renegotiation minimum, the backend can renegotiate the shortfall,
-            // so lock immediately instead of burning the remaining attempts.
-            const lockupAmount = calculateAmountOutMin(
-                quote.trade.amountOut,
-                slippage(),
-            );
+            // threshold. If locking the shortfall is still viable, do it now
+            // instead of burning the remaining attempts.
             if (
-                swap.type === SwapType.Chain &&
-                (await preBridgeLockupClearsRenegotiationMinimum(
-                    swap as ChainSwap,
-                    lockupAmount,
-                ))
+                await shouldLockBelowThresholdQuote(swap, quote.trade.amountOut)
             ) {
                 log.info(
                     "Swap execution locking pre-bridge quote below threshold; lockup clears renegotiation minimum",

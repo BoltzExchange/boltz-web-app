@@ -23,6 +23,7 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 
+import type { AlchemyCall } from "../alchemy/Alchemy";
 import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import type { newKeyFn } from "../context/Global";
 import type { EncodedHop } from "./Pair";
@@ -55,12 +56,6 @@ export type PendingBridgeSendCallbacks = {
     persist: (pending: PendingBridgeSend) => Promise<void>;
 };
 
-export type PreBridgeRecoveryCall = {
-    to: string;
-    value?: string;
-    data?: string;
-};
-
 export enum PreBridgeRecoveryStatus {
     Blocked = "blocked",
     Retrying = "retrying",
@@ -71,7 +66,7 @@ export type PreBridgeRecovery = {
     status: PreBridgeRecoveryStatus;
     asset: string;
     amount: string;
-    receiveCall?: PreBridgeRecoveryCall;
+    receiveCall?: AlchemyCall;
     txHash?: string;
 };
 
