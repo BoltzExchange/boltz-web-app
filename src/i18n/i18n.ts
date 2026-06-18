@@ -282,8 +282,6 @@ const dict = {
             "Save the Rescue Key in a **SECURE** and **PERMANENT** location!",
         download_boltz_rescue_key_subline_warning:
             "Failing to do so may lead to **LOSS OF FUNDS**.",
-        download_boltz_rescue_key_subline_third:
-            "To continue, please download a new Rescue Key.",
         download_new_key: "Download rescue key",
         verify_boltz_rescue_key: "Verify Boltz Rescue Key",
         verify_boltz_rescue_key_subline:
@@ -821,8 +819,6 @@ const dict = {
             "Bewahre den Rettungsschlüssel an einem **SICHEREN** und **DAUERHAFTEN** Ort auf!",
         download_boltz_rescue_key_subline_warning:
             "Andernfalls kann es zum **VERLUST VON GELDMITTELN** kommen.",
-        download_boltz_rescue_key_subline_third:
-            "Um fortzufahren, lade einen neuen Rettungsschlüssel herunter.",
         download_new_key: "Rettungsschlüssel herunterladen",
         verify_boltz_rescue_key:
             "Existierenden Boltz Rettungsschlüssel verifizieren",
@@ -1367,8 +1363,6 @@ const dict = {
             "¡Guarda la clave de rescate en un lugar **SEGURO** y **PERMANENTE**!",
         download_boltz_rescue_key_subline_warning:
             "No hacerlo puede provocar una **PÉRDIDA DE FONDOS**.",
-        download_boltz_rescue_key_subline_third:
-            "Para continuar, descarga una nueva clave de rescate.",
         download_new_key: "Descargar clave de rescate",
         verify_boltz_rescue_key: "Verificar clave de rescate existente",
         verify_boltz_rescue_key_subline:
@@ -1909,8 +1903,6 @@ const dict = {
             "Guarde a chave de resgate em um local **SEGURO** e **PERMANENTE**!",
         download_boltz_rescue_key_subline_warning:
             "Não fazer isso pode levar à **PERDA DE FUNDOS**.",
-        download_boltz_rescue_key_subline_third:
-            "Para continuar, baixe uma nova chave de resgate.",
         download_new_key: "Baixar chave de resgate",
         verify_boltz_rescue_key: "Verificar chave de resgate",
         verify_boltz_rescue_key_subline:
@@ -2418,7 +2410,6 @@ const dict = {
         download_boltz_rescue_key_subline_save:
             "请将救援密钥保存在**安全**且**永久**的位置！",
         download_boltz_rescue_key_subline_warning: "否则可能导致**资金损失**。",
-        download_boltz_rescue_key_subline_third: "要继续，请下载新的救援密钥。",
         download_new_key: "下载救援密钥",
         verify_boltz_rescue_key: "验证博尔茨救援密钥",
         verify_boltz_rescue_key_subline:
@@ -2931,8 +2922,6 @@ const dict = {
             "レスキューキーは**安全**で**永続的**な場所に保管してください！",
         download_boltz_rescue_key_subline_warning:
             "そうしないと、**資金の損失**につながる可能性があります。",
-        download_boltz_rescue_key_subline_third:
-            "続行するには、新しいレスキューキーをダウンロードしてください。",
         download_new_key: "レスキューキーをダウンロード",
         verify_boltz_rescue_key: "Boltzレスキューキー検証",
         verify_boltz_rescue_key_subline:
