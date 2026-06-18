@@ -568,8 +568,7 @@ const Pay = () => {
                                 <Switch>
                                     <Match
                                         when={
-                                            swap()?.execution
-                                                ?.preBridgeRecovery !==
+                                            swap()?.bridge?.recovery !==
                                             undefined
                                         }>
                                         <PreBridgeDexQuoteBlocked />
@@ -676,8 +675,7 @@ const Pay = () => {
                                 </Switch>
                                 <Show
                                     when={
-                                        swap()?.execution?.preBridgeRecovery
-                                            ?.status !==
+                                        swap()?.bridge?.recovery?.status !==
                                         PreBridgeRecoveryStatus.Recovered
                                     }>
                                     <BlockExplorerLink

@@ -585,17 +585,19 @@ describe("SwapExecutionWorker", () => {
 
             expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(3);
             expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
-            expect(currentSwap.execution).toEqual({
-                preBridgeRecovery: expect.objectContaining({
+            expect(
+                (currentSwap.bridge as Record<string, unknown>).recovery,
+            ).toEqual(
+                expect.objectContaining({
                     status: "blocked",
                     asset: "DST",
                     amount: "150",
                 }),
-            });
+            );
             expect(mockSetSwapStorage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    execution: expect.objectContaining({
-                        preBridgeRecovery: expect.objectContaining({
+                    bridge: expect.objectContaining({
+                        recovery: expect.objectContaining({
                             status: "blocked",
                             asset: "DST",
                             amount: "150",
@@ -628,7 +630,9 @@ describe("SwapExecutionWorker", () => {
             );
         });
 
-        expect(currentSwap.execution).toBeUndefined();
+        expect(
+            (currentSwap.bridge as Record<string, unknown>).recovery,
+        ).toBeUndefined();
     });
 
     test("should lock immediately without retrying when the lockup clears the renegotiation minimum", async () => {
@@ -661,7 +665,9 @@ describe("SwapExecutionWorker", () => {
             });
 
             expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(1);
-            expect(currentSwap.execution).toBeUndefined();
+            expect(
+                (currentSwap.bridge as Record<string, unknown>).recovery,
+            ).toBeUndefined();
         } finally {
             mockPairs.mockReturnValue({
                 chain: {

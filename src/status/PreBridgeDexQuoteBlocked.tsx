@@ -1,6 +1,8 @@
 import { useNavigate } from "@solidjs/router";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import log from "loglevel";
 import { Show } from "solid-js";
+import { getAddress } from "viem";
 
 import type { AlchemyCall } from "../alchemy/Alchemy";
 import BlockExplorer, {
@@ -8,7 +10,11 @@ import BlockExplorer, {
 } from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { buildPreBridgeReverseBridgeRefundCalls } from "../components/RefundButton";
+import {
+    buildReverseBridgeCalls,
+    resolveBridgeSender,
+} from "../components/RefundButton";
+import { getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
@@ -27,7 +33,7 @@ const PreBridgeDexQuoteBlocked = () => {
     const { getGasAbstractionSigner } = useWeb3Signer();
 
     const recovery = (): PreBridgeRecovery | undefined =>
-        swap()?.execution?.preBridgeRecovery;
+        swap()?.bridge?.recovery;
 
     const persistRecovery = async (nextRecovery: PreBridgeRecovery) => {
         const currentSwap = swap();
@@ -36,14 +42,11 @@ const PreBridgeDexQuoteBlocked = () => {
         }
 
         const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
-        if (latestSwap?.execution?.preBridgeRecovery === undefined) {
+        if (latestSwap?.bridge?.recovery === undefined) {
             return;
         }
 
-        latestSwap.execution = {
-            ...latestSwap.execution,
-            preBridgeRecovery: nextRecovery,
-        };
+        latestSwap.bridge.recovery = nextRecovery;
         await setSwapStorage(latestSwap);
         setSwap(latestSwap);
     };
@@ -77,7 +80,9 @@ const PreBridgeDexQuoteBlocked = () => {
             );
             return;
         }
-        if (currentSwap.bridge === undefined || currentSwap.dex === undefined) {
+        const { bridge, dex } = currentSwap;
+        const hopDexDetails = dex?.hops[0]?.dexDetails;
+        if (bridge === undefined || hopDexDetails === undefined) {
             log.warn(
                 `Cannot recover pre-bridge funds for swap ${currentSwap.id}: ` +
                     "missing bridge or DEX details",
@@ -88,16 +93,16 @@ const PreBridgeDexQuoteBlocked = () => {
         const gasAbstractionSigner = getGasAbstractionSigner(
             currentRecovery.asset,
         );
-        const reverseBridgeCalls = await buildPreBridgeReverseBridgeRefundCalls(
-            {
-                transactionSigner: gasAbstractionSigner,
-                asset: currentRecovery.asset,
-                amount: BigInt(currentRecovery.amount),
-                slippage: slippage(),
-                dexDetails: currentSwap.dex,
-                bridge: currentSwap.bridge,
-            },
-        );
+        const reverseBridgeCalls = await buildReverseBridgeCalls({
+            transactionSigner: gasAbstractionSigner,
+            bridge,
+            recipient: await resolveBridgeSender(bridge),
+            sourceToken: getAddress(getTokenAddress(currentRecovery.asset)),
+            amount: BigInt(currentRecovery.amount),
+            quoteChain: hopDexDetails.chain,
+            refundAddress: getAddress(gasAbstractionSigner.address),
+            slippage: slippage(),
+        });
         const calls: AlchemyCall[] = [];
         if (currentRecovery.receiveCall !== undefined) {
             calls.push(currentRecovery.receiveCall);
@@ -152,6 +157,9 @@ const PreBridgeDexQuoteBlocked = () => {
                                                         BlockExplorerTargetKind.Tx
                                                     }
                                                     id={txHash}
+                                                    explorer={bridgeRegistry.getExplorerKind(
+                                                        swap()?.bridge,
+                                                    )}
                                                     typeLabel="refund_tx"
                                                 />
                                             </>

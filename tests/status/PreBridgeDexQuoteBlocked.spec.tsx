@@ -27,7 +27,8 @@ const setSwap = vi.fn((nextSwap: SomeSwap | null) => {
 });
 const getGasAbstractionSigner = vi.fn<(asset: string) => Signer>();
 const sendPopulatedTransaction = vi.fn<typeof sendPopulatedTransactionFn>();
-const buildPreBridgeReverseBridgeRefundCalls = vi.fn();
+const buildReverseBridgeCalls = vi.fn();
+const resolveBridgeSender = vi.fn();
 
 vi.mock("@solidjs/router", () => ({
     useNavigate: () => vi.fn(),
@@ -92,7 +93,14 @@ vi.mock("../../src/components/ConnectWallet", () => ({
 }));
 
 vi.mock("../../src/components/RefundButton", () => ({
-    buildPreBridgeReverseBridgeRefundCalls,
+    buildReverseBridgeCalls,
+    resolveBridgeSender,
+}));
+
+vi.mock("boltz-swaps/bridge", () => ({
+    bridgeRegistry: {
+        getExplorerKind: () => undefined,
+    },
 }));
 
 const { default: PreBridgeDexQuoteBlocked } =
@@ -114,6 +122,16 @@ const makeSwap = (): SomeSwap =>
             sourceAsset: "USDT0-ETH",
             destinationAsset: "USDT0",
             txHash: "0xbridge",
+            recovery: {
+                status: PreBridgeRecoveryStatus.Blocked,
+                asset: "USDT0",
+                amount: "123",
+                receiveCall: {
+                    to: messageTransmitter,
+                    value: "0",
+                    data: "0x1234",
+                } as AlchemyCall,
+            },
         },
         dex: {
             position: SwapPosition.Pre,
@@ -128,18 +146,6 @@ const makeSwap = (): SomeSwap =>
             ],
             quoteAmount: "123",
         },
-        execution: {
-            preBridgeRecovery: {
-                status: PreBridgeRecoveryStatus.Blocked,
-                asset: "USDT0",
-                amount: "123",
-                receiveCall: {
-                    to: messageTransmitter,
-                    value: "0",
-                    data: "0x1234",
-                } as AlchemyCall,
-            },
-        },
     }) as SomeSwap;
 
 describe("PreBridgeDexQuoteBlocked", () => {
@@ -153,7 +159,8 @@ describe("PreBridgeDexQuoteBlocked", () => {
             makeSigner(gasAbstractionAddress),
         );
         sendPopulatedTransaction.mockResolvedValue("0xrecovery");
-        buildPreBridgeReverseBridgeRefundCalls.mockResolvedValue([
+        resolveBridgeSender.mockResolvedValue(destinationAddress);
+        buildReverseBridgeCalls.mockResolvedValue([
             {
                 to: tokenAddress,
                 value: "0",
@@ -187,12 +194,12 @@ describe("PreBridgeDexQuoteBlocked", () => {
         await waitFor(() => {
             expect(setSwapStorage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    execution: {
-                        preBridgeRecovery: expect.objectContaining({
+                    bridge: expect.objectContaining({
+                        recovery: expect.objectContaining({
                             status: PreBridgeRecoveryStatus.Recovered,
                             txHash: "0xrecovery",
                         }),
-                    },
+                    }),
                 }),
             );
         });
@@ -206,11 +213,11 @@ describe("PreBridgeDexQuoteBlocked", () => {
         await waitFor(() => {
             expect(setSwapStorage).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    execution: {
-                        preBridgeRecovery: expect.objectContaining({
+                    bridge: expect.objectContaining({
+                        recovery: expect.objectContaining({
                             status: PreBridgeRecoveryStatus.Retrying,
                         }),
-                    },
+                    }),
                 }),
             );
         });

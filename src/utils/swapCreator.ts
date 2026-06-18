@@ -43,25 +43,14 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
-export type BridgeDetail = BridgeRoute & {
-    kind: BridgeKind;
-    position: SwapPosition;
-    txHash?: string;
-    details?: BridgeDetails;
-    pendingSend?: PendingBridgeSend;
-    evmSendCandidate?: PendingEvmBridgeSend;
-};
-
-export type PendingBridgeSendCallbacks = {
-    persist: (pending: PendingBridgeSend) => Promise<void>;
-};
-
 export enum PreBridgeRecoveryStatus {
     Blocked = "blocked",
     Retrying = "retrying",
     Recovered = "recovered",
 }
 
+// Client-side recovery state for a pre-bridge swap whose DEX quote fell short
+// while the funds were bridging. This is not a backend status.
 export type PreBridgeRecovery = {
     status: PreBridgeRecoveryStatus;
     asset: string;
@@ -70,8 +59,21 @@ export type PreBridgeRecovery = {
     txHash?: string;
 };
 
-export type SwapExecutionState = {
-    preBridgeRecovery?: PreBridgeRecovery;
+export type BridgeDetail = BridgeRoute & {
+    kind: BridgeKind;
+    position: SwapPosition;
+    txHash?: string;
+    details?: BridgeDetails;
+    pendingSend?: PendingBridgeSend;
+    evmSendCandidate?: PendingEvmBridgeSend;
+
+    // Recovery state when a pre-bridge DEX quote falls short and the bridged
+    // funds must be retried or refunded back to the original sender.
+    recovery?: PreBridgeRecovery;
+};
+
+export type PendingBridgeSendCallbacks = {
+    persist: (pending: PendingBridgeSend) => Promise<void>;
 };
 
 export type GasAbstraction = {
@@ -121,10 +123,6 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
-
-    // Local execution state for client-side swap steps that are not backend
-    // statuses.
-    execution?: SwapExecutionState;
 };
 
 export type SubmarineSwap = SwapBase &

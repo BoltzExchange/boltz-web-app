@@ -146,9 +146,8 @@ const needsPreBridgeLockup = (
     swap.bridge?.position === SwapPosition.Pre &&
     swap.bridge.txHash !== undefined &&
     swap.commitmentLockupTxHash === undefined &&
-    (swap.execution?.preBridgeRecovery === undefined ||
-        swap.execution.preBridgeRecovery.status ===
-            PreBridgeRecoveryStatus.Retrying) &&
+    (swap.bridge.recovery === undefined ||
+        swap.bridge.recovery.status === PreBridgeRecoveryStatus.Retrying) &&
     isPendingCommitmentStatus(swap.status) &&
     swap.dex !== undefined &&
     swap.dex.position === SwapPosition.Pre &&
@@ -279,30 +278,27 @@ export const SwapExecutionWorker = () => {
                 amount: receivedAmount.toString(),
             }),
         );
-        latestSwap.execution = {
-            ...latestSwap.execution,
-            preBridgeRecovery: {
-                status: PreBridgeRecoveryStatus.Blocked,
-                asset: latestSwap.bridge.destinationAsset,
-                amount: receivedAmount.toString(),
-                receiveCall,
-            },
+        latestSwap.bridge.recovery = {
+            status: PreBridgeRecoveryStatus.Blocked,
+            asset: latestSwap.bridge.destinationAsset,
+            amount: receivedAmount.toString(),
+            receiveCall,
         };
         await persistSwap(latestSwap);
     };
 
     const clearPreBridgeRecovery = async (latestSwap: SomeSwap) => {
-        if (latestSwap.execution?.preBridgeRecovery === undefined) {
+        if (latestSwap.bridge?.recovery === undefined) {
             return;
         }
 
         log.info(
             "Pre-bridge recovery cleared, proceeding with lockup",
             getSwapExecutionLogContext(latestSwap.id, {
-                status: latestSwap.execution.preBridgeRecovery.status,
+                status: latestSwap.bridge.recovery.status,
             }),
         );
-        latestSwap.execution = undefined;
+        latestSwap.bridge.recovery = undefined;
         await persistSwap(latestSwap);
     };
 

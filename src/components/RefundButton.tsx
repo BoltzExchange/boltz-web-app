@@ -58,12 +58,7 @@ import {
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
-import {
-    type AssetType,
-    getKindForAsset,
-    getTokenAddress,
-    isEvmAsset,
-} from "../consts/Assets";
+import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
@@ -131,7 +126,9 @@ export const sendRefundTransaction = async (
     return transactionHash;
 };
 
-const resolveBridgeSender = async (bridge: BridgeDetail): Promise<string> => {
+export const resolveBridgeSender = async (
+    bridge: BridgeDetail,
+): Promise<string> => {
     if (bridge.txHash === undefined) {
         throw new Error(
             "missing bridge transaction hash for pre-bridge refund",
@@ -152,7 +149,7 @@ const resolveBridgeSender = async (bridge: BridgeDetail): Promise<string> => {
     return sender;
 };
 
-const buildReverseBridgeCalls = async ({
+export const buildReverseBridgeCalls = async ({
     transactionSigner,
     bridge,
     recipient,
@@ -405,42 +402,6 @@ const buildRefundFollowUpCalls = async (
         refundAddress: refundData.refundAddress,
         slippage,
         trade: { desiredToken },
-    });
-};
-
-export const buildPreBridgeReverseBridgeRefundCalls = async ({
-    transactionSigner,
-    asset,
-    amount,
-    slippage,
-    dexDetails,
-    bridge,
-}: {
-    transactionSigner: Signer;
-    asset: string;
-    amount: bigint;
-    slippage: number;
-    dexDetails: DexDetail;
-    bridge: BridgeDetail;
-}): Promise<AlchemyCall[]> => {
-    if (bridge.position !== SwapPosition.Pre) {
-        throw new Error("reverse-bridge refund requires a pre-bridge route");
-    }
-
-    const hopDexDetails = dexDetails.hops[0]?.dexDetails;
-    if (hopDexDetails === undefined) {
-        throw new Error("missing DEX details for pre-bridge refund");
-    }
-
-    return buildReverseBridgeCalls({
-        transactionSigner,
-        bridge,
-        recipient: await resolveBridgeSender(bridge),
-        sourceToken: getAddress(getTokenAddress(asset)),
-        amount,
-        quoteChain: hopDexDetails.chain,
-        refundAddress: getAddress(transactionSigner.address),
-        slippage,
     });
 };
 
