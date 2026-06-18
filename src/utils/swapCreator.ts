@@ -23,6 +23,7 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 
+import type { AlchemyCall } from "../alchemy/Alchemy";
 import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import type { newKeyFn } from "../context/Global";
 import type { EncodedHop } from "./Pair";
@@ -42,6 +43,22 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
+export enum PreBridgeRecoveryStatus {
+    Blocked = "blocked",
+    Retrying = "retrying",
+    Recovered = "recovered",
+}
+
+// Client-side recovery state for a pre-bridge swap whose DEX quote fell short
+// while the funds were bridging. This is not a backend status.
+export type PreBridgeRecovery = {
+    status: PreBridgeRecoveryStatus;
+    asset: string;
+    amount: string;
+    receiveCall?: AlchemyCall;
+    txHash?: string;
+};
+
 export type BridgeDetail = BridgeRoute & {
     kind: BridgeKind;
     position: SwapPosition;
@@ -49,6 +66,10 @@ export type BridgeDetail = BridgeRoute & {
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
     evmSendCandidate?: PendingEvmBridgeSend;
+
+    // Recovery state when a pre-bridge DEX quote falls short and the bridged
+    // funds must be retried or refunded back to the original sender.
+    recovery?: PreBridgeRecovery;
 };
 
 export type PendingBridgeSendCallbacks = {

@@ -13,6 +13,7 @@ import {
 } from "boltz-swaps/cctp";
 import { encodeDexQuote, getCommitmentLockupDetails } from "boltz-swaps/client";
 import {
+    assetAmountToSats,
     createAssetProvider,
     prefix0x,
     satsToAssetAmount,
@@ -68,12 +69,13 @@ import { calculateAmountOutMin } from "../utils/calculate";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
-import { fetchDexQuote } from "../utils/quoter";
+import { type ClaimQuote, fetchDexQuote } from "../utils/quoter";
 import {
     type BridgeDetail,
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
+    PreBridgeRecoveryStatus,
     type SomeSwap,
     type SubmarineSwap,
     getLockupGasAbstraction,
@@ -81,6 +83,8 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
+const preBridgeDexQuoteAttempts = 3;
+const preBridgeDexQuoteRetryDelayMs = 5_000;
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -142,6 +146,8 @@ const needsPreBridgeLockup = (
     swap.bridge?.position === SwapPosition.Pre &&
     swap.bridge.txHash !== undefined &&
     swap.commitmentLockupTxHash === undefined &&
+    (swap.bridge.recovery === undefined ||
+        swap.bridge.recovery.status === PreBridgeRecoveryStatus.Retrying) &&
     isPendingCommitmentStatus(swap.status) &&
     swap.dex !== undefined &&
     swap.dex.position === SwapPosition.Pre &&
@@ -212,7 +218,8 @@ const isTaskRelevant = (
 };
 
 export const SwapExecutionWorker = () => {
-    const { getSwap, getSwaps, setSwapStorage, slippage } = useGlobalContext();
+    const { getSwap, getSwaps, setSwapStorage, slippage, pairs, fetchPairs } =
+        useGlobalContext();
     const { swap, setSwap } = usePayContext();
     const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
 
@@ -249,6 +256,157 @@ export const SwapExecutionWorker = () => {
         );
         queueRelevantTasks(latestSwap);
         return true;
+    };
+
+    const persistPreBridgeDexQuoteBlock = async ({
+        latestSwap,
+        receivedAmount,
+        receiveCall,
+    }: {
+        latestSwap: SomeSwap & {
+            bridge: BridgeDetail & { txHash: string };
+            dex: DexDetail;
+        };
+        receivedAmount: bigint;
+        receiveCall?: AlchemyCall;
+    }) => {
+        log.warn(
+            "Pre-bridge lockup blocked: DEX quote below required amount, " +
+                "awaiting user recovery decision",
+            getSwapExecutionLogContext(latestSwap.id, {
+                asset: latestSwap.bridge.destinationAsset,
+                amount: receivedAmount.toString(),
+            }),
+        );
+        latestSwap.bridge.recovery = {
+            status: PreBridgeRecoveryStatus.Blocked,
+            asset: latestSwap.bridge.destinationAsset,
+            amount: receivedAmount.toString(),
+            receiveCall,
+        };
+        await persistSwap(latestSwap);
+    };
+
+    const clearPreBridgeRecovery = async (latestSwap: SomeSwap) => {
+        if (latestSwap.bridge?.recovery === undefined) {
+            return;
+        }
+
+        log.info(
+            "Pre-bridge recovery cleared, proceeding with lockup",
+            getSwapExecutionLogContext(latestSwap.id, {
+                status: latestSwap.bridge.recovery.status,
+            }),
+        );
+        latestSwap.bridge.recovery = undefined;
+        await persistSwap(latestSwap);
+    };
+
+    // A pre-bridge quote below the slippage threshold can still be locked when
+    // the backend is able to renegotiate the shortfall. That is only possible
+    // for chain swaps whose lockup amount still clears the pair minimum;
+    // otherwise locking is pointless and the swap should block for a refund.
+    const shouldLockBelowThresholdQuote = async (
+        swap: SomeSwap,
+        quoteAmountOut: bigint,
+    ): Promise<boolean> => {
+        if (swap.type !== SwapType.Chain) {
+            return false;
+        }
+
+        const chainSwap = swap as ChainSwap;
+        const lockupAmount = calculateAmountOutMin(quoteAmountOut, slippage());
+        await fetchPairs();
+        const minimal =
+            pairs()?.[SwapType.Chain]?.[chainSwap.assetSend]?.[
+                chainSwap.assetReceive
+            ]?.limits.minimal;
+
+        return (
+            minimal === undefined ||
+            assetAmountToSats(lockupAmount, chainSwap.assetSend) >=
+                BigInt(minimal)
+        );
+    };
+
+    const fetchPreBridgeDexQuote = async ({
+        swap,
+        swapId,
+        guid,
+        hop,
+        receivedAmount,
+        expectedAmount,
+        receivedAsset,
+        requiredAsset,
+    }: {
+        swap: SomeSwap;
+        swapId: string;
+        guid: string;
+        hop: NonNullable<DexDetail["hops"][number]["dexDetails"]>;
+        receivedAmount: bigint;
+        expectedAmount: bigint;
+        receivedAsset: string;
+        requiredAsset: string;
+    }): Promise<{ quote: ClaimQuote; shouldLock: boolean }> => {
+        let lastQuote: ClaimQuote | undefined;
+        const requiredAmount = calculateAmountOutMin(
+            expectedAmount,
+            slippage(),
+        );
+        for (let attempt = 1; attempt <= preBridgeDexQuoteAttempts; attempt++) {
+            const quote = await fetchDexQuote(hop, receivedAmount);
+            lastQuote = quote;
+
+            const logContext = getSwapExecutionLogContext(swapId, {
+                guid,
+                attempt,
+                attempts: preBridgeDexQuoteAttempts,
+                receivedAsset,
+                amountReceived: receivedAmount.toString(),
+                requiredAsset,
+                amountExpected: expectedAmount.toString(),
+                amountRequired: requiredAmount.toString(),
+                quotedAmountOut: quote.trade.amountOut.toString(),
+                slippage: slippage(),
+            });
+
+            log.debug(
+                "Swap execution fetched pre-bridge DEX quote",
+                logContext,
+            );
+
+            if (quote.trade.amountOut >= requiredAmount) {
+                return { quote, shouldLock: true };
+            }
+
+            log.warn("Pre-bridge DEX quote is below slippage threshold", {
+                ...logContext,
+                deficit: (requiredAmount - quote.trade.amountOut).toString(),
+            });
+
+            // Retrying only helps if the quote recovers above the slippage
+            // threshold. If locking the shortfall is still viable, do it now
+            // instead of burning the remaining attempts.
+            if (
+                await shouldLockBelowThresholdQuote(swap, quote.trade.amountOut)
+            ) {
+                log.info(
+                    "Swap execution locking pre-bridge quote below threshold; lockup clears renegotiation minimum",
+                    logContext,
+                );
+                return { quote, shouldLock: true };
+            }
+
+            if (attempt < preBridgeDexQuoteAttempts) {
+                await sleep(preBridgeDexQuoteRetryDelayMs);
+            }
+        }
+
+        if (lastQuote === undefined) {
+            throw new Error("failed to fetch pre-bridge DEX quote");
+        }
+
+        return { quote: lastQuote, shouldLock: false };
     };
 
     const recoverPreBridgeCommitmentLockup = async (
@@ -1007,42 +1165,27 @@ export const SwapExecutionWorker = () => {
             latestSwap.sendAmount,
             latestSwap.assetSend,
         );
-        const quote = await fetchDexQuote(hop.dexDetails, receivedAmount);
+        const { quote, shouldLock } = await fetchPreBridgeDexQuote({
+            swap: latestSwap,
+            swapId: latestSwap.id,
+            guid,
+            hop: hop.dexDetails,
+            receivedAmount,
+            expectedAmount,
+            receivedAsset: latestSwap.bridge.destinationAsset,
+            requiredAsset: latestSwap.assetSend,
+        });
 
-        log.debug(
-            "Swap execution fetched pre-bridge DEX quote",
-            getSwapExecutionLogContext(latestSwap.id, {
-                guid,
-                amountReceived: formatAssetAmountForLog(
-                    receivedAmount,
-                    latestSwap.bridge.destinationAsset,
-                ),
-                amountExpected: formatAssetAmountForLog(
-                    expectedAmount,
-                    latestSwap.assetSend,
-                ),
-                quotedAmountOut: formatAssetAmountForLog(
-                    quote.trade.amountOut,
-                    latestSwap.assetSend,
-                ),
-            }),
-        );
-
-        if (quote.trade.amountOut < expectedAmount) {
-            log.warn("Bridge received amount is less than expected", {
-                swapId: latestSwap.id,
-                guid,
-                amountReceived: formatAssetAmountForLog(
-                    receivedAmount,
-                    latestSwap.bridge.destinationAsset,
-                ),
-                amountExpected: formatAssetAmountForLog(
-                    expectedAmount,
-                    latestSwap.assetSend,
-                ),
+        if (!shouldLock) {
+            await persistPreBridgeDexQuoteBlock({
+                latestSwap,
+                receivedAmount,
+                receiveCall: manualCctpReceive?.receiveCall,
             });
             return;
         }
+
+        await clearPreBridgeRecovery(latestSwap);
 
         const router = createRouterContract(
             latestSwap.assetSend,

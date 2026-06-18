@@ -1,17 +1,20 @@
 import { useNavigate } from "@solidjs/router";
 import { bridgeRegistry } from "boltz-swaps/bridge";
 import { SwapPosition } from "boltz-swaps/types";
+import { Show } from "solid-js";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
+import { getAssetNetwork } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { formatDenomination } from "../utils/denomination";
 
 const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
-    const { t } = useGlobalContext();
+    const { t, denomination } = useGlobalContext();
     const preBridge = () =>
         swap()?.bridge?.position === SwapPosition.Pre
             ? swap()!.bridge
@@ -19,7 +22,21 @@ const SwapRefunded = (props: { refundTxId: string }) => {
 
     return (
         <div>
-            <p>{t("refunded")}</p>
+            <Show when={preBridge()} fallback={<p>{t("refunded")}</p>}>
+                {(bridge) => (
+                    <p>
+                        {t("refunded_bridge_pending", {
+                            denomination: formatDenomination(
+                                denomination(),
+                                bridge().sourceAsset,
+                            ),
+                            network:
+                                getAssetNetwork(bridge().sourceAsset) ??
+                                bridge().sourceAsset,
+                        })}
+                    </p>
+                )}
+            </Show>
             <hr />
             <BlockExplorer
                 asset={preBridge()?.sourceAsset ?? swap()!.assetSend}

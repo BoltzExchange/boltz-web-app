@@ -47,6 +47,7 @@ import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
 import InvoiceSet from "../status/InvoiceSet";
+import PreBridgeDexQuoteBlocked from "../status/PreBridgeDexQuoteBlocked";
 import SwapCreated from "../status/SwapCreated";
 import SwapExpired from "../status/SwapExpired";
 import SwapRefunded from "../status/SwapRefunded";
@@ -67,7 +68,12 @@ import {
     hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    PreBridgeRecoveryStatus,
+    type SomeSwap,
+    type SubmarineSwap,
+} from "../utils/swapCreator";
 import { getUrlParam } from "../utils/urlParams";
 
 const Pay = () => {
@@ -457,7 +463,12 @@ const Pay = () => {
                         <Show when={swap()?.refundTx === undefined}>
                             <Show
                                 when={swapStatus()}
-                                fallback={<LoadingSpinner />}>
+                                fallback={
+                                    <>
+                                        <LoadingSpinner />
+                                        <hr />
+                                    </>
+                                }>
                                 <div class="swap-status">
                                     {t("status")}:
                                     <span class="btn-small">{status()}</span>
@@ -555,6 +566,13 @@ const Pay = () => {
                                     </>
                                 }>
                                 <Switch>
+                                    <Match
+                                        when={
+                                            swap()?.bridge?.recovery !==
+                                            undefined
+                                        }>
+                                        <PreBridgeDexQuoteBlocked />
+                                    </Match>
                                     <Match
                                         when={
                                             swapStatus() ===
@@ -655,10 +673,16 @@ const Pay = () => {
                                         <SwapCreated />
                                     </Match>
                                 </Switch>
-                                <BlockExplorerLink
-                                    swap={swap as Accessor<SomeSwap>}
-                                    swapStatus={swapStatus}
-                                />
+                                <Show
+                                    when={
+                                        swap()?.bridge?.recovery?.status !==
+                                        PreBridgeRecoveryStatus.Recovered
+                                    }>
+                                    <BlockExplorerLink
+                                        swap={swap as Accessor<SomeSwap>}
+                                        swapStatus={swapStatus}
+                                    />
+                                </Show>
                             </Show>
                         </Show>
                     </Show>
