@@ -5,6 +5,7 @@ import { useWeb3Signer } from "../context/Web3";
 import { downloadRescueFile } from "../utils/backup";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
+import { emphasize } from "../utils/strings";
 import Warning from "./Warning";
 
 type BackupDownloadContentProps = {
@@ -31,9 +32,16 @@ const BackupDownloadContent = (props: BackupDownloadContentProps) => {
         <>
             <h2>{t("download_boltz_rescue_key")}</h2>
             <h4>{t("download_boltz_rescue_key_subline")}</h4>
-            <p>{t("download_boltz_rescue_key_subline_second")}</p>
+            <p>
+                {t("download_boltz_rescue_key_subline_second")} <br />
+                {t("download_boltz_rescue_key_subline_backup")}
+            </p>
             <Warning />
-            <p>{t("download_boltz_rescue_key_subline_third")}</p>
+            <p>
+                {emphasize(t("download_boltz_rescue_key_subline_save"))}
+                <br />
+                {emphasize(t("download_boltz_rescue_key_subline_warning"))}
+            </p>
             <div class="btns">
                 <button class="btn" onClick={downloadKey}>
                     {t("download_new_key")}
