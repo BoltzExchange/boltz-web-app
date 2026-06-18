@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.1.4](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.3..v2.1.4) - 2026-06-18
+
+### Bug Fixes
+
+- scanned QR address validation (#1515) - ([502103f](https://github.com/BoltzExchange/boltz-web-app/commit/502103f9ee31de01d7508c720f502617020f3be7))
+- stranded funds from dex quote shortfall (#1529) - ([992824b](https://github.com/BoltzExchange/boltz-web-app/commit/992824b7fdb7cc3b75d6378034714ac91f0f8bd7))
+
+### Features
+
+- display network badge on all pages (#1510) - ([5691d56](https://github.com/BoltzExchange/boltz-web-app/commit/5691d56029bd92c339c354734108ec74a5eed028))
+- onion domain for gas sponsor (#1513) - ([03aa745](https://github.com/BoltzExchange/boltz-web-app/commit/03aa745d1fa03491124dfadd1954bd40bca3fb26))
+- URL param for rescue backup via mnemonic (#1511) - ([ef18b28](https://github.com/BoltzExchange/boltz-web-app/commit/ef18b288daba308c3e241389f4efa0413230d2c7))
+- post message on swap completion (#1512) - ([413ede3](https://github.com/BoltzExchange/boltz-web-app/commit/413ede393d8b8c8e645d5e0316d1421669a21875))
+- add unblinded Liquid claim tx link (#1523) - ([37bc819](https://github.com/BoltzExchange/boltz-web-app/commit/37bc8195c34e7035498b5aa3082ef1b0310e813f))
+- add unix timestamp to rescue file name (#1528) - ([8e4eb73](https://github.com/BoltzExchange/boltz-web-app/commit/8e4eb7316bd0277e67de331783cc83c4e869b874))
+
+### Miscellaneous Chores
+
+- improve WebSocket logging (#1514) - ([97a7be6](https://github.com/BoltzExchange/boltz-web-app/commit/97a7be6da0cfeb112521f27a3d692b65459aa2cc))
+- update rbtc icon (#1519) - ([ab939d2](https://github.com/BoltzExchange/boltz-web-app/commit/ab939d2613a9162303bf21ec9f2a54da5589a77b))
+- bump regtest (#1521) - ([b291dfd](https://github.com/BoltzExchange/boltz-web-app/commit/b291dfd1abdf3c597a3bbeed8910807fd305ed4a))
+- log currency denomination (#1518) - ([78fb837](https://github.com/BoltzExchange/boltz-web-app/commit/78fb837f25990dc35d63be1cc11f34f8989f85db))
+- improve rescue key backup warnings (#1531) - ([42293ee](https://github.com/BoltzExchange/boltz-web-app/commit/42293ee5dc8b7ee785b061f264e921952897adbe))
+- bump dependencies (#1532) - ([b7f3d0e](https://github.com/BoltzExchange/boltz-web-app/commit/b7f3d0e9c05e50b1979894ed710770ea11949f2c))
+
+---
 ## [2.1.3](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.2..v2.1.3) - 2026-06-01
 
 ### Bug Fixes
@@ -21,6 +47,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - improve logging of resource fetching error (#1506) - ([f99feed](https://github.com/BoltzExchange/boltz-web-app/commit/f99feed8dd8b9ef47376916d2405f744ae86d7f9))
 - mempool.space API override for tests (#1508) - ([c49c110](https://github.com/BoltzExchange/boltz-web-app/commit/c49c110ccdc8c4dcbbd03e1eb8dbd9818b57e92b))
+- bump version to v2.1.3 (#1509) - ([fcabd80](https://github.com/BoltzExchange/boltz-web-app/commit/fcabd8055fc321a2d8b8ac9461e80ad252f75537))
 
 ### Refactoring
 
