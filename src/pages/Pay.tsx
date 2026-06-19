@@ -436,6 +436,16 @@ const Pay = () => {
         />
     );
 
+    // Post-bridge swaps need a "check status" link to follow the transfer to the
+    // destination chain; their status components render it themselves. Other
+    // swaps just get the plain transaction link, the default button below.
+    const shouldShowPostBridgeExplorer = createMemo(
+        () =>
+            transactionClaimedPostBridge() ||
+            swap()?.bridge?.recovery?.status ===
+                PreBridgeRecoveryStatus.Recovered,
+    );
+
     return (
         <Show
             when={swap()}
@@ -691,12 +701,7 @@ const Pay = () => {
                                         <SwapCreated />
                                     </Match>
                                 </Switch>
-                                <Show
-                                    when={
-                                        !transactionClaimedPostBridge() &&
-                                        swap()?.bridge?.recovery?.status !==
-                                            PreBridgeRecoveryStatus.Recovered
-                                    }>
+                                <Show when={!shouldShowPostBridgeExplorer()}>
                                     {blockExplorerLink()}
                                 </Show>
                             </Show>
