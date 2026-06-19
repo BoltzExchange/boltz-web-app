@@ -1,9 +1,12 @@
 import { render, screen } from "@solidjs/testing-library";
-import { SwapType } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 
-import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { config } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { BTC, LBTC, RBTC, USDT0 } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
+import type { SomeSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
 vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
@@ -15,6 +18,9 @@ vi.mock("../../packages/boltz-swaps/src/client.ts", () => ({
 describe("TransactionClaimed", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        config.assets!["USDT0-ETH"] ??= structuredClone(
+            mainnetConfig.assets!["USDT0-ETH"],
+        );
     });
 
     test.each`
@@ -43,5 +49,38 @@ describe("TransactionClaimed", () => {
         await expect(
             screen.findByText(i18n.en.congrats),
         ).resolves.not.toBeUndefined();
+    });
+
+    test("explains post-bridge delivery is still in progress", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <TransactionClaimed />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        payContext.setSwap({
+            type: SwapType.Reverse,
+            assetReceive: USDT0,
+            receiveAmount: 123_456,
+            claimTx: "0xclaim",
+            bridge: {
+                kind: "oft",
+                sourceAsset: USDT0,
+                destinationAsset: "USDT0-ETH",
+                position: SwapPosition.Post,
+            },
+        } as unknown as SomeSwap);
+
+        await expect(
+            screen.findByText(
+                /Swap complete!.*was sent via the Ethereum bridge/u,
+            ),
+        ).resolves.not.toBeUndefined();
+        expect(screen.queryByText(/You successfully received/u)).toBeNull();
     });
 });

@@ -3,9 +3,11 @@ import { useLocation } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
-import { SwapType } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { config } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -165,6 +167,9 @@ describe("Pay", () => {
             assetSend: LBTC,
             lockupDetails: {},
         });
+        config.assets!["USDT0-ETH"] ??= structuredClone(
+            mainnetConfig.assets!["USDT0-ETH"],
+        );
         mockUseLocation.mockReturnValue({
             hash: "",
             key: "",
@@ -378,6 +383,55 @@ describe("Pay", () => {
         const refundEta = await screen.findByTestId("refund-eta");
         const expectedDate = new Date(timeoutEta * 1000).toLocaleString();
         expect(refundEta).toHaveTextContent(expectedDate);
+    });
+
+    test("should show post-bridge status link directly below completed message", async () => {
+        const claimTx = "0xclaim";
+        const postBridgeSwap = {
+            id: "123",
+            type: SwapType.Reverse,
+            assetSend: BTC,
+            assetReceive: USDT0,
+            receiveAmount: 123_456,
+            claimTx,
+            bridge: {
+                kind: "oft",
+                sourceAsset: USDT0,
+                destinationAsset: "USDT0-ETH",
+                position: SwapPosition.Post,
+            },
+        } as ReverseSwap;
+
+        swapsGetItemMock.mockResolvedValue(postBridgeSwap);
+        mockGetSwapStatus.mockResolvedValue({
+            status: swapStatusSuccess.TransactionClaimed,
+        });
+        renderPay();
+        payContext.setSwap(postBridgeSwap);
+        payContext.setSwapStatus(swapStatusSuccess.TransactionClaimed);
+
+        const message = await screen.findByText(
+            /Swap complete!.*was sent via the Ethereum bridge/u,
+        );
+        const bridgeLink = (await screen.findByText(
+            dict.en.check_bridge_status,
+        )) as HTMLAnchorElement;
+        const newSwap = await screen.findByText(dict.en.new_swap);
+
+        expect(
+            message.compareDocumentPosition(bridgeLink) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(
+            bridgeLink.compareDocumentPosition(newSwap) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(screen.getAllByText(dict.en.check_bridge_status)).toHaveLength(
+            1,
+        );
+        expect(bridgeLink.href).toEqual(
+            `${config.layerZeroExplorerUrl}/tx/${claimTx}`,
+        );
     });
 
     test("should show refund button automatically when swap has timed out with UTXOs", async () => {

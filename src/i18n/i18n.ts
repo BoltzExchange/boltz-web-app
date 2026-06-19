@@ -69,6 +69,8 @@ const dict = {
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
+        bridge_transfer_pending:
+            "Swap complete! Your {{ amount }} {{ denomination }} was sent via the {{ network }} bridge. Bridge transfers may take a few minutes to finish.",
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
@@ -610,6 +612,8 @@ const dict = {
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
+        bridge_transfer_pending:
+            "Swap abgeschlossen! Deine {{ amount }} {{ denomination }} wurden über die {{ network }}-Bridge gesendet. Bridge-Transfers können einige Minuten dauern.",
         timeout_eta: "Timeout-ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap nicht gefunden!",
@@ -1168,6 +1172,8 @@ const dict = {
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
+        bridge_transfer_pending:
+            "¡Intercambio completado! Tus {{ amount }} {{ denomination }} se enviaron a través del puente {{ network }}. Las transferencias por puentes pueden tardar unos minutos en finalizar.",
         timeout_eta: "Tiempo de espera estimado",
         pay_invoice: "Intercambio: {{ id }}",
         pay_swap_404: "¡Intercambio no encontrado!",
@@ -1723,6 +1729,8 @@ const dict = {
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
+        bridge_transfer_pending:
+            "Troca concluída! Seus {{ amount }} {{ denomination }} foram enviados pela ponte {{ network }}. Transferências por pontes podem levar alguns minutos para finalizar.",
         timeout_eta: "Estimativa de Expiração",
         pay_invoice: "Troca: {{ id }}",
         pay_swap_404: "Troca não encontrada!",
@@ -2267,6 +2275,8 @@ const dict = {
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
+        bridge_transfer_pending:
+            "交换已完成！您的 {{ amount }} {{ denomination }} 已通过 {{ network }} 桥发送。桥接转账可能需要几分钟才能完成。",
         timeout_eta: "超过预期时间",
         pay_invoice: "交换：{{ id }}",
         pay_swap_404: "找不到交换！",
@@ -2767,6 +2777,8 @@ const dict = {
             "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
+        bridge_transfer_pending:
+            "スワップが完了しました！{{ amount }} {{ denomination }} は {{ network }} ブリッジ経由で送信されました。ブリッジ転送の完了には数分かかる場合があります。",
         timeout_eta: "タイムアウト予想時間",
         pay_invoice: "スワップ：{{ id }}",
         pay_swap_404: "スワップが見つかりません！",
