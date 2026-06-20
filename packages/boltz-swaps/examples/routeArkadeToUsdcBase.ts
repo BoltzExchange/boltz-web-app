@@ -45,6 +45,7 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { createBoltzClient, getPairs } from "boltz-swaps";
+import { calculateAmountOutMin } from "boltz-swaps/helper";
 import type { Signer } from "boltz-swaps/interfaces";
 import { type MainnetAsset, mainnetConfig } from "boltz-swaps/presets/mainnet";
 import {
@@ -219,7 +220,29 @@ const main = async () => {
         await sleep(5_000);
     }
 
-    // 3) Claim the destination + DEX + bridge in one atomic router claim.
+    // 3) Pin the minimum we will accept. In a real app, derive this from the
+    //    quote the user actually accepted; here we re-quote just before claiming
+    //    so market drift can't push the received amount below our slippage band.
+    //    `route.execute` enforces this exact floor instead of recomputing one
+    //    from its own fresh quote (and throws up front if the quote already
+    //    drifted below it).
+    const quote = await boltz.route.quoteAmountOut({
+        from: "ARK",
+        to: "USDC-BASE",
+        pairs,
+        amountIn: BigInt(amountSats),
+        recipient,
+    });
+    const minReceiveAmount = calculateAmountOutMin(
+        quote.receiveAmount,
+        slippage,
+    );
+    console.log(
+        `Quoted ~${quote.receiveAmount} USDC base units; ` +
+            `will not accept less than ${minReceiveAmount}.`,
+    );
+
+    // 4) Claim the destination + DEX + bridge in one atomic router claim.
     console.log("\nClaiming + swapping + bridging to Base…");
     const result = await boltz.route.execute({
         createdSwap,
@@ -227,6 +250,7 @@ const main = async () => {
         preimage: hex.encode(preimage),
         signer,
         recipient,
+        minReceiveAmount,
     });
 
     console.log("\n✅ Router claim broadcast");

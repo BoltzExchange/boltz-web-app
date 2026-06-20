@@ -116,6 +116,7 @@ const bridgePlan = (withDex = true): RoutePlan => ({
 
 type ClaimBridgeArgs = {
     lzTokenFee: bigint;
+    minAmountLd: bigint;
     outputTokenAddress: string;
     routerCalls: { target: string; value: string | bigint; callData: string }[];
 };
@@ -290,6 +291,58 @@ describe("executeRoute: DEX-only path (no bridge)", () => {
             signer,
             { to: "0xrouter", data: "0xdexonly" },
         );
+    });
+});
+
+describe("executeRoute: minReceiveAmount floor", () => {
+    const dexOnlyPlan: RoutePlan = {
+        from: "L-BTC",
+        to: "USDC-ARB",
+        chainSwap: { from: "L-BTC", to: "TBTC" },
+        dex: { chain: "ARB", tokenIn: TBTC_TOKEN, tokenOut: USDC_TOKEN },
+    };
+
+    test("DEX-only: pins amountOutMin to minReceiveAmount instead of the fresh quote", async () => {
+        await executeRoute({ ...args(dexOnlyPlan), minReceiveAmount: 7950n });
+
+        expect(mocks.encodeDexQuote).toHaveBeenCalledTimes(1);
+        expect(mocks.encodeDexQuote.mock.calls[0]?.[3]).toBe(7950n);
+    });
+
+    test("DEX-only: derives the floor from the fresh quote when minReceiveAmount is omitted", async () => {
+        await executeRoute(args(dexOnlyPlan));
+        expect(mocks.encodeDexQuote.mock.calls[0]?.[3]).toBe(7920n);
+    });
+
+    test("DEX-only: throws when the fresh quote is below minReceiveAmount", async () => {
+        await expect(
+            executeRoute({ ...args(dexOnlyPlan), minReceiveAmount: 8500n }),
+        ).rejects.toThrow(/below minReceiveAmount 8500 \(slippage exceeded\)/);
+        expect(mocks.sendPopulatedTransaction).not.toHaveBeenCalled();
+    });
+
+    test("bridge path: pins the final minAmountLd to minReceiveAmount", async () => {
+        const driver = makeDriver([0n, 0n]);
+        mocks.requireDriverForRoute.mockReturnValue(driver);
+
+        await executeRoute({
+            ...args(bridgePlan(false)),
+            minReceiveAmount: 8950n,
+        });
+
+        expect(claimBridgeArgs(driver).minAmountLd).toBe(8950n);
+    });
+
+    test("bridge path: throws when the bridge quote is below minReceiveAmount", async () => {
+        const driver = makeDriver([0n, 0n]);
+        mocks.requireDriverForRoute.mockReturnValue(driver);
+
+        await expect(
+            executeRoute({
+                ...args(bridgePlan(false)),
+                minReceiveAmount: 9500n,
+            }),
+        ).rejects.toThrow(/below minReceiveAmount 9500 \(slippage exceeded\)/);
     });
 });
 

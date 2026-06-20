@@ -1,18 +1,18 @@
 import { hex } from "@scure/base";
-import { getAddress } from "viem";
+import { getAddress, isAddressEqual } from "viem";
 
 import {
     type ChainSwapCreatedResponse,
     broadcastApiTransaction,
     getChainSwapTransactions,
 } from "./client.ts";
-import { getConfiguredNetwork, isEvmAsset } from "./config.ts";
+import { getConfiguredNetwork, getKindForAsset, isEvmAsset } from "./config.ts";
 import { stripHexPrefix } from "./evm/prefix0x.ts";
 import { sendPopulatedTransaction } from "./evm/sender.ts";
 import { buildSwapContractsForAsset } from "./evm/swapContracts.ts";
 import { type ClaimResult, claimAsset } from "./evm/transaction.ts";
 import type { Signer } from "./interfaces/signer.ts";
-import { GasAbstractionType } from "./types.ts";
+import { AssetKind, GasAbstractionType } from "./types.ts";
 import type { ECKeys, UtxoAsset } from "./utxo/index.ts";
 
 export type UtxoClaimKeys = {
@@ -143,6 +143,24 @@ export const executeChainSwap = async <A extends string = string>(
         signer,
         utxoClaim,
     } = args;
+
+    // Only ERC20 destinations honor a `destination` distinct from `claimAddress`
+    // (claim to `claimAddress`, then ERC20-transfer to `destination`). For
+    // native-EVM and UTXO destinations the claim pays `claimAddress` directly
+    // and `destination` is unused, so reject a distinct value instead of
+    // silently ignoring it.
+    if (destination !== undefined && getKindForAsset(to) !== AssetKind.ERC20) {
+        const sameAddress = isEvmAsset(to)
+            ? isAddressEqual(getAddress(destination), getAddress(claimAddress))
+            : destination === claimAddress;
+        if (!sameAddress) {
+            throw new Error(
+                `execute: destination must be omitted or equal claimAddress ` +
+                    `for ${to} (${getKindForAsset(to)}); forwarding to a ` +
+                    `distinct destination is only supported for ERC20 assets`,
+            );
+        }
+    }
 
     let claim: ClaimResult;
     if (isEvmAsset(to)) {

@@ -68,6 +68,7 @@ export type RouteExecuteArgs<A extends string = string> = {
     recipient: string;
     refundAddress?: string;
     slippage?: number;
+    minReceiveAmount?: bigint;
 };
 
 export type RouteExecuteResult = {
@@ -111,6 +112,7 @@ type RouterClaimContext<A extends string> = {
     timeoutBlockHeight: number;
     recipient: string;
     slippage: number;
+    minReceiveAmount?: bigint;
     signer: Signer;
     erc20Swap: Erc20SwapContract;
 };
@@ -122,6 +124,23 @@ const toBridgeRoute = (bridge: {
     sourceAsset: bridge.sourceAsset,
     destinationAsset: bridge.destinationAsset,
 });
+
+const resolveMinOut = (
+    quotedAmount: bigint,
+    slippage: number,
+    minReceiveAmount: bigint | undefined,
+): bigint => {
+    if (minReceiveAmount === undefined) {
+        return calculateAmountOutMin(quotedAmount, slippage);
+    }
+    if (quotedAmount < minReceiveAmount) {
+        throw new Error(
+            `route.execute: current quote ${quotedAmount} is below ` +
+                `minReceiveAmount ${minReceiveAmount} (slippage exceeded)`,
+        );
+    }
+    return minReceiveAmount;
+};
 
 const claimViaRouterBridge = async <A extends string>(
     ctx: RouterClaimContext<A>,
@@ -254,7 +273,11 @@ const claimViaRouterBridge = async <A extends string>(
         bridgeInput,
         quoteOptions,
     );
-    const amountLdWithSlippage = calculateAmountOutMin(minAmount, ctx.slippage);
+    const amountLdWithSlippage = resolveMinOut(
+        minAmount,
+        ctx.slippage,
+        ctx.minReceiveAmount,
+    );
 
     const claimSignature = await signErc20ClaimToRouter(
         ctx.signer,
@@ -306,9 +329,10 @@ const claimViaRouterDex = async <A extends string>(
         dex.tokenOut,
         ctx.assetAmount,
     );
-    const amountOutMin = calculateAmountOutMin(
+    const amountOutMin = resolveMinOut(
         BigInt(tradeQuote.quote),
         ctx.slippage,
+        ctx.minReceiveAmount,
     );
     const finalToken = dex.tokenOut;
 
@@ -421,6 +445,7 @@ export const executeRoute = async <A extends string = string>(
         timeoutBlockHeight: createdSwap.claimDetails.timeoutBlockHeight,
         recipient,
         slippage,
+        minReceiveAmount: args.minReceiveAmount,
         signer,
         erc20Swap,
     };

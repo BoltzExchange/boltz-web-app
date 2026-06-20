@@ -80,6 +80,17 @@ beforeEach(() => {
                 },
                 token: { address: CLAIM, decimals: 18 },
             },
+            RBTC: {
+                type: AssetKind.EVMNative,
+                network: {
+                    chainName: "Rootstock",
+                    symbol: "RBTC",
+                    gasToken: "RBTC",
+                    transport: NetworkTransport.Evm,
+                    chainId: 30,
+                    rpcUrls: ["http://localhost"],
+                },
+            },
         } as never,
     });
 });
@@ -123,6 +134,27 @@ describe("executeChainSwap: EVM destination", () => {
         await expect(
             executeChainSwap(evmArgs({ signer: undefined })),
         ).rejects.toThrow(/requires a signer/);
+        expect(claimAssetMock).not.toHaveBeenCalled();
+    });
+});
+
+describe("executeChainSwap: destination validation", () => {
+    test("rejects a distinct destination for a native-EVM asset", async () => {
+        await expect(
+            executeChainSwap(evmArgs({ to: "RBTC", destination: DESTINATION })),
+        ).rejects.toThrow(/destination must be omitted or equal claimAddress/);
+        expect(claimAssetMock).not.toHaveBeenCalled();
+    });
+
+    test("allows a native-EVM destination equal to claimAddress", async () => {
+        await executeChainSwap(evmArgs({ to: "RBTC", destination: CLAIM }));
+        expect(claimAssetMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("rejects a distinct destination for a UTXO asset", async () => {
+        await expect(
+            executeChainSwap(evmArgs({ to: "BTC", destination: DESTINATION })),
+        ).rejects.toThrow(/destination must be omitted or equal claimAddress/);
         expect(claimAssetMock).not.toHaveBeenCalled();
     });
 });
