@@ -6,7 +6,15 @@ const mocks = vi.hoisted(() => ({
     setSwap: vi.fn((nextSwap: unknown) => {
         mocks.swap = nextSwap;
     }),
-    setSwapStorage: vi.fn().mockResolvedValue(undefined),
+    modifySwapStorage: vi.fn(
+        async (
+            _id: string,
+            mutator: (s: unknown) => void | Promise<void>,
+        ): Promise<unknown> => {
+            await mutator(mocks.swap);
+            return mocks.swap;
+        },
+    ),
     setFailureReason: vi.fn(),
     setStatusOverride: vi.fn(),
     acceptChainSwapNewQuote: vi.fn().mockResolvedValue(undefined),
@@ -46,7 +54,7 @@ vi.mock("../../src/context/Global", () => ({
     useGlobalContext: () => ({
         t: (key: string) => key,
         fetchPairs: mocks.fetchPairs,
-        setSwapStorage: mocks.setSwapStorage,
+        modifySwapStorage: mocks.modifySwapStorage,
         pairs: () => ({
             chain: {
                 FINAL: {
@@ -151,8 +159,12 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
 
         expect(
             mocks.acceptChainSwapNewQuote.mock.invocationCallOrder[0],
-        ).toBeLessThan(mocks.setSwapStorage.mock.invocationCallOrder[0]);
-        expect(mocks.setSwapStorage).toHaveBeenCalledWith(
+        ).toBeLessThan(mocks.modifySwapStorage.mock.invocationCallOrder[0]);
+        expect(mocks.modifySwapStorage).toHaveBeenCalledWith(
+            "swap-1",
+            expect.any(Function),
+        );
+        expect(mocks.swap).toEqual(
             expect.objectContaining({
                 receiveAmount: 990,
                 claimDetails: expect.objectContaining({
@@ -181,6 +193,6 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
         });
 
         expect(mocks.acceptChainSwapNewQuote).not.toHaveBeenCalled();
-        expect(mocks.setSwapStorage).not.toHaveBeenCalled();
+        expect(mocks.modifySwapStorage).not.toHaveBeenCalled();
     });
 });

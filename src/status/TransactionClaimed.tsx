@@ -17,6 +17,7 @@ import { config } from "../config";
 import { getAssetNetwork, isEvmAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
@@ -47,9 +48,9 @@ const paymentValidationUrl = (invoice: string, preimage: string): string => {
 const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
     const navigate = useNavigate();
 
-    const { notify } = useGlobalContext();
+    const { notify, t, denomination, separator } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator, setSwapStorage } = useGlobalContext();
+    const modifySwap = useModifySwap();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
@@ -73,8 +74,9 @@ const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
             notify("error", formatError(e));
         }
 
-        submarine.preimage = res.preimage;
-        await setSwapStorage(submarine);
+        await modifySwap<SubmarineSwap>(submarine.id, (s) => {
+            s.preimage = res.preimage;
+        });
         return res.preimage;
     });
 

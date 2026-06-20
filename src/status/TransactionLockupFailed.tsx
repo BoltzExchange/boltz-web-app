@@ -24,6 +24,7 @@ import RefundButton, { incorrectAssetError } from "../components/RefundButton";
 import { isEvmAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { useModifySwap } from "../hooks/useModifySwap";
 import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import Pair from "../utils/Pair";
@@ -87,9 +88,9 @@ const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
 const TransactionLockupFailed = (props: {
     setStatusOverride: Setter<string | undefined>;
 }) => {
-    const { t, fetchPairs, setSwapStorage, pairs, slippage } =
-        useGlobalContext();
-    const { failureReason, swap, setSwap, setFailureReason } = usePayContext();
+    const { t, fetchPairs, pairs, slippage } = useGlobalContext();
+    const { failureReason, swap, setFailureReason } = usePayContext();
+    const modifySwap = useModifySwap();
     const [loading, setLoading] = createSignal(false);
     const [autoAcceptedQuote, setAutoAcceptedQuote] = createSignal<
         number | undefined
@@ -250,17 +251,16 @@ const TransactionLockupFailed = (props: {
         setLoading(true);
         try {
             await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
-            currentSwap.receiveAmount = quoteData.receiveAmount;
-            currentSwap.claimDetails.amount = quoteData.quote;
-            if (currentSwap.dex !== undefined) {
-                currentSwap.dex.quoteAmount =
-                    currentSwap.dex.position === SwapPosition.Pre
-                        ? quoteData.sentAmount
-                        : quoteData.receiveAmount;
-            }
-
-            await setSwapStorage(currentSwap);
-            setSwap(currentSwap);
+            await modifySwap<ChainSwap>(currentSwap.id, (swap) => {
+                swap.receiveAmount = quoteData.receiveAmount;
+                swap.claimDetails.amount = quoteData.quote;
+                if (swap.dex !== undefined) {
+                    swap.dex.quoteAmount =
+                        swap.dex.position === SwapPosition.Pre
+                            ? quoteData.sentAmount
+                            : quoteData.receiveAmount;
+                }
+            });
             setAutoAcceptedQuote(quoteData.quote);
             log.info(
                 `Accepted replacement quote for chain swap ${currentSwap.id}`,

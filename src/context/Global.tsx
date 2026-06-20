@@ -115,6 +115,10 @@ export type GlobalContextType = {
 
     setSwapStorage: (swap: SomeSwap) => Promise<void>;
     getSwap: <T = SomeSwap>(id: string) => Promise<T | null>;
+    modifySwapStorage: <T extends SomeSwap = SomeSwap>(
+        id: string,
+        mutator: (swap: T) => void | Promise<void>,
+    ) => Promise<T | null>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<void>;
@@ -393,6 +397,32 @@ const GlobalProvider = (props: {
 
     const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
 
+    // Serialized read-modify-write for a stored swap. Re-reads the latest
+    // persisted swap inside a per-swap lock and writes it back, so concurrent
+    // updates to different fields cannot clobber each other (lost-update race).
+    // The mutator receives the freshest swap; return value is the merged swap,
+    // or null if it no longer exists.
+    const modifySwapStorage = async <T extends SomeSwap = SomeSwap>(
+        id: string,
+        mutator: (swap: T) => void | Promise<void>,
+    ): Promise<T | null> => {
+        const apply = async (): Promise<T | null> => {
+            const swap = await getSwap<T>(id);
+            if (swap === null) {
+                return null;
+            }
+            await mutator(swap);
+            await setSwapStorage(swap);
+            return swap;
+        };
+
+        if (navigator.locks?.request === undefined) {
+            return await apply();
+        }
+
+        return await navigator.locks.request(`swapStorage:${id}`, apply);
+    };
+
     const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
@@ -404,20 +434,23 @@ const GlobalProvider = (props: {
     };
 
     const updateSwapStatus = async (id: string, newStatus: string) => {
-        const swap = await getSwap<SomeSwap & { status: string }>(id);
+        let changed = false;
+        const updated = await modifySwapStorage<SomeSwap & { status: string }>(
+            id,
+            (swap) => {
+                if (swap.status !== newStatus) {
+                    swap.status = newStatus;
+                    changed = true;
+                }
+            },
+        );
 
-        if (swap === undefined || swap === null) {
+        if (updated === null) {
             log.warn(`cannot update swap ${id} status: not found`);
             return false;
         }
 
-        if (swap.status !== newStatus) {
-            swap.status = newStatus;
-            await setSwapStorage(swap);
-            return true;
-        }
-
-        return false;
+        return changed;
     };
 
     const clearSwaps = async () => {
@@ -613,6 +646,7 @@ const GlobalProvider = (props: {
                 updateSwapStatus,
                 setSwapStorage,
                 getSwap,
+                modifySwapStorage,
                 deleteSwap,
                 getSwaps,
                 clearSwaps,
