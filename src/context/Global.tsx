@@ -391,7 +391,28 @@ const GlobalProvider = (props: {
 
     const deleteSwap = async (id: string) => await swapsForage.removeItem(id);
 
-    const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
+    const getSwap = async <T = SomeSwap,>(id: string): Promise<T | null> => {
+        const swap = await swapsForage.getItem<T>(id);
+
+        // TEMP DEBUG: inspect the loaded swap (esp. claimDetails.amount)
+        const details = (swap as unknown as {
+            claimDetails?: { amount?: number };
+        } | null)?.claimDetails;
+        log.warn(
+            `[debug] loaded swap ${id}, claimDetails.amount=`,
+            details?.amount,
+        );
+        log.warn(`[debug] full swap ${id}`, swap);
+
+        // TEMP HOTFIX: restore the replacement-quote amount that was lost for
+        // this stuck 0-amount chain swap so the claim can quote/execute.
+        if (swap !== null && id === "zTm7II1ybo7o" && details && !details.amount) {
+            details.amount = 872018;
+            log.warn(`[debug] patched claimDetails.amount for ${id} -> 872018`);
+        }
+
+        return swap;
+    };
 
     const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
