@@ -4,7 +4,7 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
-import { prefix0x } from "boltz-swaps/evm";
+import { type AlchemyCall, prefix0x, toAlchemyCall } from "boltz-swaps/evm";
 import { resolveErc20SwapAbi, resolveEtherSwapAbi } from "boltz-swaps/evm/abis";
 import {
     getEvmRefundCooperativeSignature,
@@ -26,6 +26,10 @@ import {
     erc20SwapAbi,
     etherSwapAbi,
 } from "boltz-swaps/generated/evm-abis";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "boltz-swaps/helper";
 import {
     AssetKind,
     type LockupEvent,
@@ -55,17 +59,12 @@ import {
     zeroAddress,
 } from "viem";
 
-import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
 import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import {
-    calculateAmountOutMin,
-    calculateAmountWithSlippage,
-} from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";

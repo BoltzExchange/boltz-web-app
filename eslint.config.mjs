@@ -21,8 +21,7 @@ export default [
             "src/utils/dnssec/dnssec_prover*",
             "packages/*/src/generated/**",
             "packages/*/dist/**",
-            "packages/*/tests/**",
-            "packages/*/vitest.config.mjs",
+            "packages/*/vitest*.config.mjs",
             "playwright-report",
         ],
     },
@@ -133,6 +132,30 @@ export default [
         },
     },
     {
+        files: [
+            "packages/boltz-swaps/tests/**/*.ts",
+            "packages/boltz-swaps/integration/**/*.ts",
+        ],
+        languageOptions: {
+            globals: globals.node,
+        },
+        rules: {
+            "no-console": "off",
+            "no-restricted-imports": "off",
+            "@typescript-eslint/no-restricted-imports": "off",
+            "require-await": "off",
+            "@typescript-eslint/require-await": "off",
+            "@typescript-eslint/consistent-type-imports": [
+                "warn",
+                { disallowTypeAnnotations: false },
+            ],
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+            ],
+        },
+    },
+    {
         files: ["packages/*/scripts/**/*.{mjs,ts}"],
         languageOptions: {
             globals: globals.node,
@@ -154,6 +177,12 @@ export default [
                 },
             ],
             "import-x/no-nodejs-modules": "error",
+        },
+    },
+    {
+        files: ["packages/boltz-swaps/src/utxo/**/*.ts"],
+        rules: {
+            "import-x/no-nodejs-modules": ["error", { allow: ["buffer"] }],
         },
     },
 ];

@@ -1,4 +1,5 @@
 import { hex } from "@scure/base";
+import type { LiquidTransactionOutputWithKey } from "boltz-swaps/utxo";
 import { Buffer } from "buffer";
 import { describe, expect, test } from "vitest";
 
@@ -7,7 +8,6 @@ import {
     formatBlindingData,
     getClaimBlindingData,
 } from "../../src/utils/blindedExplorer";
-import type { LiquidTransactionOutputWithKey } from "../../src/utils/compat";
 
 const reverse = (b: Uint8Array) => Uint8Array.from(b).reverse();
 

@@ -14,6 +14,7 @@ import {
 import type { ChainSwapDetails } from "boltz-swaps/client";
 import { createAssetProvider } from "boltz-swaps/evm";
 import { AssetKind, SwapType } from "boltz-swaps/types";
+import { createMusig, tweakMusig } from "boltz-swaps/utxo";
 import { type Address, keccak256 } from "viem";
 
 import {
@@ -36,7 +37,6 @@ import type {
     SomeSwap,
     SubmarineSwap,
 } from "./swapCreator";
-import { createMusig, tweakMusig } from "./taproot/musig";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts

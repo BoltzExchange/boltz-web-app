@@ -28,8 +28,21 @@ export interface BoltzSwapsConfig<A extends string = string> {
     // every request.
     referral?: string;
 
+    // Bitcoin/Liquid network for UTXO operations (e.g. chain-swap claims).
+    // Defaults to "mainnet".
+    network?: "mainnet" | "testnet" | "regtest";
+
+    // Alchemy-compatible gas-sponsor (bundler) endpoint used for gas-abstracted
+    // EVM claims. Defaults to the Boltz gas sponsor.
+    gasSponsor?: string;
+
+    // Default slippage tolerance (a fraction, e.g. 0.01 == 1%) applied by
+    // `route.execute` when the caller omits a per-call override. Defaults to
+    // 0.01.
+    defaultSlippage?: number;
+
     // When true, cooperative-signature Boltz endpoints throw before sending.
-    // Should only be used for testing
+    // Should only be used for testing.
     cooperativeDisabled?: boolean;
 }
 
@@ -49,6 +62,7 @@ export const MAINNET_API_DEFAULTS: {
     cctpExplorerUrl: string;
     layerZeroExplorerUrl: string;
     oftDeploymentsUrl: string;
+    gasSponsor: string;
 } = {
     boltzApiUrl: "https://api.boltz.exchange",
     cctpApiUrl: "https://iris-api.circle.com",
@@ -56,6 +70,7 @@ export const MAINNET_API_DEFAULTS: {
     cctpExplorerUrl: "https://ccxp.space",
     layerZeroExplorerUrl: "https://layerzeroscan.com",
     oftDeploymentsUrl: "https://docs.usdt0.to/api/deployments",
+    gasSponsor: "https://sponsor.ccxp.space",
 };
 
 const defaultGasTopUpSupported = (): boolean => false;
@@ -101,7 +116,13 @@ const mergeWithDefaults = <A extends string>(
             get: () => input[key] ?? REQUIRED_DEFAULTS[key],
         });
     }
-    for (const key of ["referral", "cooperativeDisabled"] as const) {
+    for (const key of [
+        "referral",
+        "cooperativeDisabled",
+        "network",
+        "gasSponsor",
+        "defaultSlippage",
+    ] as const) {
         Object.defineProperty(merged, key, {
             enumerable: true,
             get: () => input[key],
@@ -344,3 +365,12 @@ export const getReferralHeader = (): string | undefined =>
 
 export const isCooperativeDisabled = (): boolean =>
     getBoltzSwapsConfig().cooperativeDisabled === true;
+
+export const getConfiguredNetwork = (): "mainnet" | "testnet" | "regtest" =>
+    getBoltzSwapsConfig().network ?? "mainnet";
+
+export const getGasSponsorUrl = (): string =>
+    getBoltzSwapsConfig().gasSponsor ?? MAINNET_API_DEFAULTS.gasSponsor;
+
+export const getConfiguredDefaultSlippage = (): number =>
+    getBoltzSwapsConfig().defaultSlippage ?? 0.01;

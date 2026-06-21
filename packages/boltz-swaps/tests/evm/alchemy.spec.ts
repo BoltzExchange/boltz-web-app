@@ -6,8 +6,11 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import { sendTransaction, toAlchemyCall } from "../../src/alchemy/Alchemy";
-import type { Signer } from "../../src/context/Web3";
+import {
+    sendAlchemyTransaction,
+    toAlchemyCall,
+} from "../../src/evm/alchemy.ts";
+import type { Signer } from "../../src/interfaces/signer.ts";
 
 describe("Alchemy", () => {
     type JsonRpcRequest = {
@@ -72,7 +75,7 @@ describe("Alchemy", () => {
         });
     });
 
-    describe("sendTransaction", () => {
+    describe("sendAlchemyTransaction", () => {
         test("should sign prepared calls in the order Alchemy expects", async () => {
             const privateKey =
                 "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -97,7 +100,7 @@ describe("Alchemy", () => {
                     }),
                 }),
                 rdns: "test",
-            });
+            }) as Signer;
             const authPayload =
                 "0x2a8073568c8fad3edf15f70c3471a7fff18e1d57c650a501ab47f57a5c1f0e39";
             const userOperationPayload =
@@ -174,7 +177,7 @@ describe("Alchemy", () => {
                 });
 
             await expect(
-                sendTransaction(signer, 30n, [
+                sendAlchemyTransaction(signer, 30n, [
                     {
                         to: "0x1000000000000000000000000000000000000000",
                         data: "0x1234",
@@ -248,7 +251,7 @@ describe("Alchemy", () => {
                     }),
                 }),
                 rdns: "test",
-            });
+            }) as Signer;
             // Same payload as Path A — confirms both paths sign identically.
             const userOperationPayload =
                 "0xc69e468aa6fafb5c7298c02841e76f976b433018266af39a5807bc29ea9ad392";
@@ -310,7 +313,7 @@ describe("Alchemy", () => {
                 });
 
             await expect(
-                sendTransaction(signer, 30n, [
+                sendAlchemyTransaction(signer, 30n, [
                     {
                         to: "0x1000000000000000000000000000000000000000",
                         data: "0x1234",
@@ -393,7 +396,7 @@ describe("Alchemy", () => {
             });
 
             await expect(
-                sendTransaction(jsonRpcSigner, 30n, [
+                sendAlchemyTransaction(jsonRpcSigner, 30n, [
                     {
                         to: "0x1000000000000000000000000000000000000000",
                         data: "0x1234",

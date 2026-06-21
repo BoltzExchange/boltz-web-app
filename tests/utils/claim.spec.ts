@@ -29,18 +29,20 @@ describe("createTheirPartialChainSwapSignature", () => {
         },
     );
 
+    const utxoSourceSwap = {
+        id: "btc-swap",
+        assetSend: BTC,
+        refundPrivateKey: "11".repeat(32),
+        lockupDetails: { swapTree: {} },
+    } as unknown as ChainSwap;
+
     test("returns undefined when backend rejects with the not-eligible Error", async () => {
         vi.mocked(getChainSwapClaimDetails).mockRejectedValueOnce(
             new Error("swap not eligible for a cooperative claim"),
         );
 
-        const swap = {
-            id: "btc-swap",
-            assetSend: BTC,
-        } as unknown as ChainSwap;
-
         await expect(
-            createTheirPartialChainSwapSignature(deriveKey, swap),
+            createTheirPartialChainSwapSignature(deriveKey, utxoSourceSwap),
         ).resolves.toBeUndefined();
     });
 
@@ -48,13 +50,8 @@ describe("createTheirPartialChainSwapSignature", () => {
         const err = new Error("something else broke");
         vi.mocked(getChainSwapClaimDetails).mockRejectedValueOnce(err);
 
-        const swap = {
-            id: "btc-swap",
-            assetSend: BTC,
-        } as unknown as ChainSwap;
-
         await expect(
-            createTheirPartialChainSwapSignature(deriveKey, swap),
+            createTheirPartialChainSwapSignature(deriveKey, utxoSourceSwap),
         ).rejects.toThrow("something else broke");
     });
 });

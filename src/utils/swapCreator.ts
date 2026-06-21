@@ -16,6 +16,7 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "boltz-swaps/client";
+import type { AlchemyCall } from "boltz-swaps/evm";
 import {
     type BridgeKind,
     GasAbstractionType,
@@ -23,7 +24,6 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 
-import type { AlchemyCall } from "../alchemy/Alchemy";
 import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import type { newKeyFn } from "../context/Global";
 import type { EncodedHop } from "./Pair";

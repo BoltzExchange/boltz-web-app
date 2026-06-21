@@ -2,6 +2,9 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+    contents: read
+
 jobs:
     ci:
         runs-on: ubuntu-latest
@@ -57,6 +60,35 @@ jobs:
             - run: bun run check:lazy
 
             - run: bun run check:package
+
+    package-integration:
+        timeout-minutes: 30
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+
+            - name: Start regtest
+              env:
+                  COMPOSE_PROFILES: webapp-ci
+              run: |
+                  git submodule init
+                  git submodule update
+                  chmod -R 777 regtest
+                  git apply boltz.conf.patch
+                  cd regtest
+                  ./start.sh
+
+            - name: Install dependencies
+              run: bun ci
+
+            - name: Run SDK integration tests
+              working-directory: packages/boltz-swaps
+              run: bun run test:integration
 
     e2e:
         timeout-minutes: 60

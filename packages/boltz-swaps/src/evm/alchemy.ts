@@ -1,15 +1,13 @@
-import { prefix0x } from "boltz-swaps/evm";
-import log from "loglevel";
 import { type Address, type Hash, type Hex, toHex } from "viem";
 
-import { config } from "../config";
-import { chooseUrl, isTor } from "../configs/base";
-import type { Signer } from "../context/Web3";
-import { formatError } from "../utils/errors";
-import {
-    constructRequestOptions,
-    defaultTimeoutDuration,
-} from "../utils/helper";
+import { getGasSponsorUrl } from "../config.ts";
+import { formatError } from "../errors.ts";
+import type { AlchemyCall } from "../interfaces/alchemy.ts";
+import type { Signer } from "../interfaces/signer.ts";
+import { getLogger } from "../logger.ts";
+import { prefix0x } from "./prefix0x.ts";
+
+export type { AlchemyCall } from "../interfaces/alchemy.ts";
 
 const alchemyHeaders = {
     accept: "application/json",
@@ -17,6 +15,7 @@ const alchemyHeaders = {
 } as const;
 const jsonRpcVersion = "2.0";
 const jsonRpcId = 1;
+const requestTimeoutMs = 60_000;
 
 type JsonRpcError = {
     code: number;
@@ -50,9 +49,6 @@ const parseAlchemyResponse = <T>(
     try {
         return JSON.parse(rawBody) as JsonRpcResponse<T>;
     } catch {
-        log.error(
-            `Alchemy ${method} returned invalid JSON (HTTP ${response.status} ${response.statusText}): ${truncateBody(rawBody)}`,
-        );
         throw new Error(
             `Alchemy returned invalid JSON for ${method} (HTTP ${response.status} ${response.statusText})`,
         );
@@ -63,14 +59,13 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     method: string,
     params: unknown[],
 ): Promise<T> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), requestTimeoutMs);
+
     let response: Response;
-    const sponsorUrl = chooseUrl(config.gasSponsor);
-    if (sponsorUrl === undefined) {
-        throw new Error("missing gas sponsor url in config");
-    }
-    const timeoutMs = isTor() ? 60_000 : defaultTimeoutDuration;
-    const { opts, requestTimeout } = constructRequestOptions(
-        {
+    let rawBody: string;
+    try {
+        response = await fetch(getGasSponsorUrl(), {
             method: "POST",
             headers: alchemyHeaders,
             body: JSON.stringify({
@@ -79,45 +74,37 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
                 method,
                 params,
             }),
-        },
-        timeoutMs,
-    );
-
-    try {
-        response = await fetch(sponsorUrl, opts);
+            signal: controller.signal,
+        });
+        rawBody = await response.text();
     } catch (error) {
-        const isAbortError =
-            (error instanceof DOMException && error.name === "AbortError") ||
-            opts.signal?.aborted === true;
-        if (isAbortError) {
-            log.error(
-                `Alchemy ${method} timed out after ${timeoutMs}ms`,
+        if (controller.signal.aborted) {
+            getLogger().error(
+                `Alchemy ${method} timed out after ${requestTimeoutMs}ms`,
                 error,
             );
             throw new Error(
-                `Alchemy request timed out for ${method} after ${timeoutMs}ms`,
+                `Alchemy request timed out for ${method} after ${requestTimeoutMs}ms`,
                 { cause: error },
             );
         }
-
-        log.error(`Alchemy ${method} fetch failed`, error);
+        getLogger().error(`Alchemy ${method} fetch failed`, error);
         throw new Error(
             `Alchemy request failed for ${method}: ${formatError(error)}`,
             { cause: error },
         );
     } finally {
-        clearTimeout(requestTimeout);
+        clearTimeout(timer);
     }
 
-    const rawBody = await response.text();
     const payload = parseAlchemyResponse<T>(rawBody, method, response);
 
     if (!response.ok) {
         const errorDetails =
             payload.error !== undefined
                 ? `${payload.error.code} ${payload.error.message}`
-                : rawBody;
-        log.error(
+                : truncateBody(rawBody);
+        getLogger().error(
             `Alchemy ${method} HTTP ${response.status} ${response.statusText}`,
             payload.error ?? truncateBody(rawBody),
         );
@@ -127,14 +114,14 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     }
 
     if (payload.error !== undefined) {
-        log.error(`Alchemy ${method} RPC error`, payload.error);
+        getLogger().error(`Alchemy ${method} RPC error`, payload.error);
         throw new Error(
             `Alchemy RPC error for ${method}: ${payload.error.code} ${payload.error.message}`,
         );
     }
 
     if (payload.result === undefined) {
-        log.error(
+        getLogger().error(
             `Alchemy ${method} response missing result: ${truncateBody(rawBody)}`,
         );
         throw new Error(`Alchemy response for ${method} is missing result`);
@@ -147,19 +134,14 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     } as T;
 };
 
-const prepareCalls = async (
+const prepareCalls = (
     signerAddress: Address,
     chainId: string,
     calls: AlchemyCall[],
-) => {
-    return await requestAlchemy<PrepareCallsResponse>("wallet_prepareCalls", [
-        {
-            calls,
-            from: signerAddress,
-            chainId,
-        },
+) =>
+    requestAlchemy<PrepareCallsResponse>("wallet_prepareCalls", [
+        { calls, from: signerAddress, chainId },
     ]);
-};
 
 type SignatureRequest = {
     rawPayload?: string;
@@ -206,12 +188,6 @@ type GetCallsStatusResponse = JsonRpcSuccessResponse<{
     receipts?: CallsStatusReceipt[];
 }>;
 
-export type AlchemyCall = {
-    to: Address;
-    data?: Hex;
-    value?: string;
-};
-
 export type SendAlchemyTransactionOptions = {
     existingCallId?: string;
     onPreparedCallId?: (callId: string) => Promise<void> | void;
@@ -245,7 +221,6 @@ const signAuthorizationDigest = async (
             "Alchemy authorization signing requires a local signer",
         );
     }
-
     return await signer.account.sign({ hash });
 };
 
@@ -265,7 +240,7 @@ const signPreparedCalls = async (
         const entries = result.data as PrepareCallsEntry[];
         if (entries.length < 2) {
             throw new Error(
-                `signPreparedCalls: expected entries.length >= 2 for array result, got entries.length=${entries.length}`,
+                `signPreparedCalls: expected entries.length >= 2 for array result, got ${entries.length}`,
             );
         }
 
@@ -277,7 +252,7 @@ const signPreparedCalls = async (
             );
         }
 
-        // Sign the 7702 authorization as a raw digest (no EIP-191 prefix)
+        // Sign the 7702 authorization as a raw digest (no EIP-191 prefix).
         const authPayload = authEntry.signatureRequest.rawPayload;
         if (authPayload === undefined) {
             throw new Error(
@@ -289,7 +264,7 @@ const signPreparedCalls = async (
             authPayload as Hex,
         );
 
-        // Sign the user operation
+        // Sign the user operation.
         const uoPayload = uoEntry.signatureRequest.data?.raw;
         if (uoPayload === undefined) {
             throw new Error(
@@ -317,7 +292,7 @@ const signPreparedCalls = async (
         ];
     }
 
-    // Subsequent transactions: sign only the user operation
+    // Subsequent transactions: sign only the user operation.
     const payload = result.signatureRequest?.data?.raw;
     if (payload === undefined) {
         throw new Error(
@@ -357,47 +332,14 @@ const sendPreparedCalls = async (
             "Alchemy sendPreparedCalls response does not include a prepared call ID",
         );
     }
-
     return callId;
 };
 
-const getCallsStatus = async (
-    callId: string,
-): Promise<GetCallsStatusResponse> => {
-    return await requestAlchemy<GetCallsStatusResponse>(
-        "wallet_getCallsStatus",
-        [callId],
-    );
-};
+const getCallsStatus = (callId: string): Promise<GetCallsStatusResponse> =>
+    requestAlchemy<GetCallsStatusResponse>("wallet_getCallsStatus", [callId]);
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-export const sendTransaction = async (
-    signer: Signer,
-    chainId: bigint,
-    calls: AlchemyCall[],
-    options: SendAlchemyTransactionOptions = {},
-): Promise<Hash> => {
-    if (options.existingCallId !== undefined) {
-        return await waitForTransactionHash(options.existingCallId);
-    }
-
-    calls = calls.map((call) => ({
-        to: call.to,
-        value: call.value ? toHex(BigInt(call.value)) : undefined,
-        data: call.data ? prefix0x(call.data) : undefined,
-    }));
-
-    const prepared = await prepareCalls(
-        signer.address,
-        prefix0x(chainId.toString(16)),
-        calls,
-    );
-    const signed = await signPreparedCalls(signer, prepared);
-    const callId = await sendPreparedCalls(signed);
-    await options.onPreparedCallId?.(callId);
-    return await waitForTransactionHash(callId);
-};
+const sleep = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
 const waitForTransactionHash = async (
     callId: string,
@@ -411,55 +353,85 @@ const waitForTransactionHash = async (
         try {
             const status = await getCallsStatus(callId);
             if (consecutiveErrors > 0) {
-                log.info(
+                getLogger().info(
                     `Alchemy getCallsStatus recovered for call ${callId} after ${consecutiveErrors} consecutive failure(s)`,
                 );
             }
             consecutiveErrors = 0;
             lastStatusError = undefined;
 
-            if (
-                status.result.receipts !== undefined &&
-                status.result.receipts.length > 0
-            ) {
-                const hash = status.result.receipts[0].transactionHash;
-                log.debug(
+            const receipts = status.result.receipts;
+            if (receipts !== undefined && receipts.length > 0) {
+                const hash = receipts[0].transactionHash as Hash;
+                getLogger().debug(
                     `Alchemy call ${callId} confirmed after ${i + 1} poll(s): ${hash}`,
                 );
-                return hash as Hash;
+                return hash;
             }
         } catch (error) {
             lastStatusError = error;
             consecutiveErrors++;
             if (consecutiveErrors === 1 || consecutiveErrors % 10 === 0) {
-                log.warn(
+                getLogger().warn(
                     `Alchemy getCallsStatus failed for call ${callId} (attempt ${i + 1}/${maxAttempts}, ${consecutiveErrors} consecutive)`,
                     error,
                 );
             }
         }
-
         await sleep(intervalMs);
     }
 
     if (lastStatusError !== undefined) {
-        log.error(
+        getLogger().error(
             `Alchemy call ${callId} status unavailable after ${maxAttempts} attempts`,
             lastStatusError,
         );
         throw new Error(
-            `Transaction status unavailable after ${maxAttempts} attempts for call ${callId}: ${formatError(lastStatusError)}`,
+            `Alchemy call ${callId} status unavailable after ${maxAttempts} attempts: ${formatError(lastStatusError)}`,
         );
     }
-
-    log.error(
+    getLogger().error(
         `Alchemy call ${callId} not confirmed after ${maxAttempts} polls (no receipts returned)`,
     );
     throw new Error(
-        `Transaction not confirmed after ${maxAttempts} attempts for call ${callId}`,
+        `Alchemy call ${callId} not confirmed after ${maxAttempts} attempts`,
     );
 };
 
-export const waitForPreparedCallTransactionHash = async (
+/**
+ * Submit a batch of calls through the configured Alchemy-compatible gas sponsor
+ * (EIP-7702 account abstraction) and wait for the resulting transaction hash.
+ * Requires a local signer (for the authorization digest signature).
+ */
+export const sendAlchemyTransaction = async (
+    signer: Signer,
+    chainId: bigint,
+    calls: AlchemyCall[],
+    options: SendAlchemyTransactionOptions = {},
+): Promise<Hash> => {
+    if (options.existingCallId !== undefined) {
+        return waitForTransactionHash(options.existingCallId);
+    }
+
+    const normalizedCalls = calls.map((call) => ({
+        to: call.to,
+        value: call.value ? toHex(BigInt(call.value)) : undefined,
+        data: call.data ? prefix0x(call.data) : undefined,
+    }));
+
+    getLogger().debug("Sending transaction via Alchemy gas sponsor", calls);
+
+    const prepared = await prepareCalls(
+        signer.address,
+        prefix0x(chainId.toString(16)),
+        normalizedCalls,
+    );
+    const signed = await signPreparedCalls(signer, prepared);
+    const callId = await sendPreparedCalls(signed);
+    await options.onPreparedCallId?.(callId);
+    return waitForTransactionHash(callId);
+};
+
+export const waitForPreparedCallTransactionHash = (
     callId: string,
-): Promise<Hash> => await waitForTransactionHash(callId);
+): Promise<Hash> => waitForTransactionHash(callId);

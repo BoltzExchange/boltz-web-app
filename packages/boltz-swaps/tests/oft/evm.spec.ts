@@ -1,4 +1,4 @@
-import { type Signer } from "boltz-swaps/interfaces";
+import type { Signer } from "boltz-swaps/interfaces";
 import {
     type MsgFee,
     type SendParam,

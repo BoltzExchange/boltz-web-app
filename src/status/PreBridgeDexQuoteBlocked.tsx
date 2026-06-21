@@ -1,10 +1,10 @@
 import { useNavigate } from "@solidjs/router";
 import { bridgeRegistry } from "boltz-swaps/bridge";
+import type { AlchemyCall } from "boltz-swaps/evm";
 import log from "loglevel";
 import { Show } from "solid-js";
 import { getAddress } from "viem";
 
-import type { AlchemyCall } from "../alchemy/Alchemy";
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";

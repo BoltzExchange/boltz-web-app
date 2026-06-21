@@ -28,6 +28,7 @@ import {
 export type CoreMainnetAsset =
     | "BTC"
     | "L-BTC"
+    | "ARK"
     | "RBTC"
     | "TBTC"
     | "WBTC"
@@ -134,6 +135,9 @@ const buildCoreAssets = (
                     tor: "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/api",
                 },
             ],
+        },
+        ARK: {
+            type: AssetKind.UTXO,
         },
         RBTC: {
             type: AssetKind.EVMNative,

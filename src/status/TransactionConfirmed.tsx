@@ -1,9 +1,5 @@
 import BigNumber from "bignumber.js";
-import {
-    bridgeRegistry,
-    toRouterCalls,
-    vFromSignature,
-} from "boltz-swaps/bridge";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import {
     type QuoteData,
     encodeDexQuote,
@@ -12,8 +8,11 @@ import {
 } from "boltz-swaps/client";
 import {
     assetAmountToSats,
-    prefix0x,
+    dexCalldataToRouterCalls,
+    encodeRouterClaimExecuteTx,
     satsToAssetAmount,
+    signErc20ClaimToRouter,
+    signRouterClaim,
 } from "boltz-swaps/evm";
 import {
     type Erc20SwapContract,
@@ -24,7 +23,10 @@ import {
     type PopulatedEvmTransaction,
     getSignerForGasAbstraction,
 } from "boltz-swaps/evm/transaction";
-import { routerAbi } from "boltz-swaps/generated/evm-abis";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "boltz-swaps/helper";
 import {
     AssetKind,
     NetworkTransport,
@@ -41,13 +43,7 @@ import {
     on,
     untrack,
 } from "solid-js";
-import {
-    type Hex,
-    encodeFunctionData,
-    getAddress,
-    parseSignature,
-    zeroAddress,
-} from "viem";
+import { type Hex, getAddress, zeroAddress } from "viem";
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -59,10 +55,6 @@ import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
-import {
-    calculateAmountOutMin,
-    calculateAmountWithSlippage,
-} from "../utils/calculate";
 import {
     formatAmount,
     formatAssetAmountForLog,
@@ -267,95 +259,8 @@ const encodeRouterExecutionCalls = async (
         ),
     );
 
-    return calldata.flatMap(({ calls }) =>
-        calls.map((call) => ({
-            target: call.to,
-            value: call.value,
-            callData: prefix0x(call.data),
-        })),
-    );
+    return dexCalldataToRouterCalls(calldata);
 };
-
-export const signErc20ClaimToRouter = async (
-    signer: Signer,
-    erc20Swap: Erc20SwapContract,
-    chainId: bigint,
-    preimage: string,
-    amount: bigint,
-    tokenAddress: string,
-    refundAddress: string,
-    timeoutBlockHeight: number,
-    routerAddress: string,
-) => {
-    const version = await erc20Swap.read.version();
-
-    return parseSignature(
-        await signer.signTypedData({
-            account: signer.account,
-            domain: {
-                name: "ERC20Swap",
-                version: String(version),
-                verifyingContract: erc20Swap.address,
-                chainId,
-            },
-            types: {
-                Claim: [
-                    { name: "preimage", type: "bytes32" },
-                    { name: "amount", type: "uint256" },
-                    { name: "tokenAddress", type: "address" },
-                    { name: "refundAddress", type: "address" },
-                    { name: "timelock", type: "uint256" },
-                    { name: "destination", type: "address" },
-                ],
-            } as const,
-            primaryType: "Claim",
-            message: {
-                preimage: prefix0x(preimage),
-                amount,
-                tokenAddress: getAddress(tokenAddress),
-                refundAddress: getAddress(refundAddress),
-                timelock: BigInt(timeoutBlockHeight),
-                destination: getAddress(routerAddress),
-            },
-        }),
-    );
-};
-
-const signRouterClaim = async (
-    signer: Signer,
-    routerAddress: string,
-    chainId: bigint,
-    preimage: string,
-    finalToken: string,
-    minAmountOut: bigint,
-    destination: string,
-) =>
-    parseSignature(
-        await signer.signTypedData({
-            account: signer.account,
-            domain: {
-                name: "Router",
-                version: "2",
-                verifyingContract: getAddress(routerAddress),
-                chainId,
-            },
-            types: {
-                Claim: [
-                    { name: "preimage", type: "bytes32" },
-                    { name: "token", type: "address" },
-                    { name: "minAmountOut", type: "uint256" },
-                    { name: "destination", type: "address" },
-                ],
-            } as const,
-            primaryType: "Claim",
-            message: {
-                preimage: prefix0x(preimage),
-                token: getAddress(finalToken),
-                minAmountOut,
-                destination: getAddress(destination),
-            },
-        }),
-    );
 
 const claimErc20ViaRouter = async (
     gasAbstraction: GasAbstractionType,
@@ -404,32 +309,20 @@ const claimErc20ViaRouter = async (
         ),
     ]);
 
-    const tx = {
-        to: router.address,
-        data: encodeFunctionData({
-            abi: routerAbi,
-            functionName: "claimERC20Execute",
-            args: [
-                {
-                    preimage: prefix0x(preimage),
-                    amount: assetAmount,
-                    tokenAddress: getAddress(tokenAddress),
-                    refundAddress: getAddress(refundAddress),
-                    timelock: BigInt(timeoutBlockHeight),
-                    v: vFromSignature(claimSignature),
-                    r: claimSignature.r,
-                    s: claimSignature.s,
-                },
-                toRouterCalls(calls),
-                getAddress(execution.finalToken),
-                execution.minAmountOut,
-                getAddress(destination),
-                vFromSignature(routerSignature),
-                routerSignature.r,
-                routerSignature.s,
-            ],
-        }),
-    };
+    const tx = encodeRouterClaimExecuteTx({
+        router,
+        preimage,
+        amount: assetAmount,
+        tokenAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        claimSignature,
+        routerCalls: calls,
+        finalToken: execution.finalToken,
+        minAmountOut: execution.minAmountOut,
+        destination,
+        routerSignature,
+    });
 
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
@@ -557,13 +450,7 @@ const claimErc20ViaRouterBridge = async (
         timeoutBlockHeight,
         router.address,
     );
-    const routerCalls = calldata.flatMap(({ calls }) =>
-        calls.map((call) => ({
-            target: call.to,
-            value: call.value,
-            callData: prefix0x(call.data),
-        })),
-    );
+    const routerCalls = dexCalldataToRouterCalls(calldata);
 
     const approvalCall = await bridgeDriver.buildApprovalCall(
         bridge,

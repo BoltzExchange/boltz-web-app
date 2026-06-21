@@ -1,4 +1,5 @@
 export * from "./abis/index.ts";
+export * from "./alchemy.ts";
 export * from "./blockRanges.ts";
 export * from "./commitment.ts";
 export * from "./contracts.ts";
@@ -8,4 +9,7 @@ export * from "./logs.ts";
 export * from "./prefix0x.ts";
 export * from "./provider.ts";
 export * from "./rootstock.ts";
+export * from "./routerClaim.ts";
+export * from "./sender.ts";
+export * from "./swapContracts.ts";
 export * from "./transaction.ts";

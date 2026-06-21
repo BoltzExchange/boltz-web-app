@@ -1,6 +1,6 @@
 {
     "name": "boltz-swaps",
-    "version": "0.0.6",
+    "version": "0.0.8",
     "description": "Boltz Swap SDK",
     "license": "MIT",
     "repository": {
@@ -64,6 +64,26 @@
             "source": "./src/client.ts",
             "types": "./dist/client.d.ts",
             "default": "./dist/client.js"
+        },
+        "./status": {
+            "source": "./src/status.ts",
+            "types": "./dist/status.d.ts",
+            "default": "./dist/status.js"
+        },
+        "./execute": {
+            "source": "./src/execute.ts",
+            "types": "./dist/execute.d.ts",
+            "default": "./dist/execute.js"
+        },
+        "./route": {
+            "source": "./src/route.ts",
+            "types": "./dist/route.d.ts",
+            "default": "./dist/route.js"
+        },
+        "./routeExecute": {
+            "source": "./src/routeExecute.ts",
+            "types": "./dist/routeExecute.d.ts",
+            "default": "./dist/routeExecute.js"
         },
         "./bridge": {
             "source": "./src/bridge/index.ts",
@@ -145,6 +165,16 @@
             "types": "./dist/tron/lazy.d.ts",
             "default": "./dist/tron/lazy.js"
         },
+        "./lazy/utxo": {
+            "source": "./src/utxo/lazy.ts",
+            "types": "./dist/utxo/lazy.d.ts",
+            "default": "./dist/utxo/lazy.js"
+        },
+        "./utxo": {
+            "source": "./src/utxo/index.ts",
+            "types": "./dist/utxo/index.d.ts",
+            "default": "./dist/utxo/index.js"
+        },
         "./generated/evm-abis": {
             "source": "./src/generated/evm-abis.ts",
             "types": "./dist/generated/evm-abis.d.ts",
@@ -167,14 +197,15 @@
     "scripts": {
         "build": "rm -rf .tsbuildinfo dist/ && tsc",
         "dev": "tsc --watch",
-        "tsc": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && tsc --noEmit -p examples/tsconfig.json",
+        "tsc": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && tsc --noEmit -p examples/tsconfig.json && tsc --noEmit -p integration/tsconfig.json",
         "test": "vitest run",
+        "test:integration": "vitest run --config vitest.integration.config.mjs",
         "check:lazy": "node scripts/check-eager-loads.mjs",
         "check:package": "node scripts/check-package-smoke.mjs",
-        "prettier": "bunx prettier --cache src tests scripts *.json *.mjs",
+        "prettier": "bunx prettier --cache src tests integration scripts *.json *.mjs",
         "prettier:write": "bun run prettier -- --write",
         "prettier:check": "bun run prettier -- --check",
-        "lint": "eslint --max-warnings 0 --cache src scripts",
+        "lint": "eslint --max-warnings 0 --cache src scripts tests integration",
         "check": "bun run prettier:write && bun run lint -- --fix && bun run tsc",
         "generate:evm-abis": "bun run scripts/generate-evm-abis.ts",
         "generate:solana-oft": "codama run solana-oft",
@@ -194,11 +225,15 @@
         "@metaplex-foundation/umi-bundle-defaults": "catalog:",
         "@metaplex-foundation/umi-signer-wallet-adapters": "catalog:",
         "@reown/appkit-utils": "catalog:",
+        "@scure/btc-signer": "catalog:",
         "@solana/kit": "catalog:",
         "@solana/program-client-core": "catalog:",
         "@solana/spl-token": "catalog:",
         "@solana/web3.js": "catalog:",
         "@tronweb3/tronwallet-abstract-adapter": "catalog:",
+        "@vulpemventures/secp256k1-zkp": "catalog:",
+        "boltz-core": "catalog:",
+        "liquidjs-lib": "catalog:",
         "tronweb": "catalog:",
         "viem": "catalog:"
     },
@@ -221,6 +256,9 @@
         "@reown/appkit-utils": {
             "optional": true
         },
+        "@scure/btc-signer": {
+            "optional": true
+        },
         "@solana/kit": {
             "optional": true
         },
@@ -234,6 +272,15 @@
             "optional": true
         },
         "@tronweb3/tronwallet-abstract-adapter": {
+            "optional": true
+        },
+        "@vulpemventures/secp256k1-zkp": {
+            "optional": true
+        },
+        "boltz-core": {
+            "optional": true
+        },
+        "liquidjs-lib": {
             "optional": true
         },
         "tronweb": {

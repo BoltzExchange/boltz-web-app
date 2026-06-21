@@ -31,6 +31,12 @@ export const configureBoltzSwaps = () => {
         get referral() {
             return getReferral();
         },
+        get gasSponsor() {
+            return chooseUrl(config.gasSponsor);
+        },
+        get network() {
+            return config.network;
+        },
         gasTopUpSupported,
         getGasTopUpNativeAmount,
         cooperativeDisabled: config.cooperativeDisabled === true,

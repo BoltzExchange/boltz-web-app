@@ -16,6 +16,7 @@ import {
     etherSwapAbi,
     routerAbi,
 } from "boltz-swaps/generated/evm-abis";
+import { calculateAmountWithSlippage } from "boltz-swaps/helper";
 import { AssetKind } from "boltz-swaps/types";
 import { randomBytes } from "crypto";
 import log from "loglevel";
@@ -46,7 +47,6 @@ import {
     useWeb3Signer,
 } from "../context/Web3";
 import type { EncodedHop } from "../utils/Pair";
-import { calculateAmountWithSlippage } from "../utils/calculate";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";

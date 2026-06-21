@@ -10,38 +10,43 @@ import {
 } from "boltz-core";
 import type { LiquidClaimDetails } from "boltz-core/liquid";
 import {
-    getChainSwapClaimDetails,
     getChainSwapTransactions,
     getPartialReverseClaimSignature,
     getReverseTransaction,
     getSubmarineClaimDetails,
-    postChainSwapDetails,
     postSubmarineClaimDetails,
 } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
+import {
+    type LiquidTransactionOutputWithKey,
+    type PartialSignatureResponse,
+    type TransactionInterface,
+    type UtxoAsset,
+    type UtxoNetwork,
+    claimChainSwapUtxo,
+    createCooperativeSourceClaimSignature,
+    createMusig,
+    getConstructClaimTransaction,
+    getOutputAmount,
+    getTransaction,
+    hashForWitnessV1,
+    setCooperativeWitness,
+    tweakMusig,
+    txToHex,
+    txToId,
+} from "boltz-swaps/utxo";
 import type { Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
+import { config } from "../config";
 import { type AssetType, LBTC, RBTC, isEvmAsset } from "../consts/Assets";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getClaimBlindingData } from "./blindedExplorer";
 import { broadcastTransaction } from "./blockchain";
-import {
-    type LiquidTransactionOutputWithKey,
-    type TransactionInterface,
-    decodeAddress,
-    getConstructClaimTransaction,
-    getNetwork,
-    getOutputAmount,
-    getTransaction,
-    setCooperativeWitness,
-    txToHex,
-    txToId,
-} from "./compat";
+import { decodeAddress, getNetwork } from "./compat";
 import type { ECKeys } from "./ecpair";
-import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import {
@@ -51,7 +56,6 @@ import {
     type SubmarineSwap,
     getRelevantAssetForSwap,
 } from "./swapCreator";
-import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 type ClaimableSwap = ReverseSwap | ChainSwap;
 
@@ -238,58 +242,22 @@ const claimReverseSwap = async (
 export const createTheirPartialChainSwapSignature = async (
     deriveKey: deriveKeyFn,
     swap: ChainSwap,
-): Promise<Awaited<ReturnType<typeof postChainSwapDetails>> | undefined> => {
+): Promise<PartialSignatureResponse | undefined> => {
     // EVM claim transactions can't be signed cooperatively
     if (isEvmAsset(swap.assetSend)) {
         return undefined;
     }
 
-    // Sign the claim transaction of the server
-    try {
-        const serverClaimDetails = await getChainSwapClaimDetails(swap.id);
-
-        const boltzClaimPublicKey = hex.decode(serverClaimDetails.publicKey);
-        const theirClaimKeyAgg = createMusig(
-            parsePrivateKey(
-                deriveKey,
-                swap.assetSend as AssetType,
-                swap.refundPrivateKeyIndex,
-                swap.refundPrivateKey,
-            ),
-            boltzClaimPublicKey,
-        );
-        const tweaked = tweakMusig(
-            swap.assetSend,
-            theirClaimKeyAgg,
-            SwapTreeSerializer.deserializeSwapTree(swap.lockupDetails.swapTree)
-                .tree,
-        );
-
-        const withMsg = tweaked.message(
-            hex.decode(serverClaimDetails.transactionHash),
-        );
-        const withNonce = withMsg.generateNonce();
-
-        const aggNonces = withNonce.aggregateNonces([
-            [boltzClaimPublicKey, hex.decode(serverClaimDetails.pubNonce)],
-        ]);
-        const session = aggNonces.initializeSession();
-        const signed = session.signPartial();
-
-        return {
-            pubNonce: hex.encode(withNonce.publicNonce),
-            partialSignature: hex.encode(signed.ourPartialSignature),
-        };
-    } catch (err) {
-        if (formatError(err) === "swap not eligible for a cooperative claim") {
-            log.debug(
-                `Backend already broadcast their claim for chain swap ${swap.id}`,
-            );
-            return undefined;
-        }
-
-        throw err;
-    }
+    return await createCooperativeSourceClaimSignature(swap.id, {
+        asset: swap.assetSend as UtxoAsset,
+        refundKeys: parsePrivateKey(
+            deriveKey,
+            swap.assetSend as AssetType,
+            swap.refundPrivateKeyIndex,
+            swap.refundPrivateKey,
+        ),
+        sourceSwapTree: swap.lockupDetails.swapTree,
+    });
 };
 
 const claimChainSwap = async (
@@ -299,91 +267,46 @@ const claimChainSwap = async (
     cooperative = true,
 ): Promise<TransactionInterface> => {
     log.info(`Claiming Chain swap cooperatively: ${cooperative}`);
-    const {
-        privateKey: claimPrivateKey,
-        boltzPublicKey: boltzRefundPublicKey,
-        tree: claimTree,
-        keyAgg: ourClaimKeyAgg,
-        tweaked,
-    } = getClaimTaprootContext(deriveKey, swap);
 
-    const swapOutput = findSwapOutput(tweaked, lockupTx);
-
-    const details = [
-        {
-            ...swapOutput,
-            cooperative: cooperative,
-            swapTree: claimTree,
-            privateKey: claimPrivateKey.privateKey,
-            type: OutputType.Taproot,
-            transactionId: txToId(lockupTx),
-            blindingPrivateKey: parseBlindingKey(swap, false),
-            internalKey: ourClaimKeyAgg.aggPubkey,
-            preimage: hex.decode(swap.preimage),
-        },
-    ] as unknown as (ClaimDetails & { blindingPrivateKey: Uint8Array })[];
-    const decodedAddress = decodeAddress(swap.assetReceive, swap.claimAddress);
-    const claimTx = await createAdjustedClaim(
-        swap,
-        details,
-        decodedAddress.script,
-        swap.assetReceive === LBTC
-            ? (getNetwork(swap.assetReceive) as LiquidNetwork)
-            : undefined,
-        decodedAddress.blindingKey,
+    const claimKeys = parsePrivateKey(
+        deriveKey,
+        swap.assetReceive as AssetType,
+        swap.claimPrivateKeyIndex,
+        swap.claimPrivateKey,
     );
 
-    if (!cooperative) {
-        return claimTx;
-    }
+    // Cooperatively co-sign the server's source claim only when the source is
+    // a UTXO chain; EVM sources reveal the preimage on-chain instead.
+    const cooperativeSource = !isEvmAsset(swap.assetSend)
+        ? {
+              asset: swap.assetSend as UtxoAsset,
+              refundKeys: parsePrivateKey(
+                  deriveKey,
+                  swap.assetSend as AssetType,
+                  swap.refundPrivateKeyIndex,
+                  swap.refundPrivateKey,
+              ),
+              sourceSwapTree: swap.lockupDetails.swapTree,
+          }
+        : undefined;
 
-    try {
-        const sigHash = hashForWitnessV1(
-            swap.assetReceive,
-            getNetwork(swap.assetReceive),
-            details,
-            claimTx,
-            0,
-        );
+    const result = await claimChainSwapUtxo({
+        id: swap.id,
+        asset: swap.assetReceive as UtxoAsset,
+        network: config.network as UtxoNetwork,
+        serverPublicKey: swap.claimDetails.serverPublicKey,
+        swapTree: swap.claimDetails.swapTree,
+        blindingKey: swap.claimDetails.blindingKey,
+        claimKeys,
+        preimage: hex.decode(swap.preimage),
+        claimAddress: swap.claimAddress,
+        receiveAmount: swap.receiveAmount,
+        lockupTxHex: txToHex(lockupTx),
+        cooperativeSource,
+        cooperative,
+    });
 
-        const withMsg = tweaked.message(sigHash);
-        const withNonce = withMsg.generateNonce();
-
-        // Post our partial signature to ask for theirs. For EVM-receiving
-        // chain swaps, the server has no MuSig claim to cooperate on, so
-        // theirSig is undefined and we just request our partial signature
-        const theirSig = await createTheirPartialChainSwapSignature(
-            deriveKey,
-            swap,
-        );
-        const theirPartial = await postChainSwapDetails(
-            swap.id,
-            swap.preimage,
-            theirSig,
-            {
-                index: 0,
-                transaction: txToHex(claimTx),
-                pubNonce: hex.encode(withNonce.publicNonce),
-            },
-        );
-
-        const aggNonces = withNonce.aggregateNonces([
-            [boltzRefundPublicKey, hex.decode(theirPartial.pubNonce)],
-        ]);
-        const session = aggNonces.initializeSession();
-        const withTheirs = session.addPartial(
-            boltzRefundPublicKey,
-            hex.decode(theirPartial.partialSignature),
-        );
-        const signed = withTheirs.signPartial();
-
-        setCooperativeWitness(claimTx, 0, signed.aggregatePartials());
-
-        return claimTx;
-    } catch (e) {
-        log.warn("Uncooperative Taproot claim because", e);
-        return claimChainSwap(deriveKey, swap, lockupTx, false);
-    }
+    return getTransaction(swap.assetReceive).fromHex(result.transactionHex);
 };
 
 export const findSwapOutputVout = (

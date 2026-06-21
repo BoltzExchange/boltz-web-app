@@ -20,6 +20,7 @@ import {
     type PartialSignature,
     type QuoteCalldata,
     type QuoteData,
+    type SwapStatusResponse,
     acceptChainSwapNewQuote,
     createChainSwap,
     encodeDexQuote,
@@ -27,6 +28,7 @@ import {
     getChainSwapNewQuote,
     getChainSwapTransactions,
     getCommitmentLockupDetails,
+    getSwapStatus,
     postChainSwapDetails,
     quoteDexAmountIn,
     quoteDexAmountOut,
@@ -52,12 +54,26 @@ import {
     claimAsset,
 } from "./evm/transaction.ts";
 import {
+    type ChainSwapExecuteArgs,
+    type ChainSwapExecuteResult,
+    type UtxoClaimKeys,
+    executeChainSwap,
+} from "./execute.ts";
+import {
     type RouteQuote,
     type RouteQuoteAmountInArgs,
     type RouteQuoteAmountOutArgs,
     quoteRouteAmountIn,
     quoteRouteAmountOut,
 } from "./route.ts";
+import {
+    type RouteCreateArgs,
+    type RouteCreated,
+    type RouteExecuteArgs,
+    type RouteExecuteResult,
+    createRoute,
+    executeRoute,
+} from "./routeExecute.ts";
 import type { Asset } from "./types.ts";
 
 export type BoltzClientConfig<A extends string = string> =
@@ -174,10 +190,14 @@ export interface BoltzClient<A extends string = string> {
         vFromSignature(signature: Signature): number;
     };
     readonly swap: {
+        status(id: string): Promise<SwapStatusResponse>;
         chain: {
             create(
                 args: ChainSwapCreateArgs<A>,
             ): Promise<ChainSwapCreatedResponse>;
+            execute(
+                args: ChainSwapExecuteArgs<A>,
+            ): Promise<ChainSwapExecuteResult>;
             transactions: typeof getChainSwapTransactions;
             newQuote: typeof getChainSwapNewQuote;
             acceptNewQuote: typeof acceptChainSwapNewQuote;
@@ -208,6 +228,8 @@ export interface BoltzClient<A extends string = string> {
             args: RouteQuoteAmountOutArgs<A>,
         ): Promise<RouteQuote<A>>;
         quoteAmountIn(args: RouteQuoteAmountInArgs<A>): Promise<RouteQuote<A>>;
+        create(args: RouteCreateArgs<A>): Promise<RouteCreated<A>>;
+        execute(args: RouteExecuteArgs<A>): Promise<RouteExecuteResult>;
     };
 }
 
@@ -223,6 +245,9 @@ const configKeys: ReadonlyArray<keyof BoltzSwapsConfig> = [
     "boltzApiUrl",
     "referral",
     "cooperativeDisabled",
+    "network",
+    "gasSponsor",
+    "defaultSlippage",
 ];
 
 const buildConfigProxy = <A extends string>(
@@ -281,6 +306,7 @@ export const createBoltzClient = <A extends string = string>(
             vFromSignature,
         },
         swap: {
+            status: (id) => getSwapStatus(id),
             chain: {
                 create: ({
                     from,
@@ -302,6 +328,7 @@ export const createBoltzClient = <A extends string = string>(
                         claimAddress,
                         pairHash,
                     ),
+                execute: (args) => executeChainSwap(args),
                 transactions: getChainSwapTransactions,
                 newQuote: getChainSwapNewQuote,
                 acceptNewQuote: acceptChainSwapNewQuote,
@@ -336,6 +363,8 @@ export const createBoltzClient = <A extends string = string>(
         route: {
             quoteAmountOut: (args) => quoteRouteAmountOut(args),
             quoteAmountIn: (args) => quoteRouteAmountIn(args),
+            create: (args) => createRoute(args),
+            execute: (args) => executeRoute(args),
         },
     };
     return client;
@@ -349,6 +378,8 @@ export type {
     BridgeRoute,
     BridgeSendQuote,
     ChainSwapCreatedResponse,
+    ChainSwapExecuteArgs,
+    ChainSwapExecuteResult,
     ClaimResult,
     CommitmentLockupDetails,
     EncodeRouterExecuteArgs,
@@ -363,4 +394,6 @@ export type {
     RelayClaimTransactionFn,
     RouterCall,
     SendTransactionFn,
+    SwapStatusResponse,
+    UtxoClaimKeys,
 };

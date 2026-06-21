@@ -13,6 +13,17 @@ import {
     getPartialRefundSignature,
 } from "boltz-swaps/client";
 import { SwapType, arbitrumChainId } from "boltz-swaps/types";
+import {
+    type DecodedAddress,
+    type TransactionInterface,
+    createMusig,
+    getTransaction,
+    hashForWitnessV1,
+    setCooperativeWitness,
+    tweakMusig,
+    txToHex,
+    txToId,
+} from "boltz-swaps/utxo";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
@@ -41,15 +52,9 @@ import {
     getSwapUTXOs,
 } from "./blockchain";
 import {
-    type DecodedAddress,
-    type TransactionInterface,
     decodeAddress,
     getConstructRefundTransaction,
     getNetwork,
-    getTransaction,
-    setCooperativeWitness,
-    txToHex,
-    txToId,
 } from "./compat";
 import type { ECKeys } from "./ecpair";
 import { formatError } from "./errors";
@@ -62,7 +67,6 @@ import {
     type SubmarineSwap,
     isEvmSwap,
 } from "./swapCreator";
-import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export enum RescueAction {
     Successful = "successful",

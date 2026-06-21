@@ -11,7 +11,6 @@ import type { Signer } from "../../src/context/Web3";
 import {
     getClaimAssetForRoute,
     normalizePersistedReceiveAmount,
-    signErc20ClaimToRouter,
 } from "../../src/status/TransactionConfirmed";
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
 import { claimAsset } from "../../src/utils/evmTransaction";
@@ -196,58 +195,6 @@ describe("TransactionConfirmed claimAsset", () => {
                 ],
             }),
         ).toEqual(TBTC);
-    });
-
-    test("should read the ERC20 swap domain from the active claim signer connection", async () => {
-        const signer = {
-            signTypedData: vi
-                .fn()
-                .mockResolvedValue(`0x${"b".repeat(64)}${"c".repeat(64)}1b`),
-        };
-        const erc20Swap = {
-            address: "0x1000000000000000000000000000000000000000",
-            read: {
-                version: vi.fn().mockResolvedValue(7),
-            },
-        };
-
-        await expect(
-            signErc20ClaimToRouter(
-                signer as never,
-                erc20Swap as never,
-                31n,
-                "11".repeat(32),
-                123n,
-                "0x2000000000000000000000000000000000000000",
-                "0x3000000000000000000000000000000000000000",
-                144,
-                "0x4000000000000000000000000000000000000000",
-            ),
-        ).resolves.toMatchObject({
-            r: `0x${"b".repeat(64)}`,
-            s: `0x${"c".repeat(64)}`,
-        });
-
-        expect(erc20Swap.read.version).toHaveBeenCalledTimes(1);
-        expect(signer.signTypedData).toHaveBeenCalledWith(
-            expect.objectContaining({
-                domain: expect.objectContaining({
-                    chainId: 31n,
-                    version: "7",
-                    verifyingContract:
-                        "0x1000000000000000000000000000000000000000",
-                }),
-                primaryType: "Claim",
-                types: expect.any(Object),
-                message: expect.objectContaining({
-                    preimage: `0x${"11".repeat(32)}`,
-                    amount: 123n,
-                    tokenAddress: "0x2000000000000000000000000000000000000000",
-                    refundAddress: "0x3000000000000000000000000000000000000000",
-                    destination: "0x4000000000000000000000000000000000000000",
-                }),
-            }),
-        );
     });
 
     test("should use direct ERC20 claim path", async () => {

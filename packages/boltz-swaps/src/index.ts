@@ -3,10 +3,12 @@ export * from "./chains.ts";
 export * from "./client.ts";
 export * from "./config.ts";
 export * from "./errors.ts";
+export * from "./execute.ts";
 export * from "./helper.ts";
 export * from "./lazy.ts";
 export * from "./logger.ts";
 export * from "./route.ts";
+export * from "./routeExecute.ts";
 export * from "./sdk.ts";
 export * from "./types.ts";
 

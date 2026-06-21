@@ -1,6 +1,6 @@
-import { type BoltzSwapsConfig } from "../../src/config.ts";
+import type { BoltzSwapsConfig } from "../../src/config.ts";
 import { type MainnetAsset, mainnetConfig } from "../../src/presets/mainnet.ts";
-import { type Asset } from "../../src/types.ts";
+import type { Asset } from "../../src/types.ts";
 
 export const mainnetAssets = mainnetConfig.assets as Record<
     MainnetAsset,
