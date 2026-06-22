@@ -3,6 +3,7 @@ import type * as BoltzClientModule from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
 
 import type * as ConfigModule from "../../src/config";
+import type { SomeSwap } from "../../src/utils/swapCreator";
 
 const { getPairsMock, configMock } = vi.hoisted(() => ({
     getPairsMock: vi.fn<typeof BoltzClientModule.getPairs>(),
@@ -19,6 +20,10 @@ vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
         getPairs: getPairsMock,
     };
 });
+
+vi.mock("../../src/utils/migration", () => ({
+    migrateStorage: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -149,6 +154,70 @@ describe("Global context", () => {
             expect(globalSignals.embeddedMode()).toBe(false);
             globalSignals.setEmbeddedMode(true);
             expect(globalSignals.embeddedMode()).toBe(true);
+        });
+    });
+
+    describe("swap storage", () => {
+        const renderProvider = () => {
+            getPairsMock.mockResolvedValue(emptyPairs);
+            render(() => (
+                <GlobalProvider>
+                    <Probe />
+                </GlobalProvider>
+            ));
+        };
+
+        const storeSwap = (id: string, status: string) =>
+            globalSignals.setSwapStorage({ id, status } as unknown as SomeSwap);
+
+        test("modifySwapStorage applies the mutator and persists", async () => {
+            renderProvider();
+            await storeSwap("s1", "a");
+
+            const updated = await globalSignals.modifySwapStorage("s1", (s) => {
+                (s as unknown as { status: string }).status = "b";
+            });
+
+            expect(
+                (updated as unknown as { status: string } | null)?.status,
+            ).toBe("b");
+            const stored = await globalSignals.getSwap<{ status: string }>(
+                "s1",
+            );
+            expect(stored?.status).toBe("b");
+        });
+
+        test("modifySwapStorage returns null for a missing swap", async () => {
+            renderProvider();
+            const result = await globalSignals.modifySwapStorage(
+                "missing",
+                () => {},
+            );
+            expect(result).toBeNull();
+        });
+
+        test("updateSwapStatus persists through the lock and reports changes", async () => {
+            renderProvider();
+            await storeSwap("s2", "old");
+
+            expect(await globalSignals.updateSwapStatus("s2", "new")).toBe(
+                true,
+            );
+            const stored = await globalSignals.getSwap<{ status: string }>(
+                "s2",
+            );
+            expect(stored?.status).toBe("new");
+
+            expect(await globalSignals.updateSwapStatus("s2", "new")).toBe(
+                false,
+            );
+        });
+
+        test("updateSwapStatus returns false for a missing swap", async () => {
+            renderProvider();
+            expect(await globalSignals.updateSwapStatus("nope", "x")).toBe(
+                false,
+            );
         });
     });
 });

@@ -39,12 +39,12 @@ import {
 import { config } from "../config";
 import { getKindForAsset, getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 import {
     type Signer,
     customDerivationPathRdns,
     useWeb3Signer,
 } from "../context/Web3";
+import { useModifySwap } from "../hooks/useModifySwap";
 import type { EncodedHop } from "../utils/Pair";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import { formatAssetAmountForLog } from "../utils/denomination";
@@ -248,8 +248,7 @@ const lockupWithHops = async (
     getGasAbstractionSigner: (asset: string) => Signer,
     slippage: number,
     getSwap: (id: string) => Promise<SomeSwap | null>,
-    setSwap: Setter<SomeSwap | null>,
-    setSwapStorage: (swap: SomeSwap) => Promise<void>,
+    modifySwap: ReturnType<typeof useModifySwap>,
 ): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
@@ -389,15 +388,14 @@ const lockupWithHops = async (
             transactionSigner,
             tx,
         );
-        const currentSwap = await getSwap(swapId);
+        const currentSwap = await modifySwap(swapId, (s) => {
+            s.commitmentLockupTxHash = transactionHash;
+            s.commitmentSignatureSubmitted = false;
+            s.signer = ownerAddress;
+        });
         if (currentSwap === null) {
             throw new Error(`missing swap ${swapId} for lockup persistence`);
         }
-        currentSwap.commitmentLockupTxHash = transactionHash;
-        currentSwap.commitmentSignatureSubmitted = false;
-        currentSwap.signer = ownerAddress;
-        setSwap(currentSwap);
-        await setSwapStorage(currentSwap);
         log.info("Persisted commitment lockup tx hash for background worker", {
             swapId,
             asset,
@@ -437,8 +435,7 @@ const LockupTransaction = (props: {
     approvalTarget?: Address;
     hops?: EncodedHop[];
 }) => {
-    const { setSwap } = usePayContext();
-    const { t, slippage, getSwap, setSwapStorage } = useGlobalContext();
+    const { t, slippage, getSwap } = useGlobalContext();
     const {
         getErc20Swap,
         getEtherSwap,
@@ -446,6 +443,7 @@ const LockupTransaction = (props: {
         providers,
         getGasAbstractionSigner,
     } = useWeb3Signer();
+    const modifySwap = useModifySwap();
 
     return (
         <Show
@@ -496,8 +494,7 @@ const LockupTransaction = (props: {
                             getGasAbstractionSigner,
                             slippage(),
                             getSwap,
-                            setSwap,
-                            setSwapStorage,
+                            modifySwap,
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
@@ -559,26 +556,26 @@ const LockupTransaction = (props: {
                         }
                     }
 
-                    const currentSwap = await getSwap(props.swapId);
-                    if (currentSwap === null) {
+                    const updated = await modifySwap(props.swapId, (s) => {
+                        s.lockupTx = transactionHash;
+                        s.signer = connectedSigner.address;
+
+                        if (
+                            customDerivationPathRdns.includes(
+                                connectedSigner.rdns,
+                            )
+                        ) {
+                            s.derivationPath = (
+                                providers()[connectedSigner.rdns]
+                                    .provider as unknown as HardwareSigner
+                            ).getDerivationPath();
+                        }
+                    });
+                    if (updated === null) {
                         throw new Error(
                             `missing swap ${props.swapId} for lockup persistence`,
                         );
                     }
-                    currentSwap.lockupTx = transactionHash;
-                    currentSwap.signer = connectedSigner.address;
-
-                    if (
-                        customDerivationPathRdns.includes(connectedSigner.rdns)
-                    ) {
-                        currentSwap.derivationPath = (
-                            providers()[connectedSigner.rdns]
-                                .provider as unknown as HardwareSigner
-                        ).getDerivationPath();
-                    }
-
-                    setSwap(currentSwap);
-                    await setSwapStorage(currentSwap);
                 }}
                 children={<ConnectWallet asset={props.asset} />}
                 buttonText={t("send")}

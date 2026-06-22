@@ -39,6 +39,18 @@ vi.mock("../../src/context/Global", () => ({
         t: (key: string) => key,
         getSwap,
         setSwapStorage,
+        modifySwapStorage: async (
+            id: string,
+            mutator: (s: SomeSwap) => void | Promise<void>,
+        ) => {
+            const s = await getSwap(id);
+            if (s === null) {
+                return null;
+            }
+            await mutator(s);
+            await setSwapStorage(s);
+            return s;
+        },
         denomination: () => "BTC",
         separator: () => ".",
         slippage: () => 0.01,

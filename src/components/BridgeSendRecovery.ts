@@ -16,8 +16,8 @@ import {
     onCleanup,
 } from "solid-js";
 
-import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { useModifySwap } from "../hooks/useModifySwap";
 import type {
     BridgeDetail,
     PendingBridgeSendCallbacks,
@@ -58,8 +58,8 @@ export const useBridgeSendRecovery = (params: {
     txSent: Accessor<string | undefined>;
     evmSendActive?: Accessor<boolean>;
 }) => {
-    const { setSwap, swap } = usePayContext();
-    const { getSwap, setSwapStorage } = useGlobalContext();
+    const { swap } = usePayContext();
+    const modifySwap = useModifySwap();
 
     const storedPendingSend = createMemo(() => swap()?.bridge?.pendingSend);
     const pendingSend = createMemo<NonEvmPendingBridgeSend | undefined>(() => {
@@ -81,13 +81,12 @@ export const useBridgeSendRecovery = (params: {
     const updateBridge = async (
         update: (bridge: BridgeDetail) => BridgeDetail,
     ) => {
-        const currentSwap = await getSwap(params.swapId());
-        if (currentSwap === null || currentSwap.bridge === undefined) {
-            return;
-        }
-        currentSwap.bridge = update(currentSwap.bridge);
-        setSwap(currentSwap);
-        await setSwapStorage(currentSwap);
+        await modifySwap(params.swapId(), (currentSwap) => {
+            if (currentSwap.bridge === undefined) {
+                return;
+            }
+            currentSwap.bridge = update(currentSwap.bridge);
+        });
     };
 
     const persistBridgeSend = async (

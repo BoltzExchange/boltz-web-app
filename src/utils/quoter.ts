@@ -181,11 +181,16 @@ const fetchQuote = async (
     hop: Hop,
     amount: bigint,
 ): Promise<DexQuote> => {
-    const quote = (
-        await (
-            direction === Direction.In ? quoteDexAmountIn : quoteDexAmountOut
-        )(hop.chain, hop.tokenIn, hop.tokenOut, amount)
-    )[0];
+    const quotes = await (
+        direction === Direction.In ? quoteDexAmountIn : quoteDexAmountOut
+    )(hop.chain, hop.tokenIn, hop.tokenOut, amount);
+    const quote = quotes[0];
+    if (quote === undefined) {
+        throw new Error(
+            `no ${direction} DEX quote for ${hop.tokenIn} -> ${hop.tokenOut} ` +
+                `on ${hop.chain} (amount ${amount.toString()})`,
+        );
+    }
     const quoteAmount = BigInt(quote.quote);
     const quoteToken = direction === Direction.In ? hop.tokenOut : hop.tokenIn;
     log.info(

@@ -242,6 +242,18 @@ vi.mock("../../src/context/Global", () => ({
         getSwap: mockGetSwap,
         getSwaps: mockGetSwaps,
         setSwapStorage: mockSetSwapStorage,
+        modifySwapStorage: async (
+            _id: string,
+            mutator: (swap: unknown) => void | Promise<void>,
+        ) => {
+            const swap = await mockGetSwap();
+            if (swap === null) {
+                return null;
+            }
+            await mutator(swap);
+            await mockSetSwapStorage(swap);
+            return swap;
+        },
         slippage: () => 0.5,
         fetchPairs: mockFetchPairs,
         pairs: mockPairs,

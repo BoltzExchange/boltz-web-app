@@ -18,6 +18,7 @@ import { getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
+import { useModifySwap } from "../hooks/useModifySwap";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import {
     GasAbstractionType,
@@ -28,9 +29,10 @@ import {
 
 const PreBridgeDexQuoteBlocked = () => {
     const navigate = useNavigate();
-    const { t, getSwap, setSwapStorage, slippage } = useGlobalContext();
-    const { swap, setSwap } = usePayContext();
+    const { t, slippage } = useGlobalContext();
+    const { swap } = usePayContext();
     const { getGasAbstractionSigner } = useWeb3Signer();
+    const modifySwap = useModifySwap();
 
     const recovery = (): PreBridgeRecovery | undefined =>
         swap()?.bridge?.recovery;
@@ -41,14 +43,12 @@ const PreBridgeDexQuoteBlocked = () => {
             return;
         }
 
-        const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
-        if (latestSwap?.bridge?.recovery === undefined) {
-            return;
-        }
-
-        latestSwap.bridge.recovery = nextRecovery;
-        await setSwapStorage(latestSwap);
-        setSwap(latestSwap);
+        await modifySwap<SomeSwap>(currentSwap.id, (latestSwap) => {
+            if (latestSwap.bridge?.recovery === undefined) {
+                return;
+            }
+            latestSwap.bridge.recovery = nextRecovery;
+        });
     };
 
     const retryQuote = async () => {

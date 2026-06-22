@@ -43,6 +43,7 @@ import {
     createMemo,
     createResource,
     createSignal,
+    untrack,
 } from "solid-js";
 import {
     type Hash,
@@ -62,6 +63,7 @@ import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
+import { useModifySwap } from "../hooks/useModifySwap";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,
@@ -1060,8 +1062,7 @@ const RefundButton = (props: {
     buttonOverride?: string;
     deriveKeyFn?: deriveKeyFn;
 }) => {
-    const { setSwapStorage, getSwap } = useGlobalContext();
-    const { setSwap } = usePayContext();
+    const modifySwap = useModifySwap();
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -1071,13 +1072,10 @@ const RefundButton = (props: {
             return;
         }
 
+        const currentSwap = untrack(props.swap);
         props.setRefundTxId?.(txId);
-        setSwap({ ...props.swap(), refundTx: txId });
-        void getSwap(props.swap().id).then((swapFromStorage) => {
-            if (swapFromStorage) {
-                swapFromStorage.refundTx = txId;
-                void setSwapStorage(swapFromStorage);
-            }
+        void modifySwap(currentSwap.id, (s) => {
+            s.refundTx = txId;
         });
     });
     return (
