@@ -4,6 +4,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import type * as ConfigModule from "../../src/config";
 import { solanaMinGasTopUpLamports } from "../../src/consts/Solana";
 import {
+    fetchDexQuote,
     gasTopUpSupported,
     getGasTopUpNativeAmount,
     getGasTopUpToken,
@@ -115,6 +116,19 @@ describe("quoter gas top-up", () => {
     test("should reject gas-drop amounts for USDT0 gas token destinations", async () => {
         await expect(getGasTopUpNativeAmount("USDT0-STABLE")).rejects.toThrow(
             "gas drops are disabled for gas token USDT0",
+        );
+    });
+});
+
+describe("quoter DEX quote guard", () => {
+    test("throws when no DEX quote is available instead of a TypeError", async () => {
+        await expect(
+            fetchDexQuote(
+                { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" },
+                0n,
+            ),
+        ).rejects.toThrow(
+            "no in DEX quote for 0xin -> 0xout on ARB (amount 0)",
         );
     });
 });

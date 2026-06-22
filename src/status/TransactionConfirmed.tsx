@@ -53,6 +53,7 @@ import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
+import { useModifySwap } from "../hooks/useModifySwap";
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
 import {
@@ -670,8 +671,9 @@ const AutoClaimHops = (props: {
     autoClaimEnabled: boolean;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
-    const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
-    const { swap, setSwap } = usePayContext();
+    const { t, slippage, notify, getSwap } = useGlobalContext();
+    const { swap } = usePayContext();
+    const modifySwap = useModifySwap();
 
     const [error, setError] = createSignal<string | undefined>(undefined);
     const [loading, setLoading] = createSignal(false);
@@ -770,14 +772,15 @@ const AutoClaimHops = (props: {
                 (e) => !isWalletRejectionError(e),
             );
 
-            currentSwap.claimTx = transactionHash;
-            currentSwap.dex.quoteAmount = normalizePersistedReceiveAmount(
-                quote.amount,
-                getFinalAssetReceive(currentSwap),
-            );
-
-            setSwap(currentSwap);
-            await setSwapStorage(currentSwap);
+            await modifySwap<ChainSwap>(props.swapId, (s) => {
+                s.claimTx = transactionHash;
+                if (s.dex !== undefined) {
+                    s.dex.quoteAmount = normalizePersistedReceiveAmount(
+                        quote.amount,
+                        getFinalAssetReceive(s),
+                    );
+                }
+            });
         } catch (e) {
             log.error("Auto claim hops failed", e);
             const msg = `Transaction failed: ${formatError(e)}`;
@@ -965,8 +968,8 @@ const ClaimEvm = (props: {
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
         useWeb3Signer();
-    const { t, slippage, getSwap, setSwapStorage } = useGlobalContext();
-    const { setSwap } = usePayContext();
+    const { t, slippage } = useGlobalContext();
+    const modifySwap = useModifySwap();
 
     const claimableWithoutInteraction = () =>
         props.gasAbstraction === GasAbstractionType.Signer;
@@ -982,8 +985,6 @@ const ClaimEvm = (props: {
         if (props.refundAddress === undefined) {
             throw new Error("missing refund address for claim");
         }
-
-        const currentSwap = await getSwap(props.swapId);
 
         let result: ClaimResult;
 
@@ -1046,18 +1047,15 @@ const ClaimEvm = (props: {
 
         const { transactionHash, receiveAmount } = result;
 
-        if (currentSwap === null) {
-            return;
-        }
-        currentSwap.claimTx = transactionHash;
-        currentSwap.receiveAmount = Number(
-            normalizePersistedReceiveAmount(
-                receiveAmount,
-                getFinalAssetReceive(currentSwap),
-            ),
-        );
-        setSwap(currentSwap);
-        await setSwapStorage(currentSwap);
+        await modifySwap(props.swapId, (s) => {
+            s.claimTx = transactionHash;
+            s.receiveAmount = Number(
+                normalizePersistedReceiveAmount(
+                    receiveAmount,
+                    getFinalAssetReceive(s),
+                ),
+            );
+        });
     };
 
     createEffect(

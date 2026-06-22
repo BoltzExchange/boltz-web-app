@@ -21,6 +21,7 @@ import {
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import { BTC, LBTC } from "../consts/Assets";
 import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
+import { createSwapModifier } from "../hooks/useModifySwap";
 import { getTransactionOutSpend } from "../utils/blockchain";
 import {
     claim,
@@ -85,7 +86,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
         privacyMode,
         notify,
         pairs,
-        setSwapStorage,
+        modifySwapStorage,
         zeroConf,
         getSwaps,
     } = useGlobalContext();
@@ -94,6 +95,11 @@ const PayProvider = (props: { children: JSX.Element }) => {
         // To allow updating properties of the swap object without replacing it completely
         equals: () => false,
     });
+
+    // Locked read-modify-write of a stored swap that also keeps the displayed
+    // swap signal in sync. PayProvider cannot call usePayContext on itself, so
+    // it builds the helper directly from the factory.
+    const modifySwap = createSwapModifier(modifySwapStorage, swap, setSwap);
     const [swapStatus, setSwapStatus] = createSignal<string>("");
     const [swapStatusTransaction, setSwapStatusTransaction] =
         createSignal<SwapStatusTransaction>({});
@@ -196,8 +202,10 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 data.status === swapStatusPending.TransactionMempool &&
                 data.transaction !== undefined
             ) {
-                currentSwap.lockupTx = data.transaction.id;
-                await setSwapStorage(currentSwap);
+                const lockupTxId = data.transaction.id;
+                await modifySwap(swapId, (s) => {
+                    s.lockupTx = lockupTxId;
+                });
             }
 
             return;
@@ -243,16 +251,13 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 if (res === undefined) {
                     return;
                 }
-                const claimedSwap = await getSwap(res.id);
+                const claimedSwap = await modifySwap(res.id, (s) => {
+                    s.claimTx = res.claimTx;
+                });
                 if (claimedSwap === null) {
                     return;
                 }
-                claimedSwap.claimTx = res.claimTx;
-                await setSwapStorage(claimedSwap);
 
-                if (claimedSwap.id === swap()?.id) {
-                    setSwap(claimedSwap);
-                }
                 notify(
                     "success",
                     t("swap_completed", {
@@ -299,12 +304,10 @@ const PayProvider = (props: { children: JSX.Element }) => {
                                 log.debug(
                                     `swap ${currentSwap.id}: lockup tx was already claimed, updating claimTx id to ${outspend.txid}`,
                                 );
-                                currentSwap.claimTx = outspend.txid;
-                                await setSwapStorage(currentSwap);
-
-                                if (currentSwap.id === swap()?.id) {
-                                    setSwap(currentSwap);
-                                }
+                                const claimTxId = outspend.txid;
+                                await modifySwap(currentSwap.id, (s) => {
+                                    s.claimTx = claimTxId;
+                                });
 
                                 return;
                             }

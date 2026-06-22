@@ -64,6 +64,7 @@ import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
+import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
@@ -216,36 +217,29 @@ const isTaskRelevant = (
 };
 
 export const SwapExecutionWorker = () => {
-    const { getSwap, getSwaps, setSwapStorage, slippage, pairs, fetchPairs } =
+    const { getSwap, getSwaps, slippage, pairs, fetchPairs } =
         useGlobalContext();
-    const { swap, setSwap } = usePayContext();
+    const { swap } = usePayContext();
     const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
+    const modifySwap = useModifySwap();
 
     const runningTasks = new Set<string>();
     const scheduledRetries = new Map<string, number>();
-
-    const persistSwap = async (updatedSwap: SomeSwap) => {
-        await setSwapStorage(updatedSwap);
-
-        if (swap()?.id === updatedSwap.id) {
-            setSwap(updatedSwap);
-        }
-    };
 
     const persistCommitmentLockupTransaction = async (
         swapId: string,
         commitmentLockupTxHash: string,
         source: CommitmentLockupTransactionSource,
     ) => {
-        const latestSwap = await getSwap<SomeSwap>(swapId);
-        if (latestSwap === undefined || latestSwap === null) {
+        const latestSwap = await modifySwap(swapId, (s) => {
+            s.commitmentLockupTxHash = commitmentLockupTxHash;
+            s.commitmentLockupCallId = undefined;
+            s.commitmentSignatureSubmitted = false;
+        });
+        if (latestSwap === null) {
             return false;
         }
 
-        latestSwap.commitmentLockupTxHash = commitmentLockupTxHash;
-        latestSwap.commitmentLockupCallId = undefined;
-        latestSwap.commitmentSignatureSubmitted = false;
-        await persistSwap(latestSwap);
         log.info(
             `Swap execution persisted ${source} commitment lockup transaction`,
             getSwapExecutionLogContext(latestSwap.id, {
@@ -276,13 +270,17 @@ export const SwapExecutionWorker = () => {
                 amount: receivedAmount.toString(),
             }),
         );
-        latestSwap.bridge.recovery = {
+        const recovery = {
             status: PreBridgeRecoveryStatus.Blocked,
             asset: latestSwap.bridge.destinationAsset,
             amount: receivedAmount.toString(),
             receiveCall,
         };
-        await persistSwap(latestSwap);
+        await modifySwap(latestSwap.id, (s) => {
+            if (s.bridge !== undefined) {
+                s.bridge.recovery = recovery;
+            }
+        });
     };
 
     const clearPreBridgeRecovery = async (latestSwap: SomeSwap) => {
@@ -296,8 +294,11 @@ export const SwapExecutionWorker = () => {
                 status: latestSwap.bridge.recovery.status,
             }),
         );
-        latestSwap.bridge.recovery = undefined;
-        await persistSwap(latestSwap);
+        await modifySwap(latestSwap.id, (s) => {
+            if (s.bridge !== undefined) {
+                s.bridge.recovery = undefined;
+            }
+        });
     };
 
     // A pre-bridge quote below the slippage threshold can still be locked when
@@ -650,11 +651,15 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
-        const bridge = { ...latestSwap.bridge };
-        delete bridge.txHash;
-        delete bridge.details;
-        latestSwap.bridge = bridge;
-        await persistSwap(latestSwap);
+        await modifySwap(swapId, (s) => {
+            if (s.bridge === undefined) {
+                return;
+            }
+            const bridge = { ...s.bridge };
+            delete bridge.txHash;
+            delete bridge.details;
+            s.bridge = bridge;
+        });
         log.warn(
             "Swap execution abandoning failed bridge send transaction",
             getSwapExecutionLogContext(swapId, {
@@ -1261,8 +1266,9 @@ export const SwapExecutionWorker = () => {
                 {
                     alchemy: {
                         onPreparedCallId: async (callId) => {
-                            latestSwap.commitmentLockupCallId = callId;
-                            await persistSwap(latestSwap);
+                            await modifySwap(latestSwap.id, (s) => {
+                                s.commitmentLockupCallId = callId;
+                            });
                             log.info(
                                 "Swap execution persisted commitment lockup call ID",
                                 getSwapExecutionLogContext(latestSwap.id, {
@@ -1456,8 +1462,9 @@ export const SwapExecutionWorker = () => {
                     signer: transactionSigner,
                 });
 
-                storedSwap.commitmentSignatureSubmitted = true;
-                await persistSwap(storedSwap);
+                await modifySwap(storedSwap.id, (s) => {
+                    s.commitmentSignatureSubmitted = true;
+                });
                 log.info(
                     "Swap execution marked commitment signature submitted",
                     getSwapExecutionLogContext(storedSwap.id, {
