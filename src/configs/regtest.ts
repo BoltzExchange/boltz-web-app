@@ -5,7 +5,7 @@ import { type Config, baseConfig, chooseUrl } from "src/configs/base";
 const mainnetPreset = buildMainnetConfig({
     filterAssets: (asset) => asset === "TBTC" || asset === "USDT0",
     rpcUrls: {
-        ARB: ["http://127.0.0.1:18545"],
+        ARB: [`http://127.0.0.1:${process.env.ARBITRUM_E2E_PORT ?? "18545"}`],
     },
 });
 
@@ -85,8 +85,8 @@ const config = {
         ...stablecoins,
     },
     gasSponsor: {
-        normal: "http://localhost:18547/alchemy",
-        tor: "http://localhost:18547/alchemy",
+        normal: `http://localhost:${process.env.GAS_SPONSOR_EMULATOR_PORT ?? "18547"}/alchemy`,
+        tor: `http://localhost:${process.env.GAS_SPONSOR_EMULATOR_PORT ?? "18547"}/alchemy`,
     },
 } as Config;
 
