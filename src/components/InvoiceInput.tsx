@@ -36,13 +36,18 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         setPair,
         minerFee,
         invoice,
+        lnurl,
+        bolt12Offer,
         amountValid,
         setAmountChanged,
         setInvoice,
         setInvoiceValid,
         setInvoiceError,
+        setAmountValid,
         setLnurl,
+        sendAmount,
         setReceiveAmount,
+        receiveAmount,
         setSendAmount,
         setOnchainAddress,
         setBolt12Offer,
@@ -61,6 +66,38 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         setBolt12Offer(undefined);
         setInvoiceValid(false);
         setLnurl("");
+    };
+
+    const resetAmounts = () => {
+        setAmountChanged(Side.Send);
+        setSendAmount(BigNumber(0));
+        setReceiveAmount(BigNumber(0));
+        setAmountValid(false);
+    };
+
+    const hasEnteredAmount = () =>
+        sendAmount().isGreaterThan(0) || receiveAmount().isGreaterThan(0);
+
+    const hasDeferredInvoiceDestination = () => {
+        const currentInvoice = invoice();
+        return (
+            currentInvoice !== "" &&
+            ((lnurl() !== "" && currentInvoice === lnurl()) ||
+                (bolt12Offer() !== undefined &&
+                    currentInvoice === bolt12Offer()) ||
+                isLnurl(currentInvoice) ||
+                isBolt12Offer(currentInvoice))
+        );
+    };
+
+    const resetAmountsOnDeferredDestinationEdit = (inputValue: string) => {
+        if (
+            inputValue !== invoice() &&
+            hasEnteredAmount() &&
+            hasDeferredInvoiceDestination()
+        ) {
+            resetAmounts();
+        }
     };
 
     const setDeferredInvoiceDestination = (
@@ -88,6 +125,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
             requestId !== validationRequest ||
             getCurrentInputValue() !== inputValue;
 
+        resetAmountsOnDeferredDestinationEdit(inputValue);
         setInvoice(inputValue);
 
         try {

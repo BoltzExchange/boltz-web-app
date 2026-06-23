@@ -1444,6 +1444,25 @@ describe("Create", () => {
                         screen.queryByTestId("deferred-destination-summary"),
                     ).toBeNull();
                 });
+
+                const editedDestination = "not-a-lightning-destination";
+                fireEvent.input(screen.getByTestId("invoice"), {
+                    target: { value: editedDestination },
+                });
+
+                await waitFor(() => {
+                    const invoiceInput = screen.getByTestId(
+                        "invoice",
+                    ) as HTMLInputElement;
+                    expect(signals.invoice()).toBe(editedDestination);
+                    expect(signals.sendAmount().isZero()).toBe(true);
+                    expect(signals.receiveAmount().isZero()).toBe(true);
+                    expect(signals.amountValid()).toBe(false);
+                    expect(invoiceInput).not.toBeDisabled();
+                    expect(screen.queryByTestId("committed-invoice-row")).toBe(
+                        null,
+                    );
+                });
             } finally {
                 useWeb3Signer.mockRestore();
                 bridgeMocks.getPreRoute.mockRestore();
