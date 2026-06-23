@@ -225,15 +225,25 @@ export const SwapChecker = () => {
     };
 
     onMount(async () => {
-        const swapsToCheck = (await getSwaps()).filter(
-            (s) =>
-                s.status === undefined ||
-                !swapStatusFinal.includes(s.status) ||
-                ((s.status === swapStatusSuccess.InvoiceSettled ||
-                    (s.type === SwapType.Chain &&
-                        s.status === swapStatusSuccess.TransactionClaimed)) &&
-                    s.claimTx === undefined),
-        );
+        const swapsToCheck = (await getSwaps()).filter((swap) => {
+            if (swap.type === SwapType.Commitment) {
+                return false;
+            }
+
+            if (
+                swap.status === undefined ||
+                !swapStatusFinal.includes(swap.status)
+            ) {
+                return true;
+            }
+
+            return (
+                swap.claimTx === undefined &&
+                (swap.status === swapStatusSuccess.InvoiceSettled ||
+                    (swap.type === SwapType.Chain &&
+                        swap.status === swapStatusSuccess.TransactionClaimed))
+            );
+        });
 
         ws = new BoltzWebSocket(
             getApiUrl(),
@@ -253,6 +263,9 @@ export const SwapChecker = () => {
     createEffect(() => {
         const activeSwap = swap();
         if (activeSwap === undefined || activeSwap === null) {
+            return;
+        }
+        if (activeSwap.type === SwapType.Commitment) {
             return;
         }
         // on page reload assetWebsocket might not be initialized yet

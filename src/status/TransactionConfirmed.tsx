@@ -912,7 +912,7 @@ const AutoClaimHops = (props: {
                 <div class="quote">
                     <Amount
                         label={"sent"}
-                        amount={swap()!.sendAmount}
+                        amount={props.amount}
                         asset={props.assetSend}
                     />
                     <ImArrowDown size={15} style={{ opacity: 0.5 }} />
@@ -1047,7 +1047,7 @@ const ClaimEvm = (props: {
 
         const { transactionHash, receiveAmount } = result;
 
-        await modifySwap(props.swapId, (s) => {
+        await modifySwap<ChainSwap | ReverseSwap>(props.swapId, (s) => {
             s.claimTx = transactionHash;
             s.receiveAmount = Number(
                 normalizePersistedReceiveAmount(

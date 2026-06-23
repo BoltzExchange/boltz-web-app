@@ -11,8 +11,10 @@ import {
     extractBip21Amount,
     extractInvoice,
     fetchBip353,
+    fetchDeferredInvoice,
     getAssetByBip21Prefix,
     isBip21,
+    isDeferredInvoiceDestination,
     isInvoice,
     isLnurl,
     resolveBip353,
@@ -31,6 +33,35 @@ vi.mock("boltz-swaps/client", async (importActual) => ({
 vi.mock("../../src/utils/dnssec/dohLookup", () => ({
     lookup: lookupMock,
 }));
+
+const mockOfferPubkey = secp256k1.getPublicKey(
+    new Uint8Array(32).fill(1),
+    true,
+);
+const mockResolvedBolt12Invoice = (invoiceNodeId = mockOfferPubkey) => {
+    vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
+        hrp: "lno",
+        offer_id: new Uint8Array(32).fill(4),
+        has_paths: false,
+        issuer_id: hex.encode(mockOfferPubkey),
+        records: [],
+    });
+    vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
+        hrp: "lni",
+        data: new Uint8Array(),
+    });
+    vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
+    vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
+        invoice_node_id: invoiceNodeId,
+        signature: new Uint8Array(64).fill(2),
+        records: [],
+    });
+    vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
+        new Uint8Array(32).fill(3),
+    );
+    vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
+    fetchBolt12InvoiceMock.mockResolvedValue({ invoice: "lni1mock" });
+};
 
 describe("invoice", () => {
     test.each`
@@ -130,9 +161,6 @@ describe("invoice", () => {
     });
 
     describe("fetchBip353", () => {
-        const privateKey = new Uint8Array(32).fill(1);
-        const compressedPubkey = secp256k1.getPublicKey(privateKey, true);
-
         beforeEach(() => {
             vi.clearAllMocks();
         });
@@ -148,28 +176,7 @@ describe("invoice", () => {
                     },
                 ],
             });
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: compressedPubkey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
-            fetchBolt12InvoiceMock.mockResolvedValue({ invoice: "lni1mock" });
+            mockResolvedBolt12Invoice();
 
             await expect(fetchBip353("user@example.com", 123)).resolves.toBe(
                 "lni1mock",
@@ -196,32 +203,27 @@ describe("invoice", () => {
                     },
                 ],
             });
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: otherKey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
-            fetchBolt12InvoiceMock.mockResolvedValue({ invoice: "lni1mock" });
+            mockResolvedBolt12Invoice(otherKey);
 
             await expect(fetchBip353("user@example.com", 123)).rejects.toThrow(
                 "invoice does not belong to offer",
             );
+        });
+    });
+
+    describe("fetchDeferredInvoice", () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        test("normalizes BIP21 wrapped BOLT12 offers", async () => {
+            const offer = "lno1mock";
+            mockResolvedBolt12Invoice();
+
+            await expect(
+                fetchDeferredInvoice(`bitcoin:?lno=${offer}`, 123),
+            ).resolves.toBe("lni1mock");
+            expect(fetchBolt12InvoiceMock).toHaveBeenCalledWith(offer, 123);
         });
     });
 
@@ -351,5 +353,29 @@ describe("invoice", () => {
             expect(isInvoice(null as never)).toBe(false);
             expect(isInvoice(123 as never)).toBe(false);
         });
+    });
+
+    describe("isDeferredInvoiceDestination", () => {
+        const bolt12Offer =
+            "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+
+        beforeEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        test.each`
+            type              | input                            | expected
+            ${"LNURL"}        | ${"user@example.com"}            | ${true}
+            ${"BIP353"}       | ${"₿user@example.com"}           | ${true}
+            ${"BOLT12"}       | ${bolt12Offer}                   | ${true}
+            ${"BIP21 BOLT12"} | ${`bitcoin:?lno=${bolt12Offer}`} | ${true}
+            ${"BOLT11"}       | ${"lnbcrt1mock"}                 | ${false}
+            ${"empty"}        | ${undefined}                     | ${false}
+        `(
+            "detects $type deferred invoice destinations",
+            ({ input, expected }) => {
+                expect(isDeferredInvoiceDestination(input)).toEqual(expected);
+            },
+        );
     });
 });

@@ -700,7 +700,7 @@ describe("Pair", () => {
             expect.objectContaining({
                 from: LN,
                 to: "USDT0-POL",
-                blockers: ["first hop type is reverse"],
+                blockers: ["first hop is not a chain swap"],
                 route: [
                     {
                         from: LN,

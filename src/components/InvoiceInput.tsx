@@ -19,7 +19,13 @@ import {
 } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 
-const InvoiceInput = () => {
+type InvoiceInputProps = {
+    class?: string;
+    disabled?: boolean;
+    placeholder?: string;
+};
+
+const InvoiceInput = (props: InvoiceInputProps = {}) => {
     let inputRef!: HTMLInputElement;
     let validationRequest = 0;
 
@@ -120,8 +126,9 @@ const InvoiceInput = () => {
             }
 
             if (isLnurl(invoiceValue)) {
-                setLnurl(invoiceValue);
+                resetInvoiceState();
                 setInvoice(invoiceValue);
+                setLnurl(invoiceValue);
             } else {
                 setBolt12Loading(true);
                 let isBolt12: boolean;
@@ -137,8 +144,9 @@ const InvoiceInput = () => {
                 }
 
                 if (isBolt12) {
-                    setBolt12Offer(invoiceValue);
+                    resetInvoiceState();
                     setInvoice(invoiceValue);
+                    setBolt12Offer(invoiceValue);
                 } else {
                     const sats = validateInvoice(invoiceValue);
                     setAmountChanged(Side.Receive);
@@ -180,14 +188,21 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice, pair, minerFee], async () => {
-            if (
-                pair().swapToCreate?.type === SwapType.Submarine ||
-                pair().toAsset === LN
-            ) {
-                await validate(inputRef);
-            }
-        }),
+        on(
+            [amountValid, invoice, pair, minerFee, () => props.disabled],
+            async () => {
+                if (props.disabled) {
+                    return;
+                }
+
+                if (
+                    pair().swapToCreate?.type === SwapType.Submarine ||
+                    pair().toAsset === LN
+                ) {
+                    await validate(inputRef);
+                }
+            },
+        ),
     );
 
     return (
@@ -196,12 +211,14 @@ const InvoiceInput = () => {
             ref={inputRef}
             onInput={(e) => validate(e.currentTarget)}
             type="text"
+            class={props.class}
             id="invoice"
             data-testid="invoice"
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste")}
+            disabled={props.disabled}
+            placeholder={props.placeholder ?? t("create_and_paste")}
         />
     );
 };

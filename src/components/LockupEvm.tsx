@@ -437,8 +437,7 @@ const lockupWithHops = async (
         return transactionHash;
     };
 
-    let commitmentTxHash: string | undefined = (await getSwap(swapId))
-        ?.commitmentLockupTxHash;
+    let commitmentTxHash = (await getSwap(swapId))?.commitmentLockupTxHash;
     if (commitmentTxHash === undefined) {
         commitmentTxHash = await lockup();
     } else {
@@ -590,8 +589,12 @@ const LockupTransaction = (props: {
                         }
                     }
 
+                    const persistLockupTx =
+                        props.hops === undefined || props.hops.length === 0;
                     const updated = await modifySwap(props.swapId, (s) => {
-                        s.lockupTx = transactionHash;
+                        if (persistLockupTx) {
+                            s.lockupTx = transactionHash;
+                        }
                         s.signer = connectedSigner.address;
 
                         if (
@@ -673,6 +676,11 @@ const LockupEvm = (props: {
     createEffect(() => {
         void (async () => {
             if (props.bridge !== undefined) {
+                if (props.bridge.sourceAmount !== undefined) {
+                    setBridgeValue(BigInt(props.bridge.sourceAmount));
+                    return;
+                }
+
                 if (!hasHopsBefore() || props.hops === undefined) {
                     throw new Error(
                         `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,

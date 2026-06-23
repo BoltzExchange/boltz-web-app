@@ -1,7 +1,6 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { getRpcUrls } from "boltz-swaps/config";
-import { decodeInvoice } from "boltz-swaps/invoice";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -46,6 +45,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
+import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
 import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
@@ -56,7 +56,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { isLnurl } from "../utils/invoice";
+import { isInvoice } from "../utils/invoice";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -95,6 +95,7 @@ const Create = () => {
         setInvoice,
         invoiceValid,
         setInvoiceValid,
+        setInvoiceError,
         addressValid,
         sendAmount,
         setSendAmount,
@@ -109,6 +110,7 @@ const Create = () => {
         minimum,
         maximum,
         limitsLoading,
+        amountValid,
         setAmountValid,
         boltzFee,
         minerFee,
@@ -149,7 +151,21 @@ const Create = () => {
     const limitActionsLoading = createMemo(
         () => limitsLoading() || quoteLoading(),
     );
-
+    const requiresInvoiceInput = createMemo(
+        () =>
+            pair().requiredInput === RequiredInput.Invoice ||
+            (pair().requiredInput === RequiredInput.Unknown &&
+                pair().toAsset === LN),
+    );
+    const canDeferInvoiceInput = createMemo(
+        () =>
+            requiresInvoiceInput() &&
+            canCommitSubmarineSendAmount(pair(), amountChanged()) &&
+            amountValid(),
+    );
+    const invoiceInputDisabled = createMemo(
+        () => canDeferInvoiceInput() && invoice() === "",
+    );
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = getRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
@@ -333,19 +349,15 @@ const Create = () => {
     };
 
     const clearStaleInvoice = () => {
-        if (invoice() === "" || isLnurl(invoice())) {
+        const currentInvoice = invoice();
+        if (!isInvoice(currentInvoice)) {
             return;
         }
-        try {
-            const invoiceSats = decodeInvoice(invoice()).satoshis;
-            if (invoiceSats === 0) {
-                return;
-            }
-            setInvoice("");
-            setInvoiceValid(false);
-        } catch {
-            // not a valid invoice, nothing to clear
-        }
+
+        setInvoice("");
+        setInvoiceValid(false);
+        setInvoiceError(undefined);
+        notify("success", t("invoice_cleared_amount_changed"));
     };
 
     const changeReceiveAmount = (evt: InputEvent) => {
@@ -518,7 +530,11 @@ const Create = () => {
             return;
         }
 
-        if (amount > 0 && receiveAmount().isZero()) {
+        if (
+            amount > 0 &&
+            receiveAmount().isZero() &&
+            !canCommitSubmarineSendAmount(pair(), amountChanged())
+        ) {
             setCustomValidity(t("error_zero_quote"), false);
             setAmountValid(false);
             return;
@@ -571,16 +587,14 @@ const Create = () => {
 
     const setMaxAmount = async () => {
         const selectedPair = pair();
-        let amount: number | undefined;
+        let connectedMaximum: BigNumber | undefined;
 
         try {
-            amount = (
-                await getConnectedMaximum({
-                    fromAsset: selectedPair.fromAsset,
-                    connectedWallet: connectedWallet(),
-                    signer: signer(),
-                })
-            )?.toNumber();
+            connectedMaximum = await getConnectedMaximum({
+                fromAsset: selectedPair.fromAsset,
+                connectedWallet: connectedWallet(),
+                signer: signer(),
+            });
         } catch (error) {
             log.warn("failed to resolve connected wallet max amount", {
                 asset: selectedPair.fromAsset,
@@ -594,10 +608,25 @@ const Create = () => {
 
         const limit = maximum();
         const selectedAmount =
-            amount === undefined || (limit > 0 && amount > limit)
+            connectedMaximum === undefined ||
+            !connectedMaximum.isGreaterThan(0) ||
+            (limit > 0 && connectedMaximum.isGreaterThan(limit))
                 ? limit
-                : amount;
+                : connectedMaximum.toNumber();
         setAmount(selectedAmount);
+    };
+
+    const clearCommittedAmounts = () => {
+        if (!invoiceInputDisabled()) {
+            return;
+        }
+
+        ++quoteRequestId;
+        clearQuoteDebounce();
+        setQuoteLoading(false);
+        resetAmounts();
+        setAmountValid(false);
+        setAmountChanged(Side.Send);
     };
 
     onMount(() => {
@@ -936,24 +965,37 @@ const Create = () => {
                         <hr class="spacer" />
                     </Show>
                 </Show>
-                <Show
-                    when={
-                        pair().requiredInput === RequiredInput.Invoice ||
-                        (pair().requiredInput === RequiredInput.Unknown &&
-                            pair().toAsset === LN)
-                    }>
-                    <Show when={webln()}>
+                <Show when={requiresInvoiceInput() && !destinationLocked()}>
+                    <Show when={webln() && !invoiceInputDisabled()}>
                         <WeblnButton />
                         <hr class="spacer" />
                     </Show>
-                    <Show when={!destinationLocked()}>
-                        <InvoiceInput />
-                        <hr class="spacer" />
+                    <Show
+                        when={invoiceInputDisabled()}
+                        fallback={<InvoiceInput />}>
+                        <div
+                            class="committed-invoice-row"
+                            data-testid="committed-invoice-row">
+                            <InvoiceInput
+                                class="committed-invoice-input"
+                                disabled={invoiceInputDisabled()}
+                                placeholder={t("commitment_invoice_deferred")}
+                            />
+                            <button
+                                type="button"
+                                class="btn-small invoice-slot-action"
+                                data-testid="committed-invoice-clear"
+                                onClick={clearCommittedAmounts}>
+                                {t("clear_amount")}
+                            </button>
+                        </div>
                     </Show>
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={
                         isMobile() &&
+                        !invoiceInputDisabled() &&
                         !destinationLocked() &&
                         (pair().toAsset === LN ||
                             config.assets?.[pair().toAsset]?.type ===

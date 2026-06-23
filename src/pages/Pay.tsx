@@ -43,6 +43,7 @@ import {
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import CommitmentCreated from "../status/CommitmentCreated";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -74,6 +75,7 @@ import {
     type SomeSwap,
     type SubmarineSwap,
     getPostBridgeDetail,
+    isCommitmentSwap,
 } from "../utils/swapCreator";
 import { getUrlParam } from "../utils/urlParams";
 
@@ -167,6 +169,7 @@ const Pay = () => {
         return (
             currentSwap !== null &&
             currentSwap.type !== SwapType.Reverse &&
+            !isCommitmentSwap(currentSwap) &&
             !rescueFileBackupDone()
         );
     });
@@ -202,24 +205,31 @@ const Pay = () => {
 
             return {
                 backupDone: rescueFileBackupDone(),
-                id: currentSwap.id,
+                swap: currentSwap,
                 timedOutRefundable: timedOutRefundable(),
-                type: currentSwap.type,
             };
         },
-        async (currentSwap) => {
+        async ({ backupDone, swap: currentSwap, timedOutRefundable }) => {
             if (
                 currentSwap.type !== SwapType.Reverse &&
-                !currentSwap.backupDone
+                !isCommitmentSwap(currentSwap) &&
+                !backupDone
             ) {
                 return;
             }
 
-            if (currentSwap.timedOutRefundable) {
+            if (timedOutRefundable) {
                 log.info(
                     `Refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
                 );
                 setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
+                return;
+            }
+
+            if (isCommitmentSwap(currentSwap)) {
+                setSwapStatus(
+                    currentSwap.status ?? swapStatusPending.SwapCreated,
+                );
                 return;
             }
 
@@ -236,6 +246,9 @@ const Pay = () => {
         const currentSwap = swap();
 
         if (currentSwap === null || backupVerificationRequired()) {
+            return;
+        }
+        if (isCommitmentSwap(currentSwap)) {
             return;
         }
         const swapValue = currentSwap;
@@ -436,15 +449,17 @@ const Pay = () => {
         />
     );
 
-    // Post-bridge swaps need a "check status" link to follow the transfer to the
-    // destination chain; their status components render it themselves. Other
-    // swaps just get the plain transaction link, the default button below.
-    const shouldShowPostBridgeExplorer = createMemo(
-        () =>
+    const shouldHideDefaultExplorer = createMemo(() => {
+        const currentSwap = swap();
+        return (
+            (currentSwap !== null &&
+                isCommitmentSwap(currentSwap) &&
+                currentSwap.commitmentLockupTxHash !== undefined) ||
             transactionClaimedPostBridge() ||
-            swap()?.bridge?.recovery?.status ===
-                PreBridgeRecoveryStatus.Recovered,
-    );
+            currentSwap?.bridge?.recovery?.status ===
+                PreBridgeRecoveryStatus.Recovered
+        );
+    });
 
     return (
         <Show
@@ -469,11 +484,13 @@ const Pay = () => {
                 <div data-status={status()} class="frame">
                     <span class="frame-header">
                         <h2>
-                            {t("pay_invoice", {
-                                id: privacyMode()
-                                    ? hiddenInformation
-                                    : params.id!,
-                            })}
+                            {swap() !== null && isCommitmentSwap(swap()!)
+                                ? t("swap")
+                                : t("pay_invoice", {
+                                      id: privacyMode()
+                                          ? hiddenInformation
+                                          : params.id!,
+                                  })}
                             <Show when={swap()}>
                                 <SwapIcons swap={swap()!} />
                             </Show>
@@ -501,59 +518,71 @@ const Pay = () => {
                                         <hr />
                                     </>
                                 }>
-                                <div class="swap-status">
-                                    {t("status")}:
-                                    <span class="btn-small">{status()}</span>
-                                    <Show
-                                        when={
-                                            getDestinationAddress(swap()) &&
-                                            (swapStatus() ===
-                                                swapStatusPending.SwapCreated ||
-                                                swapStatus() ===
-                                                    swapStatusPending.InvoiceSet)
-                                        }>
-                                        <span class="vertical-line" />
-                                        <Tooltip
-                                            pxDistance={20}
-                                            label={{
-                                                key: "destination_address",
-                                                variables: {
-                                                    address: cropString(
-                                                        getDestinationAddress(
-                                                            swap(),
+                                <Show
+                                    when={
+                                        swap() !== null &&
+                                        !isCommitmentSwap(swap()!)
+                                    }>
+                                    <div class="swap-status">
+                                        {t("status")}:
+                                        <span class="btn-small">
+                                            {status()}
+                                        </span>
+                                        <Show
+                                            when={
+                                                getDestinationAddress(swap()) &&
+                                                (swapStatus() ===
+                                                    swapStatusPending.SwapCreated ||
+                                                    swapStatus() ===
+                                                        swapStatusPending.InvoiceSet)
+                                            }>
+                                            <span class="vertical-line" />
+                                            <Tooltip
+                                                pxDistance={20}
+                                                label={{
+                                                    key: "destination_address",
+                                                    variables: {
+                                                        address: cropString(
+                                                            getDestinationAddress(
+                                                                swap(),
+                                                            ),
+                                                            14,
+                                                            8,
                                                         ),
-                                                        14,
-                                                        8,
-                                                    ),
-                                                },
-                                            }}
-                                            direction={[
-                                                "top",
-                                                isMobile() ? "left" : "right",
-                                            ]}>
-                                            <button
-                                                id="copy-destination"
-                                                onClick={() =>
-                                                    copyBoxText(
-                                                        getDestinationAddress(
-                                                            swap(),
-                                                        ),
-                                                    )
-                                                }>
-                                                <Show
-                                                    when={copyDestinationActive()}
-                                                    fallback={
-                                                        <BiRegularCopy
+                                                    },
+                                                }}
+                                                direction={[
+                                                    "top",
+                                                    isMobile()
+                                                        ? "left"
+                                                        : "right",
+                                                ]}>
+                                                <button
+                                                    id="copy-destination"
+                                                    onClick={() =>
+                                                        copyBoxText(
+                                                            getDestinationAddress(
+                                                                swap(),
+                                                            ),
+                                                        )
+                                                    }>
+                                                    <Show
+                                                        when={copyDestinationActive()}
+                                                        fallback={
+                                                            <BiRegularCopy
+                                                                size={14}
+                                                            />
+                                                        }>
+                                                        <IoCheckmark
                                                             size={14}
                                                         />
-                                                    }>
-                                                    <IoCheckmark size={14} />
-                                                </Show>
-                                                {t("destination")}
-                                            </button>
-                                        </Tooltip>
-                                    </Show>
-                                </div>
+                                                    </Show>
+                                                    {t("destination")}
+                                                </button>
+                                            </Tooltip>
+                                        </Show>
+                                    </div>
+                                </Show>
                                 <hr />
                             </Show>
                             <Show
@@ -604,6 +633,13 @@ const Pay = () => {
                                             undefined
                                         }>
                                         <PreBridgeDexQuoteBlocked />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swap() !== null &&
+                                            isCommitmentSwap(swap()!)
+                                        }>
+                                        <CommitmentCreated />
                                     </Match>
                                     <Match when={isTransactionClaimedStatus()}>
                                         <TransactionClaimed
@@ -701,7 +737,7 @@ const Pay = () => {
                                         <SwapCreated />
                                     </Match>
                                 </Switch>
-                                <Show when={!shouldShowPostBridgeExplorer()}>
+                                <Show when={!shouldHideDefaultExplorer()}>
                                     {blockExplorerLink()}
                                 </Show>
                             </Show>

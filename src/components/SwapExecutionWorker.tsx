@@ -114,10 +114,21 @@ const getCommitmentChainAsset = (swap: SomeSwap) =>
         ? swap.bridge.destinationAsset
         : swap.assetSend;
 
-const getPreBridgeCommitmentClaimAddress = (swap: SomeSwap) =>
-    swap.type === SwapType.Chain
-        ? (swap as ChainSwap).lockupDetails.claimAddress
-        : swap.claimAddress;
+const getPreBridgeClaimAddress = (
+    swap: SomeSwap,
+    commitmentClaimAddress: string | undefined,
+) => {
+    switch (swap.type) {
+        case SwapType.Chain:
+            return swap.lockupDetails.claimAddress;
+
+        case SwapType.Commitment:
+            return commitmentClaimAddress;
+
+        default:
+            return swap.claimAddress;
+    }
+};
 
 const getSwapPreimageHash = (swap: SomeSwap): string => {
     switch (swap.type) {
@@ -166,6 +177,7 @@ const needsCommitmentPost = (
 ): swap is SomeSwap & { commitmentLockupTxHash: string } =>
     swap !== undefined &&
     swap !== null &&
+    swap.type !== SwapType.Commitment &&
     swap.commitmentLockupTxHash !== undefined &&
     !swap.commitmentSignatureSubmitted &&
     isPendingCommitmentStatus(swap.status);
@@ -416,6 +428,7 @@ export const SwapExecutionWorker = () => {
         gasAbstractionSigner: {
             address: string;
         },
+        claimAddress: string,
     ): Promise<PreBridgeCommitmentLockupRecoveryResult> => {
         const commitmentAsset = currentSwap.assetSend;
         const erc20Swap = getErc20Swap(commitmentAsset);
@@ -426,19 +439,6 @@ export const SwapExecutionWorker = () => {
             fromBlock: BigInt(receivedEvent.blockNumber),
             toBlock: "latest",
         });
-        const claimAddress = getPreBridgeCommitmentClaimAddress(currentSwap);
-        if (typeof claimAddress !== "string") {
-            log.warn(
-                "Swap execution cannot recover pre-bridge commitment lockup without claim address",
-                getSwapExecutionLogContext(currentSwap.id, {
-                    commitmentAsset,
-                    fromBlock: receivedEvent.blockNumber,
-                }),
-            );
-            return {
-                status: PreBridgeCommitmentLockupRecoveryStatus.NotFound,
-            };
-        }
         const tokenAddress = getTokenAddress(commitmentAsset);
         const matchingLockups = lockupLogs.flatMap((event) => {
             const {
@@ -1136,6 +1136,13 @@ export const SwapExecutionWorker = () => {
         const commitmentLockupDetails = await getCommitmentLockupDetails(
             latestSwap.assetSend,
         );
+        const preBridgeClaimAddress = getPreBridgeClaimAddress(
+            latestSwap,
+            commitmentLockupDetails.claimAddress,
+        );
+        if (preBridgeClaimAddress === undefined) {
+            throw new Error("missing pre-bridge commitment claim address");
+        }
         const hop = latestSwap.dex.hops[0];
         if (hop.dexDetails === undefined) {
             throw new Error("missing DEX details for pre-bridge hop");
@@ -1147,6 +1154,7 @@ export const SwapExecutionWorker = () => {
             latestSwap,
             receivedEvent,
             gasAbstractionSigner,
+            preBridgeClaimAddress,
         );
         switch (recoveryResult.status) {
             case PreBridgeCommitmentLockupRecoveryStatus.Ambiguous:
@@ -1163,29 +1171,44 @@ export const SwapExecutionWorker = () => {
             case PreBridgeCommitmentLockupRecoveryStatus.NotFound:
                 break;
         }
-        const receivedAmount = receivedEvent.amountReceivedLD;
-        const expectedAmount = satsToAssetAmount(
-            latestSwap.sendAmount,
-            latestSwap.assetSend,
-        );
-        const { quote, shouldLock } = await fetchPreBridgeDexQuote({
-            swap: latestSwap,
-            swapId: latestSwap.id,
-            guid,
-            hop: hop.dexDetails,
-            receivedAmount,
-            expectedAmount,
-            receivedAsset: latestSwap.bridge.destinationAsset,
-            requiredAsset: latestSwap.assetSend,
-        });
 
-        if (!shouldLock) {
-            await persistPreBridgeDexQuoteBlock({
-                latestSwap,
+        const receivedAmount = receivedEvent.amountReceivedLD;
+        let quote: ClaimQuote;
+        if (latestSwap.type === SwapType.Commitment) {
+            quote = await fetchDexQuote(hop.dexDetails, receivedAmount);
+            log.debug(
+                "Swap execution fetched pre-bridge DEX quote",
+                getSwapExecutionLogContext(latestSwap.id, {
+                    guid,
+                    amountReceived: receivedAmount.toString(),
+                    quotedAmountOut: quote.trade.amountOut.toString(),
+                }),
+            );
+        } else {
+            const expectedAmount = satsToAssetAmount(
+                latestSwap.sendAmount,
+                latestSwap.assetSend,
+            );
+            const quoteResult = await fetchPreBridgeDexQuote({
+                swap: latestSwap,
+                swapId: latestSwap.id,
+                guid,
+                hop: hop.dexDetails,
                 receivedAmount,
-                receiveCall: manualCctpReceive?.receiveCall,
+                expectedAmount,
+                receivedAsset: latestSwap.bridge.destinationAsset,
+                requiredAsset: latestSwap.assetSend,
             });
-            return;
+            quote = quoteResult.quote;
+
+            if (!quoteResult.shouldLock) {
+                await persistPreBridgeDexQuoteBlock({
+                    latestSwap,
+                    receivedAmount,
+                    receiveCall: manualCctpReceive?.receiveCall,
+                });
+                return;
+            }
         }
 
         await clearPreBridgeRecovery(latestSwap);
@@ -1232,11 +1255,6 @@ export const SwapExecutionWorker = () => {
                 ),
             }),
         );
-        const preBridgeClaimAddress =
-            getPreBridgeCommitmentClaimAddress(latestSwap);
-        if (preBridgeClaimAddress === undefined) {
-            throw new Error("missing pre-bridge commitment claim address");
-        }
         const tx = {
             to: router.address,
             data: encodeFunctionData({
@@ -1284,6 +1302,7 @@ export const SwapExecutionWorker = () => {
                 latestSwap,
                 receivedEvent,
                 gasAbstractionSigner,
+                preBridgeClaimAddress,
             );
             switch (recoveryResult.status) {
                 case PreBridgeCommitmentLockupRecoveryStatus.Ambiguous:

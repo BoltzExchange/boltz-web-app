@@ -61,6 +61,21 @@ const mockSendPopulatedTransaction = vi
 const mockPostCommitmentSignatureForTransaction = vi
     .fn<(...args: unknown[]) => Promise<void>>()
     .mockResolvedValue(undefined);
+type MockDexQuote = {
+    trade: {
+        amountIn?: bigint;
+        amountOut: bigint;
+        data: string;
+    };
+};
+const mockFetchDexQuote = vi
+    .fn<(...args: unknown[]) => Promise<MockDexQuote>>()
+    .mockResolvedValue({
+        trade: {
+            amountOut: 150n,
+            data: "0xquote",
+        },
+    });
 const createMockErc20Swap = () => {
     return {
         address: "0x8000000000000000000000000000000000000000",
@@ -196,6 +211,10 @@ afterAll(() => {
 });
 
 vi.mock("../../src/consts/Assets", () => ({
+    AssetKind: {
+        ERC20: "ERC20",
+        EVMNative: "EVM_NATIVE",
+    },
     USDC: "USDC",
     getAssetBridge: (asset: string) =>
         asset === "CCTP-SRC"
@@ -231,6 +250,7 @@ vi.mock("../../src/consts/Assets", () => ({
                   }
                 : undefined,
     getNetworkTransport: () => "evm",
+    getKindForAsset: () => "ERC20",
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -270,6 +290,7 @@ vi.mock("../../src/context/Pay", () => ({
 vi.mock("../../src/context/Web3", () => ({
     useWeb3Signer: () => ({
         getErc20Swap: vi.fn(() => createMockErc20Swap()),
+        getEtherSwap: vi.fn(() => createMockErc20Swap()),
         getGasAbstractionSigner: vi.fn((asset: string) => ({
             address:
                 asset === "DST" || asset === "USDC"
@@ -406,12 +427,7 @@ vi.mock("boltz-swaps/oft", async (importActual) => ({
 }));
 
 vi.mock("../../src/utils/quoter", () => ({
-    fetchDexQuote: vi.fn().mockResolvedValue({
-        trade: {
-            amountOut: 150n,
-            data: "0xquote",
-        },
-    }),
+    fetchDexQuote: (...args: unknown[]) => mockFetchDexQuote(...args),
 }));
 
 vi.mock("boltz-swaps/evm", async (importActual) => ({
@@ -424,7 +440,6 @@ vi.mock("boltz-swaps/evm", async (importActual) => ({
 const { SwapExecutionWorker } =
     await import("../../src/components/SwapExecutionWorker");
 const oftUtils = await import("boltz-swaps/oft");
-const quoter = await import("../../src/utils/quoter");
 
 const cctpMessageSentTopic =
     "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036";
@@ -502,18 +517,16 @@ describe("SwapExecutionWorker", () => {
         mockSendPopulatedTransaction
             .mockReset()
             .mockResolvedValue("0xcommitment");
-        vi.mocked(quoter.fetchDexQuote)
-            .mockReset()
-            .mockResolvedValue({
-                trade: {
-                    amountIn: 150n,
-                    amountOut: 150n,
-                    data: "0xquote",
-                },
-            });
         mockPostCommitmentSignatureForTransaction
             .mockReset()
             .mockResolvedValue(undefined);
+        mockFetchDexQuote.mockReset().mockResolvedValue({
+            trade: {
+                amountIn: 150n,
+                amountOut: 150n,
+                data: "0xquote",
+            },
+        });
         mockQueryFilter.mockReset().mockResolvedValue([]);
         Object.defineProperty(window.navigator, "locks", {
             configurable: true,
@@ -573,7 +586,15 @@ describe("SwapExecutionWorker", () => {
             expect(mockSendPopulatedTransaction).toHaveBeenCalled();
             expect(
                 mockPostCommitmentSignatureForTransaction,
-            ).toHaveBeenCalled();
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    asset: "FINAL",
+                    commitmentAsset: "DST",
+                    signer: expect.objectContaining({
+                        address: "0x9000000000000000000000000000000000000000",
+                    }),
+                }),
+            );
             expect(mockSetSwapStorage).toHaveBeenCalledTimes(2);
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
@@ -583,7 +604,7 @@ describe("SwapExecutionWorker", () => {
     test("should persist a blocked pre-bridge state when DEX quote stays below the lockup amount", async () => {
         vi.useFakeTimers();
         try {
-            vi.mocked(quoter.fetchDexQuote).mockResolvedValue({
+            mockFetchDexQuote.mockResolvedValue({
                 trade: {
                     amountIn: 150n,
                     amountOut: 49n,
@@ -595,7 +616,7 @@ describe("SwapExecutionWorker", () => {
 
             await vi.runAllTimersAsync();
 
-            expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(3);
+            expect(mockFetchDexQuote).toHaveBeenCalledTimes(3);
             expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
             expect(
                 (currentSwap.bridge as Record<string, unknown>).recovery,
@@ -623,7 +644,7 @@ describe("SwapExecutionWorker", () => {
     });
 
     test("should execute pre-bridge lockup when the DEX quote is within slippage", async () => {
-        vi.mocked(quoter.fetchDexQuote).mockResolvedValueOnce({
+        mockFetchDexQuote.mockResolvedValueOnce({
             trade: {
                 amountIn: 150n,
                 amountOut: 50n,
@@ -661,7 +682,7 @@ describe("SwapExecutionWorker", () => {
         });
         // Below the slippage threshold (requiredAmount 50) but the resulting
         // lockup (25) still clears the renegotiation minimum (20).
-        vi.mocked(quoter.fetchDexQuote).mockResolvedValue({
+        mockFetchDexQuote.mockResolvedValue({
             trade: {
                 amountIn: 150n,
                 amountOut: 49n,
@@ -676,7 +697,7 @@ describe("SwapExecutionWorker", () => {
                 expect(mockSendPopulatedTransaction).toHaveBeenCalled();
             });
 
-            expect(quoter.fetchDexQuote).toHaveBeenCalledTimes(1);
+            expect(mockFetchDexQuote).toHaveBeenCalledTimes(1);
             expect(
                 (currentSwap.bridge as Record<string, unknown>).recovery,
             ).toBeUndefined();

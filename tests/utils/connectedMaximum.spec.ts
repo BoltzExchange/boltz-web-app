@@ -9,10 +9,8 @@ import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import { config } from "../../src/config";
 import { RBTC, USDT0 } from "../../src/consts/Assets";
 import type { ConnectedWallet, Signer } from "../../src/context/Web3";
-import {
-    assetBalanceToInternalAmount,
-    getConnectedMaximum,
-} from "../../src/utils/connectedMaximum";
+import { getConnectedMaximum } from "../../src/utils/connectedMaximum";
+import { baseAssetAmountToInternal } from "../../src/utils/denomination";
 
 const {
     createTokenContractMock,
@@ -80,15 +78,15 @@ afterEach(() => {
     config.assets = originalAssets;
 });
 
-describe("assetBalanceToInternalAmount", () => {
+describe("baseAssetAmountToInternal", () => {
     test("converts native asset base units to sats", () => {
         expect(
-            assetBalanceToInternalAmount(RBTC, 1_000_000_000_000_000_000n),
+            baseAssetAmountToInternal(RBTC, 1_000_000_000_000_000_000n),
         ).toEqual(BigNumber(100_000_000));
     });
 
     test("keeps routed ERC20 balances in token base units", () => {
-        expect(assetBalanceToInternalAmount(routedToken, 1_234_567n)).toEqual(
+        expect(baseAssetAmountToInternal(routedToken, 1_234_567n)).toEqual(
             BigNumber(1_234_567),
         );
     });
