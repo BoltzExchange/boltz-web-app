@@ -3,11 +3,13 @@ import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
+    type DexDetail,
     type SwapBase,
     getFinalAssetReceive,
     getFinalAssetSend,
     getPostBridgeDetail,
     getPreBridgeDetail,
+    getPreDexQuoteAmount,
     noGasAbstraction,
 } from "../../src/utils/swapCreator";
 
@@ -21,6 +23,13 @@ const makeBridge = (
     destinationAsset,
     position,
 });
+
+const makeDex = (position: SwapPosition, quoteAmount: number | string) =>
+    ({
+        hops: [],
+        position,
+        quoteAmount,
+    }) as DexDetail;
 
 // Minimal SwapBase builder — only fields read by the tested helpers matter.
 const makeSwap = (overrides: Partial<SwapBase>): SwapBase =>
@@ -65,6 +74,25 @@ describe("getPostBridgeDetail", () => {
 
     test("returns undefined when no bridge is provided", () => {
         expect(getPostBridgeDetail(undefined)).toBeUndefined();
+    });
+});
+
+describe("getPreDexQuoteAmount", () => {
+    test("returns the quote amount for pre-DEX details", () => {
+        expect(
+            getPreDexQuoteAmount(makeDex(SwapPosition.Pre, "40000000")),
+        ).toBe(40000000n);
+    });
+
+    test("rounds legacy numeric quote amounts", () => {
+        expect(getPreDexQuoteAmount(makeDex(SwapPosition.Pre, 1.6))).toBe(2n);
+    });
+
+    test("returns undefined for post-DEX or missing details", () => {
+        expect(
+            getPreDexQuoteAmount(makeDex(SwapPosition.Post, "40000000")),
+        ).toBeUndefined();
+        expect(getPreDexQuoteAmount(undefined)).toBeUndefined();
     });
 });
 

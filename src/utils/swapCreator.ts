@@ -243,6 +243,16 @@ export const getPostBridgeDetail = (
 ): BridgeDetail | undefined =>
     bridge?.position === SwapPosition.Post ? bridge : undefined;
 
+export const getPreDexQuoteAmount = (dex?: DexDetail): bigint | undefined => {
+    if (dex?.position !== SwapPosition.Pre) {
+        return undefined;
+    }
+
+    return typeof dex.quoteAmount === "string"
+        ? BigInt(dex.quoteAmount)
+        : BigInt(Math.round(dex.quoteAmount));
+};
+
 const generatePreimage = ({
     asset,
     keyIndex,

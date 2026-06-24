@@ -14,6 +14,7 @@ import {
     type ReverseSwap,
     getLockupGasAbstraction,
     getPreBridgeDetail,
+    getPreDexQuoteAmount,
 } from "../utils/swapCreator";
 
 const SwapCreated = () => {
@@ -59,6 +60,7 @@ const SwapCreated = () => {
                             : undefined
                     }
                     bridge={getPreBridgeDetail(chain.bridge)}
+                    bridgeAmount={getPreDexQuoteAmount(chain.dex)}
                 />
             </Show>
         </Show>
