@@ -74,6 +74,7 @@ jobs:
 
             - name: Start regtest
               env:
+                  ARBITRUM_E2E_RPC_URL: ${{ vars.ARBITRUM_E2E_RPC_URL }}
                   COMPOSE_PROFILES: webapp-ci
               run: |
                   git submodule init
@@ -106,7 +107,9 @@ jobs:
 
             - name: Start regtest
               env:
-                  COMPOSE_PROFILES: webapp-ci
+                  ARBITRUM_E2E_RPC_URL: ${{ vars.ARBITRUM_E2E_RPC_URL }}
+                  ETHEREUM_E2E_RPC_URL: ${{ vars.ETHEREUM_E2E_RPC_URL }}
+                  COMPOSE_PROFILES: webapp-ci,stables-e2e
               run: |
                   git submodule init
                   git submodule update
@@ -123,6 +126,8 @@ jobs:
 
             - name: Run Playwright tests
               env:
+                  ARBITRUM_E2E_RPC_URL: ${{ vars.ARBITRUM_E2E_RPC_URL }}
+                  ETHEREUM_E2E_RPC_URL: ${{ vars.ETHEREUM_E2E_RPC_URL }}
                   CI: true
                   VITE_RSK_LOG_SCAN_ENDPOINT: "http://localhost:8545"
               run:

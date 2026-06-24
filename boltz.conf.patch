@@ -1,5 +1,5 @@
 diff --git a/regtest/data/backend/boltz.conf b/regtest/data/backend/boltz.conf
-index a07ff9d..4d83f3a 100755
+index a819adf..830c155 100755
 --- a/regtest/data/backend/boltz.conf
 +++ b/regtest/data/backend/boltz.conf
 @@ -39,11 +39,11 @@ maxSwapAmount = 40_294_967
@@ -40,7 +40,7 @@ index a07ff9d..4d83f3a 100755
  minSwapAmount = 50_000
  
    [pairs.timeoutDelta]
--  chain= 1440
+-  chain = 1440
 -  reverse = 1440
 -  swapMinimal = 1440
 -  swapMaximal = 2880
@@ -57,7 +57,7 @@ index a07ff9d..4d83f3a 100755
    minSwapAmount = 25_000
  
    [pairs.timeoutDelta]
--  chain= 1440
+-  chain = 1440
 -  reverse = 1440
 -  swapMinimal = 1440
 -  swapMaximal = 2880
@@ -68,5 +68,5 @@ index a07ff9d..4d83f3a 100755
 +  swapMaximal = 200
 +  swapTaproot = 500
  
- [[currencies]]
- symbol = "BTC"
+ [[pairs]]
+ base = "TBTC"
