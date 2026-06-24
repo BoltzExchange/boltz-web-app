@@ -11,7 +11,6 @@ import {
     type SubmarineSwap,
     getLockupGasAbstraction,
     getPreBridgeDetail,
-    getPreDexQuoteAmount,
 } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
@@ -49,7 +48,6 @@ const InvoiceSet = () => {
                         : undefined
                 }
                 bridge={getPreBridgeDetail(submarine.bridge)}
-                bridgeAmount={getPreDexQuoteAmount(submarine.dex)}
             />
         </Show>
     );

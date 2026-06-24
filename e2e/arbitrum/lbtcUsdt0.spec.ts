@@ -11,6 +11,7 @@ import {
     http,
     isAddressEqual,
     parseAbi,
+    parseEther,
     parseEventLogs,
     parseUnits,
 } from "viem";
@@ -38,6 +39,7 @@ const describeArbitrumE2e = (title: string, callback: () => void) => {
 
 const erc20Abi = parseAbi([
     "function balanceOf(address owner) view returns (uint256)",
+    "function transfer(address recipient, uint256 amount) returns (bool)",
 ]);
 
 const lbtcSendAmount = "0.001";
@@ -45,6 +47,14 @@ const usdt0EthSendAmount = "40";
 const actionTimeout = 60_000;
 const probeTimeout = 1_000;
 const testTimeout = 150_000;
+
+// Whale holding USDT0-ETH (mainnet USDT) on the Ethereum fork; impersonated to
+// fund the test wallet, mirroring the backend TBTC funding in the fixture.
+const stablesFundingSource = getAddress(
+    process.env.STABLES_E2E_USDT0_ETH_FUNDING_SOURCE ??
+        "0xF977814e90dA44bFA03b6295A0616a897441aceC",
+);
+const stablesFundingAmount = parseUnits("500", 6);
 
 const ethereumRpcUrl = () =>
     `http://127.0.0.1:${process.env.ETHEREUM_E2E_PORT ?? "18546"}`;
@@ -140,7 +150,7 @@ const waitForDexQuote = async (args: {
             async () => {
                 try {
                     const response = await fetch(url, {
-                        signal: AbortSignal.timeout(actionTimeout),
+                        signal: AbortSignal.timeout(probeTimeout),
                     });
                     if (!response.ok) {
                         return 0;
@@ -296,15 +306,67 @@ const getTokenBalance = async (
         args: [owner],
     });
 
-const expectEthereumWalletReady = async (
+// Funds the test wallet with gas + USDT0-ETH by impersonating a whale on the
+// Anvil fork, so the test does not depend on an external funding container.
+const fundStablesE2eWallet = async (
     publicClient: PublicClient,
-    owner: Address,
+    wallet: Address,
 ) => {
     const token = getRegtestTokenAddress("USDT0-ETH");
     const tokenCode = await publicClient.getCode({ address: token });
     if (tokenCode === undefined || tokenCode === "0x") {
         throw new Error("Ethereum e2e fork is missing the USDT0-ETH contract");
     }
+
+    if (
+        (await getTokenBalance(publicClient, token, wallet)) >=
+        parseUnits(usdt0EthSendAmount, 6)
+    ) {
+        return;
+    }
+
+    await publicClient.request({
+        method: "anvil_setBalance" as never,
+        params: [wallet, "0x" + parseEther("10").toString(16)] as never,
+    });
+    await publicClient.request({
+        method: "anvil_setBalance" as never,
+        params: [
+            stablesFundingSource,
+            "0x" + parseEther("1").toString(16),
+        ] as never,
+    });
+    await publicClient.request({
+        method: "anvil_impersonateAccount" as never,
+        params: [stablesFundingSource] as never,
+    });
+
+    try {
+        const walletClient = createWalletClient({
+            account: stablesFundingSource,
+            chain: ethereumE2eChain,
+            transport: http(ethereumRpcUrl(), { timeout: actionTimeout }),
+        });
+        const hash = await walletClient.writeContract({
+            address: token,
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [wallet, stablesFundingAmount],
+        });
+        await publicClient.waitForTransactionReceipt({ hash });
+    } finally {
+        await publicClient.request({
+            method: "anvil_stopImpersonatingAccount" as never,
+            params: [stablesFundingSource] as never,
+        });
+    }
+};
+
+const expectEthereumWalletReady = async (
+    publicClient: PublicClient,
+    owner: Address,
+) => {
+    const token = getRegtestTokenAddress("USDT0-ETH");
 
     expect(await publicClient.getBalance({ address: owner })).toBeGreaterThan(
         0n,
@@ -452,11 +514,18 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
     });
 
     test("sends USDT0-ETH OFT bridge tx for an L-BTC chain swap", async ({
+        arbitrum,
         page,
     }) => {
         test.setTimeout(testTimeout);
 
+        // Requesting the arbitrum fixture runs the worker setup (RPC wait and
+        // backend TBTC liquidity) needed before the USDT0 -> TBTC DEX hop.
+        void arbitrum;
+
         const ethereum = createEthereumClient();
+        await waitForEthereumRpc(ethereum);
+
         const walletAddress = await getStablesE2eWalletAddress(ethereum);
         const walletClient = createWalletClient({
             account: walletAddress,
@@ -464,7 +533,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
             transport: http(ethereumRpcUrl(), { timeout: actionTimeout }),
         });
 
-        await waitForEthereumRpc(ethereum);
+        await fundStablesE2eWallet(ethereum, walletAddress);
         await expectEthereumWalletReady(ethereum, walletAddress);
         await injectWalletProvider({
             page,

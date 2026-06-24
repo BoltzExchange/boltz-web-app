@@ -599,7 +599,6 @@ const LockupEvm = (props: {
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
     bridge?: BridgeDetail;
-    bridgeAmount?: bigint;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();

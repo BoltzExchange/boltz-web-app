@@ -183,7 +183,6 @@ const Fees = () => {
         }
 
         const initiatingPair = pair();
-
         setLimitsLoading(true);
         void Promise.all([
             initiatingPair.getMinimum(),
