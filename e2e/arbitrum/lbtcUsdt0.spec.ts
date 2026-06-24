@@ -42,22 +42,9 @@ const erc20Abi = parseAbi([
 
 const lbtcSendAmount = "0.001";
 const usdt0EthSendAmount = "40";
-const swapClaimTimeout = 75_000;
-const swapClaimTestTimeout = 150_000;
-const rpcTimeout = 30_000;
-const ethereumRpcReadyTimeout = 15_000;
-const quoteRequestTimeout = 10_000;
-const quoteReadinessTimeout = 30_000;
-const networkSelectorProbeTimeout = 500;
-const assetSelectTimeout = 3_000;
-const uiQuoteTimeout = 30_000;
-const uiActionTimeout = 10_000;
-const walletConnectTimeout = 10_000;
-const providerModalTimeout = 1_000;
-const swapCreateTimeout = 30_000;
-const bridgeActionTimeout = 20_000;
-const bridgeTxTimeout = 20_000;
-const stablesBridgeTestTimeout = 90_000;
+const actionTimeout = 60_000;
+const probeTimeout = 1_000;
+const testTimeout = 150_000;
 
 const ethereumRpcUrl = () =>
     `http://127.0.0.1:${process.env.ETHEREUM_E2E_PORT ?? "18546"}`;
@@ -87,7 +74,7 @@ const createEthereumClient = () => {
             ...ethereumE2eChain,
             rpcUrls: { default: { http: [rpcUrl] } },
         },
-        transport: http(rpcUrl, { timeout: rpcTimeout }),
+        transport: http(rpcUrl, { timeout: actionTimeout }),
     });
 };
 
@@ -102,7 +89,7 @@ const waitForEthereumRpc = async (publicClient: PublicClient) => {
                 }
             },
             {
-                timeout: ethereumRpcReadyTimeout,
+                timeout: actionTimeout,
                 message: "Ethereum e2e RPC is ready",
             },
         )
@@ -147,29 +134,29 @@ const waitForDexQuote = async (args: {
         amountIn: args.amountIn.toString(),
     });
     const url = `${config.apiUrl.normal}/v2/quote/ARB/in?${params}`;
-    const deadline = Date.now() + quoteReadinessTimeout;
-    let lastError: unknown;
 
-    while (Date.now() < deadline) {
-        try {
-            const response = await fetch(url, {
-                signal: AbortSignal.timeout(quoteRequestTimeout),
-            });
-            if (response.ok) {
-                const quotes = await response.json();
-                if (Array.isArray(quotes) && quotes.length > 0) {
-                    return;
+    await expect
+        .poll(
+            async () => {
+                try {
+                    const response = await fetch(url, {
+                        signal: AbortSignal.timeout(actionTimeout),
+                    });
+                    if (!response.ok) {
+                        return 0;
+                    }
+                    const quotes = await response.json();
+                    return Array.isArray(quotes) ? quotes.length : 0;
+                } catch {
+                    return 0;
                 }
-            }
-            lastError = `${response.status} ${response.statusText}`;
-        } catch (error) {
-            lastError = error;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 1_000));
-    }
-
-    throw new Error(`quote not ready for ${args.label}: ${String(lastError)}`);
+            },
+            {
+                timeout: actionTimeout,
+                message: `quote not ready for ${args.label}`,
+            },
+        )
+        .toBeGreaterThan(0);
 };
 
 type StoredBridgeSwap = {
@@ -207,7 +194,7 @@ const getStoredSwap = async (
 const waitForBridgeTxHash = async (page: Page, id: string): Promise<Hex> => {
     await expect
         .poll(async () => (await getStoredSwap(page, id))?.bridge?.txHash, {
-            timeout: bridgeTxTimeout,
+            timeout: actionTimeout,
         })
         .toMatch(/^0x[0-9a-fA-F]{64}$/);
 
@@ -225,14 +212,14 @@ const chooseAsset = async (page: Page, asset: string) => {
         canonical !== asset ||
         (await page
             .getByTestId("network-back")
-            .isVisible({ timeout: networkSelectorProbeTimeout })
+            .isVisible({ timeout: probeTimeout })
             .catch(() => false))
     ) {
         await page.getByTestId(`select-${asset}`).click();
     }
 
     await expect(page.locator(".asset-select-overlay")).toBeHidden({
-        timeout: assetSelectTimeout,
+        timeout: actionTimeout,
     });
 };
 
@@ -265,10 +252,10 @@ const createSwap = async (
 
     const receiveAmount = page.getByTestId("receiveAmount");
     await expect(receiveAmount).not.toHaveValue("", {
-        timeout: uiQuoteTimeout,
+        timeout: actionTimeout,
     });
     await expect(receiveAmount).not.toHaveValue("0", {
-        timeout: uiQuoteTimeout,
+        timeout: actionTimeout,
     });
 
     if (options?.walletAddress !== undefined) {
@@ -276,7 +263,7 @@ const createSwap = async (
     }
 
     const createButton = page.getByTestId("create-swap-button");
-    await expect(createButton).toBeEnabled({ timeout: uiActionTimeout });
+    await expect(createButton).toBeEnabled({ timeout: actionTimeout });
     await createButton.click();
 
     const downloadButton = page.getByRole("button", {
@@ -287,12 +274,12 @@ const createSwap = async (
         .or(page.locator("div[data-status='invoice.set']"));
 
     await expect(swapReady.or(downloadButton)).toBeVisible({
-        timeout: swapCreateTimeout,
+        timeout: actionTimeout,
     });
     if (await downloadButton.isVisible().catch(() => false)) {
         await verifyRescueFile(page);
     }
-    await expect(swapReady).toBeVisible({ timeout: swapCreateTimeout });
+    await expect(swapReady).toBeVisible({ timeout: actionTimeout });
 
     return getCurrentSwapId(page);
 };
@@ -334,7 +321,7 @@ const connectWallet = async (page: Page, walletAddress: Address) => {
     const connectedAddress = page.locator(`text=${walletAddress.slice(0, 8)}`);
 
     await expect(connectedAddress.or(connect)).toBeVisible({
-        timeout: walletConnectTimeout,
+        timeout: actionTimeout,
     });
 
     if (await connect.isVisible().catch(() => false)) {
@@ -342,9 +329,7 @@ const connectWallet = async (page: Page, walletAddress: Address) => {
 
         const modal = page.locator("[data-testid='wallet-connect-modal']");
         if (
-            await modal
-                .isVisible({ timeout: providerModalTimeout })
-                .catch(() => false)
+            await modal.isVisible({ timeout: probeTimeout }).catch(() => false)
         ) {
             await modal
                 .locator(".provider-modal-entry-wrapper")
@@ -355,7 +340,7 @@ const connectWallet = async (page: Page, walletAddress: Address) => {
     }
 
     await expect(connectedAddress).toBeVisible({
-        timeout: walletConnectTimeout,
+        timeout: actionTimeout,
     });
 };
 
@@ -366,13 +351,13 @@ const clickSendBridge = async (page: Page, walletAddress: Address) => {
     const send = page.getByRole("button", { name: /^send$/i });
 
     await expect(send.or(approve)).toBeVisible({
-        timeout: bridgeActionTimeout,
+        timeout: actionTimeout,
     });
     if (await approve.isVisible().catch(() => false)) {
         await approve.click();
     }
 
-    await expect(send).toBeEnabled({ timeout: bridgeActionTimeout });
+    await expect(send).toBeEnabled({ timeout: actionTimeout });
     await send.click();
 };
 
@@ -386,7 +371,7 @@ const expectOftSendTx = async (
     });
     const receipt = await publicClient.waitForTransactionReceipt({
         hash: txHash,
-        timeout: bridgeTxTimeout,
+        timeout: actionTimeout,
     });
     expect(receipt.status).toBe("success");
 
@@ -418,7 +403,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
         recipientAddress,
         page,
     }) => {
-        test.setTimeout(swapClaimTestTimeout);
+        test.setTimeout(testTimeout);
 
         const token = getRegtestTokenAddress("USDT0");
         const balanceBefore = await getTokenBalance(
@@ -456,7 +441,7 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
 
         await expect(
             page.locator("div[data-status='transaction.claimed']"),
-        ).toBeVisible({ timeout: swapClaimTimeout });
+        ).toBeVisible({ timeout: actionTimeout });
 
         const balanceAfter = await getTokenBalance(
             arbitrum.publicClient,
@@ -469,14 +454,14 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
     test("sends USDT0-ETH OFT bridge tx for an L-BTC chain swap", async ({
         page,
     }) => {
-        test.setTimeout(stablesBridgeTestTimeout);
+        test.setTimeout(testTimeout);
 
         const ethereum = createEthereumClient();
         const walletAddress = await getStablesE2eWalletAddress(ethereum);
         const walletClient = createWalletClient({
             account: walletAddress,
             chain: ethereumE2eChain,
-            transport: http(ethereumRpcUrl(), { timeout: rpcTimeout }),
+            transport: http(ethereumRpcUrl(), { timeout: actionTimeout }),
         });
 
         await waitForEthereumRpc(ethereum);

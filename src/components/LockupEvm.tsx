@@ -635,11 +635,6 @@ const LockupEvm = (props: {
     createEffect(() => {
         void (async () => {
             if (props.bridge !== undefined) {
-                if (props.bridgeAmount !== undefined) {
-                    setBridgeValue(props.bridgeAmount);
-                    return;
-                }
-
                 if (!hasHopsBefore() || props.hops === undefined) {
                     throw new Error(
                         `bridge swap ${props.swapId} is missing a lockup-side DEX hop`,

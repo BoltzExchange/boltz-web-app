@@ -183,12 +183,6 @@ const Fees = () => {
         }
 
         const initiatingPair = pair();
-        if (initiatingPair.needsNetworkForQuote) {
-            setMinimum(0);
-            setMaximum(Number.MAX_SAFE_INTEGER);
-            setLimitsLoading(false);
-            return;
-        }
 
         setLimitsLoading(true);
         void Promise.all([
