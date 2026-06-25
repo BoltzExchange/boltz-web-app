@@ -181,6 +181,12 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
+                            href="https://btcpayserver.org/"
+                            class="btcpay"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
                             href="https://www.bullbitcoin.com/"
                             class="bull-bitcoin"
                         />
@@ -242,12 +248,6 @@ export const Hero = () => {
                             class="thunderhub">
                             Thunderhub
                         </ExternalLink>
-                    </div>
-                    <div>
-                        <ExternalLink
-                            href="https://tropykus.com"
-                            class="tropykus"
-                        />
                     </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
