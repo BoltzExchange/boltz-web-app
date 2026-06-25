@@ -1,6 +1,7 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { getRpcUrls } from "boltz-swaps/config";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -54,7 +55,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { decodeInvoice, isLnurl } from "../utils/invoice";
+import { isLnurl } from "../utils/invoice";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 

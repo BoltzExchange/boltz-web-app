@@ -1,4 +1,4 @@
-import { type ChainKey, chains } from "boltz-swaps/chains";
+import { type ChainKey, chains } from "boltz-swaps/networks";
 
 const prependEnv = (
     envValue: string | undefined,

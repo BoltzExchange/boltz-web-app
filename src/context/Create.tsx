@@ -2,6 +2,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import { type Navigator, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import {
     type Accessor,
     type JSX,
@@ -26,7 +27,7 @@ import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
-import { decodeInvoice, isInvoice, isLnurl } from "../utils/invoice";
+import { isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 import { useGlobalContext } from "./Global";
 

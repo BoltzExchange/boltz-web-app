@@ -1,14 +1,6 @@
 import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import { equalBytes } from "@scure/btc-signer/utils.js";
-import {
-    type RefundDetails,
-    constructRefundTransaction,
-    targetFee,
-} from "boltz-core";
-import {
-    type LiquidRefundDetails,
-    constructRefundTransaction as lcRT,
-} from "boltz-core/liquid";
+import { isBolt12Offer } from "boltz-swaps/invoice";
 import { isValidSolanaAddress } from "boltz-swaps/solana";
 import { isValidTronAddress } from "boltz-swaps/tron";
 import { NetworkTransport } from "boltz-swaps/types";
@@ -22,18 +14,11 @@ import {
     address as LiquidAddress,
     type Transaction as LiquidTransaction,
 } from "liquidjs-lib";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import { isAddress } from "viem";
 
 import { config } from "../config";
 import { BTC, LBTC, LN, getNetworkTransport } from "../consts/Assets";
-import {
-    extractAddress,
-    extractInvoice,
-    isBolt12Offer,
-    isInvoice,
-    isLnurl,
-} from "./invoice";
+import { extractAddress, extractInvoice, isInvoice, isLnurl } from "./invoice";
 
 const possibleUserInputTypes = [LN, LBTC, BTC];
 
@@ -110,48 +95,6 @@ const probeUserInput = (
     return null;
 };
 
-const getConstructRefundTransaction = (
-    asset: string,
-    addOneSatBuffer: boolean,
-) => {
-    return (
-        refundDetails: RefundDetails[] | LiquidRefundDetails[],
-        outputScript: Uint8Array,
-        timeoutBlockHeight: number,
-        feePerVbyte: number,
-        isRbf: boolean,
-        liquidNetwork?: LiquidNetwork,
-        blindingKey?: Buffer,
-    ) => {
-        if (asset === LBTC) {
-            return targetFee(
-                feePerVbyte,
-                (fee) =>
-                    lcRT(
-                        refundDetails as LiquidRefundDetails[],
-                        outputScript as Buffer,
-                        timeoutBlockHeight,
-                        addOneSatBuffer ? fee + BigInt(1) : fee,
-                        isRbf,
-                        liquidNetwork,
-                        blindingKey,
-                    ),
-                true,
-            );
-        }
-
-        return targetFee(feePerVbyte, (fee) =>
-            constructRefundTransaction(
-                refundDetails as RefundDetails[],
-                outputScript,
-                timeoutBlockHeight,
-                addOneSatBuffer ? fee + BigInt(1) : fee,
-                isRbf,
-            ),
-        );
-    };
-};
-
 const findOutputByScript = (
     asset: string,
     tx: BtcTransaction | LiquidTransaction,
@@ -178,6 +121,5 @@ export {
     validateAddress,
     getNetwork,
     decodeAddress,
-    getConstructRefundTransaction,
     probeUserInput,
 };

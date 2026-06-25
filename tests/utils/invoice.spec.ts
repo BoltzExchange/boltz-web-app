@@ -1,21 +1,21 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 import BigNumber from "bignumber.js";
-import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
 import type * as ClientModule from "boltz-swaps/client";
 import { vi } from "vitest";
 
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import {
-    decodeInvoice,
     extractAddress,
     extractBip21Amount,
     extractInvoice,
     fetchBip353,
+    getAssetByBip21Prefix,
     isBip21,
     isInvoice,
     isLnurl,
-    validateInvoiceForOffer,
+    resolveBip353,
 } from "../../src/utils/invoice";
 
 const { fetchBolt12InvoiceMock, lookupMock } = vi.hoisted(() => ({
@@ -129,302 +129,12 @@ describe("invoice", () => {
         );
     });
 
-    describe("decodeInvoice millisatoshi rounding", () => {
-        const mockInvoice = "lnbc1mock";
-
-        beforeEach(() => {
-            vi.clearAllMocks();
-            fetchBolt12InvoiceMock.mockReset();
-        });
-
-        test.each`
-            millisatoshis | expectedSats | description
-            ${1509895001} | ${1509895}   | ${"1 msat remainder - round down"}
-            ${1509895499} | ${1509895}   | ${"499 msat remainder - round down"}
-            ${1509895500} | ${1509896}   | ${"500 msat remainder - round up"}
-            ${1509895999} | ${1509896}   | ${"999 msat remainder - round up"}
-            ${1000}       | ${1}         | ${"exact conversion"}
-            ${0}          | ${0}         | ${"zero amount"}
-        `(
-            "should round $millisatoshis msat to $expectedSats sats ($description)",
-            ({ millisatoshis, expectedSats }) => {
-                vi.spyOn(bolt11, "decode").mockReturnValue({
-                    millisatoshis: millisatoshis.toString(),
-                    tags: [
-                        {
-                            tagName: "payment_hash",
-                            data: "mock_hash",
-                        },
-                    ],
-                } as ReturnType<typeof bolt11.decode>);
-
-                const result = decodeInvoice(mockInvoice);
-
-                expect(result.satoshis).toBe(expectedSats);
-            },
-        );
-    });
-
-    describe("decodeInvoice Bolt12 millisatoshi rounding", () => {
-        const mockInvoice = "lni1mock";
-
-        beforeEach(() => {
-            vi.clearAllMocks();
-        });
-
-        test.each`
-            invoiceAmount  | expectedSats | description
-            ${1509895001n} | ${1509895}   | ${"1 msat remainder - round down"}
-            ${1509895499n} | ${1509895}   | ${"499 msat remainder - round down"}
-            ${1509895500n} | ${1509896}   | ${"500 msat remainder - round up"}
-            ${1509895999n} | ${1509896}   | ${"999 msat remainder - round up"}
-            ${1000n}       | ${1}         | ${"exact conversion"}
-            ${0n}          | ${0}         | ${"zero amount"}
-        `(
-            "should round Bolt12 $invoiceAmount msat to $expectedSats sats ($description)",
-            ({ invoiceAmount, expectedSats }) => {
-                vi.spyOn(bolt11, "decode").mockImplementation(() => {
-                    throw new Error("invalid bolt11");
-                });
-                vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                    hrp: "lni",
-                    data: new Uint8Array(),
-                });
-                vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-                vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                    invoice_amount: invoiceAmount,
-                    invoice_payment_hash: new Uint8Array(32).fill(1),
-                    records: [],
-                });
-
-                const result = decodeInvoice(mockInvoice);
-
-                expect(result.type).toBe(1);
-                expect(result.satoshis).toBe(expectedSats);
-            },
-        );
-    });
-
-    describe("validateInvoiceForOffer", () => {
+    describe("fetchBip353", () => {
         const privateKey = new Uint8Array(32).fill(1);
         const compressedPubkey = secp256k1.getPublicKey(privateKey, true);
-        const xOnlyPubkey = compressedPubkey.slice(1);
 
         beforeEach(() => {
             vi.clearAllMocks();
-        });
-
-        test("should compare offer signer against normalized invoice node id", () => {
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: compressedPubkey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            const verifySignature = vi
-                .spyOn(Bolt12, "verifySignature")
-                .mockReturnValue(true);
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).not.toThrow();
-            expect(verifySignature).toHaveBeenCalledWith(
-                "invoice",
-                new Uint8Array(32).fill(3),
-                xOnlyPubkey,
-                new Uint8Array(64).fill(2),
-            );
-        });
-
-        test("should normalize compressed pubkeys from blinded paths", () => {
-            const pathBytes = new Uint8Array(102);
-            pathBytes[66] = 1;
-            pathBytes.set(compressedPubkey, 67);
-
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: true,
-                paths: hex.encode(pathBytes),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: compressedPubkey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).not.toThrow();
-        });
-
-        test("should accept x-only keys without conversion", () => {
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(xOnlyPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: xOnlyPubkey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            const verifySignature = vi
-                .spyOn(Bolt12, "verifySignature")
-                .mockReturnValue(true);
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).not.toThrow();
-            expect(verifySignature).toHaveBeenCalledWith(
-                "invoice",
-                new Uint8Array(32).fill(3),
-                xOnlyPubkey,
-                new Uint8Array(64).fill(2),
-            );
-        });
-
-        test("should throw when invoice_node_id is missing", () => {
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: undefined,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).toThrow("invalid invoice signature");
-        });
-
-        test("should throw when signature is missing", () => {
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: compressedPubkey,
-                signature: undefined,
-                records: [],
-            });
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).toThrow("invalid invoice signature");
-        });
-
-        test("should throw when signature verification fails", () => {
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: compressedPubkey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(false);
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).toThrow("invalid invoice signature");
-        });
-
-        test("should throw when invoice signer does not match offer", () => {
-            const otherKey = secp256k1.getPublicKey(
-                new Uint8Array(32).fill(2),
-                true,
-            );
-
-            vi.spyOn(Bolt12, "decodeOffer").mockReturnValue({
-                hrp: "lno",
-                offer_id: new Uint8Array(32).fill(4),
-                has_paths: false,
-                issuer_id: hex.encode(compressedPubkey),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "decodeBolt12").mockReturnValue({
-                hrp: "lni",
-                data: new Uint8Array(),
-            });
-            vi.spyOn(Bolt12, "parseTlvStream").mockReturnValue([]);
-            vi.spyOn(Bolt12, "extractInvoiceFields").mockReturnValue({
-                invoice_node_id: otherKey,
-                signature: new Uint8Array(64).fill(2),
-                records: [],
-            });
-            vi.spyOn(Bolt12, "computeMerkleRoot").mockReturnValue(
-                new Uint8Array(32).fill(3),
-            );
-            vi.spyOn(Bolt12, "verifySignature").mockReturnValue(true);
-
-            expect(() =>
-                validateInvoiceForOffer("lno1mock", "lni1mock"),
-            ).toThrow("invoice does not belong to offer");
         });
 
         test("fetchBip353 returns the invoice when it matches the resolved offer", async () => {
@@ -512,6 +222,134 @@ describe("invoice", () => {
             await expect(fetchBip353("user@example.com", 123)).rejects.toThrow(
                 "invoice does not belong to offer",
             );
+        });
+    });
+
+    describe("resolveBip353", () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        test("rejects an address without a single @ separator", async () => {
+            await expect(resolveBip353("not-an-address")).rejects.toBe(
+                "invalid BIP-353",
+            );
+            expect(lookupMock).not.toHaveBeenCalled();
+        });
+
+        test("strips the ₿ prefix before the DNS lookup", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [
+                    { type: "txt", contents: "bitcoin:?lno=lno1abc" },
+                ],
+            });
+
+            await resolveBip353("₿user@example.com");
+
+            expect(lookupMock).toHaveBeenCalledWith(
+                "user.user._bitcoin-payment.example.com",
+                "txt",
+                expect.anything(),
+            );
+        });
+
+        test("rejects a proof that is not valid yet", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: Date.now() / 1_000 + 60,
+                expires: Date.now() / 1_000 + 120,
+                verified_rrs: [
+                    { type: "txt", contents: "bitcoin:?lno=lno1abc" },
+                ],
+            });
+            await expect(resolveBip353("user@example.com")).rejects.toBe(
+                "proof is not valid yet",
+            );
+        });
+
+        test("rejects an expired proof", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 - 60,
+                verified_rrs: [
+                    { type: "txt", contents: "bitcoin:?lno=lno1abc" },
+                ],
+            });
+            await expect(resolveBip353("user@example.com")).rejects.toBe(
+                "proof has expired",
+            );
+        });
+
+        test("rejects when there is no verified TXT record", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [],
+            });
+            await expect(resolveBip353("user@example.com")).rejects.toBe(
+                "no TXT record",
+            );
+        });
+
+        test("rejects when the resolved record is not a TXT record", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [{ type: "a", contents: "1.2.3.4" }],
+            });
+            await expect(resolveBip353("user@example.com")).rejects.toBe(
+                "invalid proof",
+            );
+        });
+
+        test("rejects when the payment request has no lno parameter", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [{ type: "txt", contents: "bitcoin:?label=x" }],
+            });
+            await expect(resolveBip353("user@example.com")).rejects.toThrow(
+                /missing lno parameter/,
+            );
+        });
+
+        test("returns the offer with surrounding quotes stripped", async () => {
+            lookupMock.mockResolvedValue({
+                valid_from: 0,
+                expires: Date.now() / 1_000 + 60,
+                verified_rrs: [
+                    { type: "txt", contents: 'bitcoin:?lno="lno1abc"' },
+                ],
+            });
+            await expect(resolveBip353("user@example.com")).resolves.toBe(
+                "lno1abc",
+            );
+        });
+    });
+
+    describe("getAssetByBip21Prefix", () => {
+        test.each`
+            prefix              | expected
+            ${"bitcoin:"}       | ${BTC}
+            ${"liquidnetwork:"} | ${LBTC}
+            ${"liquidtestnet:"} | ${LBTC}
+            ${"lightning:"}     | ${LN}
+            ${"unknown:"}       | ${""}
+        `("maps $prefix to its asset", ({ prefix, expected }) => {
+            expect(getAssetByBip21Prefix(prefix)).toBe(expected);
+        });
+    });
+
+    describe("isInvoice extra cases", () => {
+        test("detects a bolt12 invoice (lni prefix) regardless of network", () => {
+            expect(isInvoice("lni1qqgypua5")).toBe(true);
+        });
+
+        test("returns false for non-string input", () => {
+            expect(isInvoice(undefined as never)).toBe(false);
+            expect(isInvoice(null as never)).toBe(false);
+            expect(isInvoice(123 as never)).toBe(false);
         });
     });
 });

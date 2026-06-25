@@ -30,10 +30,10 @@
             "types": "./dist/config.d.ts",
             "default": "./dist/config.js"
         },
-        "./chains": {
-            "source": "./src/chains.ts",
-            "types": "./dist/chains.d.ts",
-            "default": "./dist/chains.js"
+        "./networks": {
+            "source": "./src/networks.ts",
+            "types": "./dist/networks.d.ts",
+            "default": "./dist/networks.js"
         },
         "./logger": {
             "source": "./src/logger.ts",
@@ -60,6 +60,11 @@
             "types": "./dist/helper.d.ts",
             "default": "./dist/helper.js"
         },
+        "./invoice": {
+            "source": "./src/invoice.ts",
+            "types": "./dist/invoice.d.ts",
+            "default": "./dist/invoice.js"
+        },
         "./client": {
             "source": "./src/client.ts",
             "types": "./dist/client.d.ts",
@@ -70,10 +75,10 @@
             "types": "./dist/status.d.ts",
             "default": "./dist/status.js"
         },
-        "./execute": {
-            "source": "./src/execute.ts",
-            "types": "./dist/execute.d.ts",
-            "default": "./dist/execute.js"
+        "./chain": {
+            "source": "./src/chain.ts",
+            "types": "./dist/chain.d.ts",
+            "default": "./dist/chain.js"
         },
         "./route": {
             "source": "./src/route.ts",
@@ -84,6 +89,16 @@
             "source": "./src/routeExecute.ts",
             "types": "./dist/routeExecute.d.ts",
             "default": "./dist/routeExecute.js"
+        },
+        "./reverse": {
+            "source": "./src/reverse.ts",
+            "types": "./dist/reverse.d.ts",
+            "default": "./dist/reverse.js"
+        },
+        "./submarine": {
+            "source": "./src/submarine.ts",
+            "types": "./dist/submarine.d.ts",
+            "default": "./dist/submarine.js"
         },
         "./bridge": {
             "source": "./src/bridge/index.ts",
@@ -215,6 +230,7 @@
         "prepublishOnly": "bun run generate && bun run build"
     },
     "dependencies": {
+        "@noble/curves": "catalog:",
         "@noble/hashes": "catalog:",
         "@scure/base": "catalog:"
     },
@@ -232,6 +248,8 @@
         "@solana/web3.js": "catalog:",
         "@tronweb3/tronwallet-abstract-adapter": "catalog:",
         "@vulpemventures/secp256k1-zkp": "catalog:",
+        "bolt11": "catalog:",
+        "bolt12-utils": "catalog:",
         "boltz-core": "catalog:",
         "liquidjs-lib": "catalog:",
         "tronweb": "catalog:",
@@ -275,6 +293,12 @@
             "optional": true
         },
         "@vulpemventures/secp256k1-zkp": {
+            "optional": true
+        },
+        "bolt11": {
+            "optional": true
+        },
+        "bolt12-utils": {
             "optional": true
         },
         "boltz-core": {

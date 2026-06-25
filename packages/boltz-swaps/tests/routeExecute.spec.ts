@@ -11,12 +11,12 @@ import {
 } from "boltz-swaps";
 
 import type * as BridgeModule from "../src/bridge/index.ts";
+import type * as ChainModule from "../src/chain.ts";
 import type * as ClientModule from "../src/client.ts";
 import type * as ContractsModule from "../src/evm/contracts.ts";
 import type * as RouterClaimModule from "../src/evm/routerClaim.ts";
 import type * as SenderModule from "../src/evm/sender.ts";
 import type * as SwapContractsModule from "../src/evm/swapContracts.ts";
-import type * as ExecuteModule from "../src/execute.ts";
 
 const mocks = vi.hoisted(() => ({
     requireDriverForRoute: vi.fn(),
@@ -58,8 +58,8 @@ vi.mock("../src/evm/sender.ts", async (importActual) => ({
     sendPopulatedTransaction: mocks.sendPopulatedTransaction,
 }));
 
-vi.mock("../src/execute.ts", async (importActual) => ({
-    ...(await importActual<typeof ExecuteModule>()),
+vi.mock("../src/chain.ts", async (importActual) => ({
+    ...(await importActual<typeof ChainModule>()),
     executeChainSwap: mocks.executeChainSwap,
 }));
 

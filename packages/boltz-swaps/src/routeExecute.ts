@@ -3,6 +3,7 @@ import { type Hash, getAddress, isAddressEqual, zeroAddress } from "viem";
 import { bridgeRegistry } from "./bridge/index.ts";
 import type { BridgeRoute } from "./bridge/route.ts";
 import type { LooseRouterCall } from "./bridge/router.ts";
+import { executeChainSwap } from "./chain.ts";
 import {
     type ChainSwapCreatedResponse,
     type Pairs,
@@ -31,7 +32,6 @@ import {
 import { sendPopulatedTransaction } from "./evm/sender.ts";
 import { buildSwapContractsForAsset } from "./evm/swapContracts.ts";
 import type { PopulatedEvmTransaction } from "./evm/transaction.ts";
-import { executeChainSwap } from "./execute.ts";
 import {
     calculateAmountOutMin,
     calculateAmountWithSlippage,

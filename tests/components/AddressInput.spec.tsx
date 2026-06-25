@@ -17,8 +17,8 @@ import {
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
-vi.mock("../../src/utils/invoice", async () => {
-    const actual = await vi.importActual("../../src/utils/invoice");
+vi.mock("boltz-swaps/invoice", async () => {
+    const actual = await vi.importActual("boltz-swaps/invoice");
     return {
         ...actual,
         decodeInvoice: vi.fn((input: string) => {

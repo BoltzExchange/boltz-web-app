@@ -197,7 +197,7 @@ describe("signals", () => {
         "lnbcrt1500u1p5az9mypp5jlkdaygjwdzd7m06ll348lcvl24ffhpjht8m56fv3aqxpxu804xqdqqcqpjxqyz5vqsp5sq6khl9gvcw70x76nv7vxs5gq28qheehatdtlg6lxgjky029zcws9qxpqysgq762ls0zjnv82zg9rezt5y5ywh4qskmrw42r8ulynra56qa26pru4qjfrn6mz8ek3245905fvs5v969pu3cuvnw9l4f50gwq5c7kcrxgqklqs8h";
 
     const mockDecodeInvoice = async (sats: number) => {
-        const invoiceUtils = await import("../../src/utils/invoice");
+        const invoiceUtils = await import("boltz-swaps/invoice");
         return vi
             .spyOn(invoiceUtils, "decodeInvoice")
             .mockReturnValue({ satoshis: sats } as ReturnType<

@@ -15,19 +15,32 @@ import {
     vFromSignature,
 } from "./bridge/index.ts";
 import {
+    type ChainSwapExecuteArgs,
+    type ChainSwapExecuteResult,
+    type UtxoClaimKeys,
+    executeChainSwap,
+} from "./chain.ts";
+import {
     type ChainSwapCreatedResponse,
     type CommitmentLockupDetails,
     type PartialSignature,
     type QuoteCalldata,
     type QuoteData,
+    type ReverseCreatedResponse,
+    type SubmarineCreatedResponse,
     type SwapStatusResponse,
     acceptChainSwapNewQuote,
     createChainSwap,
+    createReverseSwap,
+    createSubmarineSwap,
     encodeDexQuote,
     getChainSwapClaimDetails,
     getChainSwapNewQuote,
     getChainSwapTransactions,
     getCommitmentLockupDetails,
+    getReverseTransaction,
+    getSubmarineClaimDetails,
+    getSubmarinePreimage,
     getSwapStatus,
     postChainSwapDetails,
     quoteDexAmountIn,
@@ -36,6 +49,8 @@ import {
 import {
     type BoltzSwapsConfig,
     type BoltzSwapsConfigInput,
+    getConfiguredNetwork,
+    isEvmAsset,
     setBoltzSwapsConfig,
 } from "./config.ts";
 import {
@@ -54,11 +69,10 @@ import {
     claimAsset,
 } from "./evm/transaction.ts";
 import {
-    type ChainSwapExecuteArgs,
-    type ChainSwapExecuteResult,
-    type UtxoClaimKeys,
-    executeChainSwap,
-} from "./execute.ts";
+    type ReverseExecuteArgs,
+    type ReverseExecuteResult,
+    executeReverseSwap,
+} from "./reverse.ts";
 import {
     type RouteQuote,
     type RouteQuoteAmountInArgs,
@@ -74,7 +88,16 @@ import {
     createRoute,
     executeRoute,
 } from "./routeExecute.ts";
+import {
+    type RefundResult,
+    type RefundSubmarineUtxoParams,
+    type SignSubmarineClaimArgs,
+    getSubmarineEvmRefundSignature,
+    refundSubmarineUtxo,
+    signSubmarineClaim,
+} from "./submarine.ts";
 import type { Asset } from "./types.ts";
+import type { UtxoAsset, UtxoNetwork } from "./utxo/index.ts";
 
 export type BoltzClientConfig<A extends string = string> =
     | BoltzSwapsConfigInput<A>
@@ -146,6 +169,38 @@ export type ChainSwapCreateArgs<A extends string = string> = {
     pairHash: string;
 };
 
+export type SubmarineCreateArgs<A extends string = string> = {
+    from: A;
+    to: A;
+    invoice: string;
+    pairHash: string;
+    refundPublicKey?: string;
+};
+
+export type ReverseCreateArgs<A extends string = string> = {
+    from: A;
+    to: A;
+    invoiceAmount: number;
+    preimageHash: string;
+    pairHash: string;
+    claimPublicKey?: string;
+    claimAddress?: string;
+};
+
+export type SubmarineSignClaimArgs<A extends string = string> = Omit<
+    SignSubmarineClaimArgs,
+    "asset"
+> & {
+    asset: A;
+};
+
+export type SubmarineRefundUtxoArgs = Omit<
+    RefundSubmarineUtxoParams,
+    "network"
+> & {
+    network?: UtxoNetwork;
+};
+
 export type ChainSwapClaimSubmitBody = {
     preimage: string | undefined;
     signature: { pubNonce: string; partialSignature: string } | undefined;
@@ -201,6 +256,21 @@ export interface BoltzClient<A extends string = string> {
             transactions: typeof getChainSwapTransactions;
             newQuote: typeof getChainSwapNewQuote;
             acceptNewQuote: typeof acceptChainSwapNewQuote;
+        };
+        submarine: {
+            create(
+                args: SubmarineCreateArgs<A>,
+            ): Promise<SubmarineCreatedResponse>;
+            claimDetails: typeof getSubmarineClaimDetails;
+            preimage: typeof getSubmarinePreimage;
+            signClaim(args: SubmarineSignClaimArgs<A>): Promise<void>;
+            refundUtxo(args: SubmarineRefundUtxoArgs): Promise<RefundResult>;
+            refundEvmSignature(id: string): Promise<{ signature: Hex }>;
+        };
+        reverse: {
+            create(args: ReverseCreateArgs<A>): Promise<ReverseCreatedResponse>;
+            execute(args: ReverseExecuteArgs<A>): Promise<ReverseExecuteResult>;
+            transaction: typeof getReverseTransaction;
         };
         lock: {
             commitmentDetails(currency: A): Promise<CommitmentLockupDetails>;
@@ -333,6 +403,55 @@ export const createBoltzClient = <A extends string = string>(
                 newQuote: getChainSwapNewQuote,
                 acceptNewQuote: acceptChainSwapNewQuote,
             },
+            submarine: {
+                create: ({ from, to, invoice, pairHash, refundPublicKey }) =>
+                    createSubmarineSwap(
+                        from,
+                        to,
+                        invoice,
+                        pairHash,
+                        refundPublicKey,
+                    ),
+                claimDetails: getSubmarineClaimDetails,
+                preimage: getSubmarinePreimage,
+                signClaim: async (args) => {
+                    if (isEvmAsset(args.asset)) {
+                        return;
+                    }
+                    await signSubmarineClaim({
+                        ...args,
+                        asset: args.asset as UtxoAsset,
+                    });
+                },
+                refundUtxo: (args) =>
+                    refundSubmarineUtxo({
+                        ...args,
+                        network: args.network ?? getConfiguredNetwork(),
+                    }),
+                refundEvmSignature: getSubmarineEvmRefundSignature,
+            },
+            reverse: {
+                create: ({
+                    from,
+                    to,
+                    invoiceAmount,
+                    preimageHash,
+                    pairHash,
+                    claimPublicKey,
+                    claimAddress,
+                }) =>
+                    createReverseSwap(
+                        from,
+                        to,
+                        invoiceAmount,
+                        preimageHash,
+                        pairHash,
+                        claimPublicKey,
+                        claimAddress,
+                    ),
+                execute: (args) => executeReverseSwap(args),
+                transaction: getReverseTransaction,
+            },
             lock: {
                 commitmentDetails: getCommitmentLockupDetails,
                 confirmCommitment: postCommitmentSignatureForTransaction,
@@ -391,9 +510,14 @@ export type {
     PopulatedEvmTransaction,
     QuoteCalldata,
     QuoteData,
+    RefundResult,
     RelayClaimTransactionFn,
+    ReverseCreatedResponse,
+    ReverseExecuteArgs,
+    ReverseExecuteResult,
     RouterCall,
     SendTransactionFn,
+    SubmarineCreatedResponse,
     SwapStatusResponse,
     UtxoClaimKeys,
 };

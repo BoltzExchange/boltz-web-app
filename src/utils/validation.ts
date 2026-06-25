@@ -13,6 +13,7 @@ import {
 } from "boltz-core";
 import type { ChainSwapDetails } from "boltz-swaps/client";
 import { createAssetProvider } from "boltz-swaps/evm";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import { AssetKind, SwapType } from "boltz-swaps/types";
 import { createMusig, tweakMusig } from "boltz-swaps/utxo";
 import { type Address, keccak256 } from "viem";
@@ -30,7 +31,7 @@ import { erc20SwapCodeHashes, etherSwapCodeHashes } from "../context/Web3";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
-import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { isInvoice, isLnurl } from "./invoice";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -405,7 +406,12 @@ export const validateInvoice = (inputValue: string): number => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
         if (isInputInvoice) {
-            const decoded = decodeInvoice(inputValue);
+            let decoded: ReturnType<typeof decodeInvoice>;
+            try {
+                decoded = decodeInvoice(inputValue);
+            } catch {
+                throw new Error("invalid_invoice");
+            }
             if (decoded.satoshis === 0) {
                 throw new Error("invalid_0_amount");
             }

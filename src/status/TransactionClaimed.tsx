@@ -1,6 +1,8 @@
+import { hex } from "@scure/base";
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { getSubmarinePreimage } from "boltz-swaps/client";
+import { assertPreimageHash, decodeInvoice } from "boltz-swaps/invoice";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -20,7 +22,6 @@ import { usePayContext } from "../context/Pay";
 import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
-import { checkInvoicePreimage } from "../utils/invoice";
 import {
     type SubmarineSwap,
     getFinalAssetReceive,
@@ -68,10 +69,14 @@ const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
 
         const res = await getSubmarinePreimage(submarine.id);
         try {
-            checkInvoicePreimage(submarine.invoice, res.preimage);
+            assertPreimageHash(
+                decodeInvoice(submarine.invoice).preimageHash,
+                hex.decode(res.preimage),
+            );
         } catch (e) {
             log.error("Preimage check failed", e);
             notify("error", formatError(e));
+            return undefined;
         }
 
         await modifySwap<SubmarineSwap>(submarine.id, (s) => {

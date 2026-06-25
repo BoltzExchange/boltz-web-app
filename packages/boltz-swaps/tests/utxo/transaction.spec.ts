@@ -3,34 +3,51 @@ import { Transaction as BtcTransaction } from "@scure/btc-signer";
 import type * as BoltzCore from "boltz-core";
 import type * as BoltzCoreLiquid from "boltz-core/liquid";
 import { Buffer } from "buffer";
+import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
 import {
     decodeAddress,
     getConstructClaimTransaction,
+    getConstructRefundTransaction,
     getNetwork,
     getOutputAmount,
     getTransaction,
+    setCooperativeWitness,
     txToHex,
     txToId,
 } from "../../src/utxo/transaction.ts";
 
-const { btcCCT, liquidCCT, utxoSecpGet, unblindOutputWithKey } = vi.hoisted(
-    () => ({
-        btcCCT: vi.fn(() => ({ kind: "btc-tx" })),
-        liquidCCT: vi.fn(() => ({ kind: "liquid-tx" })),
-        utxoSecpGet: vi.fn(),
-        unblindOutputWithKey: vi.fn(),
-    }),
-);
+const {
+    btcCCT,
+    liquidCCT,
+    btcCRT,
+    liquidCRT,
+    targetFeeMock,
+    utxoSecpGet,
+    unblindOutputWithKey,
+} = vi.hoisted(() => ({
+    btcCCT: vi.fn(() => ({ kind: "btc-tx" })),
+    liquidCCT: vi.fn(() => ({ kind: "liquid-tx" })),
+    btcCRT: vi.fn(() => ({ kind: "btc-refund-tx" })),
+    liquidCRT: vi.fn(() => ({ kind: "liquid-refund-tx" })),
+    targetFeeMock: vi.fn((feePerVbyte: number, cb: (fee: bigint) => unknown) =>
+        cb(BigInt(feePerVbyte)),
+    ),
+    utxoSecpGet: vi.fn(),
+    unblindOutputWithKey: vi.fn(),
+}));
 
 vi.mock("boltz-core", async (importActual) => ({
     ...(await importActual<typeof BoltzCore>()),
     constructClaimTransaction: btcCCT,
+    constructRefundTransaction: btcCRT,
+    targetFee: targetFeeMock,
 }));
 
 vi.mock("boltz-core/liquid", async (importActual) => ({
     ...(await importActual<typeof BoltzCoreLiquid>()),
     constructClaimTransaction: liquidCCT,
+    constructRefundTransaction: liquidCRT,
 }));
 
 vi.mock("../../src/utxo/lazy.ts", () => ({
@@ -51,6 +68,9 @@ const RAW_BTC_TX_ID =
 beforeEach(() => {
     btcCCT.mockClear();
     liquidCCT.mockClear();
+    btcCRT.mockClear();
+    liquidCRT.mockClear();
+    targetFeeMock.mockClear();
     utxoSecpGet.mockReset();
     unblindOutputWithKey.mockReset();
 });
@@ -215,6 +235,108 @@ describe("utxo/transaction", () => {
 
             await expect(getOutputAmount(LBTC, output)).resolves.toBe(1);
             expect(utxoSecpGet).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("getConstructRefundTransaction dispatch", () => {
+        const refundDetails = [{ marker: "refund" }] as never;
+        const outputScript = hex.decode(REGTEST_SCRIPT_HEX);
+
+        test("BTC adds the one-sat buffer and forwards two args to targetFee", () => {
+            const result = getConstructRefundTransaction("BTC", true)(
+                refundDetails,
+                outputScript,
+                150,
+                5,
+                true,
+            );
+
+            expect(targetFeeMock).toHaveBeenCalledTimes(1);
+            expect(targetFeeMock.mock.calls[0]).toHaveLength(2);
+            expect(liquidCRT).not.toHaveBeenCalled();
+            expect(btcCRT).toHaveBeenCalledWith(
+                refundDetails,
+                outputScript,
+                150,
+                6n,
+                true,
+            );
+            expect(result).toEqual({ kind: "btc-refund-tx" });
+        });
+
+        test("BTC without the buffer uses the raw fee", () => {
+            getConstructRefundTransaction("BTC", false)(
+                refundDetails,
+                outputScript,
+                150,
+                5,
+                true,
+            );
+
+            expect(btcCRT).toHaveBeenCalledWith(
+                refundDetails,
+                outputScript,
+                150,
+                5n,
+                true,
+            );
+        });
+
+        test("L-BTC dispatches to the liquid builder with the liquid targetFee flag", async () => {
+            const { networks } = await import("liquidjs-lib");
+            const liquidNetwork = networks.regtest;
+            const blindingKey = Buffer.from("aa".repeat(32), "hex");
+
+            const result = getConstructRefundTransaction("L-BTC", true)(
+                refundDetails,
+                outputScript,
+                150,
+                5,
+                false,
+                liquidNetwork,
+                blindingKey,
+            );
+
+            expect(targetFeeMock).toHaveBeenCalledTimes(1);
+            const liquidTargetFeeCall = targetFeeMock.mock
+                .calls[0] as unknown[];
+            expect(liquidTargetFeeCall).toHaveLength(3);
+            expect(liquidTargetFeeCall[2]).toBe(true);
+            expect(btcCRT).not.toHaveBeenCalled();
+            expect(liquidCRT).toHaveBeenCalledWith(
+                refundDetails,
+                outputScript,
+                150,
+                6n,
+                false,
+                liquidNetwork,
+                blindingKey,
+            );
+            expect(result).toEqual({ kind: "liquid-refund-tx" });
+        });
+    });
+
+    describe("setCooperativeWitness", () => {
+        test("BTC finalizes the input witness via updateInput", () => {
+            const updateInput = vi.fn();
+            const tx = { updateInput } as never;
+            const witness = new Uint8Array([1, 2, 3]);
+
+            setCooperativeWitness(tx, 0, witness);
+
+            expect(updateInput).toHaveBeenCalledWith(0, {
+                finalScriptWitness: [witness],
+            });
+        });
+
+        test("L-BTC assigns the witness directly on the input", () => {
+            const tx = new LiquidTransaction();
+            (tx as unknown as { ins: { witness?: Buffer[] }[] }).ins = [{}];
+            const witness = new Uint8Array([4, 5, 6]);
+
+            setCooperativeWitness(tx, 0, witness);
+
+            expect(tx.ins[0].witness).toEqual([Buffer.from(witness)]);
         });
     });
 });

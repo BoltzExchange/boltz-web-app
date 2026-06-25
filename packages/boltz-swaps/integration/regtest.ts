@@ -29,6 +29,43 @@ const execInBackend = async (command: string): Promise<string> => {
 export const setBackendSignersDisabled = (disabled: boolean): Promise<string> =>
     execInBackend(`signer ${disabled ? "disable" : "enable"} --all`);
 
+type BackendWalletBalance = { confirmed: number; unconfirmed: number };
+
+// The backends confirmed balance for an asset
+export const getBackendConfirmedBalance = async (
+    symbol: string,
+): Promise<number> => {
+    const { balances } = JSON.parse(
+        await execInBackend("wallet get-balance"),
+    ) as {
+        balances: Record<
+            string,
+            { wallets: Record<string, BackendWalletBalance> }
+        >;
+    };
+    const wallets = balances[symbol]?.wallets ?? {};
+    return Object.values(wallets).reduce((sum, w) => sum + w.confirmed, 0);
+};
+
+export const payInvoiceInBackground = (invoice: string): void => {
+    exec(`${SCRIPTS_PREFIX}lncli-sim 1 payinvoice -f ${invoice}"`, () => {});
+};
+
+export const addInvoiceLnd = async (
+    amountSat: number,
+): Promise<{ invoice: string; paymentHash: string }> => {
+    const res = JSON.parse(
+        await execInScripts(`lncli-sim 1 addinvoice --amt ${amountSat}`),
+    ) as { payment_request: string; r_hash: string };
+    return { invoice: res.payment_request, paymentHash: res.r_hash };
+};
+
+export const cancelInvoiceLnd = (paymentHash: string): Promise<string> =>
+    execInScripts(`lncli-sim 1 cancelinvoice ${paymentHash}`);
+
+export const allowSwapRefund = (swapId: string): Promise<string> =>
+    execInBackend(`swap allow-refund ${swapId}`);
+
 export const sleep = (ms: number): Promise<void> =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -59,6 +96,15 @@ export const generateBitcoinBlock = (): Promise<string> =>
 
 export const generateLiquidBlock = (): Promise<string> =>
     execInScripts("elements-cli-sim-client -generate");
+
+const chainCli = (asset: string): string =>
+    asset === "BTC" ? "bitcoin-cli-sim-client" : "elements-cli-sim-client";
+
+export const getBlockCount = async (asset: string): Promise<number> =>
+    Number((await execInScripts(`${chainCli(asset)} getblockcount`)).trim());
+
+export const generateBlocks = (asset: string, count: number): Promise<string> =>
+    execInScripts(`${chainCli(asset)} -generate ${count}`);
 
 type EsploraUtxo = {
     txid: string;

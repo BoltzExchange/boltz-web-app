@@ -1,5 +1,6 @@
 export {
     type ECKeys,
+    LBTC,
     createMusig,
     hashForWitnessV1,
     tweakMusig,
@@ -9,10 +10,20 @@ export {
     type ChainSwapUtxoClaimResult,
     type CooperativeSourceClaimInput,
     type PartialSignatureResponse,
+    type ReverseUtxoClaimParams,
     type UtxoAsset,
     claimChainSwapUtxo,
+    claimReverseUtxo,
     createCooperativeSourceClaimSignature,
 } from "./claim.ts";
+export {
+    type RefundLockup,
+    type RefundResult,
+    type RefundSubmarineUtxoParams,
+    type RefundUtxosParams,
+    refundSubmarineUtxo,
+    refundUtxos,
+} from "./refund.ts";
 export {
     type DecodedAddress,
     type LiquidTransactionOutputWithKey,
@@ -20,6 +31,7 @@ export {
     type UtxoNetwork,
     decodeAddress,
     getConstructClaimTransaction,
+    getConstructRefundTransaction,
     getNetwork,
     getOutputAmount,
     getTransaction,

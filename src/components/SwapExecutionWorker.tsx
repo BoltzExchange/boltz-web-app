@@ -33,6 +33,7 @@ import {
     routerAbi,
 } from "boltz-swaps/generated/evm-abis";
 import { calculateAmountOutMin } from "boltz-swaps/helper";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import { getTronOftGuidFromTransactionInfo } from "boltz-swaps/oft";
 import { getSolanaConnection } from "boltz-swaps/solana";
 import {
@@ -67,7 +68,6 @@ import { useWeb3Signer } from "../context/Web3";
 import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
-import { decodeInvoice } from "../utils/invoice";
 import { type ClaimQuote, fetchDexQuote } from "../utils/quoter";
 import {
     type BridgeDetail,
