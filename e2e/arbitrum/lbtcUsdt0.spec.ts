@@ -46,6 +46,7 @@ const lbtcSendAmount = "0.001";
 const usdt0EthSendAmount = "40";
 const actionTimeout = 60_000;
 const probeTimeout = 1_000;
+const quoteRequestTimeout = 10_000;
 const testTimeout = 150_000;
 
 // Whale holding USDT0-ETH (mainnet USDT) on the Ethereum fork; impersonated to
@@ -150,7 +151,7 @@ const waitForDexQuote = async (args: {
             async () => {
                 try {
                     const response = await fetch(url, {
-                        signal: AbortSignal.timeout(probeTimeout),
+                        signal: AbortSignal.timeout(quoteRequestTimeout),
                     });
                     if (!response.ok) {
                         return 0;
