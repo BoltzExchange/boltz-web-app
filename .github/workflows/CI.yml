@@ -109,7 +109,7 @@ jobs:
               env:
                   ARBITRUM_E2E_RPC_URL: ${{ vars.ARBITRUM_E2E_RPC_URL }}
                   ETHEREUM_E2E_RPC_URL: ${{ vars.ETHEREUM_E2E_RPC_URL }}
-                  COMPOSE_PROFILES: webapp-ci,stables-e2e
+                  COMPOSE_PROFILES: webapp-ci
               run: |
                   git submodule init
                   git submodule update
