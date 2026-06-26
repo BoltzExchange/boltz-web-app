@@ -8,7 +8,11 @@ import {
 import { Buffer } from "buffer";
 import type { networks as LiquidNetworks } from "liquidjs-lib";
 
-import { getChainSwapClaimDetails, postChainSwapDetails } from "../client.ts";
+import {
+    getChainSwapClaimDetails,
+    getPartialReverseClaimSignature,
+    postChainSwapDetails,
+} from "../client.ts";
 import { formatError } from "../errors.ts";
 import { getLogger } from "../logger.ts";
 import { utxoSecp } from "./lazy.ts";
@@ -71,6 +75,21 @@ export type ChainSwapUtxoClaimResult = {
     transactionId: string;
 };
 
+export type ReverseUtxoClaimParams = {
+    id: string;
+    asset: UtxoAsset;
+    network: UtxoNetwork;
+    serverPublicKey: string;
+    swapTree: SerializedSwapTree;
+    blindingKey?: string;
+    claimKeys: ECKeys;
+    preimage: Uint8Array;
+    claimAddress: string;
+    receiveAmount: number;
+    lockupTxHex: string;
+    cooperative?: boolean;
+};
+
 const isNotEligibleForCooperativeClaim = (err: unknown): boolean =>
     formatError(err) === "swap not eligible for a cooperative claim";
 
@@ -117,10 +136,19 @@ export const createCooperativeSourceClaimSignature = async (
     }
 };
 
-export const claimChainSwapUtxo = async (
-    params: ChainSwapUtxoClaimParams,
-): Promise<ChainSwapUtxoClaimResult> => {
-    const cooperative = params.cooperative ?? true;
+const buildAdjustedTaprootClaim = async (params: {
+    asset: UtxoAsset;
+    network: UtxoNetwork;
+    serverPublicKey: string;
+    swapTree: SerializedSwapTree;
+    blindingKey?: string;
+    claimKeys: ECKeys;
+    preimage: Uint8Array;
+    claimAddress: string;
+    receiveAmount: number;
+    lockupTxHex: string;
+    cooperative: boolean;
+}) => {
     const { asset, network } = params;
 
     const boltzPublicKey = hex.decode(params.serverPublicKey);
@@ -142,7 +170,7 @@ export const claimChainSwapUtxo = async (
     const details = [
         {
             ...swapOutput,
-            cooperative,
+            cooperative: params.cooperative,
             swapTree: tree,
             privateKey: params.claimKeys.privateKey,
             type: OutputType.Taproot,
@@ -165,6 +193,30 @@ export const claimChainSwapUtxo = async (
         decoded.blindingKey,
     );
 
+    return { claimTx, details, tweaked, boltzPublicKey };
+};
+
+type ClaimBuild = Awaited<ReturnType<typeof buildAdjustedTaprootClaim>>;
+
+type CooperativeClaimContext = {
+    withNonce: ReturnType<
+        ReturnType<ClaimBuild["tweaked"]["message"]>["generateNonce"]
+    >;
+    boltzPublicKey: ClaimBuild["boltzPublicKey"];
+    claimTx: ClaimBuild["claimTx"];
+};
+
+const claimCooperativeUtxo = async (
+    params: ChainSwapUtxoClaimParams | ReverseUtxoClaimParams,
+    aggregateCooperative: (ctx: CooperativeClaimContext) => Promise<Uint8Array>,
+    warnLabel: string,
+): Promise<ChainSwapUtxoClaimResult> => {
+    const cooperative = params.cooperative ?? true;
+    const { asset, network } = params;
+
+    const { claimTx, details, tweaked, boltzPublicKey } =
+        await buildAdjustedTaprootClaim({ ...params, cooperative });
+
     if (!cooperative) {
         return {
             transactionHex: txToHex(claimTx),
@@ -183,48 +235,91 @@ export const claimChainSwapUtxo = async (
 
         const withNonce = tweaked.message(sigHash).generateNonce();
 
-        // For a UTXO source, also hand the server our partial signature so it
-        // can claim the source cooperatively in the same request.
-        const theirSig =
-            params.cooperativeSource !== undefined
-                ? await createCooperativeSourceClaimSignature(
-                      params.id,
-                      params.cooperativeSource,
-                  )
-                : undefined;
-
-        const theirPartial = await postChainSwapDetails(
-            params.id,
-            hex.encode(params.preimage),
-            theirSig,
-            {
-                index: 0,
-                transaction: txToHex(claimTx),
-                pubNonce: hex.encode(withNonce.publicNonce),
-            },
+        setCooperativeWitness(
+            claimTx,
+            0,
+            await aggregateCooperative({ withNonce, boltzPublicKey, claimTx }),
         );
-
-        const aggNonces = withNonce.aggregateNonces([
-            [boltzPublicKey, hex.decode(theirPartial.pubNonce)],
-        ]);
-        const session = aggNonces.initializeSession();
-        const withTheirs = session.addPartial(
-            boltzPublicKey,
-            hex.decode(theirPartial.partialSignature),
-        );
-        const signed = withTheirs.signPartial();
-
-        setCooperativeWitness(claimTx, 0, signed.aggregatePartials());
 
         return {
             transactionHex: txToHex(claimTx),
             transactionId: txToId(claimTx),
         };
     } catch (e) {
-        getLogger().warn("Uncooperative Taproot claim because", e);
-        return claimChainSwapUtxo({ ...params, cooperative: false });
+        getLogger().warn(warnLabel, e);
+        return claimCooperativeUtxo(
+            { ...params, cooperative: false },
+            aggregateCooperative,
+            warnLabel,
+        );
     }
 };
+
+export const claimChainSwapUtxo = (
+    params: ChainSwapUtxoClaimParams,
+): Promise<ChainSwapUtxoClaimResult> =>
+    claimCooperativeUtxo(
+        params,
+        async ({ withNonce, boltzPublicKey, claimTx }) => {
+            // For a UTXO source, also hand the server our partial signature so
+            // it can claim the source cooperatively in the same request.
+            const theirSig =
+                params.cooperativeSource !== undefined
+                    ? await createCooperativeSourceClaimSignature(
+                          params.id,
+                          params.cooperativeSource,
+                      )
+                    : undefined;
+
+            const theirPartial = await postChainSwapDetails(
+                params.id,
+                hex.encode(params.preimage),
+                theirSig,
+                {
+                    index: 0,
+                    transaction: txToHex(claimTx),
+                    pubNonce: hex.encode(withNonce.publicNonce),
+                },
+            );
+
+            const aggNonces = withNonce.aggregateNonces([
+                [boltzPublicKey, hex.decode(theirPartial.pubNonce)],
+            ]);
+            const session = aggNonces.initializeSession();
+            const withTheirs = session.addPartial(
+                boltzPublicKey,
+                hex.decode(theirPartial.partialSignature),
+            );
+            return withTheirs.signPartial().aggregatePartials();
+        },
+        "Uncooperative Taproot claim because",
+    );
+
+export const claimReverseUtxo = (
+    params: ReverseUtxoClaimParams,
+): Promise<ChainSwapUtxoClaimResult> =>
+    claimCooperativeUtxo(
+        params,
+        async ({ withNonce, boltzPublicKey, claimTx }) => {
+            const boltzSig = await getPartialReverseClaimSignature(
+                params.id,
+                params.preimage,
+                withNonce.publicNonce,
+                txToHex(claimTx),
+                0,
+            );
+
+            const aggNonces = withNonce.aggregateNonces([
+                [boltzPublicKey, boltzSig.pubNonce],
+            ]);
+            const session = aggNonces.initializeSession();
+            return session
+                .signPartial()
+                .addPartial(boltzPublicKey, boltzSig.signature)
+                .aggregatePartials();
+        },
+        "Uncooperative reverse Taproot claim because",
+    );
 
 const createAdjustedClaim = async (
     asset: string,

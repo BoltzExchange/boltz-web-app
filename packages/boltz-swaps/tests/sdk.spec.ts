@@ -359,6 +359,100 @@ describe("createBoltzClient: swap.chain", () => {
     });
 });
 
+describe("createBoltzClient: swap.submarine", () => {
+    test("create posts to /v2/swap/submarine with the mapped body", async () => {
+        fetcherMock.mockResolvedValue({ id: "sub" });
+
+        await makeClient().swap.submarine.create({
+            from: "BTC",
+            to: "LN",
+            invoice: "lnbcrt1",
+            pairHash: "ph",
+            refundPublicKey: "02ab",
+        });
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine",
+            expect.objectContaining({
+                from: "BTC",
+                to: "LN",
+                invoice: "lnbcrt1",
+                refundPublicKey: "02ab",
+                pairHash: "ph",
+            }),
+        );
+    });
+
+    test("claimDetails GETs /v2/swap/submarine/{id}/claim", async () => {
+        fetcherMock.mockResolvedValue({
+            pubNonce: "01",
+            preimage: "02",
+            transactionHash: "03",
+        });
+        await makeClient().swap.submarine.claimDetails("sub-1");
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine/sub-1/claim",
+        );
+    });
+
+    test("preimage GETs /v2/swap/submarine/{id}/preimage", async () => {
+        fetcherMock.mockResolvedValue({ preimage: "ab" });
+        await makeClient().swap.submarine.preimage("sub-2");
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine/sub-2/preimage",
+        );
+    });
+
+    test("refundEvmSignature GETs the submarine refund path", async () => {
+        fetcherMock.mockResolvedValue({ signature: "0xsig" });
+        await makeClient().swap.submarine.refundEvmSignature("sub-3");
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine/sub-3/refund",
+        );
+    });
+});
+
+describe("createBoltzClient: swap.reverse", () => {
+    test("create posts to /v2/swap/reverse with the mapped body", async () => {
+        fetcherMock.mockResolvedValue({ id: "rev" });
+
+        await makeClient().swap.reverse.create({
+            from: "LN",
+            to: "BTC",
+            invoiceAmount: 100_000,
+            preimageHash: "ph",
+            pairHash: "hh",
+            claimPublicKey: "02ab",
+            claimAddress: "bcrt1quser",
+        });
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/reverse",
+            expect.objectContaining({
+                from: "LN",
+                to: "BTC",
+                invoiceAmount: 100_000,
+                preimageHash: "ph",
+                pairHash: "hh",
+                claimPublicKey: "02ab",
+                claimAddress: "bcrt1quser",
+            }),
+        );
+    });
+
+    test("transaction GETs /v2/swap/reverse/{id}/transaction", async () => {
+        fetcherMock.mockResolvedValue({
+            id: "lock",
+            hex: "deadbeef",
+            timeoutBlockHeight: 1,
+        });
+        await makeClient().swap.reverse.transaction("rev-1");
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/reverse/rev-1/transaction",
+        );
+    });
+});
+
 describe("createBoltzClient: swap.lock", () => {
     test("commitmentDetails GETs /v2/commitment/{currency}/details", async () => {
         fetcherMock.mockResolvedValue({

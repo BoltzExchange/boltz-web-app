@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import { isBolt12Offer } from "boltz-swaps/invoice";
 import { SwapType } from "boltz-swaps/types";
 import { createEffect, on } from "solid-js";
 
@@ -14,7 +15,6 @@ import {
     extractAddress,
     extractBip21Amount,
     extractInvoice,
-    isBolt12Offer,
     isLnurl,
 } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";

@@ -1,21 +1,15 @@
-import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import {
-    type ClaimDetails,
     type Musig,
-    OutputType,
     SwapTreeSerializer,
     type Types,
     detectSwap,
 } from "boltz-core";
-import type { LiquidClaimDetails } from "boltz-core/liquid";
 import {
     getChainSwapTransactions,
-    getPartialReverseClaimSignature,
     getReverseTransaction,
-    getSubmarineClaimDetails,
-    postSubmarineClaimDetails,
 } from "boltz-swaps/client";
+import { signSubmarineClaim } from "boltz-swaps/submarine";
 import { SwapType } from "boltz-swaps/types";
 import {
     type LiquidTransactionOutputWithKey,
@@ -24,31 +18,22 @@ import {
     type UtxoAsset,
     type UtxoNetwork,
     claimChainSwapUtxo,
+    claimReverseUtxo,
     createCooperativeSourceClaimSignature,
     createMusig,
-    getConstructClaimTransaction,
-    getOutputAmount,
     getTransaction,
-    hashForWitnessV1,
-    setCooperativeWitness,
     tweakMusig,
     txToHex,
-    txToId,
 } from "boltz-swaps/utxo";
-import type { Buffer } from "buffer";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { config } from "../config";
 import { type AssetType, LBTC, RBTC, isEvmAsset } from "../consts/Assets";
 import type { deriveKeyFn } from "../context/Global";
-import secp from "../lazy/secp";
 import { getClaimBlindingData } from "./blindedExplorer";
 import { broadcastTransaction } from "./blockchain";
-import { decodeAddress, getNetwork } from "./compat";
 import type { ECKeys } from "./ecpair";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
-import { decodeInvoice } from "./invoice";
 import {
     type ChainSwap,
     type ReverseSwap,
@@ -117,126 +102,42 @@ const findSwapOutput = (
     lockupTx: TransactionInterface,
 ) => detectSwap(tweaked.aggPubkey, lockupTx);
 
-const createAdjustedClaim = async <
-    T extends
-        | (ClaimDetails & { blindingPrivateKey?: Uint8Array })
-        | LiquidClaimDetails,
->(
-    swap: ClaimableSwap,
-    claimDetails: T[],
-    destination: Uint8Array,
-    liquidNetwork?: LiquidNetwork,
-    blindingKey?: Buffer,
-) => {
-    if (swap.receiveAmount === 0) {
-        throw "amount to be received is 0";
-    }
-
-    const asset = getRelevantAssetForSwap(swap);
-
-    // Ensure secp256k1-zkp is initialized for Liquid transaction construction
-    if (asset === LBTC) {
-        await secp.get();
-    }
-
-    let inputSum = 0;
-    for (const details of claimDetails) {
-        inputSum += await getOutputAmount(asset, details);
-    }
-
-    const feeBudget = Math.floor(inputSum - swap.receiveAmount);
-
-    const constructClaimTransaction = getConstructClaimTransaction(asset);
-
-    return constructClaimTransaction(
-        claimDetails as ClaimDetails[] | LiquidClaimDetails[],
-        destination,
-        feeBudget,
-        true,
-        liquidNetwork,
-        blindingKey,
-    );
-};
-
 const claimReverseSwap = async (
     deriveKey: deriveKeyFn,
     swap: ReverseSwap,
     lockupTx: TransactionInterface,
     cooperative: boolean = true,
 ): Promise<TransactionInterface | undefined> => {
-    log.info(`Claiming Taproot swap cooperatively: ${cooperative}`);
-    const asset = getRelevantAssetForSwap(swap);
+    log.info(`Claiming reverse swap cooperatively: ${cooperative}`);
 
-    const { privateKey, boltzPublicKey, tree, keyAgg, tweaked } =
-        getClaimTaprootContext(deriveKey, swap);
-    const preimage = hex.decode(swap.preimage);
-
-    const decodedAddress = decodeAddress(asset, swap.claimAddress);
-    const swapOutput = findSwapOutput(tweaked, lockupTx);
-
-    if (swapOutput === undefined) {
-        throw new Error("Swap output is undefined");
+    if (swap.refundPublicKey === undefined) {
+        throw new Error("missing refund public key for reverse swap");
     }
 
-    const details = [
-        {
-            ...swapOutput,
-            cooperative,
-            swapTree: tree,
-            privateKey: privateKey.privateKey,
-            preimage: preimage,
-            type: OutputType.Taproot,
-            transactionId: txToId(lockupTx),
-            blindingPrivateKey: parseBlindingKey(swap, false),
-            internalKey: keyAgg.aggPubkey,
-        },
-    ] as unknown as (ClaimDetails & { blindingPrivateKey: Uint8Array })[];
-    const claimTx = await createAdjustedClaim(
-        swap,
-        details,
-        decodedAddress.script,
-        asset === LBTC ? (getNetwork(asset) as LiquidNetwork) : undefined,
-        decodedAddress.blindingKey,
+    const claimKeys = parsePrivateKey(
+        deriveKey,
+        swap.assetReceive as AssetType,
+        swap.claimPrivateKeyIndex,
+        swap.claimPrivateKey,
     );
+    const blindingKey = parseBlindingKey(swap, false);
 
-    if (!cooperative) {
-        return claimTx;
-    }
+    const result = await claimReverseUtxo({
+        id: swap.id,
+        asset: swap.assetReceive as UtxoAsset,
+        network: config.network as UtxoNetwork,
+        serverPublicKey: swap.refundPublicKey,
+        swapTree: swap.swapTree,
+        blindingKey: blindingKey ? hex.encode(blindingKey) : undefined,
+        claimKeys,
+        preimage: hex.decode(swap.preimage),
+        claimAddress: swap.claimAddress,
+        receiveAmount: swap.receiveAmount,
+        lockupTxHex: txToHex(lockupTx),
+        cooperative,
+    });
 
-    try {
-        const sigHash = hashForWitnessV1(
-            asset,
-            getNetwork(asset),
-            details,
-            claimTx,
-            0,
-        );
-
-        const withMsg = tweaked.message(sigHash);
-        const withNonce = withMsg.generateNonce();
-
-        const boltzSig = await getPartialReverseClaimSignature(
-            swap.id,
-            preimage,
-            withNonce.publicNonce,
-            txToHex(claimTx),
-            0,
-        );
-
-        const aggNonces = withNonce.aggregateNonces([
-            [boltzPublicKey, boltzSig.pubNonce],
-        ]);
-        const session = aggNonces.initializeSession();
-        const signed = session.signPartial();
-        const withBoltz = signed.addPartial(boltzPublicKey, boltzSig.signature);
-
-        setCooperativeWitness(claimTx, 0, withBoltz.aggregatePartials());
-
-        return claimTx;
-    } catch (e) {
-        log.warn("Uncooperative Taproot claim because", e);
-        return claimReverseSwap(deriveKey, swap, lockupTx, false);
-    }
+    return getTransaction(swap.assetReceive).fromHex(result.transactionHex);
 };
 
 export const createTheirPartialChainSwapSignature = async (
@@ -416,46 +317,23 @@ export const createSubmarineSignature = async (
     deriveKey: deriveKeyFn,
     swap: SubmarineSwap,
 ) => {
-    const swapAsset = getRelevantAssetForSwap(swap);
-    if (swapAsset === RBTC) {
+    if (getRelevantAssetForSwap(swap) === RBTC) {
         return;
     }
 
     log.info("Creating cooperative claim signature for", swap.id);
 
-    const claimDetails = await getSubmarineClaimDetails(swap.id);
-    if (
-        hex.encode(sha256(claimDetails.preimage)) !==
-        decodeInvoice(swap.invoice).preimageHash
-    ) {
-        throw "invalid preimage";
-    }
-
-    const boltzPublicKey = hex.decode(swap.claimPublicKey);
-    const keyAgg = createMusig(
-        parsePrivateKey(
+    await signSubmarineClaim({
+        id: swap.id,
+        asset: swap.assetSend as UtxoAsset,
+        swapTree: swap.swapTree,
+        claimPublicKey: swap.claimPublicKey,
+        refundKeys: parsePrivateKey(
             deriveKey,
             swap.assetSend as AssetType,
             swap.refundPrivateKeyIndex,
             swap.refundPrivateKey,
         ),
-        boltzPublicKey,
-    );
-    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
-    const tweaked = tweakMusig(swapAsset, keyAgg, tree.tree);
-
-    const withMsg = tweaked.message(claimDetails.transactionHash);
-    const withNonce = withMsg.generateNonce();
-
-    const aggNonces = withNonce.aggregateNonces([
-        [boltzPublicKey, claimDetails.pubNonce],
-    ]);
-    const session = aggNonces.initializeSession();
-    const signed = session.signPartial();
-
-    await postSubmarineClaimDetails(
-        swap.id,
-        withNonce.publicNonce,
-        signed.ourPartialSignature,
-    );
+        invoice: swap.invoice,
+    });
 };

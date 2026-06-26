@@ -9,11 +9,16 @@ import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
 import {
     type ClaimDetails,
     Networks,
+    type RefundDetails,
     constructClaimTransaction,
+    constructRefundTransaction,
+    targetFee,
 } from "boltz-core";
 import {
     type LiquidClaimDetails,
+    type LiquidRefundDetails,
     constructClaimTransaction as lcCT,
+    constructRefundTransaction as lcRT,
 } from "boltz-core/liquid";
 import { Buffer } from "buffer";
 import {
@@ -132,6 +137,48 @@ export const getConstructClaimTransaction = (asset: string) => {
             destinationScript,
             BigInt(fee),
             isRbf,
+        );
+    };
+};
+
+export const getConstructRefundTransaction = (
+    asset: string,
+    addOneSatBuffer: boolean,
+) => {
+    return (
+        refundDetails: RefundDetails[] | LiquidRefundDetails[],
+        outputScript: Uint8Array,
+        timeoutBlockHeight: number,
+        feePerVbyte: number,
+        isRbf: boolean,
+        liquidNetwork?: LiquidNetwork,
+        blindingKey?: Buffer,
+    ) => {
+        if (asset === LBTC) {
+            return targetFee(
+                feePerVbyte,
+                (fee) =>
+                    lcRT(
+                        refundDetails as LiquidRefundDetails[],
+                        outputScript as Buffer,
+                        timeoutBlockHeight,
+                        addOneSatBuffer ? fee + BigInt(1) : fee,
+                        isRbf,
+                        liquidNetwork,
+                        blindingKey,
+                    ),
+                true,
+            );
+        }
+
+        return targetFee(feePerVbyte, (fee) =>
+            constructRefundTransaction(
+                refundDetails as RefundDetails[],
+                outputScript,
+                timeoutBlockHeight,
+                addOneSatBuffer ? fee + BigInt(1) : fee,
+                isRbf,
+            ),
         );
     };
 };

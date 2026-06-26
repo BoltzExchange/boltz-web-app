@@ -1,5 +1,5 @@
-import { type ChainKey, type ChainMeta, chains } from "../chains.ts";
 import { getExplorerId } from "../evm/explorer.ts";
+import { type ChainKey, type ChainMeta, chains } from "../networks.ts";
 import {
     type Asset,
     AssetKind,

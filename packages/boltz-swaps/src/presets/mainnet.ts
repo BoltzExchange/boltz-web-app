@@ -7,9 +7,9 @@ import {
     cctpVariants,
     createCctpVariantAsset,
 } from "../cctp/variants.ts";
-import { type ChainKey, chains } from "../chains.ts";
 import { type BoltzSwapsConfig, MAINNET_API_DEFAULTS } from "../config.ts";
 import { getExplorerId } from "../evm/explorer.ts";
+import { type ChainKey, chains } from "../networks.ts";
 import {
     type Usdt0VariantAsset,
     createUsdt0VariantAsset,

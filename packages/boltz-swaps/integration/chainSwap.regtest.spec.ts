@@ -3,12 +3,17 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { createBoltzClient, getPairs } from "boltz-swaps";
 import {
+    broadcastApiTransaction,
+    getLockupTransaction,
+} from "boltz-swaps/client";
+import {
     SwapStatus,
     isChainSwapClaimable,
     isFailureStatus,
     isFinalStatus,
 } from "boltz-swaps/status";
 import { SwapType } from "boltz-swaps/types";
+import { refundUtxos } from "boltz-swaps/utxo";
 
 import {
     BOLTZ_API_URL,
@@ -216,5 +221,109 @@ describe("chain swap integration (regtest)", () => {
 
         expect(status).toBe(SwapStatus.TransactionLockupFailed);
         expect(isFailureStatus(status)).toBe(true);
+    }, 120_000);
+
+    const runChainRefund = async (
+        from: UtxoAssetSym,
+        to: UtxoAssetSym,
+    ): Promise<void> => {
+        const claimKeys = makeKeys();
+        const refundKeys = makeKeys();
+        const preimage = crypto.getRandomValues(new Uint8Array(32));
+        const pair = await chainPair(from, to);
+
+        const created = await boltz.swap.chain.create({
+            from,
+            to,
+            userLockAmount: 200_000,
+            preimageHash: hex.encode(sha256(preimage)),
+            claimPublicKey: hex.encode(claimKeys.publicKey),
+            refundPublicKey: hex.encode(refundKeys.publicKey),
+            pairHash: pair.hash,
+        });
+        expect(created.id).toBeTruthy();
+
+        // Underpay the lockup: the swap fails (TransactionLockupFailed) and the
+        // server never locks, which is exactly when Boltz cooperatively
+        // co-signs a chain refund. 20_000 stays well above the dust limit.
+        await (from === "BTC"
+            ? bitcoinSendToAddress(
+                  created.lockupDetails.lockupAddress,
+                  satsToCoins(20_000),
+              )
+            : elementsSendToAddress(
+                  created.lockupDetails.lockupAddress,
+                  satsToCoins(20_000),
+              ));
+        await (from === "BTC" ? generateBitcoinBlock() : generateLiquidBlock());
+
+        const deadline = Date.now() + 90_000;
+        let { status } = await boltz.swap.status(created.id);
+        while (status !== SwapStatus.TransactionLockupFailed) {
+            if (Date.now() > deadline) {
+                throw new Error(
+                    `timed out waiting for TransactionLockupFailed (last "${status}")`,
+                );
+            }
+            await (from === "BTC"
+                ? generateBitcoinBlock()
+                : generateLiquidBlock());
+            await sleep(300);
+            ({ status } = await boltz.swap.status(created.id));
+        }
+
+        const lockupHex = (
+            await getLockupTransaction(created.id, SwapType.Chain)
+        ).hex;
+        expect(lockupHex).toBeTruthy();
+
+        const refundAddress = await (from === "BTC"
+            ? getBitcoinAddress()
+            : getLiquidAddress());
+
+        const refund = await refundUtxos({
+            id: created.id,
+            swapType: SwapType.Chain,
+            asset: from,
+            network: "regtest",
+            swapTree: created.lockupDetails.swapTree,
+            claimPublicKey: created.lockupDetails.serverPublicKey,
+            refundKeys,
+            lockups: [
+                {
+                    lockupTxHex: lockupHex,
+                    timeoutBlockHeight:
+                        created.lockupDetails.timeoutBlockHeight,
+                },
+            ],
+            refundAddress,
+            blindingKey: created.lockupDetails.blindingKey,
+            feePerVbyte: 2,
+            nLockTime: created.lockupDetails.timeoutBlockHeight,
+            cooperative: true,
+        });
+        expect(refund.cooperativeError).toBeUndefined();
+        expect(refund.transactionId).toMatch(/^[0-9a-f]{64}$/);
+
+        await broadcastApiTransaction(from, refund.transactionHex);
+        await (from === "BTC" ? generateBitcoinBlock() : generateLiquidBlock());
+        await waitForTxConfirmed(from, refund.transactionId);
+
+        // Esplora UTXO-by-address lookup only works for transparent BTC, not
+        // the L-BTC confidential address (covered by the confirmed tx above)
+        if (from === "BTC") {
+            const utxos = await waitForAddressUtxos("BTC", refundAddress);
+            expect(
+                utxos.find((u) => u.txid === refund.transactionId),
+            ).toBeDefined();
+        }
+    };
+
+    test("L-BTC -> BTC: cooperative chain refund of the user lockup", async () => {
+        await runChainRefund("L-BTC", "BTC");
+    }, 120_000);
+
+    test("BTC -> L-BTC: cooperative chain refund of the user lockup", async () => {
+        await runChainRefund("BTC", "L-BTC");
     }, 120_000);
 });

@@ -7,6 +7,11 @@ import {
     fetchBolt12Invoice,
 } from "boltz-swaps/client";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
+import {
+    InvoiceType,
+    decodeInvoice,
+    validateInvoiceForOffer,
+} from "boltz-swaps/invoice";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -54,12 +59,9 @@ import { handleCreateSwapError } from "../utils/handleCreateSwapError";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { getDestinationAddress, getPair } from "../utils/helper";
 import {
-    InvoiceType,
-    decodeInvoice,
     fetchBip353,
     fetchLnurl,
     getAssetByBip21Prefix,
-    validateInvoiceForOffer,
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";

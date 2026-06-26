@@ -1,5 +1,6 @@
 import type { Pairs } from "boltz-swaps/client";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import { isValidSolanaAddress } from "boltz-swaps/solana";
 import { isValidTronAddress } from "boltz-swaps/tron";
 import { NetworkTransport } from "boltz-swaps/types";
@@ -15,7 +16,6 @@ import Pair from "./Pair";
 import { probeUserInput } from "./compat";
 import { btcToSat } from "./denomination";
 import {
-    decodeInvoice,
     extractAddress,
     extractBip21Amount,
     extractInvoice,
