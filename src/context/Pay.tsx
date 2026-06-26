@@ -67,6 +67,7 @@ export type PayContextType = {
     shouldIgnoreBackendStatus: Accessor<boolean>;
     setShouldIgnoreBackendStatus: Setter<boolean>;
     claimSwap: (swapId: string, data: SwapStatus) => Promise<void>;
+    isSwapClaiming: (swapId: string) => boolean;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -166,9 +167,12 @@ const PayProvider = (props: { children: JSX.Element }) => {
         }
     };
 
-    const claimingSwaps = new Set<string>();
+    const [claimingSwaps, setClaimingSwaps] = createSignal(new Set<string>(), {
+        equals: false,
+    });
+    const isSwapClaiming = (swapId: string) => claimingSwaps().has(swapId);
     const claimSwap = async (swapId: string, data: SwapStatus) => {
-        if (claimingSwaps.has(swapId)) {
+        if (claimingSwaps().has(swapId)) {
             return;
         }
 
@@ -240,7 +244,10 @@ const PayProvider = (props: { children: JSX.Element }) => {
             })
         ) {
             try {
-                claimingSwaps.add(swapId);
+                setClaimingSwaps((swaps) => {
+                    swaps.add(swapId);
+                    return swaps;
+                });
 
                 const res = await claim(
                     deriveKey,
@@ -328,7 +335,10 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 log.error(msg, e);
                 notify("error", msg);
             } finally {
-                claimingSwaps.delete(swapId);
+                setClaimingSwaps((swaps) => {
+                    swaps.delete(swapId);
+                    return swaps;
+                });
             }
         } else if (
             currentSwap.type === SwapType.Submarine &&
@@ -434,6 +444,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 shouldIgnoreBackendStatus,
                 setShouldIgnoreBackendStatus,
                 claimSwap,
+                isSwapClaiming,
             }}>
             {props.children}
         </PayContext.Provider>
