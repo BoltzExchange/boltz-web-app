@@ -12,6 +12,7 @@ import {
 
 import type * as LibProviderModule from "../../packages/boltz-swaps/src/evm/provider";
 import { config as runtimeConfig } from "../../src/config";
+import { swapStatusPending } from "../../src/consts/SwapStatus";
 
 let currentSwap: Record<string, unknown>;
 let mockNetworkTransport = "evm";
@@ -421,7 +422,7 @@ vi.mock("boltz-swaps/evm", async (importActual) => ({
     createAssetProvider: mockCreateAssetProvider,
 }));
 
-const { SwapExecutionWorker } =
+const { SwapExecutionWorker, needsCommitmentPost } =
     await import("../../src/components/SwapExecutionWorker");
 const oftUtils = await import("boltz-swaps/oft");
 const quoter = await import("../../src/utils/quoter");
@@ -479,6 +480,59 @@ const buildCctpMessage = ({
         "00".repeat(32);
     return `0x${header}${body}`;
 };
+
+const makeCommitmentSwap = (overrides: Record<string, unknown>) =>
+    ({
+        commitmentLockupTxHash: "0xcommitment",
+        commitmentSignatureSubmitted: false,
+        status: swapStatusPending.SwapCreated,
+        ...overrides,
+    }) as unknown as Parameters<typeof needsCommitmentPost>[0];
+
+describe("needsCommitmentPost", () => {
+    test("true when the commitment lockup is posted, the signature is pending, and the status is still pending", () => {
+        expect(needsCommitmentPost(makeCommitmentSwap({}))).toBe(true);
+        expect(
+            needsCommitmentPost(
+                makeCommitmentSwap({ status: swapStatusPending.InvoiceSet }),
+            ),
+        ).toBe(true);
+        expect(
+            needsCommitmentPost(makeCommitmentSwap({ status: undefined })),
+        ).toBe(true);
+    });
+
+    test("false when there is no commitment lockup tx hash", () => {
+        expect(
+            needsCommitmentPost(
+                makeCommitmentSwap({ commitmentLockupTxHash: undefined }),
+            ),
+        ).toBe(false);
+    });
+
+    test("false when the commitment signature was already submitted", () => {
+        expect(
+            needsCommitmentPost(
+                makeCommitmentSwap({ commitmentSignatureSubmitted: true }),
+            ),
+        ).toBe(false);
+    });
+
+    test("false when the swap progressed past a pending-commitment status", () => {
+        expect(
+            needsCommitmentPost(
+                makeCommitmentSwap({
+                    status: swapStatusPending.TransactionServerConfirmed,
+                }),
+            ),
+        ).toBe(false);
+    });
+
+    test("false for null or undefined swaps", () => {
+        expect(needsCommitmentPost(null)).toBe(false);
+        expect(needsCommitmentPost(undefined)).toBe(false);
+    });
+});
 
 describe("SwapExecutionWorker", () => {
     beforeEach(() => {

@@ -655,7 +655,7 @@ const Amount = (props: {
     );
 };
 
-const AutoClaimHops = (props: {
+export const AutoClaimHops = (props: {
     amount: number;
     swapId: string;
     gasAbstraction: GasAbstractionType;

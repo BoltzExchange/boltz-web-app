@@ -169,7 +169,7 @@ const usesManualCctpReceive = (
     swap.bridge.position === SwapPosition.Pre &&
     swap.bridge.destinationAsset === USDC;
 
-const needsCommitmentPost = (
+export const needsCommitmentPost = (
     swap: SomeSwap | null | undefined,
 ): swap is SomeSwap & { commitmentLockupTxHash: string } =>
     swap !== undefined &&
