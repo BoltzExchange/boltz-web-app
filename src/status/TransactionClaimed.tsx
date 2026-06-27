@@ -14,7 +14,6 @@ import {
 } from "solid-js";
 
 import ExternalLink from "../components/ExternalLink";
-import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import { getAssetNetwork, isEvmAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
@@ -27,17 +26,7 @@ import {
     getFinalAssetReceive,
     getPostBridgeDetail,
 } from "../utils/swapCreator";
-
-const Broadcasting = () => {
-    const { t } = useGlobalContext();
-
-    return (
-        <div>
-            <h2>{t("broadcasting_claim")}</h2>
-            <LoadingSpinner />
-        </div>
-    );
-};
+import Broadcasting from "./Broadcasting";
 
 const paymentValidationUrl = (invoice: string, preimage: string): string => {
     const url = new URL(config.preimageValidation);
