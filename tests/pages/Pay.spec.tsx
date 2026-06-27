@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { createSignal } from "solid-js";
 
 import { config } from "../../src/config";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
@@ -15,6 +16,7 @@ import {
 } from "../../src/consts/SwapStatus";
 import dict from "../../src/i18n/i18n";
 import Pay from "../../src/pages/Pay";
+import TransactionMempool from "../../src/status/TransactionMempool";
 import {
     getSwapUTXOs,
     getTransactionOutSpend,
@@ -555,5 +557,141 @@ describe("Pay", () => {
                 expect.objectContaining({ claimTx: expect.any(String) }),
             );
         });
+    });
+
+    test("reports isSwapClaiming while a claim is in flight and clears it once settled", async () => {
+        const swapFromStorage = {
+            id: "123",
+            type: SwapType.Chain,
+            assetReceive: BTC,
+            assetSend: LBTC,
+            version: OutputType.Taproot,
+            claimTx: undefined,
+            lockupDetails: {},
+        } as unknown as ChainSwap;
+
+        swapsGetItemMock.mockResolvedValue(swapFromStorage);
+        vi.mocked(isSwapClaimable).mockReturnValue(true);
+
+        let resolveClaim!: (value: ChainSwap | undefined) => void;
+        vi.mocked(claim).mockReturnValue(
+            new Promise<ChainSwap | undefined>((resolve) => {
+                resolveClaim = resolve;
+            }),
+        );
+
+        renderPay();
+        payContext.setSwap({ ...swapFromStorage });
+
+        expect(payContext.isSwapClaiming("123")).toBe(false);
+
+        const claimPromise = payContext.claimSwap("123", {
+            id: "123",
+            status: swapStatusPending.TransactionMempool,
+            transaction: {
+                id: "lockup-txid",
+                hex: "00",
+            },
+        });
+
+        await waitFor(() => {
+            expect(payContext.isSwapClaiming("123")).toBe(true);
+        });
+
+        resolveClaim(undefined);
+        await claimPromise;
+
+        await waitFor(() => {
+            expect(payContext.isSwapClaiming("123")).toBe(false);
+        });
+    });
+
+    test("clears isSwapClaiming after a claim rejects", async () => {
+        const swapFromStorage = {
+            id: "123",
+            type: SwapType.Chain,
+            assetReceive: BTC,
+            assetSend: LBTC,
+            version: OutputType.Taproot,
+            claimTx: undefined,
+            lockupDetails: {},
+        } as unknown as ChainSwap;
+
+        swapsGetItemMock.mockResolvedValue(swapFromStorage);
+        vi.mocked(isSwapClaimable).mockReturnValue(true);
+        vi.mocked(claim).mockRejectedValue(new Error("claim broadcast failed"));
+
+        renderPay();
+        payContext.setSwap({ ...swapFromStorage });
+
+        await payContext.claimSwap("123", {
+            id: "123",
+            status: swapStatusPending.TransactionMempool,
+            transaction: {
+                id: "lockup-txid",
+                hex: "00",
+            },
+        });
+
+        await waitFor(() => {
+            expect(globalSignals.notificationType()).toBe("error");
+        });
+        expect(payContext.isSwapClaiming("123")).toBe(false);
+    });
+
+    test("swaps the mempool view for the broadcasting view while the real claim signal is set", async () => {
+        const swapFromStorage = {
+            id: "123",
+            type: SwapType.Chain,
+            assetReceive: BTC,
+            assetSend: LBTC,
+            version: OutputType.Taproot,
+            claimTx: undefined,
+            lockupDetails: {},
+        } as unknown as ChainSwap;
+
+        swapsGetItemMock.mockResolvedValue(swapFromStorage);
+        vi.mocked(isSwapClaimable).mockReturnValue(true);
+
+        let resolveClaim!: (value: ChainSwap | undefined) => void;
+        vi.mocked(claim).mockReturnValue(
+            new Promise<ChainSwap | undefined>((resolve) => {
+                resolveClaim = resolve;
+            }),
+        );
+
+        const [swap] = createSignal<SomeSwap | null>(
+            swapFromStorage as unknown as SomeSwap,
+        );
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <TransactionMempool swap={swap} />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        await screen.findByText(dict.en.tx_in_mempool_subline);
+        expect(screen.queryByText(dict.en.broadcasting_claim)).toBeNull();
+
+        const claimPromise = payContext.claimSwap("123", {
+            id: "123",
+            status: swapStatusPending.TransactionMempool,
+            transaction: {
+                id: "lockup-txid",
+                hex: "00",
+            },
+        });
+
+        await screen.findByText(dict.en.broadcasting_claim);
+        expect(screen.queryByText(dict.en.tx_in_mempool_subline)).toBeNull();
+
+        resolveClaim(undefined);
+        await claimPromise;
+
+        await screen.findByText(dict.en.tx_in_mempool_subline);
+        expect(screen.queryByText(dict.en.broadcasting_claim)).toBeNull();
     });
 });
