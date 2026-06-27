@@ -29,23 +29,10 @@ const execInBackend = async (command: string): Promise<string> => {
 export const setBackendSignersDisabled = (disabled: boolean): Promise<string> =>
     execInBackend(`signer ${disabled ? "disable" : "enable"} --all`);
 
-type BackendWalletBalance = { confirmed: number; unconfirmed: number };
-
-// The backends confirmed balance for an asset
-export const getBackendConfirmedBalance = async (
-    symbol: string,
-): Promise<number> => {
-    const { balances } = JSON.parse(
-        await execInBackend("wallet get-balance"),
-    ) as {
-        balances: Record<
-            string,
-            { wallets: Record<string, BackendWalletBalance> }
-        >;
-    };
-    const wallets = balances[symbol]?.wallets ?? {};
-    return Object.values(wallets).reduce((sum, w) => sum + w.confirmed, 0);
-};
+export const refreshBackendBalanceCache = (symbol?: string): Promise<string> =>
+    execInBackend(
+        `dev refresh-balance-cache${symbol !== undefined ? ` ${symbol}` : ""}`,
+    );
 
 export const payInvoiceInBackground = (invoice: string): void => {
     exec(`${SCRIPTS_PREFIX}lncli-sim 1 payinvoice -f ${invoice}"`, () => {});
