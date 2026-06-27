@@ -81,9 +81,6 @@ export const isArbitrumForkReachable = async (): Promise<boolean> => {
     }
 };
 
-export const mineArbitrumBlock = (client: PublicClient): Promise<unknown> =>
-    client.request({ method: "anvil_mine" as never, params: [] as never });
-
 export const tokenBalance = (
     client: PublicClient,
     token: Address,

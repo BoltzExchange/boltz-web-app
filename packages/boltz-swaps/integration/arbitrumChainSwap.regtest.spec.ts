@@ -18,14 +18,13 @@ import {
     ensureBackendTbtcLiquidity,
     isArbitrumForkReachable,
     makeArbitrumSigner,
-    mineArbitrumBlock,
     tokenBalance,
 } from "./arbitrum.ts";
 import {
     BOLTZ_API_URL,
     elementsSendToAddress,
     generateLiquidBlock,
-    getBackendConfirmedBalance,
+    refreshBackendBalanceCache,
     satsToCoins,
     sleep,
 } from "./regtest.ts";
@@ -37,22 +36,25 @@ const makeKeys = (): ECKeys => {
     return { privateKey, publicKey: secp256k1.getPublicKey(privateKey, true) };
 };
 
-// The backend gates swap creation on a balance cache that only refreshes every
-// 15s (BalanceCheck.updateIntervalMs), while we poll the live wallet balance.
-// Freshly-funded liquidity is therefore live before it lands in that cache, so
-// the first create can lose the race and throw "insufficient liquidity". Retry
-// until the cache catches up (well within the cache interval).
-const retryOnInsufficientLiquidity = async <T>(
-    op: () => Promise<T>,
+// The EVM pair's fee tracks the fork's gas and the backend refreshes the pair
+// hash on its own interval, so a hash can go stale between fetch and create
+// ("invalid pair hash"). Retry with a freshly-fetched hash until it settles.
+const createWithFreshPair = async <T>(
+    build: (pairHash: string) => Promise<T>,
 ): Promise<T> => {
     const deadline = Date.now() + 30_000;
     for (;;) {
+        const pairs = await getPairs();
+        const pair = pairs[SwapType.Chain]["L-BTC"]?.["TBTC"];
+        if (pair?.hash === undefined) {
+            throw new Error("no L-BTC -> TBTC chain pair");
+        }
         try {
-            return await op();
+            return await build(pair.hash);
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             if (
-                !message.includes("insufficient liquidity") ||
+                !message.includes("invalid pair hash") ||
                 Date.now() > deadline
             ) {
                 throw e;
@@ -119,31 +121,14 @@ describeFork("Arbitrum chain swap integration (regtest)", () => {
         const signer = makeArbitrumSigner();
         const refundKeys = makeKeys();
         const preimage = crypto.getRandomValues(new Uint8Array(32));
-
-        const pairs = await getPairs();
-        const pair = pairs[SwapType.Chain]["L-BTC"]?.["TBTC"];
-        if (pair?.hash === undefined) {
-            throw new Error("no L-BTC -> TBTC chain pair");
-        }
-
-        // The backend only registers the on-chain TBTC funding once it sees a new
-        // EVM block, so wait for its tracked balance to cover the lock before
-        // creating the swap.
         const userLockAmount = 200_000;
-        const balanceDeadline = Date.now() + 60_000;
-        while ((await getBackendConfirmedBalance("TBTC")) < userLockAmount) {
-            if (Date.now() > balanceDeadline) {
-                throw new Error(
-                    "timed out waiting for the backend to register TBTC liquidity",
-                );
-            }
-            await mineArbitrumBlock(publicClient);
-            await sleep(1_000);
-        }
 
-        // The live balance is funded above, but the backend's swap-creation
-        // liquidity check reads a 15s-stale cache — retry until it catches up.
-        const created = await retryOnInsufficientLiquidity(() =>
+        // TBTC is funded above, but the backend's liquidity check reads a cache
+        // that only refreshes every ~15s. Force it to pick up the live balance
+        // now so create can't lose the race to "insufficient liquidity".
+        await refreshBackendBalanceCache("TBTC");
+
+        const created = await createWithFreshPair((pairHash) =>
             boltz.swap.chain.create({
                 from: "L-BTC",
                 to: "TBTC",
@@ -151,7 +136,7 @@ describeFork("Arbitrum chain swap integration (regtest)", () => {
                 preimageHash: hex.encode(sha256(preimage)),
                 refundPublicKey: hex.encode(refundKeys.publicKey),
                 claimAddress: signer.address,
-                pairHash: pair.hash,
+                pairHash,
             }),
         );
         expect(created.id).toBeTruthy();
