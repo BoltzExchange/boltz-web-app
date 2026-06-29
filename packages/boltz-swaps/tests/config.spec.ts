@@ -25,4 +25,17 @@ describe("boltz-swaps config defaults", () => {
             "https://solburn.example",
         );
     });
+
+    test("round-trips a configured statusSource", () => {
+        const statusSource = { subscribe: () => () => {}, close: () => {} };
+        setBoltzSwapsConfig({ statusSource });
+
+        expect(getBoltzSwapsConfig().statusSource).toBe(statusSource);
+    });
+
+    test("exposes an undefined statusSource when unset", () => {
+        setBoltzSwapsConfig({});
+
+        expect(getBoltzSwapsConfig().statusSource).toBeUndefined();
+    });
 });

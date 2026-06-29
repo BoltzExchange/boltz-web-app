@@ -42,6 +42,7 @@ import {
     getSubmarineClaimDetails,
     getSubmarinePreimage,
     getSwapStatus,
+    getSwapStatuses,
     postChainSwapDetails,
     quoteDexAmountIn,
     quoteDexAmountOut,
@@ -49,6 +50,7 @@ import {
 import {
     type BoltzSwapsConfig,
     type BoltzSwapsConfigInput,
+    getBoltzSwapsConfig,
     getConfiguredNetwork,
     isEvmAsset,
     setBoltzSwapsConfig,
@@ -88,6 +90,15 @@ import {
     createRoute,
     executeRoute,
 } from "./routeExecute.ts";
+import {
+    type StatusErrorHandler,
+    type StatusSource,
+    type StatusUpdateHandler,
+    type SwapUpdate,
+    type WatchOptions,
+    createDefaultStatusSource,
+    watchStatus,
+} from "./statusSource/index.ts";
 import {
     type RefundResult,
     type RefundSubmarineUtxoParams,
@@ -246,6 +257,13 @@ export interface BoltzClient<A extends string = string> {
     };
     readonly swap: {
         status(id: string): Promise<SwapStatusResponse>;
+        statuses(ids: string[]): Promise<Record<string, SwapStatusResponse>>;
+        subscribe(
+            id: string,
+            onUpdate: StatusUpdateHandler,
+            onError?: StatusErrorHandler,
+        ): () => void;
+        watch(id: string, options?: WatchOptions): AsyncIterable<SwapUpdate>;
         chain: {
             create(
                 args: ChainSwapCreateArgs<A>,
@@ -318,6 +336,7 @@ const configKeys: ReadonlyArray<keyof BoltzSwapsConfig> = [
     "network",
     "gasSponsor",
     "defaultSlippage",
+    "statusSource",
 ];
 
 const buildConfigProxy = <A extends string>(
@@ -341,6 +360,13 @@ export const createBoltzClient = <A extends string = string>(
     input: BoltzClientConfig<A>,
 ): BoltzClient<A> => {
     setBoltzSwapsConfig(buildConfigProxy(input));
+
+    // One status source per client so the WebSocket source can multiplex all
+    // of the client's swaps over a single connection.
+    let statusSource: StatusSource | undefined;
+    const getStatusSource = (): StatusSource =>
+        (statusSource ??=
+            getBoltzSwapsConfig().statusSource ?? createDefaultStatusSource());
 
     const client: BoltzClient<A> = {
         dex: {
@@ -377,6 +403,10 @@ export const createBoltzClient = <A extends string = string>(
         },
         swap: {
             status: (id) => getSwapStatus(id),
+            statuses: (ids) => getSwapStatuses(ids),
+            subscribe: (id, onUpdate, onError) =>
+                getStatusSource().subscribe(id, onUpdate, onError),
+            watch: (id, options) => watchStatus(getStatusSource(), id, options),
             chain: {
                 create: ({
                     from,
