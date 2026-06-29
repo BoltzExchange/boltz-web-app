@@ -5,7 +5,7 @@
 // Flow:
 //   1. Create the reverse swap. Boltz returns a hold invoice.
 //   2. You pay that invoice from any Lightning wallet.
-//   3. Boltz locks L-BTC on-chain; poll `swap.status(id)` yourself.
+//   3. Boltz locks L-BTC on-chain; watch `swap.watch(id)` for status updates.
 //   4. Once the lockup confirms, `swap.reverse.execute(...)` claims the L-BTC
 //      to your address (cooperatively; it falls back to the script path if
 //      Boltz refuses to co-sign). Claiming reveals the preimage, which settles
@@ -38,9 +38,6 @@ declare const process: {
     env: Record<string, string | undefined>;
     exit: (code: number) => never;
 };
-
-const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
 
 type Keypair = { privateKey: Uint8Array; publicKey: Uint8Array };
 
@@ -116,10 +113,9 @@ const main = async () => {
         `\nBoltz will lock ${createdSwap.onchainAmount} sats of L-BTC once paid.`,
     );
 
-    console.log("\nPolling swap status every 5s (Ctrl+C to stop)…");
+    console.log("\nWatching swap status (Ctrl+C to stop)…");
     let lastStatus = "";
-    for (;;) {
-        const { status } = await boltz.swap.status(createdSwap.id);
+    for await (const { status } of boltz.swap.watch(createdSwap.id)) {
         if (status !== lastStatus) {
             console.log(`  status: ${status}`);
             lastStatus = status;
@@ -134,7 +130,6 @@ const main = async () => {
                     : `swap already settled (${status})`,
             );
         }
-        await sleep(5_000);
     }
 
     const receiveAmount = createdSwap.onchainAmount - pair.fees.minerFees.claim;

@@ -75,6 +75,11 @@
             "types": "./dist/status.d.ts",
             "default": "./dist/status.js"
         },
+        "./statusSource": {
+            "source": "./src/statusSource/index.ts",
+            "types": "./dist/statusSource/index.d.ts",
+            "default": "./dist/statusSource/index.js"
+        },
         "./chain": {
             "source": "./src/chain.ts",
             "types": "./dist/chain.d.ts",

@@ -41,9 +41,6 @@ declare const process: {
     exit: (code: number) => never;
 };
 
-const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-
 type Keypair = { privateKey: Uint8Array; publicKey: Uint8Array };
 
 const fromPrivateKey = (privateKey: Uint8Array): Keypair => ({
@@ -107,11 +104,10 @@ const main = async () => {
         console.log(`  lockup blinding key: ${createdSwap.blindingKey}`);
     }
 
-    console.log("\nPolling swap status every 5s (Ctrl+C to stop)…");
+    console.log("\nWatching swap status (Ctrl+C to stop)…");
     let lastStatus = "";
     let coSigned = false;
-    for (;;) {
-        const { status } = await boltz.swap.status(createdSwap.id);
+    for await (const { status } of boltz.swap.watch(createdSwap.id)) {
         if (status !== lastStatus) {
             console.log(`  status: ${status}`);
             lastStatus = status;
@@ -143,7 +139,6 @@ const main = async () => {
                     : `unexpected terminal status ${status}`,
             );
         }
-        await sleep(5_000);
     }
 };
 

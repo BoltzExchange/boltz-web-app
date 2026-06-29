@@ -5,7 +5,7 @@
 // Flow:
 //   1. Create the chain swap (source = L-BTC, destination = TBTC on Arbitrum).
 //   2. You fund the returned L-BTC lockup address from any external wallet.
-//   3. Poll `swap.status(id)` yourself; once Boltz has locked TBTC,
+//   3. Watch `swap.watch(id)` for status; once Boltz has locked TBTC,
 //      `swap.chain.execute(...)` claims it to your Arbitrum address.
 //
 // ── Run ────────────────────────────────────────────────────────────────────
@@ -57,9 +57,6 @@ declare const process: {
     env: Record<string, string | undefined>;
     exit: (code: number) => never;
 };
-
-const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
 
 type Keypair = { privateKey: Uint8Array; publicKey: Uint8Array };
 
@@ -188,17 +185,20 @@ const main = async () => {
         `\nExpected to receive ~${createdSwap.claimDetails.amount} TBTC base units (18 dec).`,
     );
 
-    // 3) Poll the status yourself until Boltz has locked TBTC, then claim it.
-    //    `execute` does the claim only — it does not poll.
-    console.log("\nPolling swap status every 5s (Ctrl+C to stop)…");
+    // 3) Watch the status until Boltz has locked TBTC, then claim it.
+    //    `execute` does the claim only — it does not watch.
+    console.log("\nWatching swap status (Ctrl+C to stop)…");
     let lastStatus = "";
-    for (;;) {
-        const { status } = await boltz.swap.status(createdSwap.id);
+    for await (const { status } of boltz.swap.watch(createdSwap.id)) {
         if (status !== lastStatus) {
             console.log(`  status: ${status}`);
             lastStatus = status;
         }
-        if (isChainSwapClaimable({ status })) {
+        if (
+            isChainSwapClaimable({
+                status,
+            })
+        ) {
             break;
         }
         if (isFinalStatus(status)) {
@@ -208,7 +208,6 @@ const main = async () => {
                     : `swap already settled (${status})`,
             );
         }
-        await sleep(5_000);
     }
 
     console.log("\nClaiming TBTC…");

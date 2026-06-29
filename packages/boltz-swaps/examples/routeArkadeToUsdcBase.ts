@@ -11,7 +11,7 @@
 //      the via/landing asset (here TBTC, the chain-swap destination), committing
 //      the signer's EOA as the claim address.
 //   2. You fund the returned Arkade lockup from your Arkade wallet.
-//   3. Poll `swap.status(id)` yourself; once Boltz has locked the destination,
+//   3. Watch `swap.watch(id)` for status; once Boltz has locked the destination,
 //      `route.execute(...)` claims it and, in the same tx, runs the DEX swap and
 //      bridges USDC to your Base address.
 //
@@ -67,9 +67,6 @@ declare const process: {
     env: Record<string, string | undefined>;
     exit: (code: number) => never;
 };
-
-const sleep = (ms: number): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, ms));
 
 type Keypair = { privateKey: Uint8Array; publicKey: Uint8Array };
 
@@ -197,17 +194,23 @@ const main = async () => {
     }
     const signer = buildSigner(account, rpcUrl);
 
-    // 2) Poll the status yourself until Boltz has locked the destination, then
-    //    claim. `execute` does the claim only — it does not poll.
-    console.log("\nPolling swap status every 5s (Ctrl+C to stop)…");
+    // 2) Watch the status until Boltz has locked the destination, then claim.
+    //    `execute` does the claim only — it does not watch.
+    console.log("\nWatching swap status (Ctrl+C to stop)…");
     let lastStatus = "";
-    for (;;) {
-        const { status } = await boltz.swap.status(createdSwap.id);
+    for await (const { status, zeroConfRejected } of boltz.swap.watch(
+        createdSwap.id,
+    )) {
         if (status !== lastStatus) {
             console.log(`  status: ${status}`);
             lastStatus = status;
         }
-        if (isChainSwapClaimable({ status })) {
+        if (
+            isChainSwapClaimable({
+                status,
+                zeroConf: zeroConfRejected !== true,
+            })
+        ) {
             break;
         }
         if (isFinalStatus(status)) {
@@ -217,7 +220,6 @@ const main = async () => {
                     : `swap already settled (${status})`,
             );
         }
-        await sleep(5_000);
     }
 
     // 3) Pin the minimum we will accept. In a real app, derive this from the
