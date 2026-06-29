@@ -49,7 +49,6 @@ import {
 import { useModifySwap } from "../hooks/useModifySwap";
 import type { EncodedHop } from "../utils/Pair";
 import { formatAssetAmountForLog } from "../utils/denomination";
-import { calculateAmountWithSlippage } from "../utils/calculate";
 import { getNativeEvmLockupSpendableBalance } from "../utils/evmLockup";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
