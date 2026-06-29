@@ -25,11 +25,14 @@ type SwapStatus = {
 };
 
 const reconnectInterval = 5_000;
+const pingInterval = 15_000;
 
-class BoltzWebSocket {
+export class BoltzWebSocket {
     private ws?: WebSocket;
     private reconnectTimeout?: ReturnType<typeof setTimeout>;
     private isClosed: boolean = false;
+    private pingTimer?: ReturnType<typeof setInterval>;
+    private awaitingPong: boolean = false;
 
     constructor(
         private readonly url: string,
@@ -43,7 +46,7 @@ class BoltzWebSocket {
 
     public connect = () => {
         log.debug("Opening WebSocket");
-        void this.openWebSocket(`${this.url}/v2/ws`);
+        void this.openWebSocket(`${this.url}/v2/ws`).catch(() => {});
     };
 
     public close = () => {
@@ -52,6 +55,7 @@ class BoltzWebSocket {
             clearTimeout(this.reconnectTimeout);
         }
 
+        this.stopPinging();
         this.ws?.close();
     };
 
@@ -88,7 +92,15 @@ class BoltzWebSocket {
     private openWebSocket = (url: string) => {
         this.isClosed = false;
         clearTimeout(this.reconnectTimeout);
-        this.ws?.close();
+        this.stopPinging();
+
+        if (this.ws !== undefined) {
+            this.ws.onopen = null;
+            this.ws.onerror = null;
+            this.ws.onclose = null;
+            this.ws.onmessage = null;
+            this.ws.close();
+        }
 
         return new Promise<void>((resolve, reject) => {
             this.ws = new WebSocket(BoltzWebSocket.formatWsUrl(url));
@@ -99,12 +111,14 @@ class BoltzWebSocket {
                     Array.from(this.relevantIds.values()),
                     true,
                 );
+                this.startPinging();
             };
             this.ws.onerror = (error) => {
                 log.error("WebSocket error", error);
             };
             this.ws.onclose = (error) => {
                 log.warn("WebSocket closed", error);
+                this.stopPinging();
                 this.handleClose();
 
                 if (error.wasClean) {
@@ -114,6 +128,9 @@ class BoltzWebSocket {
                 }
             };
             this.ws.onmessage = async (msg) => {
+                // Any inbound frame proves the connection is alive
+                this.awaitingPong = false;
+
                 const data = JSON.parse(msg.data);
                 if (data.event === "pong" || data.event === "ping") {
                     return;
@@ -148,6 +165,30 @@ class BoltzWebSocket {
             () => this.connect(),
             reconnectInterval,
         );
+    };
+
+    private startPinging = () => {
+        this.stopPinging();
+        this.pingTimer = setInterval(() => {
+            if (this.ws?.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
+            if (this.awaitingPong) {
+                log.warn("WebSocket ping timed out; recreating connection");
+                this.connect();
+                return;
+            }
+
+            this.awaitingPong = true;
+            this.ws.send(JSON.stringify({ op: "ping" }));
+        }, pingInterval);
+    };
+
+    private stopPinging = () => {
+        clearInterval(this.pingTimer);
+        this.pingTimer = undefined;
+        this.awaitingPong = false;
     };
 
     private static formatWsUrl = (url: string) =>
