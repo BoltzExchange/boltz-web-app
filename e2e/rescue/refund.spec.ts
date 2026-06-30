@@ -552,4 +552,80 @@ test.describe("Refund", () => {
             ).toBeVisible({ timeout: 5_000 });
         });
     });
+
+    const explorerUtxoApiDown = /\/address\/[^/]+\/utxo/;
+
+    test("still refunds via the backend lockup when the explorer UTXO API is down", async ({
+        page,
+    }) => {
+        test.setTimeout(60_000);
+
+        const { swapId, address } = await setupSwapWithMultipleUTXOs(
+            page,
+            0.005,
+            1,
+        );
+        await setFailedToPay(swapId);
+
+        await page.route(explorerUtxoApiDown, (route) =>
+            route.fulfill({ status: 500, body: "explorer down" }),
+        );
+
+        await page.reload();
+        await performRefundAction(page, "invoice.failedToPay");
+        await validateRefundTransaction(page, LBTC, address);
+    });
+
+    test("recovers when the backend reports a bogus lockup tx", async ({
+        page,
+    }) => {
+        test.setTimeout(60_000);
+
+        const { swapId, address } = await setupSwapWithMultipleUTXOs(
+            page,
+            0.005,
+            1,
+        );
+        await setFailedToPay(swapId);
+
+        const cors = { "access-control-allow-origin": "*" };
+
+        await page.route(
+            /\/v2\/swap\/submarine\/[^/]+\/transaction/,
+            (route) =>
+                route.request().method() === "OPTIONS"
+                    ? route.fulfill({
+                          status: 204,
+                          headers: {
+                              ...cors,
+                              "access-control-allow-methods": "GET, OPTIONS",
+                              "access-control-allow-headers": "referral",
+                          },
+                      })
+                    : route.fulfill({
+                          status: 200,
+                          contentType: "application/json",
+                          headers: cors,
+                          body: JSON.stringify({
+                              id: "f".repeat(64),
+                              hex: "bogus",
+                              timeoutBlockHeight: 1,
+                          }),
+                      }),
+        );
+
+        let explorerUp = false;
+        await page.route(explorerUtxoApiDown, (route) =>
+            explorerUp
+                ? route.continue()
+                : route.fulfill({ status: 500, headers: cors, body: "down" }),
+        );
+
+        await page.reload();
+        await expect(page.getByTestId("refundAddress")).toBeVisible();
+        explorerUp = true;
+
+        await performRefundAction(page, "invoice.failedToPay");
+        await validateRefundTransaction(page, LBTC, address);
+    });
 });

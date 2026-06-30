@@ -67,6 +67,7 @@ import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import { useModifySwap } from "../hooks/useModifySwap";
+import { getSwapUTXOs } from "../utils/blockchain";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
@@ -896,7 +897,8 @@ export const RefundBtc = (props: {
 }) => {
     const { setRefundAddress, refundAddress, notify, t, deriveKey } =
         useGlobalContext();
-    const { refundableUTXOs, failureReason } = usePayContext();
+    const { refundableUTXOs, setRefundableUTXOs, failureReason } =
+        usePayContext();
 
     const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
     const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<number>(0);
@@ -932,7 +934,30 @@ export const RefundBtc = (props: {
         setValid(validateAddress(asset, address));
     };
 
-    const refundAction = async () => {
+    // Re-read the real outpoint from the explorer; true if it changed.
+    const refetchRefundableUTXOs = async (): Promise<boolean> => {
+        try {
+            const fresh = await getSwapUTXOs(props.swap());
+            if (fresh.length === 0) {
+                return false;
+            }
+            const idsOf = (utxos: { id?: string }[]) =>
+                utxos
+                    .map((u) => u.id ?? "")
+                    .sort()
+                    .join(",");
+            if (idsOf(fresh) === idsOf(refundableUTXOs())) {
+                return false;
+            }
+            setRefundableUTXOs(fresh);
+            return true;
+        } catch (e) {
+            log.warn("failed to refetch refundable UTXOs for self-heal", e);
+            return false;
+        }
+    };
+
+    const refundAction = async (isRetry = false) => {
         setRefundRunning(true);
 
         try {
@@ -955,10 +980,19 @@ export const RefundBtc = (props: {
             setRefundAddress("");
         } catch (error) {
             log.warn("refund failed", error);
+
+            // The cached lockup tx may be wrong (e.g. the backend reported a
+            // stale or invalid lockup tx). Refetch the real address UTXOs and
+            // retry once if they changed.
+            if (!isRetry && (await refetchRefundableUTXOs())) {
+                return refundAction(true);
+            }
+
             if (typeof error === "string") {
                 let msg = error;
                 if (
-                    msg === "bad-txns-inputs-missingorspent" ||
+                    msg.includes("bad-txns-inputs-missingorspent") ||
+                    msg.includes("Inputs missing or spent") ||
                     msg === "Transaction already in block chain" ||
                     msg.startsWith("insufficient fee")
                 ) {
