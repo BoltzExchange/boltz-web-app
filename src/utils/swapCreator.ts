@@ -110,6 +110,11 @@ export type SwapBase = {
     commitmentLockupCallId?: string;
     commitmentSignatureSubmitted?: boolean;
 
+    // Set when the backend permanently rejected the commitment post (e.g.
+    // "insufficient amount"). The on-chain lockup is immutable, so retrying can
+    // never succeed; this stops the retry loop and offers the user a refund.
+    commitmentRejection?: { reason: string };
+
     gasAbstraction: GasAbstraction;
     signer?: string;
     // Set for hardware wallet signers

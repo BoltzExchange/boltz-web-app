@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { oftAbi } from "boltz-swaps/oft";
 import {
     type Address,
+    type Chain,
     type Hex,
     type PublicClient,
     createPublicClient,
@@ -453,6 +454,101 @@ const expectOftSendTx = async (
     expect(sent.args.amountReceivedLD).toBeGreaterThan(0n);
 };
 
+// Whale holding USD₮0 on the Arbitrum fork; impersonated to fund the test
+// wallet so it can send a native USDT0 (Arbitrum) commitment swap.
+const usdt0FundingSource = getAddress(
+    "0xF977814e90dA44bFA03b6295A0616a897441aceC",
+);
+const usdt0FundingAmount = parseUnits("500", 6);
+
+type ArbitrumE2e = { chain: Chain; publicClient: PublicClient; rpcUrl: string };
+
+const arbWalletAccountIndex = 3;
+
+const getArbWalletAddress = async (
+    publicClient: PublicClient,
+): Promise<Address> => {
+    const accounts = (await publicClient.request({
+        method: "eth_accounts",
+        params: [],
+    } as never)) as Address[];
+    const walletAddress = accounts[arbWalletAccountIndex];
+    if (walletAddress === undefined) {
+        throw new Error(
+            `Arbitrum account #${arbWalletAccountIndex} is not available in Anvil`,
+        );
+    }
+    return getAddress(walletAddress);
+};
+
+const clearEoaDelegation = async (
+    publicClient: PublicClient,
+    account: Address,
+) => {
+    await publicClient.request({
+        method: "anvil_setCode" as never,
+        params: [account, "0x"] as never,
+    });
+};
+
+const fundArbUsdt0Wallet = async (arbitrum: ArbitrumE2e, wallet: Address) => {
+    const token = getRegtestTokenAddress("USDT0");
+    if (
+        (await getTokenBalance(arbitrum.publicClient, token, wallet)) >=
+        parseUnits(usdt0EthSendAmount, 6)
+    ) {
+        return;
+    }
+
+    await arbitrum.publicClient.request({
+        method: "anvil_setBalance" as never,
+        params: [
+            usdt0FundingSource,
+            `0x${parseEther("1").toString(16)}`,
+        ] as never,
+    });
+    await arbitrum.publicClient.request({
+        method: "anvil_impersonateAccount" as never,
+        params: [usdt0FundingSource] as never,
+    });
+
+    try {
+        const walletClient = createWalletClient({
+            account: usdt0FundingSource,
+            chain: arbitrum.chain,
+            transport: http(arbitrum.rpcUrl, { timeout: actionTimeout }),
+        });
+        const hash = await walletClient.writeContract({
+            address: token,
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [wallet, usdt0FundingAmount],
+        });
+        await arbitrum.publicClient.waitForTransactionReceipt({ hash });
+    } finally {
+        await arbitrum.publicClient.request({
+            method: "anvil_stopImpersonatingAccount" as never,
+            params: [usdt0FundingSource] as never,
+        });
+    }
+};
+
+const lockupCommitment = async (page: Page, walletAddress: Address) => {
+    await connectWallet(page, walletAddress);
+
+    const approve = page.getByRole("button", { name: /^approve$/i });
+    const send = page.getByRole("button", { name: /^send$/i });
+
+    await expect(send.or(approve)).toBeVisible({ timeout: actionTimeout });
+    if (await approve.isVisible().catch(() => false)) {
+        await approve.click();
+        await expect(approve).toBeHidden({ timeout: actionTimeout });
+    }
+
+    await expect(send).toBeEnabled({ timeout: actionTimeout });
+    await send.click();
+};
+
 describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
     test.describe.configure({ mode: "serial" });
 
@@ -565,5 +661,105 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
             await waitForBridgeTxHash(page, swapId),
             walletAddress,
         );
+    });
+
+    test("offers a source-asset refund when the backend rejects the commitment", async ({
+        arbitrum,
+        page,
+    }) => {
+        test.setTimeout(testTimeout);
+
+        const walletAddress = await getArbWalletAddress(arbitrum.publicClient);
+        await clearEoaDelegation(arbitrum.publicClient, walletAddress);
+        await fundArbUsdt0Wallet(arbitrum, walletAddress);
+        await injectWalletProvider({
+            page,
+            publicClient: arbitrum.publicClient,
+            walletClient: createWalletClient({
+                account: walletAddress,
+                chain: arbitrum.chain,
+                transport: http(arbitrum.rpcUrl, { timeout: actionTimeout }),
+            }),
+            chain: arbitrum.chain,
+        });
+
+        await waitForDexQuote({
+            tokenIn: getRegtestTokenAddress("USDT0"),
+            tokenOut: getRegtestTokenAddress("TBTC"),
+            amountIn: parseUnits("39.996", 6),
+            label: "USDT0 -> TBTC",
+        });
+
+        // Force the backend to permanently reject the commitment post.
+        let commitmentPosts = 0;
+        await page.route("**/v2/commitment/*", async (route, request) => {
+            const isRefund = new URL(request.url()).pathname.endsWith(
+                "/refund",
+            );
+            if (request.method() !== "POST" || isRefund) {
+                await route.continue();
+                return;
+            }
+
+            commitmentPosts += 1;
+            await route.fulfill({
+                status: 400,
+                contentType: "application/json",
+                body: JSON.stringify({
+                    error: "insufficient amount: 16643 < 16650",
+                }),
+            });
+        });
+
+        await createSwap(
+            page,
+            "USDT0",
+            "L-BTC",
+            await getLiquidAddress(),
+            usdt0EthSendAmount,
+            { walletAddress },
+        );
+        await lockupCommitment(page, walletAddress);
+
+        await expect(
+            page.getByText(dict.en.commitment_rejected_line),
+        ).toBeVisible({ timeout: testTimeout });
+
+        await expect(
+            page.getByRole("button", {
+                name: new RegExp(`^${dict.en.refund}$`, "i"),
+            }),
+        ).toBeVisible({ timeout: actionTimeout });
+
+        expect(commitmentPosts).toBeGreaterThan(0);
+        const postsAtRejection = commitmentPosts;
+        await page.waitForTimeout(7_000);
+        expect(commitmentPosts).toBe(postsAtRejection);
+
+        const usdt0 = getRegtestTokenAddress("USDT0");
+        const usdt0BeforeRefund = await getTokenBalance(
+            arbitrum.publicClient,
+            usdt0,
+            walletAddress,
+        );
+        await page
+            .getByRole("button", {
+                name: new RegExp(`^${dict.en.refund}$`, "i"),
+            })
+            .click();
+        await expect
+            .poll(
+                () =>
+                    getTokenBalance(
+                        arbitrum.publicClient,
+                        usdt0,
+                        walletAddress,
+                    ),
+                {
+                    timeout: actionTimeout,
+                    message: "cooperative refund returns USDT0 to the wallet",
+                },
+            )
+            .toBeGreaterThan(usdt0BeforeRefund);
     });
 });

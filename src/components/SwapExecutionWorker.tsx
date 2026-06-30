@@ -67,6 +67,7 @@ import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAssetAmountForLog } from "../utils/denomination";
+import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { type ClaimQuote, fetchDexQuote } from "../utils/quoter";
 import {
@@ -84,6 +85,13 @@ const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
 const preBridgeDexQuoteAttempts = 3;
 const preBridgeDexQuoteRetryDelayMs = 5_000;
+
+// The backend rejects a commitment whose locked amount is below the swap's
+// expected amount with "insufficient amount: <actual> < <expected>". The
+// on-chain lockup is immutable, so this can never succeed on retry; treat it as
+// terminal and offer a refund instead of looping forever.
+const isInsufficientCommitmentAmountError = (error: unknown): boolean =>
+    /insufficient amount/i.test(formatError(error));
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -168,6 +176,7 @@ const needsCommitmentPost = (
     swap !== null &&
     swap.commitmentLockupTxHash !== undefined &&
     !swap.commitmentSignatureSubmitted &&
+    swap.commitmentRejection === undefined &&
     isPendingCommitmentStatus(swap.status);
 
 type TaskStage = "pre-bridge" | "commitment";
@@ -1452,15 +1461,35 @@ export const SwapExecutionWorker = () => {
                             storedSwap.commitmentLockupTxHash,
                     }),
                 );
-                await postCommitmentSignatureForTransaction({
-                    asset: storedSwap.assetSend,
-                    commitmentAsset,
-                    swapId: storedSwap.id,
-                    preimageHash: getSwapPreimageHash(storedSwap),
-                    commitmentTxHash: storedSwap.commitmentLockupTxHash as Hash,
-                    erc20Swap: getErc20Swap(commitmentAsset),
-                    signer: transactionSigner,
-                });
+                try {
+                    await postCommitmentSignatureForTransaction({
+                        asset: storedSwap.assetSend,
+                        commitmentAsset,
+                        swapId: storedSwap.id,
+                        preimageHash: getSwapPreimageHash(storedSwap),
+                        commitmentTxHash:
+                            storedSwap.commitmentLockupTxHash as Hash,
+                        erc20Swap: getErc20Swap(commitmentAsset),
+                        signer: transactionSigner,
+                    });
+                } catch (error) {
+                    if (isInsufficientCommitmentAmountError(error)) {
+                        const reason = formatError(error);
+                        await modifySwap(storedSwap.id, (s) => {
+                            s.commitmentRejection = { reason };
+                        });
+                        log.warn(
+                            "Swap execution commitment permanently rejected; offering refund",
+                            getSwapExecutionLogContext(storedSwap.id, {
+                                reason,
+                                commitmentLockupTxHash:
+                                    storedSwap.commitmentLockupTxHash,
+                            }),
+                        );
+                        return;
+                    }
+                    throw error;
+                }
 
                 await modifySwap(storedSwap.id, (s) => {
                     s.commitmentSignatureSubmitted = true;

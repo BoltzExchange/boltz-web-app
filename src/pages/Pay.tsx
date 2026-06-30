@@ -43,6 +43,7 @@ import {
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import CommitmentRejected from "../status/CommitmentRejected";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -598,6 +599,13 @@ const Pay = () => {
                                     </>
                                 }>
                                 <Switch>
+                                    <Match
+                                        when={
+                                            swap()?.commitmentRejection !==
+                                            undefined
+                                        }>
+                                        <CommitmentRejected />
+                                    </Match>
                                     <Match
                                         when={
                                             swap()?.bridge?.recovery !==
