@@ -187,6 +187,38 @@ describe("InvoiceInput", () => {
         });
     });
 
+    test("should clear amounts when changing to a BOLT12 offer", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        setPairAssets(BTC, LN);
+
+        signals.setSendAmount(BigNumber(10_000));
+        signals.setReceiveAmount(BigNumber(9_900));
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLInputElement;
+        const offer =
+            "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+
+        fireEvent.input(input, {
+            target: { value: offer },
+        });
+
+        await waitFor(() => {
+            expect(signals.bolt12Offer()).toEqual(offer);
+            expect(signals.sendAmount().isZero()).toEqual(true);
+            expect(signals.receiveAmount().isZero()).toEqual(true);
+        });
+    });
+
     test.each`
         lnurl
         ${`${invoicePrefix}m@some.domain`}

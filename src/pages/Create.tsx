@@ -56,7 +56,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { isInvoice } from "../utils/invoice";
+import { isDeferredInvoiceDestination } from "../utils/invoice";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -105,6 +105,7 @@ const Create = () => {
         setSendAmountFormatted,
         receiveAmountFormatted,
         setReceiveAmountFormatted,
+        resetAmounts,
         amountChanged,
         setAmountChanged,
         minimum,
@@ -343,14 +344,13 @@ const Create = () => {
         return amount === "";
     };
 
-    const resetAmounts = () => {
-        setReceiveAmount(BigNumber(0));
-        setSendAmount(BigNumber(0));
-    };
-
     const clearStaleInvoice = () => {
         const currentInvoice = invoice();
-        if (!isInvoice(currentInvoice)) {
+        if (
+            currentInvoice === "" ||
+            !invoiceValid() ||
+            isDeferredInvoiceDestination(currentInvoice)
+        ) {
             return;
         }
 
@@ -625,7 +625,6 @@ const Create = () => {
         clearQuoteDebounce();
         setQuoteLoading(false);
         resetAmounts();
-        setAmountValid(false);
         setAmountChanged(Side.Send);
     };
 

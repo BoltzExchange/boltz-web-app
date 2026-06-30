@@ -36,6 +36,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         minerFee,
         invoice,
         amountValid,
+        resetAmounts,
         setAmountChanged,
         setInvoice,
         setInvoiceValid,
@@ -62,14 +63,38 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         setLnurl("");
     };
 
-    const validate = async (input: HTMLInputElement) => {
-        const requestId = ++validationRequest;
-        const getCurrentInputValue = () => input.value.trim();
-        const inputValue = getCurrentInputValue();
-        const isStale = () =>
-            requestId !== validationRequest ||
-            getCurrentInputValue() !== inputValue;
+    const canSwitchToAsset = (asset: string | null): asset is string =>
+        asset !== LN &&
+        asset !== null &&
+        (!bitcoinOnly() || isBitcoinOnlyAsset(asset));
 
+    const validateInput = (input: HTMLInputElement) => {
+        const inputValue = input.value.trim();
+        const address = extractAddress(inputValue);
+        const invoiceValue = extractInvoice(inputValue) ?? "";
+        const actualAsset =
+            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
+
+        if (!canSwitchToAsset(actualAsset)) {
+            resetAmounts();
+        }
+
+        void validate(input);
+    };
+
+    const validate = async (
+        input: HTMLInputElement,
+        inputValue = input.value.trim(),
+    ) => {
+        const requestId = ++validationRequest;
+        const isStale = () =>
+            requestId !== validationRequest || invoice().trim() !== inputValue;
+
+        const address = extractAddress(inputValue);
+        const invoiceValue = extractInvoice(inputValue) ?? "";
+        const actualAsset =
+            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
+        const switchesToAsset = canSwitchToAsset(actualAsset);
         setInvoice(inputValue);
 
         try {
@@ -81,12 +106,6 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
                 resetInvoiceState();
                 return;
             }
-
-            const address = extractAddress(inputValue);
-            const invoiceValue = extractInvoice(inputValue) ?? "";
-
-            const actualAsset =
-                probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
 
             const bip21Amount = extractBip21Amount(inputValue);
             if (bip21Amount) {
@@ -108,11 +127,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
             if (isStale()) {
                 return;
             }
-            if (
-                actualAsset !== LN &&
-                actualAsset !== null &&
-                (!bitcoinOnly() || isBitcoinOnlyAsset(actualAsset))
-            ) {
+            if (switchesToAsset) {
                 const fromAsset =
                     pair().fromAsset === actualAsset ? LN : pair().fromAsset;
                 setPair(
@@ -199,7 +214,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
                     pair().swapToCreate?.type === SwapType.Submarine ||
                     pair().toAsset === LN
                 ) {
-                    await validate(inputRef);
+                    await validate(inputRef, invoice().trim());
                 }
             },
         ),
@@ -209,7 +224,7 @@ const InvoiceInput = (props: InvoiceInputProps = {}) => {
         <input
             required
             ref={inputRef}
-            onInput={(e) => validate(e.currentTarget)}
+            onInput={(e) => validateInput(e.currentTarget)}
             type="text"
             class={props.class}
             id="invoice"
