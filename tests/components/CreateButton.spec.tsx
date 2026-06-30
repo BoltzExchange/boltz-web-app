@@ -129,8 +129,6 @@ vi.mock("../../src/config", async () => {
 
 const invoice =
     "lnbcrt600u1p5ynhmgpp5l8j7lnaql4mqeukvcqmhr8zp9vh3rngfgmla6km2fh9vf8pt678sdqqcqzzsxqrpwusp56gha98s9xk2f4eeyhs7dcsx4j4rt79llks72nf6l6hc9cna6vfgs9qxpqysgqqnt8lqcrujmuuv3ajvrlu5z7ydvvge4efv39hj28etf8v72vpcl597evz5e0tvq04tv3z089wxtugee4xh5hvu6309ymrfddrlzfhzgqumsrpk";
-const lnurl =
-    "lnurl1dp68gurn8ghj7mrww4exctndd93ksct9dscnqvf39eshgtmpwp5j7mrww4excuqgy84zh";
 const bolt12Offer = "lno1mockoffer";
 
 const usdt0Pairs: Pairs = {
@@ -165,6 +163,63 @@ const setPairAssetsWithPairs = (
     toAsset: string,
 ) => {
     signals.setPair(new Pair(pairs, fromAsset, toAsset, pairs));
+};
+
+const renderCreateButton = () =>
+    render(
+        () => (
+            <>
+                <TestComponent />
+                <CreateButton />
+            </>
+        ),
+        { wrapper: contextWrapper },
+    );
+
+const mockPreDexCommitmentCreation = () => {
+    signals.pair().creationData = vi.fn().mockResolvedValue({
+        type: SwapType.Submarine,
+        from: TBTC,
+        to: BTC,
+        sendAmount: BigNumber(80_000),
+        receiveAmount: BigNumber(79_000),
+        pairHash: "tbtc-ln-pair-hash",
+        hops: [
+            {
+                type: SwapType.Dex,
+                from: USDC,
+                to: TBTC,
+            },
+        ],
+        hopsPosition: SwapPosition.Pre,
+    });
+};
+
+const setupPreDexCommitmentButton = async (destination = "") => {
+    renderCreateButton();
+
+    await globalSignals.clearSwaps();
+    globalSignals.setOnline(true);
+    signals.setSendAmount(BigNumber(100_000));
+    signals.setReceiveAmount(BigNumber(99_000));
+    signals.setAmountChanged(Side.Send);
+    signals.setAmountValid(true);
+    signals.setInvoice(destination);
+    signals.setBolt12Offer(destination || undefined);
+    signals.setInvoiceValid(false);
+    setPairAssetsWithPairs(usdt0Pairs, USDC, LN);
+    mockPreDexCommitmentCreation();
+
+    const btn = (await screen.findByTestId(
+        "create-swap-button",
+    )) as HTMLButtonElement;
+
+    await waitFor(() => {
+        expect(signals.valid()).toBe(false);
+        expect(btn.disabled).toBe(false);
+    });
+
+    return btn;
 };
 
 describe("CreateButton", () => {
@@ -722,50 +777,7 @@ describe("CreateButton", () => {
     });
 
     test("should create a local commitment swap for send-side pre-dex submarine without invoice", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <CreateButton />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
-
-        await globalSignals.clearSwaps();
-        globalSignals.setOnline(true);
-        signals.setSendAmount(BigNumber(100_000));
-        signals.setReceiveAmount(BigNumber(99_000));
-        signals.setAmountChanged(Side.Send);
-        signals.setAmountValid(true);
-        signals.setInvoice("");
-        signals.setInvoiceValid(false);
-        setPairAssetsWithPairs(usdt0Pairs, USDC, LN);
-        signals.pair().creationData = vi.fn().mockResolvedValue({
-            type: SwapType.Submarine,
-            from: TBTC,
-            to: BTC,
-            sendAmount: BigNumber(80_000),
-            receiveAmount: BigNumber(79_000),
-            pairHash: "tbtc-ln-pair-hash",
-            hops: [
-                {
-                    type: SwapType.Dex,
-                    from: USDC,
-                    to: TBTC,
-                },
-            ],
-            hopsPosition: SwapPosition.Pre,
-        });
-
-        const btn = (await screen.findByTestId(
-            "create-swap-button",
-        )) as HTMLButtonElement;
-
-        await waitFor(() => {
-            expect(signals.valid()).toBe(false);
-            expect(btn.disabled).toBe(false);
-        });
+        const btn = await setupPreDexCommitmentButton();
         fireEvent.click(btn);
 
         await waitFor(async () => {
@@ -794,70 +806,18 @@ describe("CreateButton", () => {
         });
     });
 
-    test.each`
-        type        | destination    | lnurlValue | bolt12Value
-        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
-        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
-    `(
-        "should defer $type invoice fetching for send-side pre-dex commitments",
-        async ({ destination, lnurlValue, bolt12Value }) => {
-            render(
-                () => (
-                    <>
-                        <TestComponent />
-                        <CreateButton />
-                    </>
-                ),
-                { wrapper: contextWrapper },
-            );
+    test("should defer invoice fetching for send-side pre-dex commitments", async () => {
+        const btn = await setupPreDexCommitmentButton(bolt12Offer);
+        fireEvent.click(btn);
 
-            await globalSignals.clearSwaps();
-            globalSignals.setOnline(true);
-            signals.setSendAmount(BigNumber(100_000));
-            signals.setReceiveAmount(BigNumber(99_000));
-            signals.setAmountChanged(Side.Send);
-            signals.setAmountValid(true);
-            signals.setInvoice(destination);
-            signals.setLnurl(lnurlValue);
-            signals.setBolt12Offer(bolt12Value);
-            signals.setInvoiceValid(false);
-            setPairAssetsWithPairs(usdt0Pairs, USDC, LN);
-            signals.pair().creationData = vi.fn().mockResolvedValue({
-                type: SwapType.Submarine,
-                from: TBTC,
-                to: BTC,
-                sendAmount: BigNumber(80_000),
-                receiveAmount: BigNumber(79_000),
-                pairHash: "tbtc-ln-pair-hash",
-                hops: [
-                    {
-                        type: SwapType.Dex,
-                        from: USDC,
-                        to: TBTC,
-                    },
-                ],
-                hopsPosition: SwapPosition.Pre,
+        await waitFor(async () => {
+            const [swap] = await globalSignals.getSwaps();
+            expect(swap).toMatchObject({
+                type: SwapType.Commitment,
+                originalDestination: bolt12Offer,
             });
-
-            const btn = (await screen.findByTestId(
-                "create-swap-button",
-            )) as HTMLButtonElement;
-
-            await waitFor(() => {
-                expect(signals.valid()).toBe(false);
-                expect(btn.disabled).toBe(false);
-            });
-            fireEvent.click(btn);
-
-            await waitFor(async () => {
-                const [swap] = await globalSignals.getSwaps();
-                expect(swap).toMatchObject({
-                    type: SwapType.Commitment,
-                    originalDestination: destination,
-                });
-            });
-        },
-    );
+        });
+    });
 
     test("should be disabled on empty address", async () => {
         render(

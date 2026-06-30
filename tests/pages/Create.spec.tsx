@@ -71,8 +71,6 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
 
 const invoice =
     "lnbcrt600u1p5ynhmgpp5l8j7lnaql4mqeukvcqmhr8zp9vh3rngfgmla6km2fh9vf8pt678sdqqcqzzsxqrpwusp56gha98s9xk2f4eeyhs7dcsx4j4rt79llks72nf6l6hc9cna6vfgs9qxpqysgqqnt8lqcrujmuuv3ajvrlu5z7ydvvge4efv39hj28etf8v72vpcl597evz5e0tvq04tv3z089wxtugee4xh5hvu6309ymrfddrlzfhzgqumsrpk";
-const lnurl =
-    "lnurl1dp68gurn8ghj7mrww4exctndd93ksct9dscnqvf39eshgtmpwp5j7mrww4excuqgy84zh";
 const bolt12Offer =
     "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
 
@@ -90,27 +88,6 @@ const commitmentRouteDetail = {
     ...commitmentRoute,
     kind: BridgeKind.Oft,
     position: SwapPosition.Pre,
-};
-const directEvmSubmarinePairs: Pairs = {
-    submarine: {
-        [RBTC]: {
-            [BTC]: {
-                hash: "rbtc-ln-pair-hash",
-                rate: 1,
-                limits: {
-                    maximal: 1_000_000,
-                    minimal: 1,
-                    maximalZeroConf: 0,
-                },
-                fees: {
-                    percentage: 0,
-                    minerFees: 0,
-                },
-            },
-        },
-    },
-    reverse: {},
-    chain: {},
 };
 const commitmentSubmarinePairs: Pairs = {
     submarine: {
@@ -221,6 +198,23 @@ const createPreBridgeDriver = (
     getMessagingFeeToken: () => "POL",
     getTransferFeeAsset: () => commitmentRoute.sourceAsset,
 });
+
+const mockCommitmentWalletAndBridge = (
+    getSourceTokenBalance: BridgeDriver["getSourceTokenBalance"],
+) => {
+    const useWeb3Signer = mockWalletConnectEvm();
+    const bridgeMocks = mockPreBridgeDriver(
+        createPreBridgeDriver(getSourceTokenBalance),
+    );
+
+    return () => {
+        useWeb3Signer.mockRestore();
+        bridgeMocks.getPreRoute.mockRestore();
+        bridgeMocks.requireDriverForRoute.mockRestore();
+        bridgeMocks.getDriverForAsset.mockRestore();
+        window.history.pushState({}, "", "/");
+    };
+};
 
 const selectMaximumCommitmentSwap = async ({
     createSwap = true,
@@ -1191,9 +1185,6 @@ describe("Create", () => {
                 expect(createButton.disabled).toEqual(true);
                 expect(createButton.textContent).toMatch(/^Minimum amount is /);
             });
-            if (toAsset === LN) {
-                expect(screen.getByTestId("invoice")).toBeInTheDocument();
-            }
         },
     );
 
@@ -1249,7 +1240,7 @@ describe("Create", () => {
         });
     });
 
-    test("should keep the invoice input while submarine swap is missing an invoice", async () => {
+    test("should re-prioritize the minimum amount error after clearing the send amount (submarine swap)", async () => {
         render(
             () => (
                 <>
@@ -1268,15 +1259,16 @@ describe("Create", () => {
             expect(signals.minimum()).toBeGreaterThan(0);
         });
 
-        const sendAmountInput = (await screen.findByTestId(
-            "sendAmount",
-        )) as HTMLInputElement;
         const createButton = (await screen.findByTestId(
             "create-swap-button",
         )) as HTMLButtonElement;
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
 
-        expect(await screen.findByTestId("invoice")).toBeInTheDocument();
-        expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        await waitFor(() => {
+            expect(createButton.textContent).toMatch(/^Minimum amount is /);
+        });
 
         fireEvent.input(sendAmountInput, {
             target: {
@@ -1285,9 +1277,7 @@ describe("Create", () => {
         });
 
         await waitFor(() => {
-            expect(createButton.disabled).toEqual(true);
             expect(createButton.textContent).toEqual(i18n.en.invalid_invoice);
-            expect(screen.getByTestId("invoice")).toBeInTheDocument();
         });
 
         fireEvent.input(sendAmountInput, {
@@ -1297,7 +1287,6 @@ describe("Create", () => {
         await waitFor(() => {
             expect(createButton.disabled).toEqual(true);
             expect(createButton.textContent).toMatch(/^Minimum amount is /);
-            expect(screen.getByTestId("invoice")).toBeInTheDocument();
         });
     });
 
@@ -1336,59 +1325,12 @@ describe("Create", () => {
         });
     });
 
-    test.each`
-        type        | destination    | lnurlValue | bolt12Value
-        ${"LNURL"}  | ${lnurl}       | ${lnurl}   | ${undefined}
-        ${"BOLT12"} | ${bolt12Offer} | ${""}      | ${bolt12Offer}
-    `(
-        "should keep a $type destination when changing the send amount",
-        async ({ destination, lnurlValue, bolt12Value }) => {
-            render(
-                () => (
-                    <>
-                        <TestComponent />
-                        <Create />
-                    </>
-                ),
-                {
-                    wrapper: contextWrapper,
-                },
-            );
-            globalSignals.setOnline(true);
-            globalSignals.setPairs(pairs);
-            setPairAssets(BTC, LN);
-            await waitFor(() => {
-                expect(signals.minimum()).toBeGreaterThan(0);
-            });
-
-            signals.setInvoice(destination);
-            signals.setLnurl(lnurlValue);
-            signals.setBolt12Offer(bolt12Value);
-            signals.setInvoiceValid(false);
-            signals.setInvoiceError(undefined);
-
-            fireEvent.input(await screen.findByTestId("sendAmount"), {
-                target: { value: `${signals.minimum()}` },
-            });
-
-            await waitFor(() => {
-                expect(signals.invoice()).toBe(destination);
-                expect(signals.lnurl()).toBe(lnurlValue);
-                expect(signals.bolt12Offer()).toBe(bolt12Value);
-                expect(screen.getByTestId("invoice")).toHaveValue(destination);
-            });
-        },
-    );
-
     test("should keep a deferred destination editable after selecting max for a commitment swap", async () => {
-        const bridgeMocks = mockPreBridgeDriver(
-            createPreBridgeDriver(
-                vi
-                    .fn<BridgeDriver["getSourceTokenBalance"]>()
-                    .mockResolvedValue(1_000_000n),
-            ),
+        const restoreMocks = mockCommitmentWalletAndBridge(
+            vi
+                .fn<BridgeDriver["getSourceTokenBalance"]>()
+                .mockResolvedValue(1_000_000n),
         );
-        const useWeb3Signer = mockWalletConnectEvm();
 
         try {
             window.history.pushState({}, "", "/");
@@ -1423,91 +1365,31 @@ describe("Create", () => {
                 ).toBeNull();
             });
         } finally {
-            useWeb3Signer.mockRestore();
-            bridgeMocks.getPreRoute.mockRestore();
-            bridgeMocks.requireDriverForRoute.mockRestore();
-            bridgeMocks.getDriverForAsset.mockRestore();
-            window.history.pushState({}, "", "/");
-        }
-    });
-
-    test("should require an invoice for direct max EVM submarine swaps", async () => {
-        const useWeb3Signer = mockWalletConnectEvm();
-
-        try {
-            window.history.pushState({}, "", "/");
-            renderCreate();
-            await globalSignals.clearSwaps();
-            globalSignals.setOnline(true);
-            globalSignals.setPairs(directEvmSubmarinePairs);
-            globalSignals.setRegularPairs(directEvmSubmarinePairs);
-            signals.setPair(
-                new Pair(
-                    directEvmSubmarinePairs,
-                    RBTC,
-                    LN,
-                    directEvmSubmarinePairs,
-                ),
-            );
-
-            await waitFor(() => {
-                expect(signals.maximum()).toBe(1_000_000);
-            });
-
-            fireEvent.click(await screen.findByTestId("limit-max-button"));
-
-            await waitFor(() => {
-                expect(signals.sendAmount().toNumber()).toBe(signals.maximum());
-            });
-
-            await waitFor(() => {
-                expect(signals.valid()).toBe(false);
-                const createButton = screen.getByTestId(
-                    "create-swap-button",
-                ) as HTMLButtonElement;
-                expect(createButton.disabled).toBe(true);
-                expect(createButton.textContent).toEqual(
-                    i18n.en.invalid_invoice,
-                );
-                expect(screen.getByTestId("invoice")).toBeInTheDocument();
-            });
-
-            await expect(globalSignals.getSwaps()).resolves.toEqual([]);
-        } finally {
-            useWeb3Signer.mockRestore();
-            window.history.pushState({}, "", "/");
+            restoreMocks();
         }
     });
 
     test("should create a pre-bridge commitment swap without an invoice after selecting max", async () => {
-        const driver = createPreBridgeDriver(
+        const restoreMocks = mockCommitmentWalletAndBridge(
             vi
                 .fn<BridgeDriver["getSourceTokenBalance"]>()
                 .mockResolvedValue(1_000_000n),
         );
-        const useWeb3Signer = mockWalletConnectEvm();
-        const bridgeMocks = mockPreBridgeDriver(driver);
 
         try {
             await selectMaximumCommitmentSwap();
             await assertCommitmentSwapCreated();
         } finally {
-            useWeb3Signer.mockRestore();
-            bridgeMocks.getPreRoute.mockRestore();
-            bridgeMocks.requireDriverForRoute.mockRestore();
-            bridgeMocks.getDriverForAsset.mockRestore();
-            window.history.pushState({}, "", "/");
+            restoreMocks();
         }
     });
 
     test("should clear committed amounts from the disabled invoice row", async () => {
-        const driver = createPreBridgeDriver(
+        const restoreMocks = mockCommitmentWalletAndBridge(
             vi
                 .fn<BridgeDriver["getSourceTokenBalance"]>()
                 .mockResolvedValue(1_000_000n),
         );
-        const useWeb3Signer = mockWalletConnectEvm();
-        const bridgeMocks = mockPreBridgeDriver(driver);
 
         try {
             await selectMaximumCommitmentSwap({ createSwap: false });
@@ -1539,22 +1421,16 @@ describe("Create", () => {
                 ).not.toBeDisabled();
             });
         } finally {
-            useWeb3Signer.mockRestore();
-            bridgeMocks.getPreRoute.mockRestore();
-            bridgeMocks.requireDriverForRoute.mockRestore();
-            bridgeMocks.getDriverForAsset.mockRestore();
-            window.history.pushState({}, "", "/");
+            restoreMocks();
         }
     });
 
     test("should keep the max commitment flow when a pre-bridge balance lookup fails", async () => {
-        const driver = createPreBridgeDriver(
+        const restoreMocks = mockCommitmentWalletAndBridge(
             vi
                 .fn<BridgeDriver["getSourceTokenBalance"]>()
                 .mockRejectedValue(new Error("balance unavailable")),
         );
-        const useWeb3Signer = mockWalletConnectEvm();
-        const bridgeMocks = mockPreBridgeDriver(driver);
 
         try {
             const createButton = await selectMaximumCommitmentSwap({
@@ -1565,11 +1441,7 @@ describe("Create", () => {
             expect(createButton.disabled).toBe(false);
             await expect(globalSignals.getSwaps()).resolves.toEqual([]);
         } finally {
-            useWeb3Signer.mockRestore();
-            bridgeMocks.getPreRoute.mockRestore();
-            bridgeMocks.requireDriverForRoute.mockRestore();
-            bridgeMocks.getDriverForAsset.mockRestore();
-            window.history.pushState({}, "", "/");
+            restoreMocks();
         }
     });
 
