@@ -115,6 +115,11 @@ vi.mock("boltz-swaps/bridge", () => ({
     },
 }));
 
+vi.mock("../../src/components/BlockExplorer", () => ({
+    default: () => <a data-testid="block-explorer">explorer</a>,
+    BlockExplorerTargetKind: { Tx: "tx" },
+}));
+
 const { default: PreBridgeDexQuoteBlocked } =
     await import("../../src/status/PreBridgeDexQuoteBlocked");
 
@@ -233,5 +238,50 @@ describe("PreBridgeDexQuoteBlocked", () => {
                 }),
             );
         });
+    });
+
+    test("renders the blocked state with retry and refund actions", async () => {
+        render(() => <PreBridgeDexQuoteBlocked />);
+
+        expect(
+            await screen.findByText("pre_bridge_dex_quote_blocked"),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText("pre_bridge_dex_quote_blocked_line"),
+        ).toBeInTheDocument();
+        expect(screen.getByText("retry_quote")).toBeInTheDocument();
+        expect(screen.getByTestId("recover-button")).toBeInTheDocument();
+        expect(screen.queryByText("retrying_quote")).toBeNull();
+    });
+
+    test("renders the retrying state without action buttons", async () => {
+        const retrying = makeSwap();
+        retrying.bridge!.recovery!.status = PreBridgeRecoveryStatus.Retrying;
+        setSwapSignal(retrying);
+
+        render(() => <PreBridgeDexQuoteBlocked />);
+
+        expect(await screen.findByText("retrying_quote")).toBeInTheDocument();
+        expect(
+            screen.getByText("pre_bridge_dex_quote_blocked"),
+        ).toBeInTheDocument();
+        expect(screen.queryByText("retry_quote")).toBeNull();
+        expect(screen.queryByTestId("recover-button")).toBeNull();
+    });
+
+    test("renders the recovered state with the refund-initiated message", async () => {
+        const recovered = makeSwap();
+        recovered.bridge!.recovery!.status = PreBridgeRecoveryStatus.Recovered;
+        recovered.bridge!.recovery!.txHash = "0xrecovery";
+        setSwapSignal(recovered);
+
+        render(() => <PreBridgeDexQuoteBlocked />);
+
+        expect(
+            await screen.findByText("pre_bridge_refund_initiated"),
+        ).toBeInTheDocument();
+        expect(screen.getByText("new_swap")).toBeInTheDocument();
+        expect(screen.getByTestId("block-explorer")).toBeInTheDocument();
+        expect(screen.queryByText("pre_bridge_dex_quote_blocked")).toBeNull();
     });
 });

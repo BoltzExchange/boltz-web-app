@@ -130,6 +130,7 @@ jobs:
                   ETHEREUM_E2E_RPC_URL: ${{ vars.ETHEREUM_E2E_RPC_URL }}
                   CI: true
                   VITE_RSK_LOG_SCAN_ENDPOINT: "http://localhost:8545"
+                  VITE_ARBITRUM_LOG_SCAN_ENDPOINT: "http://localhost:18545"
               run:
                   bun run test:e2e -- --shard=${{ matrix.shardIndex }}/${{
                   matrix.shardTotal }}
