@@ -1350,7 +1350,7 @@ const dict = {
         waiting_for_bridge: "Esperando el puente {{ symbol }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         commitment_rejected_line:
-            "El monto bloqueado se quedó corto, por lo que este intercambio no se puede completar. Puedes reembolsar tus fondos a tu dirección original.",
+            "El monto enviado se quedó corto, por lo que este intercambio no se puede completar. Puedes reembolsar tus fondos a tu dirección original.",
         pre_bridge_dex_quote_blocked: "La cotización ha cambiado",
         pre_bridge_dex_quote_blocked_line:
             "Los precios cambiaron mientras tus fondos se transferían por el puente, por lo que la cotización ya no es suficiente para completar el swap. Inténtalo de nuevo o reembolsa tus fondos.",
@@ -1903,7 +1903,7 @@ const dict = {
         waiting_for_bridge: "Aguardando a ponte {{ symbol }}",
         dex_quote_changed: "A cotação da DEX mudou",
         commitment_rejected_line:
-            "O valor bloqueado ficou aquém, portanto este swap não pode ser concluído. Você pode reembolsar seus fundos para o seu endereço original.",
+            "O valor enviado ficou insuficiente, portanto esta troca não pode ser concluída. Você pode reembolsar seus fundos para o seu endereço original.",
         pre_bridge_dex_quote_blocked: "A cotação mudou",
         pre_bridge_dex_quote_blocked_line:
             "Os preços mudaram enquanto seus fundos eram transferidos pela ponte, então a cotação não é mais suficiente para completar o swap. Tente novamente ou reembolse seus fundos.",
