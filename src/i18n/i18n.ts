@@ -238,6 +238,8 @@ const dict = {
         oft_transfer_in_progress: "Transfer in progress",
         waiting_for_bridge: "Waiting for {{ symbol }} bridge",
         dex_quote_changed: "DEX quote has changed",
+        commitment_rejected_line:
+            "The locked amount came up short, so this swap can't be completed. You can refund your funds back to your original address.",
         pre_bridge_dex_quote_blocked: "Quote has changed",
         pre_bridge_dex_quote_blocked_line:
             "Prices changed while your funds were bridging, so the quote is no longer enough to complete the swap. Please try again or refund your funds.",
@@ -783,6 +785,8 @@ const dict = {
         oft_transfer_in_progress: "Übertragung läuft",
         waiting_for_bridge: "Warte auf {{ symbol }}-Bridge",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
+        commitment_rejected_line:
+            "Der Betrag war zu gering, daher kann dieser Swap nicht abgeschlossen werden. Du kannst deine Gelder an deine ursprüngliche Adresse zurückerstatten.",
         pre_bridge_dex_quote_blocked: "Der Kurs hat sich geändert",
         pre_bridge_dex_quote_blocked_line:
             "Die Preise haben sich während der Bridge-Übertragung geändert, daher reicht der Kurs nicht mehr aus, um den Swap abzuschließen. Bitte versuche es erneut oder lass dir dein Guthaben erstatten.",
@@ -1339,6 +1343,8 @@ const dict = {
         oft_transfer_in_progress: "Transferencia en curso",
         waiting_for_bridge: "Esperando el puente {{ symbol }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
+        commitment_rejected_line:
+            "El monto enviado se quedó corto, por lo que este intercambio no se puede completar. Puedes reembolsar tus fondos a tu dirección original.",
         pre_bridge_dex_quote_blocked: "La cotización ha cambiado",
         pre_bridge_dex_quote_blocked_line:
             "Los precios cambiaron mientras tus fondos se transferían por el puente, por lo que la cotización ya no es suficiente para completar el swap. Inténtalo de nuevo o reembolsa tus fondos.",
@@ -1888,6 +1894,8 @@ const dict = {
         oft_transfer_in_progress: "Transferência em andamento",
         waiting_for_bridge: "Aguardando a ponte {{ symbol }}",
         dex_quote_changed: "A cotação da DEX mudou",
+        commitment_rejected_line:
+            "O valor enviado ficou insuficiente, portanto esta troca não pode ser concluída. Você pode reembolsar seus fundos para o seu endereço original.",
         pre_bridge_dex_quote_blocked: "A cotação mudou",
         pre_bridge_dex_quote_blocked_line:
             "Os preços mudaram enquanto seus fundos eram transferidos pela ponte, então a cotação não é mais suficiente para completar o swap. Tente novamente ou reembolse seus fundos.",
@@ -2412,6 +2420,8 @@ const dict = {
         oft_transfer_in_progress: "转账进行中",
         waiting_for_bridge: "等待 {{ symbol }} 桥接",
         dex_quote_changed: "DEX 报价已变更",
+        commitment_rejected_line:
+            "锁定的金额不足，因此无法完成此次兑换。您可以将资金退款到您的原始地址。",
         pre_bridge_dex_quote_blocked: "报价已变更",
         pre_bridge_dex_quote_blocked_line:
             "您的资金在桥接期间价格发生了变动，因此报价已不足以完成兑换。请重试，或退还您的资金。",
@@ -2929,6 +2939,8 @@ const dict = {
         oft_transfer_in_progress: "転送中",
         waiting_for_bridge: "{{ symbol }}ブリッジを待機中",
         dex_quote_changed: "DEXのクオートが変更されました",
+        commitment_rejected_line:
+            "ロックされた金額が不足しているため、このスワップを完了できません。資金を元のアドレスに返金できます。",
         pre_bridge_dex_quote_blocked: "見積もりが変更されました",
         pre_bridge_dex_quote_blocked_line:
             "ブリッジ中に価格が変動したため、見積もりではスワップを完了できなくなりました。もう一度お試しいただくか、資金を返金してください。",

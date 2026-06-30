@@ -580,6 +580,48 @@ describe("SwapExecutionWorker", () => {
         });
     });
 
+    test("should flag the swap for refund and stop retrying when the commitment is rejected for insufficient amount", async () => {
+        mockPostCommitmentSignatureForTransaction
+            .mockReset()
+            .mockRejectedValue("insufficient amount: 49 < 50");
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(currentSwap.commitmentRejection).toEqual({
+                reason: "insufficient amount: 49 < 50",
+            });
+        });
+
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+        expect(mockPostCommitmentSignatureForTransaction).toHaveBeenCalledTimes(
+            1,
+        );
+        expect(currentSwap.commitmentSignatureSubmitted).toBe(false);
+    });
+
+    test("should still retry the commitment post on a transient error", async () => {
+        vi.useFakeTimers();
+        try {
+            mockPostCommitmentSignatureForTransaction
+                .mockReset()
+                .mockRejectedValueOnce("network error")
+                .mockResolvedValue(undefined);
+
+            render(() => <SwapExecutionWorker />);
+
+            await vi.runAllTimersAsync();
+
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalledTimes(2);
+            expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+            expect(currentSwap.commitmentRejection).toBeUndefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("should persist a blocked pre-bridge state when DEX quote stays below the lockup amount", async () => {
         vi.useFakeTimers();
         try {
