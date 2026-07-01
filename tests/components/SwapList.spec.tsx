@@ -82,7 +82,7 @@ describe("SwapList", () => {
 
     it("should keep local commitment links pointed at the full swap id", () => {
         const swap = {
-            id: "commitment-12345678-1234-1234-1234-123456789abc",
+            id: "12345678-1234-1234-1234-123456789abc",
             type: SwapType.Commitment,
             date: new Date().getTime(),
             assetSend: BTC,

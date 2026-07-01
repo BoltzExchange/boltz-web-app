@@ -6,7 +6,6 @@ import { Dynamic } from "solid-js/web";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import { formatSwapId } from "../utils/helper";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { desktopItemsPerPage, mobileItemsPerPage } from "./Pagination";
@@ -119,7 +118,7 @@ const SwapListItem = (props: {
             <span class="swaplist-asset-id">
                 {t("id")}:&nbsp;
                 <Show when={!privacyMode()} fallback={hiddenInformation}>
-                    <span class="monospace">{formatSwapId(props.swap)}</span>
+                    <span class="monospace">{props.swap.id}</span>
                 </Show>
             </span>
             <span
