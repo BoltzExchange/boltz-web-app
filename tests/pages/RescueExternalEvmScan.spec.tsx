@@ -14,18 +14,23 @@ import { TBTC, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import type * as RescueUtils from "../../src/utils/rescue";
-import { encryptSwapMetadata } from "../../src/utils/swapMetadata";
+import {
+    appendCommitmentMatchMarker,
+    encryptSwapMetadata,
+} from "../../src/utils/swapMetadata";
 import { TestComponent, contextWrapper } from "../helper";
 
 const {
     mockCreateRescueList,
     mockGetErc20Swap,
+    mockGetTransaction,
     mockGetSweepableGasAbstractionBalances,
     mockPreimageHashesWorker,
     mockScanLockupEvents,
 } = vi.hoisted(() => ({
     mockCreateRescueList: vi.fn(),
     mockGetErc20Swap: vi.fn(() => ({})),
+    mockGetTransaction: vi.fn(() => Promise.resolve({ input: "0x" })),
     mockGetSweepableGasAbstractionBalances: vi.fn(),
     mockPreimageHashesWorker: vi.fn(function PreimageHashesWorker() {
         return {
@@ -69,7 +74,7 @@ vi.mock("boltz-swaps/evm", () => ({
     assetAmountToSats: (amount: bigint, asset?: string) =>
         asset === "TBTC" ? amount / 10n ** 10n : amount,
     createAssetProvider: vi.fn(() => ({})),
-    createProvider: vi.fn(() => ({})),
+    createProvider: vi.fn(() => ({ getTransaction: mockGetTransaction })),
     getTimelockBlockNumber: vi.fn(() => Promise.resolve(0)),
     isEmptyPreimageHash: (preimageHash: string | undefined) =>
         preimageHash?.replace(/^0x/i, "").toLowerCase() === "00".repeat(32),
@@ -141,6 +146,7 @@ describe("RescueExternal EVM scan", () => {
                     swaps.map((swap) => ({ ...swap, action: "pending" })),
                 ),
         );
+        mockGetTransaction.mockResolvedValue({ input: "0x" });
         mockGetSweepableGasAbstractionBalances.mockResolvedValue([]);
     });
 
@@ -491,7 +497,7 @@ describe("RescueExternal EVM scan", () => {
         expect(assets[1]).toHaveAttribute("data-network", "solana");
     });
 
-    test("renders restored EVM commitment refund metadata as original swap assets with matched amount", async () => {
+    test("keeps zero-preimage EVM refund rows separate from restored routed metadata", async () => {
         const user = userEvent.setup();
         const mnemonic =
             "awake father sword slab matrix myth cargo lock river thumb inspire speed";
@@ -568,7 +574,7 @@ describe("RescueExternal EVM scan", () => {
                               blockNumber: 100,
                               transactionHash,
                               preimageHash: `0x${"00".repeat(32)}`,
-                              amount: 134_030_488_189_299n,
+                              amount: 99_039_478_307_028n,
                               claimAddress:
                                   "0x0000000000000000000000000000000000000001",
                               refundAddress:
@@ -620,11 +626,128 @@ describe("RescueExternal EVM scan", () => {
                 `swaplist-item-evm:${RskRescueMode.Refund}:${TBTC}:${transactionHash}`,
             );
             const assets = currentRow.querySelectorAll(".asset");
-            expect(assets).toHaveLength(2);
-            expect(assets[0]).toHaveAttribute("data-asset", "USDT");
-            expect(assets[0]).toHaveAttribute("data-network", "solana");
-            expect(assets[1]).toHaveAttribute("data-asset", "LBTC");
+            expect(assets).toHaveLength(1);
+            expect(assets[0]).toHaveAttribute("data-asset", "TBTC");
         });
+    });
+
+    test("matches zero-preimage EVM refund rows by commitment marker metadata", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const transactionHash =
+            "0xe9559cd624e5cc64bae9093a524191bd6f5c5d2d4163a54d4ee7ea13ff4fb283";
+        const commitmentMatch = {
+            version: 1 as const,
+            id: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        };
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+        mockGetTransaction.mockResolvedValue({
+            input: appendCommitmentMatchMarker("0xabcdef", commitmentMatch.id),
+        });
+
+        const restoredSwap: RestorableSwap = {
+            id: "p5BsvXMbpxGX",
+            type: SwapType.Chain,
+            status: "swap.created",
+            createdAt: 1782925180,
+            from: TBTC,
+            to: "L-BTC",
+            preimageHash:
+                "ccbe6b214f2efc84dc30b0c21a594ad82a810a90b0b6f3c9ee9bb0d254676e6c",
+            metadata: await encryptSwapMetadata(mnemonic, {
+                hops: [
+                    {
+                        type: SwapType.Dex,
+                        from: "USDT0",
+                        to: TBTC,
+                        dexDetails: {
+                            chain: "ARB",
+                            tokenIn:
+                                "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+                            tokenOut:
+                                "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                        },
+                    },
+                ],
+                position: SwapPosition.Pre,
+                quoteAmount: 1_000,
+                bridge: {
+                    sourceAsset: "USDT0-SOL",
+                    destinationAsset: "USDT0",
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Pre,
+                    refundAddress: "source-wallet",
+                },
+                commitmentMatch,
+            }),
+        };
+        mockGetRestorableSwaps.mockResolvedValueOnce([restoredSwap]);
+        mockScanLockupEvents.mockImplementation(async function* (
+            ...args: unknown[]
+        ) {
+            await Promise.resolve();
+            const config = args[2] as {
+                action?: RskRescueMode;
+                asset?: string;
+            };
+            yield {
+                derivedKeys: undefined,
+                events:
+                    config.action === RskRescueMode.Refund &&
+                    config.asset === TBTC
+                        ? [
+                              {
+                                  asset: TBTC,
+                                  blockNumber: 100,
+                                  transactionHash,
+                                  preimageHash: `0x${"00".repeat(32)}`,
+                                  amount: 99_039_478_307_028n,
+                                  claimAddress:
+                                      "0x0000000000000000000000000000000000000001",
+                                  refundAddress:
+                                      "0x0000000000000000000000000000000000000002",
+                                  timelock: 123n,
+                              },
+                          ]
+                        : [],
+                progress: 1,
+                unmatchedSwaps: 0,
+            };
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        const row = await screen.findByTestId(
+            `swaplist-item-evm:${RskRescueMode.Refund}:${TBTC}:${transactionHash}`,
+        );
+        const assets = row.querySelectorAll(".asset");
+
+        expect(row).toHaveTextContent(i18n.en.refund);
+        expect(assets).toHaveLength(2);
+        expect(assets[0]).toHaveAttribute("data-asset", "USDT");
+        expect(assets[0]).toHaveAttribute("data-network", "solana");
+        expect(assets[1]).toHaveAttribute("data-asset", "LBTC");
     });
 
     test("scans WBTC and TBTC on Arbitrum", async () => {

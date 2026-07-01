@@ -51,6 +51,7 @@ import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
+import { appendCommitmentMatchMarker } from "../utils/swapMetadata";
 import {
     type BridgeDetail,
     GasAbstractionType,
@@ -259,7 +260,9 @@ const lockupWithHops = async (
         throw new Error("missing transaction signer for lockup");
     }
 
-    const lockup = async () => {
+    const storedSwap = await getSwap(swapId);
+
+    const lockup = async (commitmentMatchId: string | undefined) => {
         if (hops.length !== 1) {
             throw new Error("only one hop is supported for now");
         }
@@ -348,28 +351,31 @@ const lockupWithHops = async (
 
         const tx = {
             to: router.address,
-            data: encodeFunctionData({
-                abi: routerAbi,
-                functionName: "executeAndLockERC20WithPermit2",
-                args: [
-                    prefix0x(commitmentPreimageHash),
-                    tokenAddress,
-                    getAddress(commitmentLockupDetails.claimAddress),
-                    refundAddress,
-                    BigInt(commitmentLockupDetails.timelock),
-                    calls,
-                    {
-                        permitted: {
-                            token: getAddress(hop.dexDetails.tokenIn),
-                            amount: amountIn,
+            data: appendCommitmentMatchMarker(
+                encodeFunctionData({
+                    abi: routerAbi,
+                    functionName: "executeAndLockERC20WithPermit2",
+                    args: [
+                        prefix0x(commitmentPreimageHash),
+                        tokenAddress,
+                        getAddress(commitmentLockupDetails.claimAddress),
+                        refundAddress,
+                        BigInt(commitmentLockupDetails.timelock),
+                        calls,
+                        {
+                            permitted: {
+                                token: getAddress(hop.dexDetails.tokenIn),
+                                amount: amountIn,
+                            },
+                            nonce,
+                            deadline,
                         },
-                        nonce,
-                        deadline,
-                    },
-                    ownerAddress,
-                    permit2Signature,
-                ],
-            }),
+                        ownerAddress,
+                        permit2Signature,
+                    ],
+                }),
+                commitmentMatchId,
+            ),
         };
 
         log.info("Broadcasting commitment lockup with hops", {
@@ -405,10 +411,10 @@ const lockupWithHops = async (
         return transactionHash;
     };
 
-    let commitmentTxHash: string | undefined = (await getSwap(swapId))
-        ?.commitmentLockupTxHash;
+    let commitmentTxHash: string | undefined =
+        storedSwap?.commitmentLockupTxHash;
     if (commitmentTxHash === undefined) {
-        commitmentTxHash = await lockup();
+        commitmentTxHash = await lockup(storedSwap?.commitmentMatch?.id);
     } else {
         log.debug("Reusing existing commitment lockup tx hash", {
             swapId,

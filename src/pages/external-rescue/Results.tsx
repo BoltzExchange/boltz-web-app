@@ -40,9 +40,15 @@ export const getEvmFinalAsset = (swap: EvmRescueResult) => {
 };
 
 export const getEvmDisplayAssets = (swap: EvmRescueResult) => {
+    const bridge = swap.bridge ?? swap.restoredSwap?.bridge;
+    const dex = swap.dex ?? swap.restoredSwap?.dex;
+    const shouldUseDex =
+        swap.restoredSwap !== undefined ||
+        swap.action !== RskRescueMode.Refund ||
+        bridge !== undefined;
     const base = {
-        bridge: swap.bridge ?? swap.restoredSwap?.bridge,
-        dex: swap.dex ?? swap.restoredSwap?.dex,
+        bridge,
+        dex: shouldUseDex ? dex : undefined,
         assetSend: swap.restoredSwap?.from ?? swap.asset,
         assetReceive: swap.restoredSwap?.to ?? swap.asset,
     } as SwapBase;

@@ -221,6 +221,21 @@ describe("external EVM rescue scan helpers", () => {
         expect(getEvmDisplayAssets(refund)).toEqual(["USDT0-SOL"]);
     });
 
+    test("does not infer source asset from unmatched pre-dex refund rows", () => {
+        const refund = {
+            ...baseEvent,
+            action: RskRescueMode.Refund,
+            dex: {
+                hops: [{ type: SwapType.Dex, from: "USDT0", to: "TBTC" }],
+                position: SwapPosition.Pre,
+                quoteAmount: 1000,
+            },
+        };
+
+        expect(getEvmFinalAsset(refund)).toBe("TBTC");
+        expect(getEvmDisplayAssets(refund)).toEqual(["TBTC"]);
+    });
+
     test("does not infer source metadata for unmatched routed pre-bridge refund rows", () => {
         const preRoutedSwap: RestoredEvmSwap = {
             ...restoredSwap,
@@ -276,6 +291,56 @@ describe("external EVM rescue scan helpers", () => {
         expect(getEvmDisplayAssets(enriched)).toEqual(["TBTC"]);
     });
 
+    test("enriches zero-preimage refund rows by commitment match id", () => {
+        const commitmentMatch = {
+            version: 1 as const,
+            id: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        };
+        const preRoutedSwap: RestoredEvmSwap = {
+            ...restoredSwap,
+            id: "p5BsvXMbpxGX",
+            from: "TBTC",
+            to: "L-BTC",
+            preimageHash:
+                "ccbe6b214f2efc84dc30b0c21a594ad82a810a90b0b6f3c9ee9bb0d254676e6c",
+            commitmentMatch,
+            dex: {
+                hops: [{ type: SwapType.Dex, from: "USDT0", to: "TBTC" }],
+                position: SwapPosition.Pre,
+                quoteAmount: 1000,
+            },
+            bridge: {
+                sourceAsset: "USDT0-SOL",
+                destinationAsset: "USDT0",
+                kind: BridgeKind.Oft,
+                position: SwapPosition.Pre,
+                refundAddress: "source-wallet",
+            },
+        };
+        const [enriched] = enrichEvmRescueResults(
+            [
+                {
+                    ...baseEvent,
+                    action: RskRescueMode.Refund,
+                    asset: "TBTC",
+                    transactionHash:
+                        "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+                    preimageHash: `0x${"00".repeat(32)}`,
+                    commitmentMatchId: commitmentMatch.id,
+                },
+            ],
+            [preRoutedSwap],
+        );
+
+        expect(enriched.restoredSwap?.id).toBe("p5BsvXMbpxGX");
+        expect(enriched.bridge?.sourceAsset).toBe("USDT0-SOL");
+        expect(enriched.bridge?.refundAddress).toBe("source-wallet");
+        expect(getEvmDisplayAssets(enriched)).toEqual([
+            "USDT0-SOL",
+            "L-BTC",
+        ]);
+    });
+
     test("uses restored swap endpoints for pre-bridge refund rows", () => {
         expect(
             getEvmDisplayAssets({
@@ -308,7 +373,7 @@ describe("external EVM rescue scan helpers", () => {
         ).toEqual(["USDT0-SOL", "L-BTC"]);
     });
 
-    test("uses decrypted metadata source asset for the QzNPe7rckJCp commitment refund row with matched amount", async () => {
+    test("does not attach QzNPe7rckJCp metadata to a zero-preimage refund row by amount", async () => {
         const [restored] = await mapRestoredEvmSwaps(
             [
                 {
@@ -356,7 +421,7 @@ describe("external EVM rescue scan helpers", () => {
                     transactionHash:
                         "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
                     preimageHash: `0x${"00".repeat(32)}`,
-                    amount: 134_030_488_189_299n,
+                    amount: 99_039_478_307_028n,
                 },
             ],
             [restored],
@@ -367,8 +432,9 @@ describe("external EVM rescue scan helpers", () => {
             from: "USDT0",
             to: "TBTC",
         });
-        expect(enriched.restoredSwap?.id).toBe("QzNPe7rckJCp");
-        expect(getEvmDisplayAssets(enriched)).toEqual(["USDT0-SOL", "L-BTC"]);
+        expect(enriched.restoredSwap).toBeUndefined();
+        expect(enriched.bridge).toBeUndefined();
+        expect(getEvmDisplayAssets(enriched)).toEqual(["TBTC"]);
     });
 
     test("hides the QzNPe7rckJCp generic restore row when the EVM refund row exists", () => {

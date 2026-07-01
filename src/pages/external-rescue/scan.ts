@@ -1,10 +1,6 @@
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
-import {
-    type SwapContract,
-    assetAmountToSats,
-    isEmptyPreimageHash,
-} from "boltz-swaps/evm";
-import { RskRescueMode, SwapPosition } from "boltz-swaps/types";
+import { type SwapContract, isEmptyPreimageHash } from "boltz-swaps/evm";
+import { RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 
 import { config } from "../../config";
@@ -17,6 +13,7 @@ import type { SomeSwap } from "../../utils/swapCreator";
 import {
     type SwapMetadataLocalFields,
     hydrateRestorableSwapsMetadata,
+    normalizeCommitmentMatchId,
 } from "../../utils/swapMetadata";
 import { mapSwap } from "../RefundRescue";
 import {
@@ -46,139 +43,19 @@ export const arbitrumRescueAssets = [TBTC, WBTC] as const;
 export const normalizeEvmId = (value: string | undefined): string =>
     value?.toLowerCase().replace(/^0x/, "") ?? "";
 
-const routedPreRefundAmountToleranceBps = 50n;
-const routedPreRefundBasisPoints = 10_000n;
-const routedPreRefundMinimumTolerance = 1n;
-
 const hasUsablePreimageHash = (value: string | undefined) =>
     normalizeEvmId(value) !== "" && !isEmptyPreimageHash(value);
 
-const getPreRouteLockupAsset = (swap: RestoredEvmSwap) => {
-    if (swap.dex?.position === SwapPosition.Pre && swap.dex.hops.length > 0) {
-        return swap.dex.hops[swap.dex.hops.length - 1].to;
-    }
+type RestoredEvmMatchReason =
+    | "evm-claim-transaction"
+    | "refund-transaction"
+    | "commitment-match-id"
+    | "preimage-hash"
+    | "claim-address";
 
-    if (swap.bridge?.position === SwapPosition.Pre) {
-        return swap.bridge.destinationAsset;
-    }
-
-    return undefined;
-};
-
-const amountDifference = (left: bigint, right: bigint) =>
-    left > right ? left - right : right - left;
-
-const isWithinRoutedPreRefundTolerance = (
-    possibleAmount: bigint,
-    restoredAmount: bigint,
-) => {
-    const referenceAmount =
-        restoredAmount > 0n ? restoredAmount : possibleAmount;
-    const percentageTolerance =
-        (referenceAmount * routedPreRefundAmountToleranceBps) /
-        routedPreRefundBasisPoints;
-    const tolerance =
-        percentageTolerance > routedPreRefundMinimumTolerance
-            ? percentageTolerance
-            : routedPreRefundMinimumTolerance;
-
-    return amountDifference(possibleAmount, restoredAmount) <= tolerance;
-};
-
-const routedPreRefundAmountMatchScore = (
-    swap: EvmRescueResult,
-    restored: RestoredEvmSwap,
-) => {
-    const possibleAmounts = new Set<bigint>([swap.amount]);
-    const restoredAmounts = new Set<bigint>();
-
-    const addRestoredAmount = (amount: number | string | undefined) => {
-        if (amount === undefined) {
-            return;
-        }
-
-        try {
-            restoredAmounts.add(BigInt(amount));
-        } catch {
-            // Ignore malformed amount candidates from older restore payloads.
-        }
-    };
-
-    try {
-        possibleAmounts.add(assetAmountToSats(swap.amount, swap.asset));
-    } catch {
-        // noop
-    }
-
-    addRestoredAmount(restored.claimDetails?.amount);
-    addRestoredAmount(restored.refundDetails?.amount);
-    addRestoredAmount(restored.evmClaimDetails?.amount);
-
-    if (restored.dex?.position === SwapPosition.Pre) {
-        addRestoredAmount(restored.dex.quoteAmount);
-    }
-
-    for (const restoredAmount of restoredAmounts) {
-        if (possibleAmounts.has(restoredAmount)) {
-            return 0;
-        }
-    }
-
-    for (const possibleAmount of possibleAmounts) {
-        for (const restoredAmount of restoredAmounts) {
-            if (
-                isWithinRoutedPreRefundTolerance(possibleAmount, restoredAmount)
-            ) {
-                return 1;
-            }
-        }
-    }
-
-    return undefined;
-};
-
-const getRoutedPreRefundMatch = (
-    swap: EvmRescueResult,
-    restoredSwaps: RestoredEvmSwap[],
-) => {
-    if (
-        swap.action !== RskRescueMode.Refund ||
-        !isEmptyPreimageHash(swap.preimageHash)
-    ) {
-        return undefined;
-    }
-
-    const matches = restoredSwaps
-        .map((restored) => {
-            if (
-                restored.from !== swap.asset ||
-                getPreRouteLockupAsset(restored) !== swap.asset
-            ) {
-                return undefined;
-            }
-
-            const score = routedPreRefundAmountMatchScore(swap, restored);
-            return score === undefined ? undefined : { restored, score };
-        })
-        .filter(
-            (
-                match,
-            ): match is {
-                restored: RestoredEvmSwap;
-                score: number;
-            } => match !== undefined,
-        );
-    const bestScore = matches.reduce<number | undefined>(
-        (best, match) =>
-            best === undefined ? match.score : Math.min(best, match.score),
-        undefined,
-    );
-    const bestMatches =
-        bestScore === undefined
-            ? []
-            : matches.filter((match) => match.score === bestScore);
-
-    return bestMatches.length === 1 ? bestMatches[0].restored : undefined;
+type RestoredEvmMatch = {
+    restoredSwap: RestoredEvmSwap;
+    reason: RestoredEvmMatchReason;
 };
 
 const getEvmResultKey = (swap: EvmRescueResult) =>
@@ -209,6 +86,8 @@ export const mergeEvmRescueResults = (
             dex: swap.dex ?? existing?.dex,
             bridge: swap.bridge ?? existing?.bridge,
             preimage: swap.preimage ?? existing?.preimage,
+            commitmentMatchId:
+                swap.commitmentMatchId ?? existing?.commitmentMatchId,
         });
     }
 
@@ -218,33 +97,71 @@ export const mergeEvmRescueResults = (
 const hasPreimageHash = (swap: RestorableSwap): swap is RestoredEvmSwap =>
     swap.preimageHash !== undefined;
 
-export const getRestoredEvmMatch = (
+const getRestoredEvmMatchDetails = (
     swap: EvmRescueResult,
     restoredSwaps: RestoredEvmSwap[],
-): RestoredEvmSwap | undefined => {
+): RestoredEvmMatch | undefined => {
     const txHash = normalizeEvmId(swap.transactionHash);
     const preimageHash = normalizeEvmId(swap.preimageHash);
     const claimAddress = normalizeEvmId(swap.claimAddress);
-
-    const identifierMatch = restoredSwaps.find(
-        (restored) =>
-            (txHash !== "" &&
-                normalizeEvmId(restored.evmClaimDetails?.transaction?.id) ===
-                    txHash) ||
-            (txHash !== "" &&
-                normalizeEvmId(restored.refundDetails?.transaction?.id) ===
-                    txHash) ||
-            (hasUsablePreimageHash(swap.preimageHash) &&
-                normalizeEvmId(restored.preimageHash) === preimageHash),
+    const commitmentMatchId = normalizeCommitmentMatchId(
+        swap.commitmentMatchId,
     );
 
-    if (identifierMatch !== undefined) {
-        return identifierMatch;
+    for (const restored of restoredSwaps) {
+        if (
+            txHash !== "" &&
+            normalizeEvmId(restored.evmClaimDetails?.transaction?.id) === txHash
+        ) {
+            return {
+                restoredSwap: restored,
+                reason: "evm-claim-transaction",
+            };
+        }
+
+        if (
+            txHash !== "" &&
+            normalizeEvmId(restored.refundDetails?.transaction?.id) === txHash
+        ) {
+            return {
+                restoredSwap: restored,
+                reason: "refund-transaction",
+            };
+        }
+
+        if (
+            hasUsablePreimageHash(swap.preimageHash) &&
+            normalizeEvmId(restored.preimageHash) === preimageHash
+        ) {
+            return {
+                restoredSwap: restored,
+                reason: "preimage-hash",
+            };
+        }
     }
 
-    const routedPreRefundMatch = getRoutedPreRefundMatch(swap, restoredSwaps);
-    if (routedPreRefundMatch !== undefined || claimAddress === "") {
-        return routedPreRefundMatch;
+    if (commitmentMatchId !== undefined) {
+        const commitmentMatches = restoredSwaps.filter(
+            (restored) =>
+                normalizeCommitmentMatchId(restored.commitmentMatch?.id) ===
+                commitmentMatchId,
+        );
+
+        const commitmentMatch =
+            commitmentMatches.length === 1
+                ? commitmentMatches[0]
+                : undefined;
+
+        if (commitmentMatch !== undefined) {
+            return {
+                restoredSwap: commitmentMatch,
+                reason: "commitment-match-id",
+            };
+        }
+    }
+
+    if (claimAddress === "") {
+        return undefined;
     }
 
     const addressMatches = restoredSwaps.filter(
@@ -256,18 +173,49 @@ export const getRestoredEvmMatch = (
     const addressMatch =
         addressMatches.length === 1 ? addressMatches[0] : undefined;
 
-    return addressMatch;
+    return addressMatch === undefined
+        ? undefined
+        : {
+              restoredSwap: addressMatch,
+              reason: "claim-address",
+          };
 };
+
+export const getRestoredEvmMatch = (
+    swap: EvmRescueResult,
+    restoredSwaps: RestoredEvmSwap[],
+): RestoredEvmSwap | undefined =>
+    getRestoredEvmMatchDetails(swap, restoredSwaps)?.restoredSwap;
 
 export const enrichEvmRescueResults = (
     swaps: EvmRescueResult[],
     restoredSwaps: RestoredEvmSwap[],
 ): EvmRescueResult[] =>
     swaps.map((swap) => {
-        const restoredSwap = getRestoredEvmMatch(swap, restoredSwaps);
-        if (restoredSwap === undefined) {
+        const match = getRestoredEvmMatchDetails(swap, restoredSwaps);
+        if (match === undefined) {
             return swap;
         }
+
+        const restoredSwap = match.restoredSwap;
+        log.warn("[external-rescue-diagnostic] EVM restore metadata match", {
+            action: swap.action,
+            asset: swap.asset,
+            transactionHash: swap.transactionHash,
+            preimageHash: swap.preimageHash,
+            commitmentMatchId: swap.commitmentMatchId,
+            amount: swap.amount.toString(),
+            claimAddress: swap.claimAddress,
+            refundAddress: swap.refundAddress,
+            matchedId: restoredSwap.id,
+            reason: match.reason,
+            restoredFrom: restoredSwap.from,
+            restoredTo: restoredSwap.to,
+            restoredPreimageHash: restoredSwap.preimageHash,
+            evmClaimDetails: restoredSwap.evmClaimDetails,
+            dex: restoredSwap.dex,
+            bridge: restoredSwap.bridge,
+        });
 
         return {
             ...swap,
@@ -309,6 +257,7 @@ export const mergeRestoredEvmSwaps = (
             evmClaimDetails: swap.evmClaimDetails ?? existing?.evmClaimDetails,
             dex: swap.dex ?? existing?.dex,
             bridge: swap.bridge ?? existing?.bridge,
+            commitmentMatch: swap.commitmentMatch ?? existing?.commitmentMatch,
         });
     }
 

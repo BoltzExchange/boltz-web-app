@@ -1,5 +1,4 @@
 import type { RestorableSwap } from "boltz-swaps/client";
-import type { LogRefundData } from "boltz-swaps/types";
 import {
     type Accessor,
     type JSX,
@@ -10,6 +9,7 @@ import {
 } from "solid-js";
 
 import type { AssetType } from "../consts/Assets";
+import type { EvmRescueResult } from "../pages/external-rescue/types";
 import { type ECKeys, ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 
@@ -23,8 +23,8 @@ export type RescueContextType = {
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
 
-    evmRescuableSwaps: Accessor<LogRefundData[]>;
-    setEvmRescuableSwaps: Setter<LogRefundData[]>;
+    evmRescuableSwaps: Accessor<EvmRescueResult[]>;
+    setEvmRescuableSwaps: Setter<EvmRescueResult[]>;
 
     validRescueKey: Accessor<boolean>;
     setValidRescueKey: Setter<boolean>;
@@ -42,7 +42,7 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
         [],
     );
     const [evmRescuableSwaps, setEvmRescuableSwaps] = createSignal<
-        LogRefundData[]
+        EvmRescueResult[]
     >([]);
     const [validRescueKey, setValidRescueKey] = createSignal<boolean>(false);
 

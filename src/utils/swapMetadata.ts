@@ -7,6 +7,11 @@ import type { EncodedHop } from "./Pair";
 import { formatError } from "./errors";
 import type { BridgeDetail } from "./swapCreator";
 
+export type CommitmentMatchMetadata = {
+    version: 1;
+    id: string;
+};
+
 export type SwapMetadataPayload = {
     hops?: EncodedHop[];
     position?: SwapPosition;
@@ -16,7 +21,9 @@ export type SwapMetadataPayload = {
         destinationAsset: string;
         kind: BridgeKind;
         position: SwapPosition;
+        refundAddress?: string;
     };
+    commitmentMatch?: CommitmentMatchMetadata;
 };
 
 export type SwapMetadataLocalFields = {
@@ -26,20 +33,30 @@ export type SwapMetadataLocalFields = {
         quoteAmount: number | string;
     };
     bridge?: BridgeDetail;
+    commitmentMatch?: CommitmentMatchMetadata;
 };
 
 const IV_LENGTH = 12;
+const COMMITMENT_MATCH_ID_BYTES = 32;
+const COMMITMENT_MATCH_ID_HEX_LENGTH = COMMITMENT_MATCH_ID_BYTES * 2;
+const COMMITMENT_MATCH_MARKER_PREFIX = hex.encode(
+    new TextEncoder().encode("boltz_commitment_v1"),
+);
 
 const toBridgeMetadata = (bridge: {
     sourceAsset: string;
     destinationAsset: string;
     kind: BridgeKind;
     position: SwapPosition;
+    refundAddress?: string;
 }) => ({
     sourceAsset: bridge.sourceAsset,
     destinationAsset: bridge.destinationAsset,
     kind: bridge.kind,
     position: bridge.position,
+    ...(bridge.refundAddress === undefined
+        ? {}
+        : { refundAddress: bridge.refundAddress }),
 });
 
 const textEncoder = new TextEncoder();
@@ -47,6 +64,81 @@ const textDecoder = new TextDecoder();
 
 const toBufferSource = (view: Uint8Array): Uint8Array<ArrayBuffer> =>
     new Uint8Array(view);
+
+export const normalizeCommitmentMatchId = (
+    id: string | undefined,
+): string | undefined => {
+    const normalized = id?.toLowerCase().replace(/^0x/, "");
+    if (
+        normalized === undefined ||
+        normalized.length !== COMMITMENT_MATCH_ID_HEX_LENGTH ||
+        !/^[0-9a-f]+$/.test(normalized)
+    ) {
+        return undefined;
+    }
+
+    return normalized;
+};
+
+export const createCommitmentMatchId = (): string => {
+    const bytes = crypto.getRandomValues(
+        new Uint8Array(COMMITMENT_MATCH_ID_BYTES),
+    );
+    return hex.encode(bytes);
+};
+
+const toCommitmentMatchMetadata = (
+    commitmentMatch: CommitmentMatchMetadata | undefined,
+): CommitmentMatchMetadata | undefined => {
+    const id = normalizeCommitmentMatchId(commitmentMatch?.id);
+    if (commitmentMatch?.version !== 1 || id === undefined) {
+        return undefined;
+    }
+
+    return {
+        version: 1,
+        id,
+    };
+};
+
+export const buildCommitmentMatchMarker = (id: string): `0x${string}` => {
+    const normalized = normalizeCommitmentMatchId(id);
+    if (normalized === undefined) {
+        throw new Error("invalid commitment match id");
+    }
+
+    return `0x${COMMITMENT_MATCH_MARKER_PREFIX}${normalized}`;
+};
+
+export const appendCommitmentMatchMarker = <T extends `0x${string}`>(
+    data: T,
+    id: string | undefined,
+): `0x${string}` => {
+    if (id === undefined) {
+        return data;
+    }
+
+    return `${data}${buildCommitmentMatchMarker(id).slice(2)}` as `0x${string}`;
+};
+
+export const extractCommitmentMatchIdFromInput = (
+    input: string | undefined | null,
+): string | undefined => {
+    const normalized = input?.toLowerCase().replace(/^0x/, "") ?? "";
+    const markerIndex = normalized.lastIndexOf(COMMITMENT_MATCH_MARKER_PREFIX);
+    if (markerIndex === -1) {
+        return undefined;
+    }
+
+    return normalizeCommitmentMatchId(
+        normalized.slice(
+            markerIndex + COMMITMENT_MATCH_MARKER_PREFIX.length,
+            markerIndex +
+                COMMITMENT_MATCH_MARKER_PREFIX.length +
+                COMMITMENT_MATCH_ID_HEX_LENGTH,
+        ),
+    );
+};
 
 const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
     const keyMaterial = await crypto.subtle.importKey(
@@ -125,14 +217,23 @@ export const buildSwapMetadataPayload = ({
     bridge,
     sendAmount,
     receiveAmount,
+    commitmentMatch,
 }: {
     hops: EncodedHop[];
     hopsPosition: SwapPosition | undefined;
     bridge: BridgeDetail | undefined;
     sendAmount: number;
     receiveAmount: number;
+    commitmentMatch?: CommitmentMatchMetadata;
 }): SwapMetadataPayload | undefined => {
-    if (hopsPosition === undefined && bridge === undefined) {
+    const normalizedCommitmentMatch =
+        toCommitmentMatchMetadata(commitmentMatch);
+
+    if (
+        hopsPosition === undefined &&
+        bridge === undefined &&
+        normalizedCommitmentMatch === undefined
+    ) {
         return undefined;
     }
 
@@ -147,6 +248,10 @@ export const buildSwapMetadataPayload = ({
 
     if (bridge !== undefined) {
         payload.bridge = toBridgeMetadata(bridge);
+    }
+
+    if (normalizedCommitmentMatch !== undefined) {
+        payload.commitmentMatch = normalizedCommitmentMatch;
     }
 
     return payload;
@@ -170,6 +275,10 @@ export const swapMetadataToLocalFields = (
     if (payload.bridge !== undefined) {
         fields.bridge = toBridgeMetadata(payload.bridge);
     }
+
+    fields.commitmentMatch = toCommitmentMatchMetadata(
+        payload.commitmentMatch,
+    );
 
     return fields;
 };
