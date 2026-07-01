@@ -1,7 +1,10 @@
 import { hex } from "@scure/base";
+import type { RestorableSwap } from "boltz-swaps/client";
 import { type BridgeKind, SwapPosition } from "boltz-swaps/types";
+import log from "loglevel";
 
 import type { EncodedHop } from "./Pair";
+import { formatError } from "./errors";
 import type { BridgeDetail } from "./swapCreator";
 
 export type SwapMetadataPayload = {
@@ -26,6 +29,18 @@ export type SwapMetadataLocalFields = {
 };
 
 const IV_LENGTH = 12;
+
+const toBridgeMetadata = (bridge: {
+    sourceAsset: string;
+    destinationAsset: string;
+    kind: BridgeKind;
+    position: SwapPosition;
+}) => ({
+    sourceAsset: bridge.sourceAsset,
+    destinationAsset: bridge.destinationAsset,
+    kind: bridge.kind,
+    position: bridge.position,
+});
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -131,12 +146,7 @@ export const buildSwapMetadataPayload = ({
     }
 
     if (bridge !== undefined) {
-        payload.bridge = {
-            sourceAsset: bridge.sourceAsset,
-            destinationAsset: bridge.destinationAsset,
-            kind: bridge.kind,
-            position: bridge.position,
-        };
+        payload.bridge = toBridgeMetadata(bridge);
     }
 
     return payload;
@@ -158,13 +168,42 @@ export const swapMetadataToLocalFields = (
     }
 
     if (payload.bridge !== undefined) {
-        fields.bridge = {
-            sourceAsset: payload.bridge.sourceAsset,
-            destinationAsset: payload.bridge.destinationAsset,
-            kind: payload.bridge.kind,
-            position: payload.bridge.position,
-        };
+        fields.bridge = toBridgeMetadata(payload.bridge);
     }
 
     return fields;
 };
+
+export const hydrateRestorableSwapMetadata = async <T extends RestorableSwap>(
+    swap: T,
+    mnemonic: string,
+): Promise<T & SwapMetadataLocalFields> => {
+    if (swap.metadata === undefined) {
+        return swap;
+    }
+
+    try {
+        const localFields = swapMetadataToLocalFields(
+            await decryptSwapMetadata(mnemonic, swap.metadata),
+        );
+
+        return {
+            ...swap,
+            ...localFields,
+        };
+    } catch (e) {
+        log.warn(
+            `failed to decrypt metadata for swap ${swap.id}, falling back to on-chain assets:`,
+            formatError(e),
+        );
+        return swap;
+    }
+};
+
+export const hydrateRestorableSwapsMetadata = <T extends RestorableSwap>(
+    swaps: T[],
+    mnemonic: string,
+): Promise<(T & SwapMetadataLocalFields)[]> =>
+    Promise.all(
+        swaps.map((swap) => hydrateRestorableSwapMetadata(swap, mnemonic)),
+    );
