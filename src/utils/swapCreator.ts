@@ -28,6 +28,7 @@ import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import type { newKeyFn } from "../context/Global";
 import type { EncodedHop } from "./Pair";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
+import type { CommitmentMatchMetadata } from "./swapMetadata";
 
 export { GasAbstractionType };
 
@@ -66,6 +67,7 @@ export type BridgeDetail = BridgeRoute & {
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
     evmSendCandidate?: PendingEvmBridgeSend;
+    refundAddress?: string;
 
     // Recovery state when a pre-bridge DEX quote falls short and the bridged
     // funds must be retried or refunded back to the original sender.
@@ -128,6 +130,10 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
+
+    // Stable client-generated ID mirrored in encrypted backend metadata and
+    // commitment lockup calldata for external rescue matching.
+    commitmentMatch?: CommitmentMatchMetadata;
 };
 
 export type SubmarineSwap = SwapBase &

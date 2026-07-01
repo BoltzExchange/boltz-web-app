@@ -6,11 +6,7 @@ import {
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "boltz-swaps/evm/logs";
-import {
-    AssetKind,
-    type LogRefundData,
-    RskRescueMode,
-} from "boltz-swaps/types";
+import { AssetKind, RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
@@ -47,8 +43,9 @@ import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
 import { getTimeoutEta } from "../utils/rescue";
 import { GasAbstractionType } from "../utils/swapCreator";
+import type { EvmRescueResult } from "./external-rescue/types";
 
-type RescueData = LogRefundData & { currentHeight: bigint };
+type RescueData = EvmRescueResult & { currentHeight: bigint };
 
 const RefundState = (props: {
     asset: string;
@@ -103,6 +100,14 @@ const RefundState = (props: {
 
             <RefundButton
                 asset={props.asset}
+                swapId={props.refundData.restoredSwap?.id}
+                dexDetails={
+                    props.refundData.dex ?? props.refundData.restoredSwap?.dex
+                }
+                bridge={
+                    props.refundData.bridge ??
+                    props.refundData.restoredSwap?.bridge
+                }
                 setRefundTxId={
                     props.setRefundTxId as Setter<string | undefined>
                 }
@@ -244,6 +249,7 @@ const RescueEvm = () => {
     }>();
 
     const { t } = useGlobalContext();
+    const { evmRescuableSwaps } = useRescueContext();
     const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
 
     const getSwapContract = (asset: string) =>
@@ -275,9 +281,17 @@ const RescueEvm = () => {
             ),
             getTimelockBlockNumber(provider, params.asset as AssetType),
         ]);
+        const contextData = evmRescuableSwaps().find(
+            (swap) =>
+                swap.action === params.action &&
+                swap.transactionHash.toLowerCase() ===
+                    params.txHash.toLowerCase(),
+        );
 
         return {
+            ...contextData,
             ...logData,
+            action: params.action,
             currentHeight: BigInt(currentHeight),
         };
     });

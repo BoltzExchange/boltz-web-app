@@ -70,6 +70,7 @@ import { formatAssetAmountForLog } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { type ClaimQuote, fetchDexQuote } from "../utils/quoter";
+import { appendCommitmentMatchMarker } from "../utils/swapMetadata";
 import {
     type BridgeDetail,
     type ChainSwap,
@@ -1248,22 +1249,25 @@ export const SwapExecutionWorker = () => {
         }
         const tx = {
             to: router.address,
-            data: encodeFunctionData({
-                abi: routerAbi,
-                functionName: "executeAndLockERC20",
-                args: [
-                    emptyPreimageHash,
-                    getAddress(getTokenAddress(latestSwap.assetSend)),
-                    getAddress(preBridgeClaimAddress),
-                    getAddress(gasAbstractionSigner.address),
-                    BigInt(commitmentLockupDetails.timelock),
-                    encoded.calls.map((call) => ({
-                        target: getAddress(call.to),
-                        value: BigInt(call.value),
-                        callData: prefix0x(call.data),
-                    })),
-                ],
-            }),
+            data: appendCommitmentMatchMarker(
+                encodeFunctionData({
+                    abi: routerAbi,
+                    functionName: "executeAndLockERC20",
+                    args: [
+                        emptyPreimageHash,
+                        getAddress(getTokenAddress(latestSwap.assetSend)),
+                        getAddress(preBridgeClaimAddress),
+                        getAddress(gasAbstractionSigner.address),
+                        BigInt(commitmentLockupDetails.timelock),
+                        encoded.calls.map((call) => ({
+                            target: getAddress(call.to),
+                            value: BigInt(call.value),
+                            callData: prefix0x(call.data),
+                        })),
+                    ],
+                }),
+                latestSwap.commitmentMatch?.id,
+            ),
         };
         calls.push(toAlchemyCall(tx));
 

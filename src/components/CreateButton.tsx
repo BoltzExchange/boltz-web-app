@@ -12,7 +12,7 @@ import {
     decodeInvoice,
     validateInvoiceForOffer,
 } from "boltz-swaps/invoice";
-import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { NetworkTransport, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -29,6 +29,7 @@ import {
     RBTC,
     getBridgeKind,
     getCanonicalAsset,
+    getNetworkTransport,
     getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
@@ -78,7 +79,9 @@ import {
     createSubmarine,
 } from "../utils/swapCreator";
 import {
+    type CommitmentMatchMetadata,
     buildSwapMetadataPayload,
+    createCommitmentMatchId,
     encryptSwapMetadata,
 } from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
@@ -125,6 +128,8 @@ export const buildEncryptedSwapMetadata = async ({
     sendAmount,
     receiveAmount,
     mnemonic,
+    bridge,
+    commitmentMatch,
 }: {
     assetSend: string;
     assetReceive: string;
@@ -133,17 +138,21 @@ export const buildEncryptedSwapMetadata = async ({
     sendAmount: number;
     receiveAmount: number;
     mnemonic: string | undefined;
+    bridge?: BridgeDetail;
+    commitmentMatch?: CommitmentMatchMetadata;
 }): Promise<string | undefined> => {
-    const bridge =
+    const routeBridge =
+        bridge ??
         buildBridgeDetail(assetSend, SwapPosition.Pre) ??
         buildBridgeDetail(assetReceive, SwapPosition.Post);
 
     const payload = buildSwapMetadataPayload({
         hops,
         hopsPosition,
-        bridge,
+        bridge: routeBridge,
         sendAmount,
         receiveAmount,
+        commitmentMatch,
     });
 
     if (payload === undefined) {
@@ -615,11 +624,56 @@ const CreateButton = () => {
         }
     };
 
+    const withBridgeRefundAddress = (
+        bridge: BridgeDetail | undefined,
+    ): BridgeDetail | undefined => {
+        if (bridge === undefined || bridge.position !== SwapPosition.Pre) {
+            return bridge;
+        }
+
+        const sourceTransport = getNetworkTransport(bridge.sourceAsset);
+        const wallet = connectedWallet();
+        const refundAddress =
+            sourceTransport === NetworkTransport.Evm
+                ? signer()?.address
+                : wallet !== undefined && wallet.transport === sourceTransport
+                  ? wallet.address
+                  : undefined;
+
+        return refundAddress === undefined
+            ? bridge
+            : {
+                  ...bridge,
+                  refundAddress,
+              };
+    };
+
+    const getCreationBridge = () =>
+        withBridgeRefundAddress(
+            buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
+                buildBridgeDetail(assetReceive(), SwapPosition.Post),
+        );
+
+    const needsCommitmentMatch = (creationData: CreationData) =>
+        creationData.hopsPosition === SwapPosition.Pre &&
+        creationData.hops.some((hop) => hop.dexDetails !== undefined);
+
+    let creationBridge: BridgeDetail | undefined;
+    let commitmentMatch: CommitmentMatchMetadata | undefined;
+
     const buildCreationMetadata = (
         creationData: CreationData,
         mnemonic = rescueFile()?.mnemonic,
-    ): Promise<string | undefined> =>
-        buildEncryptedSwapMetadata({
+    ): Promise<string | undefined> => {
+        creationBridge = getCreationBridge();
+        commitmentMatch = needsCommitmentMatch(creationData)
+            ? {
+                  version: 1,
+                  id: createCommitmentMatchId(),
+              }
+            : undefined;
+
+        return buildEncryptedSwapMetadata({
             assetSend: assetSend(),
             assetReceive: assetReceive(),
             hops: creationData.hops,
@@ -627,7 +681,10 @@ const CreateButton = () => {
             sendAmount: Number(creationData.sendAmount),
             receiveAmount: Number(creationData.receiveAmount),
             mnemonic,
+            bridge: creationBridge,
+            commitmentMatch,
         });
+    };
 
     const createSwap = async (
         claimAddress: string,
@@ -916,13 +973,12 @@ const CreateButton = () => {
                 ),
             });
 
-            const bridge =
-                buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
-                buildBridgeDetail(assetReceive(), SwapPosition.Post);
+            const bridge = creationBridge ?? getCreationBridge();
 
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
+                commitmentMatch,
                 dex:
                     hopsPosition !== undefined
                         ? {

@@ -279,6 +279,34 @@ describe("buildEncryptedSwapMetadata", () => {
         expect(payload.bridge).toBeDefined();
     });
 
+    test("includes commitment match and bridge refund metadata", async () => {
+        const commitmentMatch = {
+            version: 1 as const,
+            id: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        };
+        const metadata = await buildEncryptedSwapMetadata({
+            assetSend: bridgeAsset,
+            assetReceive: LN,
+            hops: dexHops,
+            hopsPosition: SwapPosition.Pre,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            mnemonic,
+            bridge: {
+                sourceAsset: bridgeAsset,
+                destinationAsset: USDT0,
+                kind: BridgeKind.Cctp,
+                position: SwapPosition.Pre,
+                refundAddress: "source-wallet",
+            },
+            commitmentMatch,
+        });
+
+        const payload = await decryptSwapMetadata(mnemonic, metadata!);
+        expect(payload.bridge?.refundAddress).toBe("source-wallet");
+        expect(payload.commitmentMatch).toEqual(commitmentMatch);
+    });
+
     test("returns undefined for a direct pair without DEX or bridge", async () => {
         await expect(
             buildEncryptedSwapMetadata({

@@ -1,5 +1,7 @@
 import BigNumber from "bignumber.js";
 import { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
+import { RskRescueMode } from "boltz-swaps/types";
+import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Match, Show, Switch } from "solid-js";
 
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -15,19 +17,74 @@ import { formatAmount, formatDenomination } from "../../utils/denomination";
 import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../../utils/helper";
 import { RescueAction } from "../../utils/rescue";
-import type { SomeSwap } from "../../utils/swapCreator";
+import {
+    type SomeSwap,
+    type SwapBase,
+    getFinalAssetReceive,
+    getFinalAssetSend,
+} from "../../utils/swapCreator";
 import { getSwapDate } from "./scan";
 import {
     BtcSearchState,
+    type EvmRescueResult,
     RescueResultSource,
     type UnifiedRescueResult,
 } from "./types";
 import type { ExternalRescueSearch } from "./useExternalRescueSearch";
 
-const EvmAssetIcon = (props: { asset: string }) => (
+export const getEvmFinalAsset = (swap: EvmRescueResult) => {
+    const assets = getEvmDisplayAssets(swap);
+    return swap.action === RskRescueMode.Refund
+        ? assets[0]!
+        : assets[assets.length - 1]!;
+};
+
+export const getEvmDisplayAssets = (swap: EvmRescueResult) => {
+    const bridge = swap.bridge ?? swap.restoredSwap?.bridge;
+    const dex = swap.dex ?? swap.restoredSwap?.dex;
+    const shouldUseDex =
+        swap.restoredSwap !== undefined ||
+        swap.action !== RskRescueMode.Refund ||
+        bridge !== undefined;
+    const base = {
+        bridge,
+        dex: shouldUseDex ? dex : undefined,
+        assetSend: swap.restoredSwap?.from ?? swap.asset,
+        assetReceive: swap.restoredSwap?.to ?? swap.asset,
+    } as SwapBase;
+    const assetSend = getFinalAssetSend(base, true);
+    const assetReceive = getFinalAssetReceive(base, true);
+
+    if (
+        swap.restoredSwap === undefined &&
+        swap.action === RskRescueMode.Refund
+    ) {
+        return [assetSend];
+    }
+
+    return assetSend === assetReceive ? [assetSend] : [assetSend, assetReceive];
+};
+
+const SingleAssetIcon = (props: { asset: string }) => (
     <span class="swaplist-asset swaplist-asset-single">
         <SwapListAssetIcon asset={props.asset} />
     </span>
+);
+
+const AssetPair = (props: { assets: string[] }) => (
+    <Show
+        when={props.assets[1]}
+        fallback={<SingleAssetIcon asset={props.assets[0]} />}>
+        <span class="swaplist-asset">
+            <SwapListAssetIcon asset={props.assets[0]} />
+            <VsArrowSmallRight />
+            <SwapListAssetIcon asset={props.assets[1]!} />
+        </span>
+    </Show>
+);
+
+const EvmAssetIcon = (props: { swap: EvmRescueResult }) => (
+    <AssetPair assets={getEvmDisplayAssets(props.swap)} />
 );
 
 const resultActionLabel = (
@@ -127,18 +184,18 @@ const UnifiedResultAssets = (props: { result: UnifiedRescueResult }) => (
         </Match>
         <Match when={props.result.source === RescueResultSource.Evm}>
             <EvmAssetIcon
-                asset={
+                swap={
                     (
                         props.result as Extract<
                             UnifiedRescueResult,
                             { source: RescueResultSource.Evm }
                         >
-                    ).swap.asset
+                    ).swap
                 }
             />
         </Match>
         <Match when={props.result.source === RescueResultSource.Sweep}>
-            <EvmAssetIcon
+            <SingleAssetIcon
                 asset={
                     (
                         props.result as Extract<
@@ -216,6 +273,10 @@ const UnifiedRescueList = (props: {
 
 export const Results = (props: ResultsProps) => {
     const { t } = useGlobalContext();
+    const layoutSlots = () =>
+        Array.from({
+            length: props.results.displaySlotCount(),
+        }) as never as SomeSwap[];
 
     return (
         <>
@@ -247,11 +308,7 @@ export const Results = (props: ResultsProps) => {
 
             <Show when={props.results.all().length > 0}>
                 <div class="rescue-external-results">
-                    <div
-                        style={getSwapListHeight(
-                            props.results.all() as never as SomeSwap[],
-                            isMobile(),
-                        )}>
+                    <div style={getSwapListHeight(layoutSlots(), isMobile())}>
                         <UnifiedRescueList results={props.results} />
                     </div>
                     <Pagination

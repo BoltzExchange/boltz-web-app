@@ -4,9 +4,13 @@ import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import type { BridgeDetail } from "../../src/utils/swapCreator";
 import {
     type SwapMetadataPayload,
+    appendCommitmentMatchMarker,
     buildSwapMetadataPayload,
+    createCommitmentMatchId,
     decryptSwapMetadata,
     encryptSwapMetadata,
+    extractCommitmentMatchIdFromInput,
+    normalizeCommitmentMatchId,
     swapMetadataToLocalFields,
 } from "../../src/utils/swapMetadata";
 
@@ -73,6 +77,26 @@ const makeBridge = (position: SwapPosition): BridgeDetail => ({
     position,
 });
 
+describe("commitment match metadata", () => {
+    test("creates and normalizes 32-byte hex IDs", () => {
+        const id = createCommitmentMatchId();
+
+        expect(id).toMatch(/^[0-9a-f]{64}$/);
+        expect(normalizeCommitmentMatchId(`0x${id.toUpperCase()}`)).toBe(id);
+        expect(normalizeCommitmentMatchId("not-hex")).toBeUndefined();
+    });
+
+    test("appends and extracts calldata markers", () => {
+        const id =
+            "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+        const input = appendCommitmentMatchMarker("0xabcdef", id);
+
+        expect(input.startsWith("0xabcdef")).toBe(true);
+        expect(extractCommitmentMatchIdFromInput(input)).toBe(id);
+        expect(extractCommitmentMatchIdFromInput("0xabcdef")).toBeUndefined();
+    });
+});
+
 describe("buildSwapMetadataPayload", () => {
     test("returns undefined for a direct pair with no DEX or bridge", () => {
         expect(
@@ -117,7 +141,10 @@ describe("buildSwapMetadataPayload", () => {
         const payload = buildSwapMetadataPayload({
             hops: [],
             hopsPosition: undefined,
-            bridge: makeBridge(SwapPosition.Pre),
+            bridge: {
+                ...makeBridge(SwapPosition.Pre),
+                refundAddress: "source-wallet",
+            },
             sendAmount: 1000,
             receiveAmount: 900,
         });
@@ -127,7 +154,25 @@ describe("buildSwapMetadataPayload", () => {
                 destinationAsset: "USDC-BASE",
                 kind: BridgeKind.Cctp,
                 position: SwapPosition.Pre,
+                refundAddress: "source-wallet",
             },
+        });
+    });
+
+    test("includes commitment match metadata without requiring a route", () => {
+        const id =
+            "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+        const payload = buildSwapMetadataPayload({
+            hops: [],
+            hopsPosition: undefined,
+            bridge: undefined,
+            sendAmount: 1000,
+            receiveAmount: 900,
+            commitmentMatch: { version: 1, id },
+        });
+
+        expect(payload).toEqual({
+            commitmentMatch: { version: 1, id },
         });
     });
 
@@ -146,7 +191,21 @@ describe("buildSwapMetadataPayload", () => {
 
 describe("swapMetadataToLocalFields", () => {
     test("maps a full payload to dex and bridge fields", () => {
-        expect(swapMetadataToLocalFields(samplePayload)).toEqual({
+        const commitmentMatch = {
+            version: 1 as const,
+            id: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        };
+
+        expect(
+            swapMetadataToLocalFields({
+                ...samplePayload,
+                bridge: {
+                    ...samplePayload.bridge!,
+                    refundAddress: "source-wallet",
+                },
+                commitmentMatch,
+            }),
+        ).toEqual({
             dex: {
                 hops: samplePayload.hops,
                 position: SwapPosition.Post,
@@ -157,7 +216,9 @@ describe("swapMetadataToLocalFields", () => {
                 destinationAsset: "USDC-BASE",
                 kind: BridgeKind.Cctp,
                 position: SwapPosition.Post,
+                refundAddress: "source-wallet",
             },
+            commitmentMatch,
         });
     });
 

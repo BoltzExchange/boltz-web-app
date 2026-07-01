@@ -1,9 +1,12 @@
+import type { RestorableSwap } from "boltz-swaps/client";
 import type { SwapContract } from "boltz-swaps/evm";
 import type { LogRefundData, RskRescueMode } from "boltz-swaps/types";
 
 import type { Swap } from "../../components/SwapList";
 import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
 import type { RescueAction } from "../../utils/rescue";
+import type { BridgeDetail, DexDetail } from "../../utils/swapCreator";
+import type { CommitmentMatchMetadata } from "../../utils/swapMetadata";
 
 export enum RecoveryMethod {
     Key = "key",
@@ -46,9 +49,20 @@ export type ScanProgress = {
     updateUnmatched: (asset: string, unmatched: number) => void;
 };
 
+export type RestoredEvmSwap = RestorableSwap & {
+    preimageHash: string;
+    dex?: DexDetail;
+    bridge?: BridgeDetail;
+    commitmentMatch?: CommitmentMatchMetadata;
+};
+
 export type EvmRescueResult = LogRefundData & {
     action: RskRescueMode;
     currentHeight?: bigint;
+    commitmentMatchId?: string;
+    restoredSwap?: RestoredEvmSwap;
+    dex?: DexDetail;
+    bridge?: BridgeDetail;
 };
 
 export type UnifiedRescueResult =
