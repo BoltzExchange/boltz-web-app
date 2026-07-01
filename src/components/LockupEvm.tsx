@@ -57,6 +57,7 @@ import {
     type BridgeDetail,
     GasAbstractionType,
     type SomeSwap,
+    isCommitmentSwap,
 } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
 import ConnectWallet from "./ConnectWallet";
@@ -346,6 +347,7 @@ const lockupWithHops = async (
 
         const tokenAddress = getAddress(getTokenAddress(asset));
         const commitmentLockupDetails = await getCommitmentLockupDetails(asset);
+        const timeoutBlockHeight = Number(commitmentLockupDetails.timelock);
         const commitmentPreimageHash = "00".repeat(32);
 
         const permit2Signature = await connectedSigner.signTypedData({
@@ -372,7 +374,7 @@ const lockupWithHops = async (
                         commitmentLockupDetails.claimAddress,
                     ),
                     refundAddress: refundAddress,
-                    timelock: BigInt(commitmentLockupDetails.timelock),
+                    timelock: BigInt(timeoutBlockHeight),
                     callsHash,
                 },
             },
@@ -388,7 +390,7 @@ const lockupWithHops = async (
                     tokenAddress,
                     getAddress(commitmentLockupDetails.claimAddress),
                     refundAddress,
-                    BigInt(commitmentLockupDetails.timelock),
+                    BigInt(timeoutBlockHeight),
                     calls,
                     {
                         permitted: {
@@ -424,6 +426,9 @@ const lockupWithHops = async (
             s.commitmentLockupTxHash = transactionHash;
             s.commitmentSignatureSubmitted = false;
             s.signer = ownerAddress;
+            if (isCommitmentSwap(s)) {
+                s.timeoutBlockHeight = timeoutBlockHeight;
+            }
         });
         if (currentSwap === null) {
             throw new Error(`missing swap ${swapId} for lockup persistence`);

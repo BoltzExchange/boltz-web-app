@@ -1,10 +1,12 @@
 import { BigNumber } from "bignumber.js";
+import type { Hash, PublicClient, TransactionReceipt } from "viem";
 
 import {
     type CommitmentAmounts,
     calculateCommittedSubmarineAmounts,
     validateCommitmentInvoice,
     validateCommitmentInvoiceInput,
+    waitForCommitmentLockupReceipt,
 } from "../../src/status/CommitmentCreated";
 import type Pair from "../../src/utils/Pair";
 import { validateInvoice } from "../../src/utils/validation";
@@ -103,5 +105,26 @@ describe("CommitmentCreated", () => {
                 receiveAmount: BigNumber(validateInvoice(invoice) + 1),
             }),
         ).toThrow("invalid_invoice");
+    });
+
+    test("retries commitment lockup receipt lookup after transient failures", async () => {
+        const hash = `0x${"1".repeat(64)}` as Hash;
+        const receipt = { blockNumber: 123n } as TransactionReceipt;
+        const provider = {
+            waitForTransactionReceipt: vi
+                .fn()
+                .mockRejectedValueOnce(new Error("temporary rpc failure"))
+                .mockResolvedValueOnce(receipt),
+        } as unknown as PublicClient;
+
+        await expect(
+            waitForCommitmentLockupReceipt(provider, hash, 1, 0),
+        ).resolves.toBe(receipt);
+        expect(provider.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
+        expect(provider.waitForTransactionReceipt).toHaveBeenCalledWith({
+            hash,
+            confirmations: 1,
+            timeout: 1,
+        });
     });
 });

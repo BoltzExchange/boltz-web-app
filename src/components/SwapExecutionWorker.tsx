@@ -242,11 +242,15 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         commitmentLockupTxHash: string,
         source: CommitmentLockupTransactionSource,
+        timeoutBlockHeight?: number,
     ) => {
         const latestSwap = await modifySwap(swapId, (s) => {
             s.commitmentLockupTxHash = commitmentLockupTxHash;
             s.commitmentLockupCallId = undefined;
             s.commitmentSignatureSubmitted = false;
+            if (s.type === SwapType.Commitment) {
+                s.timeoutBlockHeight = timeoutBlockHeight;
+            }
         });
         if (latestSwap === null) {
             return false;
@@ -256,6 +260,7 @@ export const SwapExecutionWorker = () => {
             `Swap execution persisted ${source} commitment lockup transaction`,
             getSwapExecutionLogContext(latestSwap.id, {
                 commitmentLockupTxHash,
+                timeoutBlockHeight,
             }),
         );
         queueRelevantTasks(latestSwap);
@@ -966,10 +971,14 @@ export const SwapExecutionWorker = () => {
                 await waitForPreparedCallTransactionHash(
                     currentSwap.commitmentLockupCallId,
                 );
+            const commitmentLockupDetails = await getCommitmentLockupDetails(
+                currentSwap.assetSend,
+            );
             await persistCommitmentLockupTransaction(
                 currentSwap.id,
                 commitmentLockupTxHash,
                 CommitmentLockupTransactionSource.Resumed,
+                Number(commitmentLockupDetails.timelock),
             );
             return;
         }
@@ -1136,6 +1145,7 @@ export const SwapExecutionWorker = () => {
         const commitmentLockupDetails = await getCommitmentLockupDetails(
             latestSwap.assetSend,
         );
+        const timeoutBlockHeight = Number(commitmentLockupDetails.timelock);
         const preBridgeClaimAddress = getPreBridgeClaimAddress(
             latestSwap,
             commitmentLockupDetails.claimAddress,
@@ -1165,6 +1175,7 @@ export const SwapExecutionWorker = () => {
                     latestSwap.id,
                     recoveryResult.transactionHash,
                     CommitmentLockupTransactionSource.Recovered,
+                    timeoutBlockHeight,
                 );
                 return;
 
@@ -1265,7 +1276,7 @@ export const SwapExecutionWorker = () => {
                     getAddress(getTokenAddress(latestSwap.assetSend)),
                     getAddress(preBridgeClaimAddress),
                     getAddress(gasAbstractionSigner.address),
-                    BigInt(commitmentLockupDetails.timelock),
+                    BigInt(timeoutBlockHeight),
                     encoded.calls.map((call) => ({
                         target: getAddress(call.to),
                         value: BigInt(call.value),
@@ -1313,6 +1324,7 @@ export const SwapExecutionWorker = () => {
                         latestSwap.id,
                         recoveryResult.transactionHash,
                         CommitmentLockupTransactionSource.Recovered,
+                        timeoutBlockHeight,
                     );
                     return;
 
@@ -1327,6 +1339,7 @@ export const SwapExecutionWorker = () => {
             latestSwap.id,
             latestSwap.commitmentLockupTxHash,
             CommitmentLockupTransactionSource.Broadcast,
+            timeoutBlockHeight,
         );
     };
 

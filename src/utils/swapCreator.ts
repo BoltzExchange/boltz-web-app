@@ -176,6 +176,7 @@ export type CommitmentSwap = SwapBaseData & {
     sourceAsset: string;
     sourceAmount: string;
     lockupAmount?: string;
+    timeoutBlockHeight?: number;
 };
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap | CommitmentSwap;

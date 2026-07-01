@@ -16,7 +16,12 @@ import {
     createSignal,
     untrack,
 } from "solid-js";
-import { type Hash, zeroAddress } from "viem";
+import {
+    type Hash,
+    type PublicClient,
+    type TransactionReceipt,
+    zeroAddress,
+} from "viem";
 
 import CopyButton from "../components/CopyButton";
 import ExternalLink from "../components/ExternalLink";
@@ -60,8 +65,38 @@ type InvoiceData = {
     sats: number;
 };
 
+const receiptWaitTimeout = 120_000;
+const receiptRetryDelay = 3_000;
+
+const wait = (ms: number) =>
+    new Promise((resolve) => window.setTimeout(resolve, ms));
+
 const getInvoiceSats = (amounts: CommitmentAmounts) =>
     Math.floor(amounts.receiveAmount.toNumber());
+
+export const waitForCommitmentLockupReceipt = async (
+    provider: PublicClient,
+    hash: Hash,
+    waitTimeout = receiptWaitTimeout,
+    retryDelay = receiptRetryDelay,
+): Promise<TransactionReceipt> => {
+    for (;;) {
+        try {
+            const receipt = await provider.waitForTransactionReceipt({
+                hash,
+                confirmations: 1,
+                timeout: waitTimeout,
+            });
+            if (receipt !== null) {
+                return receipt;
+            }
+        } catch (error) {
+            log.warn("Waiting for commitment lockup receipt failed", error);
+        }
+
+        await wait(retryDelay);
+    }
+};
 
 export const validateCommitmentInvoiceInput = (
     value: string,
@@ -294,14 +329,10 @@ const CommitmentCreated = () => {
             regularPairs,
         }): Promise<CommitmentAmounts> => {
             const provider = createAssetProvider(current.assetSend);
-            const receipt = await provider.waitForTransactionReceipt({
-                hash: current.commitmentLockupTxHash as Hash,
-                confirmations: 1,
-                timeout: 120_000,
-            });
-            if (receipt === null) {
-                throw new Error("could not fetch commitment lockup receipt");
-            }
+            const receipt = await waitForCommitmentLockupReceipt(
+                provider,
+                current.commitmentLockupTxHash as Hash,
+            );
 
             const contract = getErc20Swap(current.assetSend);
             const event = getLockupEvent(
