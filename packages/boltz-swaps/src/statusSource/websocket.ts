@@ -83,13 +83,16 @@ export const createWebSocketStatusSource = (
     const fallback = options.fallback;
     const connectTimeoutMs = options.connectTimeoutMs ?? 15_000;
     const pingIntervalMs = options.pingIntervalMs ?? 15_000;
+    const constructor: WebSocketConstructor | null =
+        options.webSocketImpl ??
+        (globalThis as { WebSocket?: WebSocketConstructor }).WebSocket ??
+        null;
 
     const subscribers = new Map<string, Set<StatusUpdateHandler>>();
     const errorHandlers = new Map<string, Set<StatusErrorHandler>>();
     const lastUpdate = new Map<string, SwapUpdate>();
     const fallbackUnsubs = new Map<string, Unsubscribe>();
 
-    let constructor: WebSocketConstructor | null | undefined;
     let ws: WebSocketLike | undefined;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
     let openTimer: ReturnType<typeof setTimeout> | undefined;
@@ -98,17 +101,6 @@ export const createWebSocketStatusSource = (
     let attempt = 0;
     let fallbackActive = false;
     let sourceClosed = false;
-
-    const resolveConstructor = (): WebSocketConstructor | null => {
-        if (constructor === undefined) {
-            constructor =
-                options.webSocketImpl ??
-                (globalThis as { WebSocket?: WebSocketConstructor })
-                    .WebSocket ??
-                null;
-        }
-        return constructor;
-    };
 
     const dispatch = (update: SwapUpdate): void => {
         const handlers = subscribers.get(update.id);
@@ -301,7 +293,7 @@ export const createWebSocketStatusSource = (
         ) {
             return;
         }
-        const ctor = resolveConstructor();
+        const ctor = constructor;
         if (ctor === null) {
             activateFallback();
             return;
@@ -376,7 +368,7 @@ export const createWebSocketStatusSource = (
             if (sourceClosed) {
                 return () => {};
             }
-            if (resolveConstructor() === null && fallback === undefined) {
+            if (constructor === null && fallback === undefined) {
                 throw new Error(
                     "No WebSocket implementation available. Pass `webSocketImpl` " +
                         "(e.g. `(await import('ws')).default`) or use createPollingStatusSource.",

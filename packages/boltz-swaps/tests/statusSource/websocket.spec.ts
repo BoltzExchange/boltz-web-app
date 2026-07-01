@@ -432,9 +432,9 @@ describe("createWebSocketStatusSource", () => {
     });
 
     test("throws when no WebSocket is available and no fallback is given", () => {
-        const source = createWebSocketStatusSource({});
         vi.stubGlobal("WebSocket", undefined);
         try {
+            const source = createWebSocketStatusSource({});
             expect(() => source.subscribe("a", () => {})).toThrow(
                 /No WebSocket implementation/,
             );
