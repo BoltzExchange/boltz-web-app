@@ -19,6 +19,7 @@ import {
 } from "../utils";
 import {
     actionTimeout,
+    clearEoaDelegation,
     clickSendBridge,
     connectWallet,
     createEthereumClient,
@@ -34,14 +35,13 @@ import {
     getRegtestTokenAddress,
     getStablesE2eWalletAddress,
     getTokenBalance,
+    lbtcSendAmount,
     testTimeout,
     usdt0EthSendAmount,
     waitForBridgeTxHash,
     waitForDexQuote,
     waitForEthereumRpc,
-} from "./utils";
-
-const lbtcSendAmount = "0.001";
+} from "./shared";
 
 const arbWalletAccountIndex = 3;
 
@@ -59,16 +59,6 @@ const getArbWalletAddress = async (
         );
     }
     return getAddress(walletAddress);
-};
-
-const clearEoaDelegation = async (
-    publicClient: PublicClient,
-    account: Address,
-) => {
-    await publicClient.request({
-        method: "anvil_setCode" as never,
-        params: [account, "0x"] as never,
-    });
 };
 
 const lockupCommitment = async (page: Page, walletAddress: Address) => {

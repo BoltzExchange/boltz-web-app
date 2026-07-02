@@ -1,4 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
+import { oftAbi } from "boltz-swaps/oft";
 import {
     type Address,
     type Hex,
@@ -9,8 +10,10 @@ import {
     defineChain,
     getAddress,
     http,
+    isAddressEqual,
     parseAbi,
     parseEther,
+    parseEventLogs,
     parseUnits,
 } from "viem";
 
@@ -36,10 +39,12 @@ export const erc20Abi = parseAbi([
 
 export const lbtcSendAmount = "0.001";
 export const usdt0EthSendAmount = "40";
+export const usdt0ArbitrumSendAmount = "40";
 export const actionTimeout = 60_000;
 export const probeTimeout = 1_000;
 export const quoteRequestTimeout = 10_000;
 export const testTimeout = 150_000;
+export const fullFlowTestTimeout = 300_000;
 
 const isVisibleWithin = (locator: Locator, timeout = probeTimeout) =>
     locator
@@ -49,6 +54,10 @@ const isVisibleWithin = (locator: Locator, timeout = probeTimeout) =>
 
 export const stablesFundingSource = getAddress(
     process.env.STABLES_E2E_USDT0_ETH_FUNDING_SOURCE ??
+        "0xF977814e90dA44bFA03b6295A0616a897441aceC",
+);
+const arbitrumStablesFundingSource = getAddress(
+    process.env.STABLES_E2E_USDT0_FUNDING_SOURCE ??
         "0xF977814e90dA44bFA03b6295A0616a897441aceC",
 );
 export const stablesFundingAmount = parseUnits("500", 6);
@@ -137,6 +146,25 @@ export const getStablesE2eWalletAddress = async (
     }
 
     return getAddress(walletAddress);
+};
+
+export const getCodeFreeStablesE2eWalletAddress = async (
+    publicClient: PublicClient,
+): Promise<Address> => {
+    const accounts = (await publicClient.request({
+        method: "eth_accounts",
+        params: [],
+    } as never)) as Address[];
+
+    for (const account of accounts) {
+        const address = getAddress(account);
+        const code = await publicClient.getCode({ address });
+        if (code === undefined || code === "0x") {
+            return address;
+        }
+    }
+
+    throw new Error("no code-free Anvil account is available");
 };
 
 export const waitForDexQuote = async (args: {
@@ -443,6 +471,124 @@ export const fundErc20FromWhale = async (args: {
     }
 };
 
+const fundStablesE2eWallet = async ({
+    asset,
+    chain,
+    fundingSource,
+    minimumAmount,
+    publicClient,
+    rpcUrl,
+    wallet,
+}: {
+    asset: "USDT0" | "USDT0-ETH";
+    chain: typeof arbitrumE2eChain | typeof ethereumE2eChain;
+    fundingSource: Address;
+    minimumAmount: bigint;
+    publicClient: PublicClient;
+    rpcUrl: string;
+    wallet: Address;
+}) => {
+    const token = getRegtestTokenAddress(asset);
+    const tokenCode = await publicClient.getCode({ address: token });
+    if (tokenCode === undefined || tokenCode === "0x") {
+        throw new Error(`${asset} e2e fork is missing the token contract`);
+    }
+
+    await publicClient.request({
+        method: "anvil_setBalance" as never,
+        params: [wallet, "0x" + parseEther("10").toString(16)] as never,
+    });
+
+    if ((await getTokenBalance(publicClient, token, wallet)) >= minimumAmount) {
+        return;
+    }
+
+    await publicClient.request({
+        method: "anvil_setBalance" as never,
+        params: [fundingSource, "0x" + parseEther("1").toString(16)] as never,
+    });
+    await publicClient.request({
+        method: "anvil_impersonateAccount" as never,
+        params: [fundingSource] as never,
+    });
+
+    try {
+        const walletClient = createWalletClient({
+            account: fundingSource,
+            chain,
+            transport: http(rpcUrl, { timeout: actionTimeout }),
+        });
+        const hash = await walletClient.writeContract({
+            address: token,
+            abi: erc20Abi,
+            functionName: "transfer",
+            args: [wallet, stablesFundingAmount],
+        });
+        await publicClient.waitForTransactionReceipt({ hash });
+    } finally {
+        await publicClient.request({
+            method: "anvil_stopImpersonatingAccount" as never,
+            params: [fundingSource] as never,
+        });
+    }
+};
+
+export const fundEthereumStablesE2eWallet = async (
+    publicClient: PublicClient,
+    wallet: Address,
+) =>
+    await fundStablesE2eWallet({
+        asset: "USDT0-ETH",
+        chain: ethereumE2eChain,
+        fundingSource: stablesFundingSource,
+        minimumAmount: parseUnits(usdt0EthSendAmount, 6),
+        publicClient,
+        rpcUrl: ethereumRpcUrl(),
+        wallet,
+    });
+
+export const fundArbitrumStablesE2eWallet = async (
+    publicClient: PublicClient,
+    wallet: Address,
+) =>
+    await fundStablesE2eWallet({
+        asset: "USDT0",
+        chain: arbitrumE2eChain,
+        fundingSource: arbitrumStablesFundingSource,
+        minimumAmount: parseUnits(usdt0ArbitrumSendAmount, 6),
+        publicClient,
+        rpcUrl: arbitrumRpcUrl(),
+        wallet,
+    });
+
+export const expectEthereumWalletReady = async (
+    publicClient: PublicClient,
+    owner: Address,
+) => {
+    const token = getRegtestTokenAddress("USDT0-ETH");
+
+    expect(await publicClient.getBalance({ address: owner })).toBeGreaterThan(
+        0n,
+    );
+    expect(
+        await getTokenBalance(publicClient, token, owner),
+    ).toBeGreaterThanOrEqual(parseUnits(usdt0EthSendAmount, 6));
+};
+
+export const expectArbitrumWalletReady = async (
+    publicClient: PublicClient,
+    owner: Address,
+) => {
+    const token = getRegtestTokenAddress("USDT0");
+
+    expect(await publicClient.getBalance({ address: owner })).toBeGreaterThan(
+        0n,
+    );
+    expect(
+        await getTokenBalance(publicClient, token, owner),
+    ).toBeGreaterThanOrEqual(parseUnits(usdt0ArbitrumSendAmount, 6));
+};
+
 // Clears an EIP-7702 delegation inherited from forked mainnet state, which would
 // otherwise make Permit2 verify the lockup permit via EIP-1271 instead of ECDSA.
 export const clearEoaDelegation = async (
@@ -509,6 +655,37 @@ export const approveAndSend = async (page: Page, walletAddress: Address) => {
 
     await expect(send).toBeEnabled({ timeout: actionTimeout });
     await send.click();
+};
+
+export const clickSendBridge = approveAndSend;
+
+export const expectOftSendTx = async (
+    publicClient: PublicClient,
+    txHash: Hex,
+    walletAddress: Address,
+) => {
+    const transaction = await publicClient.getTransaction({
+        hash: txHash,
+    });
+    const receipt = await publicClient.waitForTransactionReceipt({
+        hash: txHash,
+        timeout: actionTimeout,
+    });
+    expect(receipt.status).toBe("success");
+
+    const [sent] = parseEventLogs({
+        abi: oftAbi,
+        eventName: "OFTSent",
+        logs: receipt.logs,
+    });
+
+    expect(sent).toBeDefined();
+    expect(isAddressEqual(sent.address, getAddress(transaction.to!))).toBe(
+        true,
+    );
+    expect(isAddressEqual(sent.args.fromAddress, walletAddress)).toBe(true);
+    expect(sent.args.amountSentLD).toBeGreaterThan(0n);
+    expect(sent.args.amountReceivedLD).toBeGreaterThan(0n);
 };
 
 export type { Address, Hex, PublicClient, WalletClient };

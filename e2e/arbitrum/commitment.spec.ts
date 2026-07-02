@@ -27,7 +27,7 @@ import {
     selectAssets,
     usdt0ArbitrumSendAmount,
     waitForDexQuote,
-} from "./utils";
+} from "./shared";
 
 const hasCommitmentSubmarinePair = async (): Promise<boolean> => {
     const response = await fetch(`${config.apiUrl.normal}/v2/swap/submarine`);
