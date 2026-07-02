@@ -328,6 +328,114 @@ describe("createWebSocketStatusSource", () => {
         }
     });
 
+    test("keeps backing off and degrades when the socket drops right after opening", async () => {
+        vi.useFakeTimers();
+        const fallbackUnsubscribe = vi.fn();
+        const fallbackSubscribe = vi.fn<StatusSource["subscribe"]>(
+            () => fallbackUnsubscribe,
+        );
+        const fallback: StatusSource = { subscribe: fallbackSubscribe };
+        try {
+            const source = createWebSocketStatusSource({
+                webSocketImpl: WebSocketImpl,
+                reconnect: noJitter,
+                fallback,
+            });
+            source.subscribe("a", () => {});
+
+            // Each socket opens then drops in the same instant, so the backoff
+            // must keep climbing instead of resetting on every open.
+            FakeWebSocket.instances[0].open();
+            FakeWebSocket.instances[0].drop();
+            await vi.advanceTimersByTimeAsync(100);
+            FakeWebSocket.instances[1].open();
+            FakeWebSocket.instances[1].drop();
+            await vi.advanceTimersByTimeAsync(200);
+            FakeWebSocket.instances[2].open();
+            FakeWebSocket.instances[2].drop();
+            await vi.advanceTimersByTimeAsync(400);
+
+            expect(FakeWebSocket.instances).toHaveLength(4);
+            expect(fallbackSubscribe.mock.calls.map((c) => c[0])).toEqual([
+                "a",
+            ]);
+
+            // Another doomed open must not tear the fallback down.
+            FakeWebSocket.instances[3].open();
+            expect(fallbackUnsubscribe).not.toHaveBeenCalled();
+            expect(fallbackSubscribe).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("resets the backoff once a frame arrives past the stable threshold", async () => {
+        vi.useFakeTimers();
+        try {
+            const source = createWebSocketStatusSource({
+                webSocketImpl: WebSocketImpl,
+                reconnect: noJitter,
+            });
+            source.subscribe("a", () => {});
+
+            FakeWebSocket.instances[0].drop();
+            await vi.advanceTimersByTimeAsync(100);
+            FakeWebSocket.instances[1].drop();
+            await vi.advanceTimersByTimeAsync(200);
+            expect(FakeWebSocket.instances).toHaveLength(3);
+
+            FakeWebSocket.instances[2].open();
+            await vi.advanceTimersByTimeAsync(10_000);
+            FakeWebSocket.instances[2].recv({ event: "pong" });
+            FakeWebSocket.instances[2].drop();
+
+            // Staying alive cleared the backoff: the next retry is the initial delay.
+            await vi.advanceTimersByTimeAsync(99);
+            expect(FakeWebSocket.instances).toHaveLength(3);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(FakeWebSocket.instances).toHaveLength(4);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("a half-open socket that delivers no frames never counts as stable", async () => {
+        vi.useFakeTimers();
+        const fallbackSubscribe = vi.fn<StatusSource["subscribe"]>(
+            () => () => {},
+        );
+        const fallback: StatusSource = { subscribe: fallbackSubscribe };
+        try {
+            const source = createWebSocketStatusSource({
+                webSocketImpl: WebSocketImpl,
+                reconnect: noJitter,
+                pingIntervalMs: 15_000,
+                fallback,
+            });
+            source.subscribe("a", () => {});
+
+            // Silent sockets die by ping timeout at 30s — past stableResetMs.
+            FakeWebSocket.instances[0].open();
+            await vi.advanceTimersByTimeAsync(30_000);
+            expect(fallbackSubscribe).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(100);
+            FakeWebSocket.instances[1].open();
+            await vi.advanceTimersByTimeAsync(30_000);
+            expect(fallbackSubscribe).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(200);
+            FakeWebSocket.instances[2].open();
+            await vi.advanceTimersByTimeAsync(30_000);
+
+            expect(fallbackSubscribe.mock.calls.map((c) => c[0])).toEqual([
+                "a",
+            ]);
+
+            source.close?.();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("unsubscribes the id and closes the socket when the last id leaves", () => {
         const source = createWebSocketStatusSource({
             webSocketImpl: WebSocketImpl,
@@ -524,12 +632,15 @@ describe("createWebSocketStatusSource", () => {
             const recovered =
                 FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
             recovered.open();
-            expect(fallbackSubs).toHaveLength(0);
+            // Polling keeps covering until the socket proves stable.
+            expect(fallbackSubs.map((s) => s.id)).toEqual(["a"]);
+            await vi.advanceTimersByTimeAsync(10_000);
             recovered.recv({
                 event: "update",
                 channel: "swap.update",
                 args: [update("a", "transaction.confirmed")],
             });
+            expect(fallbackSubs).toHaveLength(0);
             expect(seen.map((u) => u.status)).toEqual([
                 "transaction.mempool",
                 "transaction.confirmed",

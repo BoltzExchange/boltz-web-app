@@ -30,6 +30,9 @@ export type ReconnectOptions = {
     jitter?: number;
     // Activate the polling fallback after this many failed connects. Default 3.
     fallbackAfterAttempts?: number;
+    // A frame arriving this long after open proves the socket stable,
+    // resetting the backoff and disengaging the fallback. Default 10000.
+    stableResetMs?: number;
 };
 
 export type WebSocketStatusSourceOptions = {
@@ -70,6 +73,7 @@ const resolveReconnect = (
         factor: 2,
         jitter: 0.5,
         fallbackAfterAttempts: 3,
+        stableResetMs: 10_000,
         ...(reconnect ?? {}),
     };
 };
@@ -99,6 +103,7 @@ export const createWebSocketStatusSource = (
     let pingTimer: ReturnType<typeof setInterval> | undefined;
     let awaitingPong = false;
     let attempt = 0;
+    let openedAt = 0;
     let fallbackActive = false;
     let sourceClosed = false;
 
@@ -253,6 +258,7 @@ export const createWebSocketStatusSource = (
         clearOpenTimer();
         stopPinging();
         ws = undefined;
+        openedAt = 0;
         if (reconnect === false) {
             // Not reconnecting: degrade to the fallback (if any) for good
             // rather than going silently dark.
@@ -315,8 +321,11 @@ export const createWebSocketStatusSource = (
                 return;
             }
             clearOpenTimer();
-            attempt = 0;
-            deactivateFallback();
+            if (reconnect === false) {
+                deactivateFallback();
+            } else {
+                openedAt = Date.now();
+            }
             send("subscribe", Array.from(subscribers.keys()));
             startPinging(socket);
         };
@@ -326,6 +335,17 @@ export const createWebSocketStatusSource = (
             }
             // Any inbound frame proves the connection is alive.
             awaitingPong = false;
+            if (
+                reconnect !== false &&
+                openedAt !== 0 &&
+                Date.now() - openedAt >= reconnect.stableResetMs
+            ) {
+                // Frames past the threshold prove stability; mere openness
+                // (e.g. a half-open socket) never earns this reset.
+                openedAt = 0;
+                attempt = 0;
+                deactivateFallback();
+            }
             handleMessage(event.data);
         };
         socket.onerror = (event): void => {
@@ -352,6 +372,7 @@ export const createWebSocketStatusSource = (
             // fresh rather than inheriting a stale high backoff / degraded flag.
             deactivateFallback();
             attempt = 0;
+            openedAt = 0;
             if (reconnectTimer !== undefined) {
                 clearTimeout(reconnectTimer);
                 reconnectTimer = undefined;
