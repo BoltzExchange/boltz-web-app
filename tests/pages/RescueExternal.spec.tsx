@@ -4,7 +4,7 @@ import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
-import { WBTC } from "../../src/consts/Assets";
+import { WBTC, getAssetDisplaySymbol } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import { mapRestorableSwaps } from "../../src/pages/external-rescue/scan";
@@ -506,9 +506,11 @@ describe("RescueExternal", () => {
             claimDetails,
             refundDetails: claimDetails,
             metadata: await encryptSwapMetadata(mnemonic, {
-                hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDT0" }],
-                position: SwapPosition.Post,
-                quoteAmount: 10_000,
+                dex: {
+                    hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDT0" }],
+                    position: SwapPosition.Post,
+                    quoteAmount: 10_000,
+                },
                 bridge: {
                     sourceAsset: "USDT0",
                     destinationAsset: "USDT0-SOL",
@@ -522,9 +524,11 @@ describe("RescueExternal", () => {
         const mappedSwap = mapped as Partial<SomeSwap> & { to?: string };
         expect(mappedSwap.to).toBe("TBTC");
         expect(mappedSwap.assetReceive).toBe("TBTC");
-        expect(getFinalAssetReceive(mappedSwap as SomeSwap, true)).toBe(
-            "USDT0-SOL",
+        const finalAssetReceive = getFinalAssetReceive(
+            mappedSwap as SomeSwap,
+            true,
         );
+        expect(finalAssetReceive).toBe("USDT0-SOL");
 
         mockGetRestorableSwaps
             .mockResolvedValueOnce([swap])
@@ -559,6 +563,9 @@ describe("RescueExternal", () => {
         const assets = row.querySelectorAll(".asset");
         expect(assets).toHaveLength(2);
         expect(assets[0]).toHaveAttribute("data-asset", "LBTC");
-        expect(assets[1]).toHaveAttribute("data-asset", "USDT0-SOL");
+        expect(assets[1]).toHaveAttribute(
+            "data-asset",
+            getAssetDisplaySymbol(finalAssetReceive),
+        );
     });
 });

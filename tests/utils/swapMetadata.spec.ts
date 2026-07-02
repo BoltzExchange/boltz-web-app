@@ -1,15 +1,22 @@
 import { hex } from "@scure/base";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
+import { beforeEach, vi } from "vitest";
 
-import type { BridgeDetail } from "../../src/utils/swapCreator";
 import {
     type SwapMetadataPayload,
-    buildSwapMetadataPayload,
     buildSwapMetadataPayloadFromSwap,
     decryptSwapMetadata,
     encryptSwapMetadata,
-    swapMetadataToLocalFields,
+    patchEncryptedSwapMetadata,
 } from "../../src/utils/swapMetadata";
+
+const mocks = vi.hoisted(() => ({
+    patchSwapMetadata: vi.fn(),
+}));
+
+vi.mock("boltz-swaps/client", () => ({
+    patchSwapMetadata: mocks.patchSwapMetadata,
+}));
 
 const mnemonic =
     "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
@@ -18,11 +25,14 @@ const otherMnemonic =
 
 // Matches the backend's metadata format (hex).
 const backendMetadataRegex = /^(?:[0-9a-fA-F]{2})+$/;
+const rescueFile = { mnemonic } as never;
 
 const samplePayload: SwapMetadataPayload = {
-    hops: [{ type: SwapType.Dex, from: "TBTC", to: "WBTC" }],
-    position: SwapPosition.Post,
-    quoteAmount: 12345,
+    dex: {
+        hops: [{ type: SwapType.Dex, from: "TBTC", to: "WBTC" }],
+        position: SwapPosition.Post,
+        quoteAmount: 12345,
+    },
     lockupTx: "0xlockup",
     commitmentLockupTxHash: "0xcommitment",
     bridge: {
@@ -67,83 +77,29 @@ describe("swapMetadata crypto", () => {
             /too short/,
         );
     });
-});
 
-const makeBridge = (position: SwapPosition): BridgeDetail => ({
-    kind: BridgeKind.Cctp,
-    sourceAsset: "USDC",
-    destinationAsset: "USDC-BASE",
-    position,
-});
+    test("rejects unexpected payload fields", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...samplePayload,
+            unexpected: true,
+        } as never);
 
-describe("buildSwapMetadataPayload", () => {
-    test("returns undefined for a direct pair with no DEX or bridge", () => {
-        expect(
-            buildSwapMetadataPayload({
+        await expect(decryptSwapMetadata(mnemonic, metadata)).rejects.toThrow(
+            /unknown field unexpected/,
+        );
+    });
+
+    test("rejects malformed DEX metadata", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            dex: {
                 hops: [],
-                hopsPosition: undefined,
-                bridge: undefined,
-                sendAmount: 1000,
-                receiveAmount: 900,
-            }),
-        ).toBeUndefined();
-    });
-
-    test("includes hops/position/quoteAmount from sendAmount for pre-DEX", () => {
-        const payload = buildSwapMetadataPayload({
-            hops: [{ type: SwapType.Dex, from: "WBTC", to: "TBTC" }],
-            hopsPosition: SwapPosition.Pre,
-            bridge: undefined,
-            sendAmount: 1000,
-            receiveAmount: 900,
-        });
-        expect(payload).toEqual({
-            hops: [{ type: SwapType.Dex, from: "WBTC", to: "TBTC" }],
-            position: SwapPosition.Pre,
-            quoteAmount: 1000,
-        });
-    });
-
-    test("uses receiveAmount as quoteAmount for post-DEX", () => {
-        const payload = buildSwapMetadataPayload({
-            hops: [{ type: SwapType.Dex, from: "TBTC", to: "WBTC" }],
-            hopsPosition: SwapPosition.Post,
-            bridge: undefined,
-            sendAmount: 1000,
-            receiveAmount: 900,
-        });
-        expect(payload?.quoteAmount).toBe(900);
-        expect(payload?.bridge).toBeUndefined();
-    });
-
-    test("includes only the bridge when there is no DEX route", () => {
-        const payload = buildSwapMetadataPayload({
-            hops: [],
-            hopsPosition: undefined,
-            bridge: makeBridge(SwapPosition.Pre),
-            sendAmount: 1000,
-            receiveAmount: 900,
-        });
-        expect(payload).toEqual({
-            bridge: {
-                sourceAsset: "USDC",
-                destinationAsset: "USDC-BASE",
-                kind: BridgeKind.Cctp,
-                position: SwapPosition.Pre,
+                position: SwapPosition.Post,
             },
-        });
-    });
+        } as never);
 
-    test("combines DEX and bridge into a single payload", () => {
-        const payload = buildSwapMetadataPayload({
-            hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDC" }],
-            hopsPosition: SwapPosition.Post,
-            bridge: makeBridge(SwapPosition.Post),
-            sendAmount: 1000,
-            receiveAmount: 900,
-        });
-        expect(payload?.hops).toBeDefined();
-        expect(payload?.bridge).toBeDefined();
+        await expect(decryptSwapMetadata(mnemonic, metadata)).rejects.toThrow(
+            /quoteAmount/,
+        );
     });
 });
 
@@ -159,42 +115,54 @@ describe("buildSwapMetadataPayloadFromSwap", () => {
     });
 });
 
-describe("swapMetadataToLocalFields", () => {
-    test("maps a full payload to dex and bridge fields", () => {
-        expect(swapMetadataToLocalFields(samplePayload)).toEqual({
-            dex: {
-                hops: samplePayload.hops,
-                position: SwapPosition.Post,
-                quoteAmount: 12345,
-            },
-            bridge: {
-                sourceAsset: "USDC",
-                destinationAsset: "USDC-BASE",
-                kind: BridgeKind.Cctp,
-                position: SwapPosition.Post,
-            },
-            lockupTx: "0xlockup",
-            commitmentLockupTxHash: "0xcommitment",
+describe("patchEncryptedSwapMetadata", () => {
+    beforeEach(() => {
+        mocks.patchSwapMetadata.mockReset();
+    });
+
+    test("patches routed metadata with tx identity", async () => {
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Submarine,
+                id: "swap-id",
+                lockupTx: "0xtx",
+                dex: samplePayload.dex,
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).toHaveBeenCalledOnce();
+        const [swapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
+        expect(swapId).toBe("swap-id");
+        await expect(decryptSwapMetadata(mnemonic, metadata)).resolves.toEqual({
+            lockupTx: "0xtx",
+            dex: samplePayload.dex,
         });
     });
 
-    test("omits dex when there are no hops", () => {
-        expect(
-            swapMetadataToLocalFields({
-                bridge: {
-                    sourceAsset: "USDC",
-                    destinationAsset: "USDC-BASE",
-                    kind: BridgeKind.Cctp,
-                    position: SwapPosition.Pre,
-                },
-            }),
-        ).toEqual({
-            bridge: {
-                sourceAsset: "USDC",
-                destinationAsset: "USDC-BASE",
-                kind: BridgeKind.Cctp,
-                position: SwapPosition.Pre,
-            },
-        });
+    test("does not patch tx identity without route metadata", async () => {
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Submarine,
+                id: "swap-id",
+                lockupTx: "0xtx",
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).not.toHaveBeenCalled();
+    });
+
+    test("does not patch route metadata without tx identity", async () => {
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Submarine,
+                id: "swap-id",
+                dex: samplePayload.dex,
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).not.toHaveBeenCalled();
     });
 });

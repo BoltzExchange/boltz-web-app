@@ -5,7 +5,6 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
-import { SwapType } from "boltz-swaps/types";
 
 import type * as FetcherModule from "../src/http/fetcher.ts";
 
@@ -151,14 +150,10 @@ describe("boltzClient swap metadata", () => {
     });
 
     test("patches metadata on the metadata endpoint", async () => {
-        await patchSwapMetadata(
-            SwapType.Chain,
-            "swap-id",
-            "encrypted-metadata",
-        );
+        await patchSwapMetadata("swap-id", "encrypted-metadata");
 
         expect(fetcherMock).toHaveBeenCalledWith(
-            "/v2/swap/chain/swap-id/metadata",
+            "/v2/swap/swap-id/metadata",
             { metadata: "encrypted-metadata" },
             { method: "PATCH" },
         );

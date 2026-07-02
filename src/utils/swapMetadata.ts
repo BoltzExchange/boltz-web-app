@@ -1,32 +1,28 @@
 import { hex } from "@scure/base";
-import { type BridgeKind, SwapPosition } from "boltz-swaps/types";
+import { patchSwapMetadata } from "boltz-swaps/client";
+import { BridgeKind, SwapPosition } from "boltz-swaps/types";
+import log from "loglevel";
 
 import type { EncodedHop } from "./Pair";
-import type { BridgeDetail, SomeSwap } from "./swapCreator";
+import type { RescueFile } from "./rescueFile";
+import type {
+    BridgeDetail,
+    DexDetail,
+    SomeSwap,
+    SwapBase,
+} from "./swapCreator";
 
-export type SwapMetadataPayload = {
-    hops?: EncodedHop[];
-    position?: SwapPosition;
-    quoteAmount?: number | string;
-    lockupTx?: string;
-    commitmentLockupTxHash?: string;
-    bridge?: {
-        sourceAsset: string;
-        destinationAsset: string;
-        kind: BridgeKind;
-        position: SwapPosition;
-    };
-};
+type SwapMetadataBridge = Pick<
+    BridgeDetail,
+    "sourceAsset" | "destinationAsset" | "kind" | "position"
+>;
 
-export type SwapMetadataLocalFields = {
-    dex?: {
-        hops: EncodedHop[];
-        position: SwapPosition;
-        quoteAmount: number | string;
-    };
-    bridge?: BridgeDetail;
-    lockupTx?: string;
-    commitmentLockupTxHash?: string;
+export type SwapMetadataPayload = Pick<
+    SwapBase,
+    "lockupTx" | "commitmentLockupTxHash"
+> & {
+    dex?: DexDetail;
+    bridge?: SwapMetadataBridge;
 };
 
 const IV_LENGTH = 12;
@@ -34,8 +30,145 @@ const IV_LENGTH = 12;
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+const topLevelMetadataKeys = new Set([
+    "dex",
+    "bridge",
+    "lockupTx",
+    "commitmentLockupTxHash",
+]);
+const dexMetadataKeys = new Set(["hops", "position", "quoteAmount"]);
+const bridgeMetadataKeys = new Set([
+    "sourceAsset",
+    "destinationAsset",
+    "kind",
+    "position",
+]);
+
 const toBufferSource = (view: Uint8Array): Uint8Array<ArrayBuffer> =>
     new Uint8Array(view);
+
+const assertObject = (
+    value: unknown,
+    context: string,
+): Record<string, unknown> => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new Error(`${context} must be an object`);
+    }
+
+    return value as Record<string, unknown>;
+};
+
+const assertKnownKeys = (
+    object: Record<string, unknown>,
+    keys: Set<string>,
+    context: string,
+) => {
+    const unknownKey = Object.keys(object).find((key) => !keys.has(key));
+    if (unknownKey !== undefined) {
+        throw new Error(`${context} contains unknown field ${unknownKey}`);
+    }
+};
+
+const readString = (
+    object: Record<string, unknown>,
+    key: string,
+    context: string,
+): string => {
+    const value = object[key];
+    if (typeof value !== "string") {
+        throw new Error(`${context}.${key} must be a string`);
+    }
+
+    return value;
+};
+
+const isSwapPosition = (value: unknown): value is SwapPosition =>
+    value === SwapPosition.Pre || value === SwapPosition.Post;
+
+const readSwapPosition = (
+    object: Record<string, unknown>,
+    key: string,
+    context: string,
+): SwapPosition => {
+    const value = object[key];
+    if (!isSwapPosition(value)) {
+        throw new Error(`${context}.${key} must be a swap position`);
+    }
+
+    return value;
+};
+
+const parseDexMetadata = (value: unknown): DexDetail => {
+    const object = assertObject(value, "swap metadata dex");
+    assertKnownKeys(object, dexMetadataKeys, "swap metadata dex");
+
+    if (!Array.isArray(object.hops)) {
+        throw new Error("swap metadata dex.hops must be an array");
+    }
+
+    const quoteAmount = object.quoteAmount;
+    if (typeof quoteAmount !== "number" && typeof quoteAmount !== "string") {
+        throw new Error(
+            "swap metadata dex.quoteAmount must be a number or string",
+        );
+    }
+
+    return {
+        hops: object.hops as EncodedHop[],
+        position: readSwapPosition(object, "position", "swap metadata dex"),
+        quoteAmount,
+    };
+};
+
+const parseBridgeMetadata = (value: unknown): SwapMetadataBridge => {
+    const object = assertObject(value, "swap metadata bridge");
+    assertKnownKeys(object, bridgeMetadataKeys, "swap metadata bridge");
+
+    const kind = object.kind;
+    if (!Object.values(BridgeKind).includes(kind as BridgeKind)) {
+        throw new Error("swap metadata bridge.kind must be a bridge kind");
+    }
+
+    return {
+        sourceAsset: readString(object, "sourceAsset", "swap metadata bridge"),
+        destinationAsset: readString(
+            object,
+            "destinationAsset",
+            "swap metadata bridge",
+        ),
+        kind: kind as BridgeKind,
+        position: readSwapPosition(object, "position", "swap metadata bridge"),
+    };
+};
+
+const parseSwapMetadataPayload = (value: unknown): SwapMetadataPayload => {
+    const object = assertObject(value, "swap metadata");
+    assertKnownKeys(object, topLevelMetadataKeys, "swap metadata");
+
+    const payload: SwapMetadataPayload = {};
+
+    if (object.dex !== undefined) {
+        payload.dex = parseDexMetadata(object.dex);
+    }
+
+    if (object.bridge !== undefined) {
+        payload.bridge = parseBridgeMetadata(object.bridge);
+    }
+
+    if (object.lockupTx !== undefined) {
+        payload.lockupTx = readString(object, "lockupTx", "swap metadata");
+    }
+
+    if (object.commitmentLockupTxHash !== undefined) {
+        payload.commitmentLockupTxHash = readString(
+            object,
+            "commitmentLockupTxHash",
+            "swap metadata",
+        );
+    }
+
+    return payload;
+};
 
 const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
     const keyMaterial = await crypto.subtle.importKey(
@@ -102,48 +235,7 @@ export const decryptSwapMetadata = async (
         toBufferSource(ciphertext),
     );
 
-    return JSON.parse(textDecoder.decode(plaintext)) as SwapMetadataPayload;
-};
-
-// Builds the payload from the same data used for local storage. Returns
-// undefined when the swap is direct (no client-side DEX hops and no bridge), in
-// which case no metadata should be sent.
-export const buildSwapMetadataPayload = ({
-    hops,
-    hopsPosition,
-    bridge,
-    sendAmount,
-    receiveAmount,
-}: {
-    hops: EncodedHop[];
-    hopsPosition: SwapPosition | undefined;
-    bridge: BridgeDetail | undefined;
-    sendAmount: number;
-    receiveAmount: number;
-}): SwapMetadataPayload | undefined => {
-    if (hopsPosition === undefined && bridge === undefined) {
-        return undefined;
-    }
-
-    const payload: SwapMetadataPayload = {};
-
-    if (hopsPosition !== undefined) {
-        payload.hops = hops;
-        payload.position = hopsPosition;
-        payload.quoteAmount =
-            hopsPosition === SwapPosition.Post ? receiveAmount : sendAmount;
-    }
-
-    if (bridge !== undefined) {
-        payload.bridge = {
-            sourceAsset: bridge.sourceAsset,
-            destinationAsset: bridge.destinationAsset,
-            kind: bridge.kind,
-            position: bridge.position,
-        };
-    }
-
-    return payload;
+    return parseSwapMetadataPayload(JSON.parse(textDecoder.decode(plaintext)));
 };
 
 export const buildSwapMetadataPayloadFromSwap = (
@@ -152,9 +244,7 @@ export const buildSwapMetadataPayloadFromSwap = (
     const payload: SwapMetadataPayload = {};
 
     if (swap.dex !== undefined) {
-        payload.hops = swap.dex.hops;
-        payload.position = swap.dex.position;
-        payload.quoteAmount = swap.dex.quoteAmount;
+        payload.dex = swap.dex;
     }
 
     if (swap.bridge !== undefined) {
@@ -177,37 +267,43 @@ export const buildSwapMetadataPayloadFromSwap = (
     return Object.keys(payload).length > 0 ? payload : undefined;
 };
 
-// Converts a decrypted payload back into the local swap fields. Used during
-// restore to repopulate DEX/bridge routes the backend does not store.
-export const swapMetadataToLocalFields = (
-    payload: SwapMetadataPayload,
-): SwapMetadataLocalFields => {
-    const fields: SwapMetadataLocalFields = {};
+const hasMetadataTxIdentity = (payload: SwapMetadataPayload): boolean =>
+    payload.lockupTx !== undefined ||
+    payload.commitmentLockupTxHash !== undefined;
 
-    if (payload.position !== undefined && payload.hops !== undefined) {
-        fields.dex = {
-            hops: payload.hops,
-            position: payload.position,
-            quoteAmount: payload.quoteAmount ?? 0,
-        };
+const hasRouteMetadata = (payload: SwapMetadataPayload): boolean =>
+    payload.dex !== undefined || payload.bridge !== undefined;
+
+export const patchEncryptedSwapMetadata = async (
+    swap: SomeSwap,
+    rescueFile: RescueFile | null | undefined,
+) => {
+    const payload = buildSwapMetadataPayloadFromSwap(swap);
+    if (
+        payload === undefined ||
+        !hasRouteMetadata(payload) ||
+        !hasMetadataTxIdentity(payload)
+    ) {
+        return;
     }
 
-    if (payload.bridge !== undefined) {
-        fields.bridge = {
-            sourceAsset: payload.bridge.sourceAsset,
-            destinationAsset: payload.bridge.destinationAsset,
-            kind: payload.bridge.kind,
-            position: payload.bridge.position,
-        };
+    const mnemonic = rescueFile?.mnemonic;
+    if (mnemonic === undefined || mnemonic === "") {
+        log.warn("Cannot patch swap metadata without rescue file", {
+            swapId: swap.id,
+        });
+        return;
     }
 
-    if (payload.lockupTx !== undefined) {
-        fields.lockupTx = payload.lockupTx;
+    try {
+        await patchSwapMetadata(
+            swap.id,
+            await encryptSwapMetadata(mnemonic, payload),
+        );
+    } catch (error) {
+        log.warn("Failed to patch swap metadata", {
+            swapId: swap.id,
+            error,
+        });
     }
-
-    if (payload.commitmentLockupTxHash !== undefined) {
-        fields.commitmentLockupTxHash = payload.commitmentLockupTxHash;
-    }
-
-    return fields;
 };
