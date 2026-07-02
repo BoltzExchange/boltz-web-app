@@ -18,6 +18,17 @@ export type SwapMetadataPayload = {
     };
 };
 
+export type SwapMetadataLocalFields = {
+    dex?: {
+        hops: EncodedHop[];
+        position: SwapPosition;
+        quoteAmount: number | string;
+    };
+    bridge?: BridgeDetail;
+    lockupTx?: string;
+    commitmentLockupTxHash?: string;
+};
+
 const IV_LENGTH = 12;
 
 const textEncoder = new TextEncoder();
@@ -164,4 +175,39 @@ export const buildSwapMetadataPayloadFromSwap = (
     }
 
     return Object.keys(payload).length > 0 ? payload : undefined;
+};
+
+// Converts a decrypted payload back into the local swap fields. Used during
+// restore to repopulate DEX/bridge routes the backend does not store.
+export const swapMetadataToLocalFields = (
+    payload: SwapMetadataPayload,
+): SwapMetadataLocalFields => {
+    const fields: SwapMetadataLocalFields = {};
+
+    if (payload.position !== undefined && payload.hops !== undefined) {
+        fields.dex = {
+            hops: payload.hops,
+            position: payload.position,
+            quoteAmount: payload.quoteAmount ?? 0,
+        };
+    }
+
+    if (payload.bridge !== undefined) {
+        fields.bridge = {
+            sourceAsset: payload.bridge.sourceAsset,
+            destinationAsset: payload.bridge.destinationAsset,
+            kind: payload.bridge.kind,
+            position: payload.bridge.position,
+        };
+    }
+
+    if (payload.lockupTx !== undefined) {
+        fields.lockupTx = payload.lockupTx;
+    }
+
+    if (payload.commitmentLockupTxHash !== undefined) {
+        fields.commitmentLockupTxHash = payload.commitmentLockupTxHash;
+    }
+
+    return fields;
 };
