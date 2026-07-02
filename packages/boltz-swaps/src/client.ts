@@ -4,7 +4,13 @@ import type { Address, Hex } from "viem";
 import { getReferralHeader, isCooperativeDisabled } from "./config.ts";
 import { fetcher } from "./http/fetcher.ts";
 import { getLogger } from "./logger.ts";
-import { type ContractAddresses, type Contracts, SwapType } from "./types.ts";
+import {
+    type ContractAddresses,
+    type Contracts,
+    type FetchOptions,
+    SwapType,
+} from "./types.ts";
+import { defaultFetchTimeoutMs } from "./util/abort.ts";
 
 export type { ContractAddresses, Contracts };
 
@@ -267,11 +273,17 @@ export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
 export const fetchBolt12Invoice = (
     offer: string,
     amountSat: number,
+    opts?: FetchOptions,
 ): Promise<{ invoice: string }> =>
-    fetcher<{ invoice: string }>("/v2/lightning/BTC/bolt12/fetch", {
-        offer,
-        amount: amountSat,
-    });
+    fetcher<{ invoice: string }>(
+        "/v2/lightning/BTC/bolt12/fetch",
+        {
+            offer,
+            amount: amountSat,
+        },
+        { signal: opts?.signal },
+        opts?.timeoutMs ?? defaultFetchTimeoutMs,
+    );
 
 export const fetchBip21Invoice = async (invoice: string) => {
     const log = getLogger();

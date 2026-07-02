@@ -4,8 +4,7 @@ import { formatError } from "../errors.ts";
 // Default timeout for non-Tor requests; host can override per-call. Tor
 // detection is host-side, so the host bootstrap is expected to supply a
 // longer timeout when running over Tor via the `requestTimeoutDuration`
-// parameter at the call sites that care (none today — 15s suffices for all
-// current consumers).
+// parameter at the call sites that care.
 const defaultTimeoutDuration = 15_000;
 
 export const fetcher = async <T = unknown>(

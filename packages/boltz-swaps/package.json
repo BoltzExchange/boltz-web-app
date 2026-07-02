@@ -65,6 +65,16 @@
             "types": "./dist/invoice.d.ts",
             "default": "./dist/invoice.js"
         },
+        "./resolveInvoice": {
+            "source": "./src/resolveInvoice.ts",
+            "types": "./dist/resolveInvoice.d.ts",
+            "default": "./dist/resolveInvoice.js"
+        },
+        "./lnurl": {
+            "source": "./src/lnurl.ts",
+            "types": "./dist/lnurl.d.ts",
+            "default": "./dist/lnurl.js"
+        },
         "./client": {
             "source": "./src/client.ts",
             "types": "./dist/client.d.ts",

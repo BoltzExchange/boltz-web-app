@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import type { Pairs } from "boltz-swaps/client";
+import type * as InvoiceModule from "boltz-swaps/invoice";
 
 import CreateButton, {
     getClaimAddress,
@@ -31,6 +32,18 @@ import {
     signals,
 } from "../helper";
 import { pairs as testPairs } from "../pairs";
+
+vi.mock("boltz-swaps/invoice", async (importActual) => {
+    const actual = await importActual<typeof InvoiceModule>();
+    return {
+        ...actual,
+        decodeInvoice: () => ({
+            type: actual.InvoiceType.Bolt11,
+            satoshis: 60_000,
+            preimageHash: "00".repeat(32),
+        }),
+    };
+});
 
 vi.mock("../../src/config", async () => {
     const actual =
@@ -939,5 +952,151 @@ describe("CreateButton", () => {
         expect(errorBtn.disabled).toBeTruthy();
         expect(errorBtn.classList.contains("btn-error")).toBe(true);
         expect(errorBtn.classList.contains("btn-danger")).toBe(false);
+    });
+
+    test("should resolve an LNURL invoice on click and store it", async () => {
+        const fetchMock = vi.fn((url: string) => {
+            if (url.includes("/.well-known/lnurlp/")) {
+                return Promise.resolve(
+                    new Response(
+                        JSON.stringify({
+                            minSendable: 1_000,
+                            maxSendable: 200_000_000,
+                            callback: "https://example.com/cb",
+                        }),
+                        {
+                            status: 200,
+                            headers: { "content-type": "application/json" },
+                        },
+                    ),
+                );
+            }
+            if (url.startsWith("https://example.com/cb")) {
+                return Promise.resolve(
+                    new Response(JSON.stringify({ pr: invoice }), {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+                );
+            }
+            // The racing BIP-353 DoH lookup never settles.
+            return new Promise<Response>(() => {});
+        });
+        vi.stubGlobal("fetch", fetchMock);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(400));
+        signals.setReceiveAmount(BigNumber(300));
+        signals.setAmountValid(true);
+        signals.setAddressValid(true);
+        setPairAssets(LBTC, LN);
+        signals.setLnurl("test@example.com");
+
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        btn.click();
+
+        await waitFor(() => expect(signals.invoice()).toBe(invoice));
+        expect(signals.lnurl()).toBe("");
+        expect(signals.invoiceValid()).toBe(true);
+        expect(fetchMock).toHaveBeenCalledWith(
+            "https://example.com/cb?amount=300000",
+            expect.anything(),
+        );
+    });
+
+    test("should recover to an enabled button when the LNURL fetch fails", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn((url: string) =>
+                Promise.resolve(
+                    url.includes("/.well-known/lnurlp/")
+                        ? new Response(
+                              JSON.stringify({
+                                  status: "ERROR",
+                                  reason: "no user",
+                              }),
+                              {
+                                  status: 404,
+                                  headers: {
+                                      "content-type": "application/json",
+                                  },
+                              },
+                          )
+                        : new Response("nope", { status: 500 }),
+                ),
+            ),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(400));
+        signals.setReceiveAmount(BigNumber(300));
+        signals.setAmountValid(true);
+        signals.setAddressValid(true);
+        setPairAssets(LBTC, LN);
+        signals.setLnurl("test@example.com");
+
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        btn.click();
+
+        await waitFor(() => expect(btn.disabled).toBeFalsy());
+        expect(btn.textContent).toBe(i18n.en.create_swap);
+        expect(signals.lnurl()).toBe("test@example.com");
+        expect(signals.invoice()).toBe("");
+    });
+
+    test("should clear stale invoice validity when resolution fails", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(() => Promise.resolve(new Response("nope", { status: 500 }))),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(400));
+        signals.setReceiveAmount(BigNumber(300));
+        signals.setAmountValid(true);
+        signals.setAddressValid(true);
+        setPairAssets(LBTC, LN);
+        signals.setLnurl("test@example.com");
+        signals.setInvoiceValid(true);
+
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        btn.click();
+
+        await waitFor(() => expect(signals.invoiceValid()).toBe(false));
+        expect(signals.lnurl()).toBe("test@example.com");
+        await waitFor(() => expect(btn.disabled).toBeFalsy());
     });
 });

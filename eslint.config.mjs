@@ -18,7 +18,6 @@ export default [
             "node_modules",
             "dnssec-prover",
             "vite.config.mjs",
-            "src/utils/dnssec/dnssec_prover*",
             "packages/*/src/generated/**",
             "packages/*/dist/**",
             "packages/*/vitest*.config.mjs",

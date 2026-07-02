@@ -2,6 +2,7 @@ import {
     createChainSwap,
     createReverseSwap,
     createSubmarineSwap,
+    fetchBolt12Invoice,
     getSwapStatuses,
     patchSwapMetadata,
     quoteDexAmountIn,
@@ -56,6 +57,55 @@ describe("boltzClient DEX quotes", () => {
         );
         expect(result.map(({ quote }) => quote)).toEqual(["5", "10", "25"]);
         expect(quotes.map(({ quote }) => quote)).toEqual(["10", "25", "5"]);
+    });
+});
+
+describe("fetchBolt12Invoice", () => {
+    beforeEach(() => {
+        fetcherMock.mockReset();
+    });
+
+    test("posts the offer and amount and forwards the abort signal", async () => {
+        const controller = new AbortController();
+        fetcherMock.mockResolvedValue({ invoice: "lni1inv" });
+
+        const result = await fetchBolt12Invoice("lno1offer", 1234, {
+            signal: controller.signal,
+        });
+
+        expect(result).toEqual({ invoice: "lni1inv" });
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/lightning/BTC/bolt12/fetch",
+            { offer: "lno1offer", amount: 1234 },
+            { signal: controller.signal },
+            25_000,
+        );
+    });
+
+    test("passes an undefined signal and the default timeout when no options are given", async () => {
+        fetcherMock.mockResolvedValue({ invoice: "lni1inv" });
+
+        await fetchBolt12Invoice("lno1offer", 1234);
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/lightning/BTC/bolt12/fetch",
+            { offer: "lno1offer", amount: 1234 },
+            { signal: undefined },
+            25_000,
+        );
+    });
+
+    test("forwards a custom timeout as the fetcher request timeout", async () => {
+        fetcherMock.mockResolvedValue({ invoice: "lni1inv" });
+
+        await fetchBolt12Invoice("lno1offer", 1234, { timeoutMs: 5_000 });
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/lightning/BTC/bolt12/fetch",
+            { offer: "lno1offer", amount: 1234 },
+            { signal: undefined },
+            5_000,
+        );
     });
 });
 
