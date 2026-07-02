@@ -36,7 +36,7 @@ export const fetcher = async <T = unknown>(
 
         const requestOptions: RequestInit = {
             ...options,
-            method: params ? "POST" : options?.method,
+            method: params ? (options?.method ?? "POST") : options?.method,
             headers,
             signal,
             body: params ? JSON.stringify(params) : options?.body,

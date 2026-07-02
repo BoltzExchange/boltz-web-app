@@ -51,11 +51,13 @@ import { formatAssetAmountForLog } from "../utils/denomination";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { estimateFeesPerGas } from "../utils/provider";
+import type { RescueFile } from "../utils/rescueFile";
 import {
     type BridgeDetail,
     GasAbstractionType,
     type SomeSwap,
 } from "../utils/swapCreator";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadata";
 import ApproveErc20 from "./ApproveErc20";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
@@ -249,6 +251,7 @@ const lockupWithHops = async (
     slippage: number,
     getSwap: (id: string) => Promise<SomeSwap | null>,
     modifySwap: ReturnType<typeof useModifySwap>,
+    rescueFile: RescueFile | null,
 ): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
@@ -396,6 +399,7 @@ const lockupWithHops = async (
         if (currentSwap === null) {
             throw new Error(`missing swap ${swapId} for lockup persistence`);
         }
+        await patchEncryptedSwapMetadata(currentSwap, rescueFile);
         log.info("Persisted commitment lockup tx hash for background worker", {
             swapId,
             asset,
@@ -435,7 +439,7 @@ const LockupTransaction = (props: {
     approvalTarget?: Address;
     hops?: EncodedHop[];
 }) => {
-    const { t, slippage, getSwap } = useGlobalContext();
+    const { t, slippage, getSwap, rescueFile } = useGlobalContext();
     const {
         getErc20Swap,
         getEtherSwap,
@@ -495,6 +499,7 @@ const LockupTransaction = (props: {
                             slippage(),
                             getSwap,
                             modifySwap,
+                            rescueFile(),
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
@@ -576,6 +581,7 @@ const LockupTransaction = (props: {
                             `missing swap ${props.swapId} for lockup persistence`,
                         );
                     }
+                    await patchEncryptedSwapMetadata(updated, rescueFile());
                 }}
                 children={<ConnectWallet asset={props.asset} />}
                 buttonText={t("send")}
