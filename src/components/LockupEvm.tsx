@@ -56,6 +56,7 @@ import {
     GasAbstractionType,
     type SomeSwap,
 } from "../utils/swapCreator";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadataPatch";
 import ApproveErc20 from "./ApproveErc20";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
@@ -435,7 +436,7 @@ const LockupTransaction = (props: {
     approvalTarget?: Address;
     hops?: EncodedHop[];
 }) => {
-    const { t, slippage, getSwap } = useGlobalContext();
+    const { t, slippage, getSwap, rescueFile } = useGlobalContext();
     const {
         getErc20Swap,
         getEtherSwap,
@@ -576,6 +577,7 @@ const LockupTransaction = (props: {
                             `missing swap ${props.swapId} for lockup persistence`,
                         );
                     }
+                    await patchEncryptedSwapMetadata(updated, rescueFile());
                 }}
                 children={<ConnectWallet asset={props.asset} />}
                 buttonText={t("send")}
