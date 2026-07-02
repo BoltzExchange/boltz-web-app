@@ -1,3 +1,2 @@
-src/utils/dnssec/dnssec*
 packages/*/src/generated/**
 packages/*/dist/**

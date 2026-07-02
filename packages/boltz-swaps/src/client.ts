@@ -264,11 +264,17 @@ export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
 export const fetchBolt12Invoice = (
     offer: string,
     amountSat: number,
+    opts?: { signal?: AbortSignal; timeoutMs?: number },
 ): Promise<{ invoice: string }> =>
-    fetcher<{ invoice: string }>("/v2/lightning/BTC/bolt12/fetch", {
-        offer,
-        amount: amountSat,
-    });
+    fetcher<{ invoice: string }>(
+        "/v2/lightning/BTC/bolt12/fetch",
+        {
+            offer,
+            amount: amountSat,
+        },
+        { signal: opts?.signal },
+        opts?.timeoutMs,
+    );
 
 export const fetchBip21Invoice = async (invoice: string) => {
     const log = getLogger();

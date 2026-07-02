@@ -3,11 +3,13 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
+import { setBoltzSwapsConfig } from "boltz-swaps/config";
 import {
     InvoiceType,
     assertPreimageHash,
     decodeInvoice,
     isBolt12Offer,
+    isInvoice,
     validateInvoiceForOffer,
 } from "boltz-swaps/invoice";
 
@@ -469,5 +471,107 @@ describe("assertPreimageHash", () => {
         expect(() => assertPreimageHash("00".repeat(32), preimage)).toThrow(
             /invalid preimage/,
         );
+    });
+});
+
+describe("isInvoice", () => {
+    afterEach(() => {
+        setBoltzSwapsConfig({});
+    });
+
+    describe("regtest network", () => {
+        beforeEach(() => {
+            setBoltzSwapsConfig({ network: "regtest" });
+        });
+
+        test("accepts a regtest bolt11 prefix", () => {
+            expect(isInvoice("lnbcrt1abc")).toBe(true);
+        });
+
+        test("rejects a mainnet bolt11 prefix that is not regtest", () => {
+            expect(isInvoice("lnbc1abc")).toBe(false);
+        });
+
+        test("rejects a testnet bolt11 prefix", () => {
+            expect(isInvoice("lntb1abc")).toBe(false);
+        });
+
+        test("is case-insensitive for the regtest prefix", () => {
+            expect(isInvoice("LNBCRT1ABC")).toBe(true);
+        });
+    });
+
+    describe("mainnet network", () => {
+        beforeEach(() => {
+            setBoltzSwapsConfig({ network: "mainnet" });
+        });
+
+        test("accepts a mainnet bolt11 prefix", () => {
+            expect(isInvoice("lnbc1abc")).toBe(true);
+        });
+
+        test("accepts an amount before the HRP separator", () => {
+            expect(isInvoice("lnbc2500u1pvjluez")).toBe(true);
+        });
+
+        test("rejects the bare prefix without an HRP separator", () => {
+            expect(isInvoice("lnbc")).toBe(false);
+            expect(isInvoice("lnbc1")).toBe(false);
+        });
+
+        test("rejects a Lightning address starting with the prefix", () => {
+            expect(isInvoice("lnbc@example.com")).toBe(false);
+        });
+
+        test("rejects a regtest invoice that overlaps the mainnet prefix", () => {
+            expect(isInvoice("lnbcrt1abc")).toBe(false);
+        });
+
+        test("rejects a testnet bolt11 prefix", () => {
+            expect(isInvoice("lntb1abc")).toBe(false);
+        });
+    });
+
+    describe("testnet network", () => {
+        beforeEach(() => {
+            setBoltzSwapsConfig({ network: "testnet" });
+        });
+
+        test("accepts a testnet bolt11 prefix", () => {
+            expect(isInvoice("lntb1abc")).toBe(true);
+        });
+
+        test("rejects a mainnet bolt11 prefix", () => {
+            expect(isInvoice("lnbc1abc")).toBe(false);
+        });
+    });
+
+    describe("bolt12 invoices", () => {
+        test.each(["mainnet", "regtest", "testnet"] as const)(
+            "accepts an 'lni' bolt12 invoice regardless of network (%s)",
+            (network) => {
+                setBoltzSwapsConfig({ network });
+                expect(isInvoice("lni1abc")).toBe(true);
+            },
+        );
+
+        test("rejects 'lni' without an HRP separator", () => {
+            expect(isInvoice("lni")).toBe(false);
+            expect(isInvoice("lniabc")).toBe(false);
+        });
+    });
+
+    describe("non-string input", () => {
+        test("returns false for undefined", () => {
+            expect(isInvoice(undefined as never)).toBe(false);
+        });
+
+        test("returns false for null", () => {
+            expect(isInvoice(null as never)).toBe(false);
+        });
+
+        test("returns false for a number", () => {
+            expect(isInvoice(123 as never)).toBe(false);
+        });
     });
 });

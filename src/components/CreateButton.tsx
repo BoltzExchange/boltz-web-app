@@ -4,14 +4,11 @@ import { bridgeRegistry } from "boltz-swaps/bridge";
 import {
     type ChainPairTypeTaproot,
     fetchBip21Invoice,
-    fetchBolt12Invoice,
 } from "boltz-swaps/client";
+import { isLnurlAmountError } from "boltz-swaps/errors";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
-import {
-    InvoiceType,
-    decodeInvoice,
-    validateInvoiceForOffer,
-} from "boltz-swaps/invoice";
+import { InvoiceType, decodeInvoice } from "boltz-swaps/invoice";
+import { resolveInvoice } from "boltz-swaps/resolveInvoice";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -32,7 +29,6 @@ import {
     getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { InvoiceValidation } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -52,19 +48,13 @@ import {
     formatAssetAmountForLog,
     formatDenomination,
     formatSwapAmountForLog,
-    miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { handleCreateSwapError } from "../utils/handleCreateSwapError";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { getDestinationAddress, getPair } from "../utils/helper";
-import {
-    fetchBip353,
-    fetchLnurl,
-    getAssetByBip21Prefix,
-} from "../utils/invoice";
+import { getAssetByBip21Prefix } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
-import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { estimateFeesPerGas } from "../utils/provider";
 import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
@@ -450,124 +440,49 @@ const CreateButton = () => {
         );
     };
 
-    const fetchInvoice = async () => {
-        if (lnurl() !== undefined && lnurl() !== "") {
-            try {
-                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+    const fetchInvoice = async (): Promise<boolean> => {
+        const destination = lnurl() || bolt12Offer();
+        if (destination === undefined || destination === "") {
+            return true;
+        }
 
-                const fetched = await firstResolved(
-                    [
-                        (async () => {
-                            try {
-                                return await fetchLnurl(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice for LNURL failed:",
-                                    e,
-                                );
-                                if (
-                                    e instanceof Error &&
-                                    (
-                                        Object.values(
-                                            InvoiceValidation,
-                                        ) as string[]
-                                    ).includes(e.message)
-                                ) {
-                                    const satsAmount = miliSatToSat(
-                                        BigNumber(e.cause as BigNumber.Value),
-                                    );
-                                    const value = {
-                                        amount: formatAmount(
-                                            BigNumber(satsAmount),
-                                            denomination(),
-                                            separator(),
-                                            BTC,
-                                        ),
-                                        denomination: formatDenomination(
-                                            denomination(),
-                                            BTC,
-                                        ),
-                                    };
+        log.info("Resolving invoice for destination", destination);
+        try {
+            const { invoice } = await resolveInvoice(
+                destination,
+                Number(receiveAmount()),
+                { timeoutMs: invoiceFetchTimeout },
+            );
+            setOriginalDestination(destination);
+            setInvoice(invoice);
+            setLnurl("");
+            setBolt12Offer(undefined);
+            setInvoiceValid(true);
+            return true;
+        } catch (e) {
+            log.warn("Resolving invoice failed", e);
+            setInvoiceValid(false);
 
-                                    setButtonDisable(true);
+            if (isLnurlAmountError(e)) {
+                const value = {
+                    amount: formatAmount(
+                        BigNumber(e.limitSat),
+                        denomination(),
+                        separator(),
+                        BTC,
+                    ),
+                    denomination: formatDenomination(denomination(), BTC),
+                };
+                const errorMsg: DictKey = `${e.kind}_amount_destination`;
 
-                                    const minOrMax =
-                                        InvoiceValidation.MinAmount ===
-                                        e.message
-                                            ? "min"
-                                            : "max";
-
-                                    const errorMsg: DictKey = `${minOrMax}_amount_destination`;
-
-                                    setButtonLabel({
-                                        key: errorMsg,
-                                        params: value,
-                                    });
-
-                                    throw t(errorMsg, value);
-                                }
-                                const hasJson =
-                                    e !== null &&
-                                    typeof e === "object" &&
-                                    "json" in e &&
-                                    typeof (e as { json: unknown }).json ===
-                                        "function";
-                                const error = hasJson
-                                    ? await (
-                                          e as { json: () => Promise<unknown> }
-                                      ).json()
-                                    : e;
-                                throw formatError(error);
-                            }
-                        })(),
-                        (async () => {
-                            try {
-                                return await fetchBip353(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice from BIP-353 failed:",
-                                    e,
-                                );
-                                throw formatError(e);
-                            }
-                        })(),
-                    ].map((p) => promiseWithTimeout(p, invoiceFetchTimeout)),
-                );
-
-                setOriginalDestination(lnurl());
-                setInvoice(fetched);
-                setLnurl("");
-                setInvoiceValid(true);
-            } catch (e) {
-                log.warn("Fetching invoice failed", e);
-                notify("error", formatError(e));
+                setButtonDisable(true);
+                setButtonLabel({ key: errorMsg, params: value });
+                notify("error", t(errorMsg, value));
+                return false;
             }
-        } else {
-            const offer = bolt12Offer();
-            if (offer === undefined) {
-                return;
-            }
-            log.info("Fetching invoice from bolt12 offer", offer);
-            try {
-                const invoice = (
-                    await fetchBolt12Invoice(offer, Number(receiveAmount()))
-                ).invoice;
-                validateInvoiceForOffer(offer, invoice);
-                setOriginalDestination(offer);
-                setInvoice(invoice);
-                setBolt12Offer(undefined);
-                setInvoiceValid(true);
-            } catch (e) {
-                notify("error", formatError(e));
-                log.warn("Fetching invoice from bolt12 offer failed", e);
-                return;
-            }
+
+            notify("error", formatError(e));
+            return false;
         }
     };
 
@@ -918,7 +833,9 @@ const CreateButton = () => {
         setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
-                await fetchInvoice();
+                if (!(await fetchInvoice())) {
+                    return;
+                }
             }
 
             const { gasAbstraction, claimAddress } = await getClaimAddress(
