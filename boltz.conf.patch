@@ -70,3 +70,16 @@ index 63c2646..0c2bb9d 100755
  
  [[currencies]]
  symbol = "BTC"
+diff --git a/regtest/images/boltz-backend/arbitrum.conf b/regtest/images/boltz-backend/arbitrum.conf
+index 4e51ae2..b244223 100644
+--- a/regtest/images/boltz-backend/arbitrum.conf
++++ b/regtest/images/boltz-backend/arbitrum.conf
+@@ -35,7 +35,7 @@ providerEndpoint = "ws://anvil-arb:8545"
+ requiredConfirmations = 1
+
+  [[arbitrum.l1Providers]]
+- endpoint = "ws://anvil-eth:8545"
++ endpoint = "ws://anvil-arb:8545"
+
+  [[arbitrum.contracts]]
+  etherSwap = "0xc09247F837A205BDdE43960Ca01BDea426F1370e"
