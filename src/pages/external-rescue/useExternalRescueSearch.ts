@@ -50,7 +50,7 @@ import {
     getEvmRescueAction,
     getEvmScanTargets,
     getSwapDate,
-    mapRestorableSwapList,
+    mapRestorableSwaps,
     sortUnifiedResults,
 } from "./scan";
 import {
@@ -479,8 +479,12 @@ export const useExternalRescueSearch = () => {
                 return;
             }
             setRescuableSwaps(restorableSwaps);
+
             setBtcState({
-                swaps: mapRestorableSwapList(restorableSwaps),
+                swaps: await mapRestorableSwaps(
+                    restorableSwaps,
+                    currentRescueFile.mnemonic,
+                ),
                 searchState: BtcSearchState.Ready,
             });
         } catch (e) {

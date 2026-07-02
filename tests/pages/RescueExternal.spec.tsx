@@ -1,12 +1,18 @@
 import { render, screen, waitFor, within } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
-import { SwapType } from "boltz-swaps/types";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
 import { WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
+import { mapRestorableSwaps } from "../../src/pages/external-rescue/scan";
+import {
+    type SomeSwap,
+    getFinalAssetReceive,
+} from "../../src/utils/swapCreator";
+import { encryptSwapMetadata } from "../../src/utils/swapMetadata";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 global.fetch = vi.fn(() =>
@@ -464,5 +470,95 @@ describe("RescueExternal", () => {
             "swaplist-item-claim-swap",
         );
         expect(rows[1]).toHaveClass("disabled");
+    });
+
+    test("should display the metadata final asset for routed restored swaps", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "horse olympic laundry marriage material private arch civil theory crew alone thank";
+        const swapTree = {
+            claimLeaf: {
+                version: 192,
+                output: "a914aa856454ae0e8e8e0bf3e625421e13e168bd9d5d8820395d9749b27c5908e2e8e95237cf8d1c704c48b19e51f915c9986a1973925567ac",
+            },
+            refundLeaf: {
+                version: 192,
+                output: "208f7d52e62a440dec6c17cf929889df5abdbe85158834cf5d67e0f957b7ccee53ad02ca04b1",
+            },
+        };
+        const claimDetails = {
+            tree: swapTree,
+            keyIndex: 0,
+            lockupAddress:
+                "bcrt1ptwl8vqkgrxz9ydyv5zx8qluv2mpjkg58qry2xvf2qeek7l9uxpusm4tlgf",
+            serverPublicKey:
+                "02395d9749b27c5908e2e8e95237cf8d1c704c48b19e51f915c9986a1973925567",
+            timeoutBlockHeight: 1226,
+            amount: 10_000,
+        };
+        const swap: RestorableSwap = {
+            id: "metadata-swap",
+            type: SwapType.Chain,
+            status: "transaction.server.confirmed",
+            createdAt: 1754409244,
+            from: "L-BTC",
+            to: "TBTC",
+            claimDetails,
+            refundDetails: claimDetails,
+            metadata: await encryptSwapMetadata(mnemonic, {
+                hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDT0" }],
+                position: SwapPosition.Post,
+                quoteAmount: 10_000,
+                bridge: {
+                    sourceAsset: "USDT0",
+                    destinationAsset: "USDT0-SOL",
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Post,
+                },
+            }),
+        };
+
+        const [mapped] = await mapRestorableSwaps([swap], mnemonic);
+        const mappedSwap = mapped as Partial<SomeSwap> & { to?: string };
+        expect(mappedSwap.to).toBe("TBTC");
+        expect(mappedSwap.assetReceive).toBe("TBTC");
+        expect(getFinalAssetReceive(mappedSwap as SomeSwap, true)).toBe(
+            "USDT0-SOL",
+        );
+
+        mockGetRestorableSwaps
+            .mockResolvedValueOnce([swap])
+            .mockResolvedValueOnce([]);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as any).text = async () =>
+            JSON.stringify({
+                mnemonic,
+            });
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        const row = await screen.findByTestId("swaplist-item-metadata-swap");
+        expect(row).toHaveTextContent(i18n.en.in_progress);
+
+        const assets = row.querySelectorAll(".asset");
+        expect(assets).toHaveLength(2);
+        expect(assets[0]).toHaveAttribute("data-asset", "LBTC");
+        expect(assets[1]).toHaveAttribute("data-asset", "USDT0-SOL");
     });
 });
