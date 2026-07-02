@@ -43,15 +43,19 @@ describe("CommitmentCreated", () => {
         commitmentAmountsForSats(validateInvoice(invoiceValue));
 
     const commitmentAmountsForSats = (sats: number): CommitmentAmounts => ({
+        pairHash: "pair-hash",
         sendAmount: BigNumber(sats + 2),
         receiveAmount: BigNumber(sats),
     });
 
-    test("uses invoice-derived submarine send amount after commitment lockup", async () => {
+    test("uses invoice-derived submarine send amount and fresh pair hash after commitment lockup", async () => {
         const directPair = {
             minerFees: 0,
             calculateReceiveAmount: vi.fn().mockResolvedValue(BigNumber(2614)),
             calculateSendAmount: vi.fn().mockResolvedValue(BigNumber(2614)),
+            creationData: vi.fn().mockResolvedValue({
+                pairHash: "fresh-pair-hash",
+            }),
         } as unknown as Pair;
 
         const amounts = await calculateCommittedSubmarineAmounts(
@@ -67,8 +71,13 @@ describe("CommitmentCreated", () => {
             BigNumber(2614),
             0,
         );
+        expect(directPair.creationData).toHaveBeenCalledWith(
+            BigNumber(2614),
+            0,
+        );
         expect(amounts.sendAmount).toEqual(BigNumber(2614));
         expect(amounts.receiveAmount).toEqual(BigNumber(2614));
+        expect(amounts.pairHash).toEqual("fresh-pair-hash");
     });
 
     test("accepts BIP21 invoices like the create page invoice input", () => {
@@ -126,5 +135,19 @@ describe("CommitmentCreated", () => {
             confirmations: 1,
             timeout: 1,
         });
+    });
+
+    test("stops commitment lockup receipt lookup after the configured attempts", async () => {
+        const hash = `0x${"1".repeat(64)}` as Hash;
+        const provider = {
+            waitForTransactionReceipt: vi
+                .fn()
+                .mockRejectedValue(new Error("rpc timeout")),
+        } as unknown as PublicClient;
+
+        await expect(
+            waitForCommitmentLockupReceipt(provider, hash, 1, 0, 2),
+        ).rejects.toThrow("rpc timeout");
+        expect(provider.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
     });
 });

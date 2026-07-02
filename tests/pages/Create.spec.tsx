@@ -274,7 +274,6 @@ const assertCommitmentSwapCreated = async () => {
             sourceAsset: commitmentSourceAsset,
             sourceAmount: "1000000",
             lockupAmount: "740000",
-            pairHash: "tbtc-ln-pair-hash",
             bridge: {
                 sourceAsset: commitmentSourceAsset,
                 destinationAsset: USDT0,
@@ -1311,6 +1310,41 @@ describe("Create", () => {
 
         signals.setInvoice(invoice);
         signals.setInvoiceValid(true);
+
+        fireEvent.input(await screen.findByTestId("sendAmount"), {
+            target: { value: `${signals.minimum()}` },
+        });
+
+        await waitFor(() => {
+            expect(signals.invoice()).toBe("");
+            expect(globalSignals.notification()).toBe(
+                i18n.en.invoice_cleared_amount_changed,
+            );
+            expect(globalSignals.notificationType()).toBe("success");
+        });
+    });
+
+    test("should clear a fixed invoice while validation is pending", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setOnline(true);
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LN);
+        await waitFor(() => {
+            expect(signals.minimum()).toBeGreaterThan(0);
+        });
+
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(false);
 
         fireEvent.input(await screen.findByTestId("sendAmount"), {
             target: { value: `${signals.minimum()}` },

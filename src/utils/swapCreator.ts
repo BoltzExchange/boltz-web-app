@@ -176,7 +176,6 @@ export type ChainSwap = SwapBase &
 export type CommitmentSwap = SwapBaseData & {
     type: SwapType.Commitment;
     id: string;
-    pairHash: string;
     initialReceiveAsset: string;
     sourceAsset: string;
     sourceAmount: string;
@@ -294,15 +293,10 @@ const generatePreimage = ({
     return derivePreimageFromRescueKey(rescueFile, keyIndex, asset);
 };
 
-const createLocalSwapId = () => {
-    if (globalThis.crypto?.randomUUID !== undefined) {
-        return globalThis.crypto.randomUUID();
-    }
-
-    return Math.floor(Math.random() * 0x1_0000_0000)
+export const createLocalSwapId = () =>
+    Math.floor(Math.random() * 0x1_000000)
         .toString(16)
-        .padStart(8, "0");
-};
+        .padStart(6, "0");
 
 export const createCommitmentSwap = (
     assetSend: string,
@@ -311,7 +305,6 @@ export const createCommitmentSwap = (
     sourceAsset: string,
     sourceAmount: BigNumber,
     lockupAmount: BigNumber,
-    pairHash: string,
     gasAbstraction: GasAbstraction,
     dex?: DexDetail,
     bridge?: BridgeDetail,
@@ -324,7 +317,6 @@ export const createCommitmentSwap = (
     assetReceive,
     date: new Date().getTime(),
     version: OutputType.Taproot,
-    pairHash,
     initialReceiveAsset,
     sourceAsset,
     sourceAmount: sourceAmount.toFixed(0),

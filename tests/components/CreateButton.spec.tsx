@@ -790,7 +790,6 @@ describe("CreateButton", () => {
                 sourceAsset: USDC,
                 sourceAmount: "100000",
                 lockupAmount: "80000",
-                pairHash: "tbtc-ln-pair-hash",
                 dex: {
                     position: SwapPosition.Pre,
                     quoteAmount: "100000",

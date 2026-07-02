@@ -348,7 +348,6 @@ const Create = () => {
         const currentInvoice = invoice();
         if (
             currentInvoice === "" ||
-            !invoiceValid() ||
             isDeferredInvoiceDestination(currentInvoice)
         ) {
             return;

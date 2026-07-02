@@ -950,7 +950,6 @@ const CreateButton = () => {
             assetSend(),
             sendAmount(),
             creationData.sendAmount,
-            creationData.pairHash,
             gasAbstraction,
             dex,
             bridge,

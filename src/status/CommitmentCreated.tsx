@@ -55,6 +55,7 @@ import {
 import { validateInvoice, validateResponse } from "../utils/validation";
 
 export type CommitmentAmounts = {
+    pairHash: string;
     sendAmount: BigNumber;
     receiveAmount: BigNumber;
 };
@@ -67,6 +68,7 @@ type InvoiceData = {
 
 const receiptWaitTimeout = 120_000;
 const receiptRetryDelay = 3_000;
+const receiptWaitAttempts = 3;
 
 const wait = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -79,8 +81,11 @@ export const waitForCommitmentLockupReceipt = async (
     hash: Hash,
     waitTimeout = receiptWaitTimeout,
     retryDelay = receiptRetryDelay,
+    attempts = receiptWaitAttempts,
 ): Promise<TransactionReceipt> => {
-    for (;;) {
+    let lastError: unknown = new Error("commitment lockup receipt not found");
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
         try {
             const receipt = await provider.waitForTransactionReceipt({
                 hash,
@@ -90,12 +95,18 @@ export const waitForCommitmentLockupReceipt = async (
             if (receipt !== null) {
                 return receipt;
             }
+            lastError = new Error("commitment lockup receipt not found");
         } catch (error) {
+            lastError = error;
             log.warn("Waiting for commitment lockup receipt failed", error);
         }
 
-        await wait(retryDelay);
+        if (attempt < attempts) {
+            await wait(retryDelay);
+        }
     }
+
+    throw lastError;
 };
 
 export const validateCommitmentInvoiceInput = (
@@ -236,8 +247,16 @@ export const calculateCommittedSubmarineAmounts = async (
         BigNumber(invoiceSats),
         directPair.minerFees,
     );
+    const creationData = await directPair.creationData(
+        sendAmount,
+        directPair.minerFees,
+    );
+    if (creationData === undefined) {
+        throw new Error("missing committed swap creation data");
+    }
 
     return {
+        pairHash: creationData.pairHash,
         sendAmount,
         receiveAmount,
     };
@@ -276,16 +295,22 @@ const CommitmentCreated = () => {
         return error === undefined ? undefined : t(error.key, error.params);
     };
 
-    const lockupHops = () => {
+    const lockupDex = () => {
         const dex = commitment().dex;
-        return dex?.position === SwapPosition.Pre ? dex.hops : undefined;
+        if (
+            dex?.position !== SwapPosition.Pre ||
+            dex.hops.length === 0 ||
+            dex.sourceAmount === undefined
+        ) {
+            throw new Error(
+                `commitment swap ${commitment().id} is missing a lockup-side DEX route`,
+            );
+        }
+
+        return dex;
     };
-    const lockupHopInputAmount = () => {
-        const dex = commitment().dex;
-        return dex?.position === SwapPosition.Pre
-            ? dex.sourceAmount
-            : undefined;
-    };
+    const lockupHops = () => lockupDex().hops;
+    const lockupHopInputAmount = () => lockupDex().sourceAmount;
     const lockupAmount = () =>
         Number(commitment().lockupAmount ?? commitment().sourceAmount);
 
@@ -306,7 +331,7 @@ const CommitmentCreated = () => {
         });
     });
 
-    const [committedAmounts] = createResource(
+    const committedAmountsSource = createMemo(
         () => {
             const current = commitment();
             const currentPairs = pairs();
@@ -318,36 +343,54 @@ const CommitmentCreated = () => {
             }
 
             return {
-                commitment: current,
+                assetSend: current.assetSend,
+                commitmentLockupTxHash: current.commitmentLockupTxHash,
+                initialReceiveAsset: current.initialReceiveAsset,
                 pairs: currentPairs,
                 regularPairs: regularPairs(),
             };
         },
+        undefined,
+        {
+            equals: (previous, next) =>
+                previous?.assetSend === next?.assetSend &&
+                previous?.commitmentLockupTxHash ===
+                    next?.commitmentLockupTxHash &&
+                previous?.initialReceiveAsset === next?.initialReceiveAsset &&
+                previous?.pairs === next?.pairs &&
+                previous?.regularPairs === next?.regularPairs,
+        },
+    );
+
+    const [committedAmounts] = createResource(
+        committedAmountsSource,
         async ({
-            commitment: current,
+            assetSend,
+            commitmentLockupTxHash,
+            initialReceiveAsset,
             pairs: currentPairs,
             regularPairs,
         }): Promise<CommitmentAmounts> => {
-            const provider = createAssetProvider(current.assetSend);
+            const provider = createAssetProvider(assetSend);
             const receipt = await waitForCommitmentLockupReceipt(
                 provider,
-                current.commitmentLockupTxHash as Hash,
+                commitmentLockupTxHash as Hash,
             );
 
-            const contract = getErc20Swap(current.assetSend);
+            const contract = getErc20Swap(assetSend);
             const event = getLockupEvent(
                 erc20SwapAbi,
                 receipt,
                 contract.address,
             );
             const lockupAmount = baseAssetAmountToInternal(
-                current.assetSend,
+                assetSend,
                 event.amount,
             );
             const directPair = new Pair(
                 currentPairs,
-                current.assetSend,
-                current.initialReceiveAsset,
+                assetSend,
+                initialReceiveAsset,
                 regularPairs,
             );
             return calculateCommittedSubmarineAmounts(directPair, lockupAmount);
@@ -449,7 +492,7 @@ const CommitmentCreated = () => {
                 amounts.sendAmount,
                 BigNumber(resolvedInvoice.sats),
                 resolvedInvoice.invoice,
-                current.pairHash,
+                amounts.pairHash,
                 current.gasAbstraction,
                 newKey,
                 resolvedInvoice.originalDestination,
@@ -479,8 +522,25 @@ const CommitmentCreated = () => {
                 return;
             }
 
+            const message = formatError(error);
+            if (message.includes("invalid pair hash")) {
+                try {
+                    setLoadError(undefined);
+                    await fetchPairs();
+                    notify("error", t("feecheck"));
+                } catch (refreshError) {
+                    const refreshMessage = formatError(refreshError);
+                    log.error(
+                        "Refreshing pairs for committed swap failed",
+                        refreshError,
+                    );
+                    notify("error", refreshMessage);
+                }
+                return;
+            }
+
             log.error("Creating committed submarine swap failed", error);
-            notify("error", formatError(error));
+            notify("error", message);
         } finally {
             setLoading(false);
         }
@@ -534,89 +594,92 @@ const CommitmentCreated = () => {
                     bridge={getPreBridgeDetail(commitment().bridge)}
                 />
             }>
-            <Show
-                when={committedAmountsError()}
-                fallback={
-                    <Show
-                        when={committedAmounts()}
-                        fallback={<LoadingSpinner />}>
-                        {(amounts) => (
-                            <>
-                                <CommitmentInvoiceHeader
-                                    amounts={amounts()}
-                                    invoiceAsset={
-                                        commitment().initialReceiveAsset
-                                    }
-                                    lockupAsset={commitment().assetSend}
-                                    copyAmount={() =>
-                                        getInvoiceAmountString(
-                                            amounts(),
-                                            commitment().initialReceiveAsset,
-                                            separator(),
-                                        )
-                                    }
-                                    lockupTxHash={
-                                        commitment().commitmentLockupTxHash!
-                                    }
-                                />
-                                <input
-                                    required
-                                    class="commitment-invoice-input"
-                                    ref={invoiceInput}
-                                    type="text"
-                                    id="invoice"
-                                    data-testid="invoice"
-                                    aria-invalid={
-                                        invoiceError() !== undefined ||
-                                        undefined
-                                    }
-                                    aria-labelledby="commitment-invoice-label"
-                                    name="invoice"
-                                    value={invoice()}
-                                    autocomplete="off"
-                                    placeholder={t("create_and_paste")}
-                                    onInput={(event) => {
-                                        setInvoice(event.currentTarget.value);
-                                        validateCurrentInvoice();
-                                    }}
-                                />
-                                <button
-                                    class="btn commitment-invoice-submit"
-                                    data-testid="commitment-invoice-submit"
-                                    disabled={
-                                        loading() ||
-                                        invoiceError() !== undefined ||
-                                        !hasInvoice()
-                                    }
-                                    onClick={completeSwap}>
-                                    {loading() ? (
-                                        <LoadingSpinner class="inner-spinner" />
-                                    ) : invoiceErrorText() !== undefined &&
-                                      hasInvoice() ? (
-                                        invoiceErrorText()
-                                    ) : (
-                                        t("continue")
-                                    )}
-                                </button>
-                                <hr class="commitment-action-separator" />
-                                <div class="commitment-refund-action">
-                                    <RefundButton
-                                        swap={
-                                            commitment as Accessor<CommitmentSwap>
+            <>
+                <Show
+                    when={committedAmountsError()}
+                    fallback={
+                        <Show
+                            when={committedAmounts()}
+                            fallback={<LoadingSpinner />}>
+                            {(amounts) => (
+                                <>
+                                    <CommitmentInvoiceHeader
+                                        amounts={amounts()}
+                                        invoiceAsset={
+                                            commitment().initialReceiveAsset
+                                        }
+                                        lockupAsset={commitment().assetSend}
+                                        copyAmount={() =>
+                                            getInvoiceAmountString(
+                                                amounts(),
+                                                commitment()
+                                                    .initialReceiveAsset,
+                                                separator(),
+                                            )
+                                        }
+                                        lockupTxHash={
+                                            commitment().commitmentLockupTxHash!
                                         }
                                     />
-                                </div>
-                            </>
-                        )}
-                    </Show>
-                }>
-                {(error) => (
-                    <>
-                        <h2>{t("error")}</h2>
-                        <p>{error()}</p>
-                    </>
-                )}
-            </Show>
+                                    <input
+                                        required
+                                        class="commitment-invoice-input"
+                                        ref={invoiceInput}
+                                        type="text"
+                                        id="invoice"
+                                        data-testid="invoice"
+                                        aria-invalid={
+                                            invoiceError() !== undefined ||
+                                            undefined
+                                        }
+                                        aria-labelledby="commitment-invoice-label"
+                                        name="invoice"
+                                        value={invoice()}
+                                        autocomplete="off"
+                                        placeholder={t("create_and_paste")}
+                                        onInput={(event) => {
+                                            setInvoice(
+                                                event.currentTarget.value,
+                                            );
+                                            validateCurrentInvoice();
+                                        }}
+                                    />
+                                    <button
+                                        class="btn commitment-invoice-submit"
+                                        data-testid="commitment-invoice-submit"
+                                        disabled={
+                                            loading() ||
+                                            invoiceError() !== undefined ||
+                                            !hasInvoice()
+                                        }
+                                        onClick={completeSwap}>
+                                        {loading() ? (
+                                            <LoadingSpinner class="inner-spinner" />
+                                        ) : invoiceErrorText() !== undefined &&
+                                          hasInvoice() ? (
+                                            invoiceErrorText()
+                                        ) : (
+                                            t("continue")
+                                        )}
+                                    </button>
+                                </>
+                            )}
+                        </Show>
+                    }>
+                    {(error) => (
+                        <>
+                            <h2>{t("error")}</h2>
+                            <p>{error()}</p>
+                        </>
+                    )}
+                </Show>
+                <hr class="commitment-action-separator" />
+                <div class="commitment-refund-action">
+                    <RefundButton
+                        swap={commitment as Accessor<CommitmentSwap>}
+                    />
+                </div>
+            </>
         </Show>
     );
 };
