@@ -47,6 +47,7 @@ import { getFeeEstimationsFailover } from "./fees";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import {
     type ChainSwap,
+    type CommitmentSwap,
     type ReverseSwap,
     type SomeSwap,
     type SubmarineSwap,
@@ -127,15 +128,22 @@ export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
         return false;
     }
 
-    const swapTimeoutBlockHeight: Record<SwapType, () => number> = {
+    const swapTimeoutBlockHeight: Partial<
+        Record<SwapType, () => number | undefined>
+    > = {
         [SwapType.Chain]: () =>
             (swap as ChainSwap).lockupDetails.timeoutBlockHeight,
         [SwapType.Reverse]: () => (swap as ReverseSwap).timeoutBlockHeight,
         [SwapType.Submarine]: () => (swap as SubmarineSwap).timeoutBlockHeight,
-        [SwapType.Dex]: () => Number.MAX_SAFE_INTEGER, // TODO: fix that
+        [SwapType.Commitment]: () =>
+            (swap as CommitmentSwap).timeoutBlockHeight,
     };
 
-    return currentBlockHeight >= swapTimeoutBlockHeight[swap.type]();
+    const timeoutBlockHeight = swapTimeoutBlockHeight[swap.type]?.();
+    return (
+        timeoutBlockHeight !== undefined &&
+        currentBlockHeight >= timeoutBlockHeight
+    );
 };
 
 const refundTaproot = (

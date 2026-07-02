@@ -19,7 +19,13 @@ import {
 } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 
-const InvoiceInput = () => {
+type InvoiceInputProps = {
+    class?: string;
+    disabled?: boolean;
+    placeholder?: string;
+};
+
+const InvoiceInput = (props: InvoiceInputProps = {}) => {
     let inputRef!: HTMLInputElement;
     let validationRequest = 0;
 
@@ -30,6 +36,7 @@ const InvoiceInput = () => {
         minerFee,
         invoice,
         amountValid,
+        resetAmounts,
         setAmountChanged,
         setInvoice,
         setInvoiceValid,
@@ -56,14 +63,38 @@ const InvoiceInput = () => {
         setLnurl("");
     };
 
-    const validate = async (input: HTMLInputElement) => {
-        const requestId = ++validationRequest;
-        const getCurrentInputValue = () => input.value.trim();
-        const inputValue = getCurrentInputValue();
-        const isStale = () =>
-            requestId !== validationRequest ||
-            getCurrentInputValue() !== inputValue;
+    const canSwitchToAsset = (asset: string | null): asset is string =>
+        asset !== LN &&
+        asset !== null &&
+        (!bitcoinOnly() || isBitcoinOnlyAsset(asset));
 
+    const validateInput = (input: HTMLInputElement) => {
+        const inputValue = input.value.trim();
+        const address = extractAddress(inputValue);
+        const invoiceValue = extractInvoice(inputValue) ?? "";
+        const actualAsset =
+            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
+
+        if (!canSwitchToAsset(actualAsset)) {
+            resetAmounts();
+        }
+
+        void validate(input);
+    };
+
+    const validate = async (
+        input: HTMLInputElement,
+        inputValue = input.value.trim(),
+    ) => {
+        const requestId = ++validationRequest;
+        const isStale = () =>
+            requestId !== validationRequest || invoice().trim() !== inputValue;
+
+        const address = extractAddress(inputValue);
+        const invoiceValue = extractInvoice(inputValue) ?? "";
+        const actualAsset =
+            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
+        const switchesToAsset = canSwitchToAsset(actualAsset);
         setInvoice(inputValue);
 
         try {
@@ -75,12 +106,6 @@ const InvoiceInput = () => {
                 resetInvoiceState();
                 return;
             }
-
-            const address = extractAddress(inputValue);
-            const invoiceValue = extractInvoice(inputValue) ?? "";
-
-            const actualAsset =
-                probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
 
             const bip21Amount = extractBip21Amount(inputValue);
             if (bip21Amount) {
@@ -102,11 +127,7 @@ const InvoiceInput = () => {
             if (isStale()) {
                 return;
             }
-            if (
-                actualAsset !== LN &&
-                actualAsset !== null &&
-                (!bitcoinOnly() || isBitcoinOnlyAsset(actualAsset))
-            ) {
+            if (switchesToAsset) {
                 const fromAsset =
                     pair().fromAsset === actualAsset ? LN : pair().fromAsset;
                 setPair(
@@ -120,8 +141,9 @@ const InvoiceInput = () => {
             }
 
             if (isLnurl(invoiceValue)) {
-                setLnurl(invoiceValue);
+                resetInvoiceState();
                 setInvoice(invoiceValue);
+                setLnurl(invoiceValue);
             } else {
                 setBolt12Loading(true);
                 let isBolt12: boolean;
@@ -137,8 +159,9 @@ const InvoiceInput = () => {
                 }
 
                 if (isBolt12) {
-                    setBolt12Offer(invoiceValue);
+                    resetInvoiceState();
                     setInvoice(invoiceValue);
+                    setBolt12Offer(invoiceValue);
                 } else {
                     const sats = validateInvoice(invoiceValue);
                     setAmountChanged(Side.Receive);
@@ -180,28 +203,37 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice, pair, minerFee], async () => {
-            if (
-                pair().swapToCreate?.type === SwapType.Submarine ||
-                pair().toAsset === LN
-            ) {
-                await validate(inputRef);
-            }
-        }),
+        on(
+            [amountValid, invoice, pair, minerFee, () => props.disabled],
+            async () => {
+                if (props.disabled) {
+                    return;
+                }
+
+                if (
+                    pair().swapToCreate?.type === SwapType.Submarine ||
+                    pair().toAsset === LN
+                ) {
+                    await validate(inputRef, invoice().trim());
+                }
+            },
+        ),
     );
 
     return (
         <input
             required
             ref={inputRef}
-            onInput={(e) => validate(e.currentTarget)}
+            onInput={(e) => validateInput(e.currentTarget)}
             type="text"
+            class={props.class}
             id="invoice"
             data-testid="invoice"
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste")}
+            disabled={props.disabled}
+            placeholder={props.placeholder ?? t("create_and_paste")}
         />
     );
 };

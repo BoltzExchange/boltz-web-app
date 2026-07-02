@@ -298,6 +298,7 @@ export type CreateContextType = {
     setSendAmountFormatted: Setter<string>;
     receiveAmountFormatted: Accessor<string>;
     setReceiveAmountFormatted: Setter<string>;
+    resetAmounts: () => void;
     amountChanged: Accessor<Side>;
     setAmountChanged: Setter<Side>;
     minimum: Accessor<number>;
@@ -462,6 +463,13 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [sendAmountFormatted, setSendAmountFormatted] = createSignal("0");
     const [receiveAmountFormatted, setReceiveAmountFormatted] =
         createSignal("0");
+    const resetAmounts = () => {
+        setSendAmount(BigNumber(0));
+        setReceiveAmount(BigNumber(0));
+        setSendAmountFormatted("");
+        setReceiveAmountFormatted("");
+        setAmountValid(false);
+    };
 
     const [amountChanged, setAmountChanged] = createSignal(Side.Send);
     const [minimum, setMinimum] = createSignal<number>(0);
@@ -524,6 +532,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setSendAmountFormatted,
                 receiveAmountFormatted,
                 setReceiveAmountFormatted,
+                resetAmounts,
                 amountChanged,
                 setAmountChanged,
                 minimum,

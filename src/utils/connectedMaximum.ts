@@ -1,13 +1,13 @@
-import { BigNumber } from "bignumber.js";
+import type { BigNumber } from "bignumber.js";
 import { bridgeRegistry } from "boltz-swaps/bridge";
-import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
+import { createAssetProvider } from "boltz-swaps/evm";
 import { createTokenContract } from "boltz-swaps/evm/contracts";
 import { AssetKind } from "boltz-swaps/types";
 
 import { getKindForAsset } from "../consts/Assets";
 import type { ConnectedWallet, Signer } from "../context/Web3";
 import { getAssetNativeBalance } from "./chains/balance";
-import { getDecimals } from "./denomination";
+import { baseAssetAmountToInternal } from "./denomination";
 import { getNativeEvmLockupSpendableBalance } from "./evmLockup";
 import { estimateFeesPerGas } from "./provider";
 
@@ -19,11 +19,6 @@ const getNativeGasPrice = async (asset: string) => {
     }
     return gasPrice;
 };
-
-export const assetBalanceToInternalAmount = (asset: string, amount: bigint) =>
-    getDecimals(asset).isErc20
-        ? BigNumber(amount.toString())
-        : BigNumber(assetAmountToSats(amount, asset).toString());
 
 export const getConnectedMaximum = async ({
     fromAsset,
@@ -45,7 +40,7 @@ export const getConnectedMaximum = async ({
             return undefined;
         }
 
-        return assetBalanceToInternalAmount(
+        return baseAssetAmountToInternal(
             preBridgeRoute.sourceAsset,
             await driver.getSourceTokenBalance(
                 preBridgeRoute,
@@ -64,7 +59,7 @@ export const getConnectedMaximum = async ({
                 getAssetNativeBalance(fromAsset, signer.address),
                 getNativeGasPrice(fromAsset),
             ]);
-            return assetBalanceToInternalAmount(
+            return baseAssetAmountToInternal(
                 fromAsset,
                 getNativeEvmLockupSpendableBalance(balance, gasPrice),
             );
@@ -76,7 +71,7 @@ export const getConnectedMaximum = async ({
                 signer,
             ).read.balanceOf([signer.address]);
 
-            return assetBalanceToInternalAmount(fromAsset, balance);
+            return baseAssetAmountToInternal(fromAsset, balance);
         }
 
         default:

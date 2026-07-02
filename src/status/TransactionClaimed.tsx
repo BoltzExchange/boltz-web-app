@@ -22,6 +22,8 @@ import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
+    type ChainSwap,
+    type ReverseSwap,
     type SubmarineSwap,
     getFinalAssetReceive,
     getPostBridgeDetail,
@@ -89,17 +91,19 @@ const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
         );
     });
 
-    const receiveAmount = () =>
-        formatAmount(
+    const receiveAmount = () => {
+        const current = swap() as ChainSwap | ReverseSwap | SubmarineSwap;
+        return formatAmount(
             BigNumber(
-                (swap()!.dex?.position === SwapPosition.Post
-                    ? swap()!.dex?.quoteAmount
-                    : swap()!.receiveAmount) ?? 0,
+                (current.dex?.position === SwapPosition.Post
+                    ? current.dex.quoteAmount
+                    : current.receiveAmount) ?? 0,
             ),
             denomination(),
             separator(),
-            getFinalAssetReceive(swap()!),
+            getFinalAssetReceive(current),
         );
+    };
 
     const receiveDenomination = () =>
         formatDenomination(denomination(), getFinalAssetReceive(swap()!));

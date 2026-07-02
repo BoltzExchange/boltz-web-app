@@ -95,14 +95,12 @@ export const createUniformGasAbstraction = (
 export const noGasAbstraction = (): GasAbstraction =>
     createUniformGasAbstraction(GasAbstractionType.None);
 
-export type SwapBase = {
+export type SwapBaseData = {
     type: SwapType;
     status?: string;
     assetSend: string;
     assetReceive: string;
     getGasToken?: boolean;
-    sendAmount: number;
-    receiveAmount: number;
     version: number;
     date: number;
 
@@ -132,6 +130,11 @@ export type SwapBase = {
 
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
+};
+
+export type SwapBase = SwapBaseData & {
+    sendAmount: number;
+    receiveAmount: number;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -170,17 +173,34 @@ export type ChainSwap = SwapBase &
         refundPrivateKey?: string;
     };
 
-export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
+export type CommitmentSwap = SwapBaseData & {
+    type: SwapType.Commitment;
+    id: string;
+    pairHash: string;
+    initialReceiveAsset: string;
+    sourceAsset: string;
+    sourceAmount: string;
+    lockupAmount?: string;
+    timeoutBlockHeight?: number;
+};
 
-export const getLockupGasAbstraction = (swap: SwapBase): GasAbstractionType =>
-    swap.gasAbstraction.lockup;
+export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap | CommitmentSwap;
 
-export const getClaimGasAbstraction = (swap: SwapBase): GasAbstractionType =>
-    swap.gasAbstraction.claim;
+export const isCommitmentSwap = (swap: SwapBaseData): swap is CommitmentSwap =>
+    swap.type === SwapType.Commitment;
 
-export const getRelevantAssetForSwap = (swap: SwapBase) => {
+export const getLockupGasAbstraction = (
+    swap: SwapBaseData,
+): GasAbstractionType => swap.gasAbstraction.lockup;
+
+export const getClaimGasAbstraction = (
+    swap: SwapBaseData,
+): GasAbstractionType => swap.gasAbstraction.claim;
+
+export const getRelevantAssetForSwap = (swap: SwapBaseData) => {
     switch (swap.type) {
         case SwapType.Submarine:
+        case SwapType.Commitment:
             return swap.assetSend;
 
         default:
@@ -196,13 +216,19 @@ export const getSwapAddress = (swap: SomeSwap): string => {
             return swap.lockupAddress;
         case SwapType.Chain:
             return swap.lockupDetails.lockupAddress;
+        case SwapType.Commitment:
+            return "";
     }
 };
 
 export const getFinalAssetSend = (
-    swap: SwapBase,
+    swap: SwapBaseData,
     coalesceLn: boolean = false,
 ): string => {
+    if (isCommitmentSwap(swap)) {
+        return swap.sourceAsset;
+    }
+
     if (swap.bridge?.position === SwapPosition.Pre) {
         return swap.bridge.sourceAsset;
     }
@@ -219,9 +245,13 @@ export const getFinalAssetSend = (
 };
 
 export const getFinalAssetReceive = (
-    swap: SwapBase,
+    swap: SwapBaseData,
     coalesceLn: boolean = false,
 ): string => {
+    if (isCommitmentSwap(swap)) {
+        return swap.initialReceiveAsset;
+    }
+
     if (swap.bridge?.position === SwapPosition.Post) {
         return swap.bridge.destinationAsset;
     }
@@ -263,6 +293,46 @@ const generatePreimage = ({
 }) => {
     return derivePreimageFromRescueKey(rescueFile, keyIndex, asset);
 };
+
+const createLocalSwapId = () => {
+    if (globalThis.crypto?.randomUUID !== undefined) {
+        return globalThis.crypto.randomUUID();
+    }
+
+    return Math.floor(Math.random() * 0x1_0000_0000)
+        .toString(16)
+        .padStart(8, "0");
+};
+
+export const createCommitmentSwap = (
+    assetSend: string,
+    assetReceive: string,
+    initialReceiveAsset: string,
+    sourceAsset: string,
+    sourceAmount: BigNumber,
+    lockupAmount: BigNumber,
+    pairHash: string,
+    gasAbstraction: GasAbstraction,
+    dex?: DexDetail,
+    bridge?: BridgeDetail,
+    originalDestination?: string,
+): CommitmentSwap => ({
+    id: createLocalSwapId(),
+    type: SwapType.Commitment,
+    gasAbstraction,
+    assetSend,
+    assetReceive,
+    date: new Date().getTime(),
+    version: OutputType.Taproot,
+    pairHash,
+    initialReceiveAsset,
+    sourceAsset,
+    sourceAmount: sourceAmount.toFixed(0),
+    lockupAmount: lockupAmount.toFixed(0),
+    dex,
+    bridge,
+    originalDestination,
+});
 
 export const createSubmarine = async (
     assetSend: string,
