@@ -1,6 +1,7 @@
 tags
 .idea/
 .vscode/
+__pycache__/
 
 .env.local
 *.log

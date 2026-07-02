@@ -32,6 +32,9 @@ setBoltzSwapsConfig({
     get referral() {
         return "boltz_webapp_desktop";
     },
+    get network() {
+        return runtimeConfig.network;
+    },
     get cooperativeDisabled() {
         return runtimeConfig.cooperativeDisabled === true;
     },

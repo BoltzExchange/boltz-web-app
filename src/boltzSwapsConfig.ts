@@ -37,6 +37,9 @@ export const configureBoltzSwaps = () => {
         get network() {
             return config.network;
         },
+        get dnsOverHttps() {
+            return config.dnsOverHttps;
+        },
         gasTopUpSupported,
         getGasTopUpNativeAmount,
         cooperativeDisabled: config.cooperativeDisabled === true,

@@ -50,6 +50,10 @@ export interface BoltzSwapsConfig<A extends string = string> {
     // Defaults to a WebSocket stream with a REST polling fallback
     // (createDefaultStatusSource).
     statusSource?: StatusSource;
+
+    // DNS-over-HTTPS resolver endpoint used for BIP-353 DNSSEC proofs.
+    // Defaults to Cloudflare.
+    dnsOverHttps?: string;
 }
 
 // Loose input shape accepted by `setBoltzSwapsConfig` / `createBoltzClient`.
@@ -129,6 +133,7 @@ const mergeWithDefaults = <A extends string>(
         "gasSponsor",
         "defaultSlippage",
         "statusSource",
+        "dnsOverHttps",
     ] as const) {
         Object.defineProperty(merged, key, {
             enumerable: true,
@@ -381,3 +386,8 @@ export const getGasSponsorUrl = (): string =>
 
 export const getConfiguredDefaultSlippage = (): number =>
     getBoltzSwapsConfig().defaultSlippage ?? 0.01;
+
+const DEFAULT_DNS_OVER_HTTPS = "https://1.1.1.1/dns-query";
+
+export const getDnsOverHttps = (): string =>
+    getBoltzSwapsConfig().dnsOverHttps ?? DEFAULT_DNS_OVER_HTTPS;
