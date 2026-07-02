@@ -1,4 +1,8 @@
-import { quoteDexAmountIn, quoteDexAmountOut } from "boltz-swaps/client";
+import {
+    getSwapStatuses,
+    quoteDexAmountIn,
+    quoteDexAmountOut,
+} from "boltz-swaps/client";
 
 import type * as FetcherModule from "../src/http/fetcher.ts";
 
@@ -48,5 +52,76 @@ describe("boltzClient DEX quotes", () => {
         );
         expect(result.map(({ quote }) => quote)).toEqual(["5", "10", "25"]);
         expect(quotes.map(({ quote }) => quote)).toEqual(["10", "25", "5"]);
+    });
+});
+
+describe("getSwapStatuses", () => {
+    beforeEach(() => {
+        fetcherMock.mockReset();
+    });
+
+    test("returns an empty map without a request for no ids", async () => {
+        const result = await getSwapStatuses([]);
+        expect(result).toEqual({});
+        expect(fetcherMock).not.toHaveBeenCalled();
+    });
+
+    test("builds the ids query and returns the status map", async () => {
+        fetcherMock.mockResolvedValue({ a: { status: "swap.created" } });
+
+        const result = await getSwapStatuses(["a", "b"]);
+
+        expect(fetcherMock).toHaveBeenCalledWith("/v2/swap/status?ids=a&ids=b");
+        expect(result).toEqual({ a: { status: "swap.created" } });
+    });
+
+    test("url-encodes ids", async () => {
+        fetcherMock.mockResolvedValue({});
+        await getSwapStatuses(["a b", "c/d"]);
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/status?ids=a%20b&ids=c%2Fd",
+        );
+    });
+
+    test("chunks at 64 ids per request and merges the results", async () => {
+        const ids = Array.from({ length: 65 }, (_, i) => `id${i}`);
+        fetcherMock
+            .mockResolvedValueOnce({ [ids[0]]: { status: "a" } })
+            .mockResolvedValueOnce({ [ids[64]]: { status: "b" } });
+
+        const result = await getSwapStatuses(ids);
+
+        expect(fetcherMock).toHaveBeenCalledTimes(2);
+        const firstUrl = fetcherMock.mock.calls[0][0] as string;
+        expect(firstUrl.split("ids=").length - 1).toBe(64);
+        expect(fetcherMock.mock.calls[1][0]).toBe("/v2/swap/status?ids=id64");
+        expect(result).toEqual({
+            id0: { status: "a" },
+            id64: { status: "b" },
+        });
+    });
+
+    test("sends exactly one request for the 64-id boundary", async () => {
+        const ids = Array.from({ length: 64 }, (_, i) => `id${i}`);
+        fetcherMock.mockResolvedValue(
+            Object.fromEntries(ids.map((id) => [id, { status: "ok" }])),
+        );
+
+        const result = await getSwapStatuses(ids);
+
+        expect(fetcherMock).toHaveBeenCalledTimes(1);
+        expect(Object.keys(result)).toHaveLength(64);
+    });
+
+    test("rejects the whole call when any chunk fails (all-or-nothing)", async () => {
+        const ids = Array.from({ length: 65 }, (_, i) => `id${i}`);
+        fetcherMock
+            .mockResolvedValueOnce({ id0: { status: "a" } })
+            .mockRejectedValueOnce(new Error("could not find swap"));
+
+        await expect(getSwapStatuses(ids)).rejects.toThrow(
+            "could not find swap",
+        );
+        expect(fetcherMock).toHaveBeenCalledTimes(2);
     });
 });

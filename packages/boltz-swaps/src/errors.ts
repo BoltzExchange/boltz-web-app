@@ -72,6 +72,9 @@ export const setWalletRejectionMessage = (message: string): void => {
     walletRejectionMessage = message;
 };
 
+export const toError = (value: unknown): Error =>
+    value instanceof Error ? value : new Error(formatError(value));
+
 export const formatError = (message: unknown): string => {
     if (isWalletRejectionError(message)) {
         return walletRejectionMessage;

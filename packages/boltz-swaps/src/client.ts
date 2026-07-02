@@ -516,6 +516,32 @@ export const getReverseTransaction = (id: string) =>
 export const getSwapStatus = (id: string) =>
     fetcher<SwapStatusResponse>(`/v2/swap/${id}`);
 
+const maxStatusIds = 64;
+
+export const getSwapStatuses = async (
+    ids: string[],
+): Promise<Record<string, SwapStatusResponse>> => {
+    if (ids.length === 0) {
+        return {};
+    }
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += maxStatusIds) {
+        chunks.push(ids.slice(i, i + maxStatusIds));
+    }
+    const parts = await Promise.all(
+        chunks.map((chunk) =>
+            fetcher<Record<string, SwapStatusResponse>>(
+                `/v2/swap/status?${chunk.map((id) => `ids=${encodeURIComponent(id)}`).join("&")}`,
+            ),
+        ),
+    );
+    const merged: Record<string, SwapStatusResponse> = {};
+    for (const part of parts) {
+        Object.assign(merged, part);
+    }
+    return merged;
+};
+
 export const getChainSwapClaimDetails = (id: string) =>
     fetcher<{
         pubNonce: string;

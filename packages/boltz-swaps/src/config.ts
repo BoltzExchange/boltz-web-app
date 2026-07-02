@@ -1,3 +1,4 @@
+import type { StatusSource } from "./statusSource/types.ts";
 import {
     type Asset,
     type AssetBridge,
@@ -44,6 +45,11 @@ export interface BoltzSwapsConfig<A extends string = string> {
     // When true, cooperative-signature Boltz endpoints throw before sending.
     // Should only be used for testing.
     cooperativeDisabled?: boolean;
+
+    // Source of swap-status updates for `swap.subscribe` / `swap.watch`.
+    // Defaults to a WebSocket stream with a REST polling fallback
+    // (createDefaultStatusSource).
+    statusSource?: StatusSource;
 }
 
 // Loose input shape accepted by `setBoltzSwapsConfig` / `createBoltzClient`.
@@ -122,6 +128,7 @@ const mergeWithDefaults = <A extends string>(
         "network",
         "gasSponsor",
         "defaultSlippage",
+        "statusSource",
     ] as const) {
         Object.defineProperty(merged, key, {
             enumerable: true,
