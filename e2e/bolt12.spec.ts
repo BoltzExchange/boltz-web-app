@@ -17,17 +17,19 @@ test.describe("BOLT12", () => {
         const divFlipAssets = page.locator("#flip-assets");
         await divFlipAssets.click();
 
+        const invoiceInput = page.locator("input[data-testid='invoice']");
+        await invoiceInput.fill(await getBolt12Offer());
+
         const receiveAmount = "0.01";
         const inputReceiveAmount = page.locator(
             "input[data-testid='receiveAmount']",
         );
         await inputReceiveAmount.fill(receiveAmount);
 
-        const invoiceInput = page.locator("input[data-testid='invoice']");
-        await invoiceInput.fill(await getBolt12Offer());
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",
         );
+        await expect(buttonCreateSwap).toBeEnabled();
         await buttonCreateSwap.click();
 
         await verifyRescueFile(page);
