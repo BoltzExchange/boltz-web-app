@@ -80,6 +80,7 @@ import {
     type SubmarineSwap,
     getLockupGasAbstraction,
 } from "../utils/swapCreator";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadataPatch";
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
@@ -226,7 +227,7 @@ const isTaskRelevant = (
 };
 
 export const SwapExecutionWorker = () => {
-    const { getSwap, getSwaps, slippage, pairs, fetchPairs } =
+    const { getSwap, getSwaps, slippage, pairs, fetchPairs, rescueFile } =
         useGlobalContext();
     const { swap } = usePayContext();
     const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
@@ -255,6 +256,7 @@ export const SwapExecutionWorker = () => {
                 commitmentLockupTxHash,
             }),
         );
+        await patchEncryptedSwapMetadata(latestSwap, rescueFile());
         queueRelevantTasks(latestSwap);
         return true;
     };

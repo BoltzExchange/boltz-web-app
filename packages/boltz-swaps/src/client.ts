@@ -185,6 +185,7 @@ export type RestorableSwap = {
     claimPrivateKey?: string;
     claimDetails?: RestorableSwapDetails;
     refundDetails?: RestorableSwapDetails;
+    metadata?: string;
 };
 
 export type LockupTransaction = {
@@ -341,6 +342,17 @@ export const createChainSwap = (
         referralId: getReferralId(),
         userLockAmount,
     });
+
+export const patchSwapMetadata = (
+    type: SwapType.Submarine | SwapType.Reverse | SwapType.Chain,
+    id: string,
+    metadata: string,
+): Promise<Record<string, never>> =>
+    fetcher(
+        `/v2/swap/${type}/${id}/metadata`,
+        { metadata },
+        { method: "PATCH" },
+    );
 
 export const getPartialRefundSignature = async (
     id: string,

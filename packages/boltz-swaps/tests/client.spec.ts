@@ -1,8 +1,11 @@
 import {
+    createSubmarineSwap,
     getSwapStatuses,
+    patchSwapMetadata,
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
+import { SwapType } from "boltz-swaps/types";
 
 import type * as FetcherModule from "../src/http/fetcher.ts";
 
@@ -123,5 +126,41 @@ describe("getSwapStatuses", () => {
             "could not find swap",
         );
         expect(fetcherMock).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("boltzClient swap metadata", () => {
+    beforeEach(() => {
+        fetcherMock.mockReset();
+        fetcherMock.mockResolvedValue({});
+    });
+
+    test("create requests do not forward metadata", async () => {
+        await createSubmarineSwap(
+            "WBTC",
+            "BTC",
+            "lninvoice",
+            "pair-hash",
+            "refundpub",
+        );
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine",
+            expect.not.objectContaining({ metadata: expect.anything() }),
+        );
+    });
+
+    test("patches metadata on the metadata endpoint", async () => {
+        await patchSwapMetadata(
+            SwapType.Chain,
+            "swap-id",
+            "encrypted-metadata",
+        );
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/chain/swap-id/metadata",
+            { metadata: "encrypted-metadata" },
+            { method: "PATCH" },
+        );
     });
 });

@@ -77,6 +77,10 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
+import {
+    buildSwapMetadataPayload,
+    encryptSwapMetadata,
+} from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
@@ -111,6 +115,46 @@ const buildBridgeDetail = (
     }
 
     return driver.getRoutePosition(route, position);
+};
+
+export const buildEncryptedSwapMetadata = async ({
+    assetSend,
+    assetReceive,
+    hops,
+    hopsPosition,
+    sendAmount,
+    receiveAmount,
+    mnemonic,
+}: {
+    assetSend: string;
+    assetReceive: string;
+    hops: EncodedHop[];
+    hopsPosition: SwapPosition | undefined;
+    sendAmount: number;
+    receiveAmount: number;
+    mnemonic: string | undefined;
+}): Promise<string | undefined> => {
+    const bridge =
+        buildBridgeDetail(assetSend, SwapPosition.Pre) ??
+        buildBridgeDetail(assetReceive, SwapPosition.Post);
+
+    const payload = buildSwapMetadataPayload({
+        hops,
+        hopsPosition,
+        bridge,
+        sendAmount,
+        receiveAmount,
+    });
+
+    if (payload === undefined) {
+        return undefined;
+    }
+
+    if (mnemonic === undefined || mnemonic === "") {
+        throw new Error("missing rescue file for routed swap metadata");
+    }
+
+    return await encryptSwapMetadata(mnemonic, payload);
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
