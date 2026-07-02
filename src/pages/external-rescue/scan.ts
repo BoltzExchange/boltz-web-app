@@ -10,10 +10,7 @@ import { formatError } from "../../utils/errors";
 import { RescueAction } from "../../utils/rescue";
 import { type RescueFile, getXpub } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
-import {
-    decryptSwapMetadata,
-    swapMetadataToLocalFields,
-} from "../../utils/swapMetadata";
+import { decryptSwapMetadata } from "../../utils/swapMetadata";
 import { mapSwap } from "../RefundRescue";
 import {
     type EvmRescueResult,
@@ -157,7 +154,7 @@ export const mapRestorableSwaps = async (
                 );
                 return {
                     ...base,
-                    ...swapMetadataToLocalFields(metadata),
+                    ...metadata,
                 };
             } catch (e) {
                 log.warn(

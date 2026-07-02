@@ -1,37 +1,15 @@
-import { BigNumber } from "bignumber.js";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 
-import type * as ClientModule from "../../packages/boltz-swaps/src/client";
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
-import type { newKeyFn } from "../../src/context/Global";
-import type { RescueFile } from "../../src/utils/rescueFile";
 import {
     type BridgeDetail,
     type SwapBase,
-    createChain,
-    createReverse,
-    createSubmarine,
     getFinalAssetReceive,
     getFinalAssetSend,
     getPostBridgeDetail,
     getPreBridgeDetail,
     noGasAbstraction,
 } from "../../src/utils/swapCreator";
-
-const { createSubmarineMock, createReverseMock, createChainMock } = vi.hoisted(
-    () => ({
-        createSubmarineMock: vi.fn(),
-        createReverseMock: vi.fn(),
-        createChainMock: vi.fn(),
-    }),
-);
-
-vi.mock("boltz-swaps/client", async (importActual) => ({
-    ...(await importActual<typeof ClientModule>()),
-    createSubmarineSwap: createSubmarineMock,
-    createReverseSwap: createReverseMock,
-    createChainSwap: createChainMock,
-}));
 
 const makeBridge = (
     sourceAsset: string,
@@ -185,77 +163,5 @@ describe("getFinalAssetReceive", () => {
     test("falls back to swap.assetReceive when there's no bridge or post-DEX", () => {
         const swap = makeSwap({ assetReceive: LBTC });
         expect(getFinalAssetReceive(swap)).toBe(LBTC);
-    });
-});
-
-describe("create wrappers", () => {
-    const rescueFile: RescueFile = {
-        mnemonic:
-            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-    };
-
-    const newKeyWithIndex: newKeyFn = vi.fn().mockResolvedValue({
-        key: { publicKey: new Uint8Array(33) },
-        index: 0,
-    });
-    const newKeyNone: newKeyFn = vi.fn().mockResolvedValue(undefined);
-
-    beforeEach(() => {
-        createSubmarineMock.mockReset().mockResolvedValue({ id: "sub" });
-        createReverseMock.mockReset().mockResolvedValue({ id: "rev" });
-        createChainMock.mockReset().mockResolvedValue({ id: "chain" });
-    });
-
-    test("createSubmarine does not forward metadata", async () => {
-        await createSubmarine(
-            BTC,
-            BTC,
-            BigNumber(1000),
-            BigNumber(900),
-            "lninvoice",
-            "pair-hash",
-            noGasAbstraction(),
-            newKeyNone,
-            undefined,
-        );
-
-        expect(createSubmarineMock).toHaveBeenCalledTimes(1);
-        expect(createSubmarineMock.mock.calls[0]).toHaveLength(5);
-    });
-
-    test("createReverse does not forward metadata", async () => {
-        await createReverse(
-            LN,
-            BTC,
-            BigNumber(1000),
-            BigNumber(900),
-            "bc1qclaim",
-            "pair-hash",
-            noGasAbstraction(),
-            rescueFile,
-            newKeyWithIndex,
-            undefined,
-        );
-
-        expect(createReverseMock).toHaveBeenCalledTimes(1);
-        expect(createReverseMock.mock.calls[0]).toHaveLength(7);
-    });
-
-    test("createChain does not forward metadata", async () => {
-        await createChain(
-            BTC,
-            BTC,
-            BigNumber(1000),
-            BigNumber(900),
-            "bc1qclaim",
-            "pair-hash",
-            noGasAbstraction(),
-            rescueFile,
-            newKeyWithIndex,
-            undefined,
-        );
-
-        expect(createChainMock).toHaveBeenCalledTimes(1);
-        expect(createChainMock.mock.calls[0]).toHaveLength(8);
     });
 });

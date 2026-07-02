@@ -80,7 +80,7 @@ import {
     type SubmarineSwap,
     getLockupGasAbstraction,
 } from "../utils/swapCreator";
-import { patchEncryptedSwapMetadata } from "../utils/swapMetadataPatch";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadata";
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
@@ -250,13 +250,13 @@ export const SwapExecutionWorker = () => {
             return false;
         }
 
+        await patchEncryptedSwapMetadata(latestSwap, rescueFile());
         log.info(
             `Swap execution persisted ${source} commitment lockup transaction`,
             getSwapExecutionLogContext(latestSwap.id, {
                 commitmentLockupTxHash,
             }),
         );
-        await patchEncryptedSwapMetadata(latestSwap, rescueFile());
         queueRelevantTasks(latestSwap);
         return true;
     };

@@ -156,14 +156,16 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
                 991,
             );
         });
+        await waitFor(() => {
+            expect(mocks.modifySwapStorage).toHaveBeenCalledWith(
+                "swap-1",
+                expect.any(Function),
+            );
+        });
 
         expect(
             mocks.acceptChainSwapNewQuote.mock.invocationCallOrder[0],
         ).toBeLessThan(mocks.modifySwapStorage.mock.invocationCallOrder[0]);
-        expect(mocks.modifySwapStorage).toHaveBeenCalledWith(
-            "swap-1",
-            expect.any(Function),
-        );
         expect(mocks.swap).toEqual(
             expect.objectContaining({
                 receiveAmount: 990,
