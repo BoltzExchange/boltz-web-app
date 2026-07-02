@@ -64,7 +64,7 @@ const isRoutedAsset = (asset: string) =>
     config.assets?.[asset]?.bridge !== undefined;
 
 /** Convert an internal amount to EVM base units for the DEX API. */
-const toDexAmount = (amount: number, asset: string): bigint =>
+export const toDexAmount = (amount: number, asset: string): bigint =>
     isRoutedAsset(asset)
         ? BigInt(Math.round(amount))
         : satsToAssetAmount(amount, asset);
@@ -88,7 +88,7 @@ export const enum BridgeMessagingFeeDisplayMode {
 }
 
 type Hop = {
-    type: SwapType;
+    type: Exclude<SwapType, SwapType.Commitment>;
     from: string;
     to: string;
     pair?:
@@ -462,7 +462,7 @@ export default class Pair {
         }
 
         if (firstHop.type !== SwapType.Chain) {
-            blockers.push(`first hop type is ${firstHop.type}`);
+            blockers.push("first hop is not a chain swap");
         }
 
         if (isEvmAsset(firstHop.from)) {
@@ -567,6 +567,10 @@ export default class Pair {
         }
 
         return undefined;
+    }
+
+    public get hasPreBoltzDex() {
+        return this.dexHopBeforeBoltz !== undefined;
     }
 
     private get postBridgeDexHop(): Hop | undefined {

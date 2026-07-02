@@ -37,10 +37,8 @@ type SolanaOftModules = {
 export const solana: Loader<SolanaModules> = new Loader(
     "Solana",
     async (): Promise<SolanaModules> => {
-        const [web3, splToken] = await Promise.all([
-            import("@solana/web3.js"),
-            import("@solana/spl-token"),
-        ]);
+        const web3 = await import("@solana/web3.js");
+        const splToken = await import("@solana/spl-token");
 
         return { web3, splToken };
     },
@@ -49,9 +47,9 @@ export const solana: Loader<SolanaModules> = new Loader(
 export const solanaCctp: Loader<SolanaCctpModules> = new Loader(
     "Solana CCTP",
     async (): Promise<SolanaCctpModules> => {
-        const [solanaKit, web3, generated] = await Promise.all([
+        const web3 = await import("@solana/web3.js");
+        const [solanaKit, generated] = await Promise.all([
             import("@solana/kit"),
-            import("@solana/web3.js"),
             import("../generated/solana-cctp-token-messenger-minter/src/generated/index.ts"),
         ]);
 
@@ -66,6 +64,7 @@ export const solanaCctp: Loader<SolanaCctpModules> = new Loader(
 export const solanaOft: Loader<SolanaOftModules> = new Loader(
     "Solana OFT",
     async (): Promise<SolanaOftModules> => {
+        const web3 = await import("@solana/web3.js");
         const [
             lzSolanaUmi,
             mplToolbox,
@@ -74,7 +73,6 @@ export const solanaOft: Loader<SolanaOftModules> = new Loader(
             umiWalletAdapters,
             solanaKit,
             splToken,
-            web3,
             generated,
         ] = await Promise.all([
             import("@layerzerolabs/lz-solana-sdk-v2/umi"),
@@ -84,7 +82,6 @@ export const solanaOft: Loader<SolanaOftModules> = new Loader(
             import("@metaplex-foundation/umi-signer-wallet-adapters"),
             import("@solana/kit"),
             import("@solana/spl-token"),
-            import("@solana/web3.js"),
             import("../generated/solana-oft/src/generated/index.ts"),
         ]);
 

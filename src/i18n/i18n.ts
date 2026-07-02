@@ -26,7 +26,7 @@ const dict = {
         privacy: "Privacy",
         blockexplorer: "Open {{ typeLabel }}",
         blockexplorer_lockup_address: "lockup address",
-        blockexplorer_lockup_tx: "lockup transaction",
+        blockexplorer_lockup_tx: "Lockup Transaction",
         blockexplorer_claim_tx: "claim transaction",
         blockexplorer_refund_tx: "refund transaction",
         check_bridge_status: "Check bridge status",
@@ -51,7 +51,6 @@ const dict = {
             "Only continue if you are sure your wallet did not submit the transaction. Continuing can make you send funds twice.",
         continue: "Continue",
         receive: "Receive",
-        min: "Min",
         max: "Max",
         minimum_amount: "Minimum amount is {{ amount }} {{ denomination }}",
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
@@ -64,8 +63,14 @@ const dict = {
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
         amount_limits_changed:
             "Swap limits changed. Please confirm new amounts and continue with swap.",
+        commitment_invoice_heading:
+            "Enter a Lightning Invoice for {{ amount }} {{ denomination }}",
+        commitment_invoice_deferred: "Invoice to be entered after funding",
+        clear_amount: "Clear",
         create_and_paste:
             "Paste a Lightning invoice, BOLT12 or LNURL to receive funds",
+        invoice_cleared_amount_changed:
+            "Invoice cleared because the amount changed.",
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
@@ -594,7 +599,6 @@ const dict = {
             "Fahre nur fort, wenn du sicher bist, dass dein Wallet die Transaktion nicht übermittelt hat. Wenn du fortfährst, könntest du Geld zweimal senden.",
         continue: "Weiter",
         receive: "Empfange",
-        min: "Min",
         max: "Max",
         minimum_amount: "Mindestbetrag ist {{ amount }} {{ denomination }}",
         maximum_amount: "Höchstbetrag ist {{ amount }} {{ denomination }}",
@@ -607,8 +611,15 @@ const dict = {
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
         amount_limits_changed:
             "Swap-Limits haben sich geändert. Bitte bestätige die neuen Beträge und fahre mit dem Swap fort.",
+        commitment_invoice_heading:
+            "Lightning-Rechnung über {{ amount }} {{ denomination }} eingeben",
+        commitment_invoice_deferred:
+            "Rechnung wird nach der Zahlung eingegeben",
+        clear_amount: "Löschen",
         create_and_paste:
             "Füge eine Lightning-Rechnung, BOLT12 oder LNURL des Empfängers ein",
+        invoice_cleared_amount_changed:
+            "Rechnung gelöscht, weil sich der Betrag geändert hat.",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
@@ -1154,7 +1165,6 @@ const dict = {
             "Continúa solo si tienes la certeza de que tu billetera no envió la transacción. Continuar puede hacer que envíes fondos dos veces.",
         continue: "Continuar",
         receive: "Recibir",
-        min: "Mín",
         max: "Máx",
         minimum_amount: "La cantidad mínima es {{ amount }} {{ denomination }}",
         maximum_amount: "La cantidad máxima es {{ amount }} {{ denomination }}",
@@ -1167,8 +1177,15 @@ const dict = {
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
         amount_limits_changed:
             "Los límites del intercambio han cambiado. Por favor, confirma los nuevos importes y continúa con el intercambio.",
+        commitment_invoice_heading:
+            "Introduce una factura Lightning por {{ amount }} {{ denomination }}",
+        commitment_invoice_deferred:
+            "La factura se introducirá después de financiar",
+        clear_amount: "Borrar",
         create_and_paste:
             "Pega una factura Lightning, una dirección BOLT12 o una LNURL para recibir los fondos",
+        invoice_cleared_amount_changed:
+            "La factura se borró porque cambió el importe.",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
@@ -1711,7 +1728,6 @@ const dict = {
             "Continue apenas se tiver certeza de que sua carteira não enviou a transação. Continuar pode fazer com que você envie fundos duas vezes.",
         continue: "Continuar",
         receive: "Receber",
-        min: "Mín",
         max: "Máx",
         minimum_amount: "O valor mínimo é {{ amount }} {{ denomination }}",
         maximum_amount: "O valor máximo é {{ amount }} {{ denomination }}",
@@ -1724,8 +1740,15 @@ const dict = {
             "A taxa da rede foi atualizada conforme a situação atual, por favor confirme os novos valores e continue a troca.",
         amount_limits_changed:
             "Os limites da troca mudaram. Por favor confirme os novos valores e continue a troca.",
+        commitment_invoice_heading:
+            "Insira um invoice Lightning de {{ amount }} {{ denomination }}",
+        commitment_invoice_deferred:
+            "Invoice será inserido após o envio dos fundos",
+        clear_amount: "Limpar",
         create_and_paste:
             "Cole um invoice Lightning, um endereço BOLT12 ou um LNURL para receber os fundos",
+        invoice_cleared_amount_changed:
+            "O invoice foi removido porque o valor mudou.",
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
@@ -2261,7 +2284,6 @@ const dict = {
             "仅当您确定钱包没有提交该交易时才继续。继续可能会导致您重复发送资金。",
         continue: "继续",
         receive: "接收",
-        min: "最小",
         max: "最大",
         minimum_amount: "最小金额为{{ amount }}{{ denomination }}",
         maximum_amount: "最大金额为{{ amount }}{{ denomination }}",
@@ -2272,7 +2294,12 @@ const dict = {
         new_swap: "新的交换",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
         amount_limits_changed: "兑换限额已变更，请确认新的金额并继续进行兑换。",
+        commitment_invoice_heading:
+            "输入 {{ amount }} {{ denomination }} 的闪电发票",
+        commitment_invoice_deferred: "资金发送后输入发票",
+        clear_amount: "清除",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
+        invoice_cleared_amount_changed: "金额已更改，发票已清除。",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         bridge_transfer_pending:
@@ -2760,7 +2787,6 @@ const dict = {
             "ウォレットがトランザクションを送信していないことが確実な場合のみ続行してください。続行すると、資金を二重に送信する可能性があります。",
         continue: "続ける",
         receive: "受取",
-        min: "最小",
         max: "最大",
         minimum_amount: "最小金額は{{ amount }} {{ denomination }}です",
         maximum_amount: "最大金額は{{ amount }} {{ denomination }}です",
@@ -2773,8 +2799,14 @@ const dict = {
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
         amount_limits_changed:
             "スワップの上限／下限が変更されました。新しい金額を確認し、スワップを続行してください。",
+        commitment_invoice_heading:
+            "{{ amount }} {{ denomination }} のライトニングインボイスを入力してください",
+        commitment_invoice_deferred: "送金後にインボイスを入力",
+        clear_amount: "クリア",
         create_and_paste:
             "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
+        invoice_cleared_amount_changed:
+            "金額が変更されたためインボイスをクリアしました。",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         bridge_transfer_pending:

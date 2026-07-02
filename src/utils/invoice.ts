@@ -1,15 +1,22 @@
 import { bech32, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import { fetchBolt12Invoice } from "boltz-swaps/client";
-import { validateInvoiceForOffer } from "boltz-swaps/invoice";
+import { isBolt12Offer, validateInvoiceForOffer } from "boltz-swaps/invoice";
 import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
-import { InvoiceValidation } from "../consts/Enums";
-import { satToMiliSat } from "./denomination";
+import { type Denomination, InvoiceValidation } from "../consts/Enums";
+import type { ButtonLabelParams } from "../consts/Types";
+import {
+    formatAmount,
+    formatDenomination,
+    miliSatToSat,
+    satToMiliSat,
+} from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
+import { firstResolved, promiseWithTimeout } from "./promise";
 
 type LnurlResponse = {
     minSendable: number;
@@ -35,6 +42,54 @@ const bolt11Prefixes = {
 };
 
 const bip353Prefix = "₿";
+const invoiceFetchTimeout = 25_000;
+
+export const isInvoiceValidationError = (error: unknown): error is Error =>
+    error instanceof Error &&
+    (Object.values(InvoiceValidation) as string[]).includes(error.message);
+
+export const invoiceAmountLabel = (
+    error: Error,
+    options: {
+        denomination: Denomination;
+        separator: string;
+        asset: string;
+    },
+): ButtonLabelParams | undefined => {
+    if (!isInvoiceValidationError(error)) {
+        return undefined;
+    }
+
+    let key: ButtonLabelParams["key"];
+    switch (error.message) {
+        case InvoiceValidation.MinAmount:
+            key = "min_amount_destination";
+            break;
+        case InvoiceValidation.MaxAmount:
+            key = "max_amount_destination";
+            break;
+        default: {
+            const unhandled: never = error.message as never;
+            return unhandled;
+        }
+    }
+
+    return {
+        key,
+        params: {
+            amount: formatAmount(
+                miliSatToSat(BigNumber(error.cause as BigNumber.Value)),
+                options.denomination,
+                options.separator,
+                options.asset,
+            ),
+            denomination: formatDenomination(
+                options.denomination,
+                options.asset,
+            ),
+        },
+    };
+};
 
 export const fetchLnurl = async (
     lnurl: string,
@@ -120,6 +175,43 @@ export const fetchBip353 = async (
     return invoice;
 };
 
+export const fetchDeferredInvoice = async (
+    destination: string,
+    amountSat: number,
+): Promise<string> => {
+    const invoiceInput =
+        extractInvoice(destination.trim()) ?? destination.trim();
+
+    if (isLnurl(invoiceInput)) {
+        let lnurlError: unknown;
+        const lnurlInvoice = fetchLnurl(invoiceInput, amountSat).catch(
+            (error) => {
+                lnurlError = error;
+                throw error;
+            },
+        );
+
+        try {
+            return await firstResolved(
+                [lnurlInvoice, fetchBip353(invoiceInput, amountSat)].map(
+                    (promise) =>
+                        promiseWithTimeout(promise, invoiceFetchTimeout),
+                ),
+            );
+        } catch (error) {
+            if (isInvoiceValidationError(lnurlError)) {
+                throw lnurlError;
+            }
+
+            throw error;
+        }
+    }
+
+    const invoice = (await fetchBolt12Invoice(invoiceInput, amountSat)).invoice;
+    validateInvoiceForOffer(invoiceInput, invoice);
+    return invoice;
+};
+
 const checkLnurlResponse = (amount: BigNumber, data: LnurlResponse) => {
     log.debug(
         "lnurl amount check: (x, min, max)",
@@ -186,7 +278,7 @@ export const extractInvoice = (data: string) => {
         return null;
     }
 
-    data = data.toLowerCase();
+    data = data.trim().toLowerCase();
     if (data.startsWith(invoicePrefix)) {
         const url = new URL(data);
         return url.pathname;
@@ -284,5 +376,19 @@ export const isLnurl = (data: string | null | undefined) => {
     return (
         (data.includes("@") && emailRegex.test(data)) ||
         (data.startsWith("lnurl") && isValidBech32(data))
+    );
+};
+
+export const isDeferredInvoiceDestination = (
+    value: string | undefined,
+): value is string => {
+    if (value === undefined) {
+        return false;
+    }
+
+    const invoiceInput = extractInvoice(value.trim()) ?? "";
+    return (
+        invoiceInput !== "" &&
+        (isLnurl(invoiceInput) || isBolt12Offer(invoiceInput))
     );
 };

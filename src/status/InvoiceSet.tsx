@@ -47,6 +47,11 @@ const InvoiceSet = () => {
                         ? submarine.dex.hops
                         : undefined
                 }
+                hopInputAmount={
+                    submarine.dex?.position === SwapPosition.Pre
+                        ? submarine.dex.sourceAmount
+                        : undefined
+                }
                 bridge={getPreBridgeDetail(submarine.bridge)}
             />
         </Show>

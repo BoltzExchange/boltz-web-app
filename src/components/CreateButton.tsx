@@ -4,14 +4,9 @@ import { bridgeRegistry } from "boltz-swaps/bridge";
 import {
     type ChainPairTypeTaproot,
     fetchBip21Invoice,
-    fetchBolt12Invoice,
 } from "boltz-swaps/client";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
-import {
-    InvoiceType,
-    decodeInvoice,
-    validateInvoiceForOffer,
-} from "boltz-swaps/invoice";
+import { InvoiceType, decodeInvoice } from "boltz-swaps/invoice";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -32,7 +27,7 @@ import {
     getRouteViaAsset,
     isEvmAsset,
 } from "../consts/Assets";
-import { InvoiceValidation } from "../consts/Enums";
+import { Side } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -43,8 +38,9 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop } from "../utils/Pair";
+import Pair, { type EncodedHop, toDexAmount } from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";
+import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
     btcToSat,
@@ -52,37 +48,37 @@ import {
     formatAssetAmountForLog,
     formatDenomination,
     formatSwapAmountForLog,
-    miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { handleCreateSwapError } from "../utils/handleCreateSwapError";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { getDestinationAddress, getPair } from "../utils/helper";
 import {
-    fetchBip353,
-    fetchLnurl,
+    fetchDeferredInvoice,
     getAssetByBip21Prefix,
+    invoiceAmountLabel,
+    isInvoiceValidationError,
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
-import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { estimateFeesPerGas } from "../utils/provider";
 import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
 import {
     type BridgeDetail,
+    type ChainSwap,
+    type DexDetail,
     type GasAbstraction,
     GasAbstractionType,
-    type SomeSwap,
+    type ReverseSwap,
+    type SubmarineSwap,
     createChain,
+    createCommitmentSwap,
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
-
-// In milliseconds
-const invoiceFetchTimeout = 25_000;
 
 const userErrorLabelKeys = new Set<DictKey>([
     "invalid_pair",
@@ -96,6 +92,7 @@ const userErrorLabelKeys = new Set<DictKey>([
 const buildBridgeDetail = (
     asset: string,
     position: SwapPosition,
+    sourceAmount?: BigNumber,
 ): BridgeDetail | undefined => {
     const route =
         position === SwapPosition.Pre
@@ -110,7 +107,48 @@ const buildBridgeDetail = (
         return undefined;
     }
 
-    return driver.getRoutePosition(route, position);
+    const bridge = driver.getRoutePosition(route, position);
+    if (position !== SwapPosition.Pre || sourceAmount === undefined) {
+        return bridge;
+    }
+
+    return {
+        ...bridge,
+        sourceAmount: sourceAmount.toFixed(0),
+    };
+};
+
+const buildDexDetail = (
+    hops: EncodedHop[],
+    position: SwapPosition | undefined,
+    sendAmount: BigNumber,
+    receiveAmount: BigNumber,
+    amountChanged: Side,
+): DexDetail | undefined => {
+    if (position === undefined) {
+        return undefined;
+    }
+
+    const dex = {
+        hops,
+        position,
+        quoteAmount:
+            position === SwapPosition.Post
+                ? Number(receiveAmount)
+                : Number(sendAmount),
+    };
+
+    if (position !== SwapPosition.Pre || amountChanged !== Side.Send) {
+        return dex;
+    }
+
+    return {
+        ...dex,
+        sourceAmount: toDexAmount(
+            sendAmount.toNumber(),
+            hops[0].from,
+        ).toString(),
+    };
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
@@ -229,6 +267,7 @@ const CreateButton = () => {
         onchainAddress,
         receiveAmount,
         sendAmount,
+        amountChanged,
         amountValid,
         setInvoice,
         setInvoiceValid,
@@ -281,6 +320,14 @@ const CreateButton = () => {
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
+    const deferredInvoiceDestination = () => lnurl() || bolt12Offer();
+    const canCreateCommitmentSwap = () =>
+        canCommitSubmarineSendAmount(pair(), amountChanged()) &&
+        amountValid() &&
+        invoiceError() === undefined &&
+        (invoice() === "" || deferredInvoiceDestination() !== undefined);
+    const canCreateSwap = () =>
+        valid() || validWayToFetchInvoice() || canCreateCommitmentSwap();
     const getSwapCreationLogContext = (
         claimAddress?: string,
         gasAbstraction?: GasAbstraction,
@@ -308,6 +355,7 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
+                amountChanged,
                 pair,
                 lnurl,
                 online,
@@ -363,6 +411,7 @@ const CreateButton = () => {
                     // Chain swaps with 0-amount that do not have RBTC as sending asset
                     // can skip this check
                     !isChainSwapWithZeroAmount() &&
+                    !canCreateCommitmentSwap() &&
                     (isSubmarineSwapInvoiceValid() ||
                         swapType() !== SwapType.Submarine) &&
                     !(sendAmount().isZero() && hasInvalidDestinationInput());
@@ -408,6 +457,10 @@ const CreateButton = () => {
                         return;
                     }
                 } else {
+                    if (canCreateCommitmentSwap()) {
+                        setButtonLabel({ key: "create_swap" });
+                        return;
+                    }
                     if (validWayToFetchInvoice()) {
                         setButtonLabel({ key: "create_swap" });
                         return;
@@ -427,7 +480,7 @@ const CreateButton = () => {
     const validWayToFetchInvoice = (): boolean => {
         return (
             swapType() === SwapType.Submarine &&
-            (lnurl() !== "" || bolt12Offer() !== undefined) &&
+            deferredInvoiceDestination() !== undefined &&
             amountValid() &&
             sendAmount().isGreaterThan(0) &&
             assetReceive() !== assetSend()
@@ -450,124 +503,62 @@ const CreateButton = () => {
         );
     };
 
-    const fetchInvoice = async () => {
-        if (lnurl() !== undefined && lnurl() !== "") {
-            try {
-                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+    const fetchInvoice = async (): Promise<boolean> => {
+        const destination = deferredInvoiceDestination();
+        if (destination === undefined) {
+            return false;
+        }
+        const fetchingLnurl = lnurl() !== "";
 
-                const fetched = await firstResolved(
-                    [
-                        (async () => {
-                            try {
-                                return await fetchLnurl(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice for LNURL failed:",
-                                    e,
-                                );
-                                if (
-                                    e instanceof Error &&
-                                    (
-                                        Object.values(
-                                            InvoiceValidation,
-                                        ) as string[]
-                                    ).includes(e.message)
-                                ) {
-                                    const satsAmount = miliSatToSat(
-                                        BigNumber(e.cause as BigNumber.Value),
-                                    );
-                                    const value = {
-                                        amount: formatAmount(
-                                            BigNumber(satsAmount),
-                                            denomination(),
-                                            separator(),
-                                            BTC,
-                                        ),
-                                        denomination: formatDenomination(
-                                            denomination(),
-                                            BTC,
-                                        ),
-                                    };
+        log.info(
+            fetchingLnurl
+                ? "Fetching invoice from LNURL or BIP-353"
+                : "Fetching invoice from bolt12 offer",
+            destination,
+        );
 
-                                    setButtonDisable(true);
+        try {
+            const invoice = await fetchDeferredInvoice(
+                destination,
+                Number(receiveAmount()),
+            );
 
-                                    const minOrMax =
-                                        InvoiceValidation.MinAmount ===
-                                        e.message
-                                            ? "min"
-                                            : "max";
-
-                                    const errorMsg: DictKey = `${minOrMax}_amount_destination`;
-
-                                    setButtonLabel({
-                                        key: errorMsg,
-                                        params: value,
-                                    });
-
-                                    throw t(errorMsg, value);
-                                }
-                                const hasJson =
-                                    e !== null &&
-                                    typeof e === "object" &&
-                                    "json" in e &&
-                                    typeof (e as { json: unknown }).json ===
-                                        "function";
-                                const error = hasJson
-                                    ? await (
-                                          e as { json: () => Promise<unknown> }
-                                      ).json()
-                                    : e;
-                                throw formatError(error);
-                            }
-                        })(),
-                        (async () => {
-                            try {
-                                return await fetchBip353(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice from BIP-353 failed:",
-                                    e,
-                                );
-                                throw formatError(e);
-                            }
-                        })(),
-                    ].map((p) => promiseWithTimeout(p, invoiceFetchTimeout)),
-                );
-
-                setOriginalDestination(lnurl());
-                setInvoice(fetched);
+            setOriginalDestination(destination);
+            setInvoice(invoice);
+            if (fetchingLnurl) {
                 setLnurl("");
-                setInvoiceValid(true);
-            } catch (e) {
-                log.warn("Fetching invoice failed", e);
-                notify("error", formatError(e));
-            }
-        } else {
-            const offer = bolt12Offer();
-            if (offer === undefined) {
-                return;
-            }
-            log.info("Fetching invoice from bolt12 offer", offer);
-            try {
-                const invoice = (
-                    await fetchBolt12Invoice(offer, Number(receiveAmount()))
-                ).invoice;
-                validateInvoiceForOffer(offer, invoice);
-                setOriginalDestination(offer);
-                setInvoice(invoice);
+            } else {
                 setBolt12Offer(undefined);
-                setInvoiceValid(true);
-            } catch (e) {
-                notify("error", formatError(e));
-                log.warn("Fetching invoice from bolt12 offer failed", e);
-                return;
             }
+            setInvoiceValid(true);
+            return true;
+        } catch (e) {
+            log.warn("Fetching invoice failed", e);
+
+            if (fetchingLnurl && isInvoiceValidationError(e)) {
+                const label = invoiceAmountLabel(e, {
+                    denomination: denomination(),
+                    separator: separator(),
+                    asset: BTC,
+                });
+                if (label !== undefined) {
+                    setButtonDisable(true);
+                    setButtonLabel(label);
+                    notify("error", t(label.key, label.params));
+                }
+                return false;
+            }
+
+            const hasJson =
+                e !== null &&
+                typeof e === "object" &&
+                "json" in e &&
+                typeof (e as { json: unknown }).json === "function";
+            const error = hasJson
+                ? await (e as { json: () => Promise<unknown> }).json()
+                : e;
+            notify("error", formatError(error));
+            return false;
         }
     };
 
@@ -576,7 +567,7 @@ const CreateButton = () => {
         gasAbstraction: GasAbstraction,
     ): Promise<boolean> => {
         try {
-            let data!: SomeSwap;
+            let data!: SubmarineSwap | ReverseSwap | ChainSwap;
             let hops!: EncodedHop[];
             let hopsPosition: SwapPosition | undefined;
 
@@ -846,23 +837,22 @@ const CreateButton = () => {
             });
 
             const bridge =
-                buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
-                buildBridgeDetail(assetReceive(), SwapPosition.Post);
+                buildBridgeDetail(
+                    assetSend(),
+                    SwapPosition.Pre,
+                    amountChanged() === Side.Send ? sendAmount() : undefined,
+                ) ?? buildBridgeDetail(assetReceive(), SwapPosition.Post);
 
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
-                dex:
-                    hopsPosition !== undefined
-                        ? {
-                              hops,
-                              position: hopsPosition,
-                              quoteAmount:
-                                  hopsPosition === SwapPosition.Post
-                                      ? Number(receiveAmount())
-                                      : Number(sendAmount()),
-                          }
-                        : undefined,
+                dex: buildDexDetail(
+                    hops,
+                    hopsPosition,
+                    sendAmount(),
+                    receiveAmount(),
+                    amountChanged(),
+                ),
                 bridge,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
@@ -914,11 +904,77 @@ const CreateButton = () => {
         }
     };
 
+    const createLocalCommitmentSwap = async () => {
+        const creationData = await pair().creationData(
+            sendAmount(),
+            pair().minerFees,
+        );
+        if (creationData === undefined) {
+            throw new Error("missing swap creation data");
+        }
+        if (
+            creationData.hopsPosition !== SwapPosition.Pre ||
+            creationData.hops.length === 0
+        ) {
+            throw new Error("commitment swap requires a pre-swap DEX route");
+        }
+
+        const { gasAbstraction } = await getClaimAddress(
+            assetReceive,
+            assetSend,
+            signer,
+            onchainAddress,
+            getGasAbstractionSigner,
+            getGasToken(),
+        );
+
+        const dex = {
+            hops: creationData.hops,
+            position: SwapPosition.Pre,
+            quoteAmount: sendAmount().toFixed(0),
+            sourceAmount: sendAmount().toFixed(0),
+        };
+        const bridge = buildBridgeDetail(
+            assetSend(),
+            SwapPosition.Pre,
+            sendAmount(),
+        );
+        if (pair().hasPreBridge && bridge === undefined) {
+            throw new Error("missing pre-bridge details for commitment swap");
+        }
+
+        const commitmentSwap = createCommitmentSwap(
+            creationData.from,
+            creationData.to,
+            assetReceive(),
+            assetSend(),
+            sendAmount(),
+            creationData.sendAmount,
+            gasAbstraction,
+            dex,
+            bridge,
+            deferredInvoiceDestination(),
+        );
+
+        await setSwapStorage({
+            ...commitmentSwap,
+            getGasToken: getGasToken(),
+        });
+        navigate("/swap/" + commitmentSwap.id);
+    };
+
     const buttonClick = async () => {
         setLoading(true);
         try {
+            if (canCreateCommitmentSwap()) {
+                await createLocalCommitmentSwap();
+                return;
+            }
+
             if (validWayToFetchInvoice()) {
-                await fetchInvoice();
+                if (!(await fetchInvoice())) {
+                    return;
+                }
             }
 
             const { gasAbstraction, claimAddress } = await getClaimAddress(
@@ -971,7 +1027,7 @@ const CreateButton = () => {
             disabled={
                 !online() ||
                 pairsLoading() ||
-                !(valid() || validWayToFetchInvoice()) ||
+                !canCreateSwap() ||
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
@@ -979,8 +1035,8 @@ const CreateButton = () => {
                     getGasToken() === undefined) ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
-                    bolt12Offer() === undefined &&
-                    lnurl() === "")
+                    deferredInvoiceDestination() === undefined &&
+                    !canCreateCommitmentSwap())
             }
             onClick={buttonClick}>
             {(pairsLoading() ||

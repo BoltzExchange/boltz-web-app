@@ -1,7 +1,6 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { getRpcUrls } from "boltz-swaps/config";
-import { decodeInvoice } from "boltz-swaps/invoice";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import {
@@ -46,6 +45,8 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { getAssetNativeBalance } from "../utils/chains/balance";
+import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
+import { getConnectedMaximum } from "../utils/connectedMaximum";
 import {
     calculateDigits,
     convertAmount,
@@ -55,7 +56,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { isLnurl } from "../utils/invoice";
+import { isDeferredInvoiceDestination } from "../utils/invoice";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/quoter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -94,6 +95,7 @@ const Create = () => {
         setInvoice,
         invoiceValid,
         setInvoiceValid,
+        setInvoiceError,
         addressValid,
         sendAmount,
         setSendAmount,
@@ -103,11 +105,13 @@ const Create = () => {
         setSendAmountFormatted,
         receiveAmountFormatted,
         setReceiveAmountFormatted,
+        resetAmounts,
         amountChanged,
         setAmountChanged,
         minimum,
         maximum,
         limitsLoading,
+        amountValid,
         setAmountValid,
         boltzFee,
         minerFee,
@@ -116,7 +120,7 @@ const Create = () => {
         setQuoteLoading,
         destinationLocked,
     } = useCreateContext();
-    const { connectedWallet } = useWeb3Signer();
+    const { connectedWallet, signer } = useWeb3Signer();
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
@@ -148,7 +152,21 @@ const Create = () => {
     const limitActionsLoading = createMemo(
         () => limitsLoading() || quoteLoading(),
     );
-
+    const requiresInvoiceInput = createMemo(
+        () =>
+            pair().requiredInput === RequiredInput.Invoice ||
+            (pair().requiredInput === RequiredInput.Unknown &&
+                pair().toAsset === LN),
+    );
+    const canDeferInvoiceInput = createMemo(
+        () =>
+            requiresInvoiceInput() &&
+            canCommitSubmarineSendAmount(pair(), amountChanged()) &&
+            amountValid(),
+    );
+    const invoiceInputDisabled = createMemo(
+        () => canDeferInvoiceInput() && invoice() === "",
+    );
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = getRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
@@ -326,25 +344,19 @@ const Create = () => {
         return amount === "";
     };
 
-    const resetAmounts = () => {
-        setReceiveAmount(BigNumber(0));
-        setSendAmount(BigNumber(0));
-    };
-
     const clearStaleInvoice = () => {
-        if (invoice() === "" || isLnurl(invoice())) {
+        const currentInvoice = invoice();
+        if (
+            currentInvoice === "" ||
+            isDeferredInvoiceDestination(currentInvoice)
+        ) {
             return;
         }
-        try {
-            const invoiceSats = decodeInvoice(invoice()).satoshis;
-            if (invoiceSats === 0) {
-                return;
-            }
-            setInvoice("");
-            setInvoiceValid(false);
-        } catch {
-            // not a valid invoice, nothing to clear
-        }
+
+        setInvoice("");
+        setInvoiceValid(false);
+        setInvoiceError(undefined);
+        notify("success", t("invoice_cleared_amount_changed"));
     };
 
     const changeReceiveAmount = (evt: InputEvent) => {
@@ -517,7 +529,11 @@ const Create = () => {
             return;
         }
 
-        if (amount > 0 && receiveAmount().isZero()) {
+        if (
+            amount > 0 &&
+            receiveAmount().isZero() &&
+            !canCommitSubmarineSendAmount(pair(), amountChanged())
+        ) {
             setCustomValidity(t("error_zero_quote"), false);
             setAmountValid(false);
             return;
@@ -566,6 +582,49 @@ const Create = () => {
             validateAmount();
             sendAmountRef?.focus();
         });
+    };
+
+    const setMaxAmount = async () => {
+        const selectedPair = pair();
+        let connectedMaximum: BigNumber | undefined;
+
+        try {
+            connectedMaximum = await getConnectedMaximum({
+                fromAsset: selectedPair.fromAsset,
+                connectedWallet: connectedWallet(),
+                signer: signer(),
+            });
+        } catch (error) {
+            log.warn("failed to resolve connected wallet max amount", {
+                asset: selectedPair.fromAsset,
+                error,
+            });
+        }
+
+        if (pair() !== selectedPair) {
+            return;
+        }
+
+        const limit = maximum();
+        const selectedAmount =
+            connectedMaximum === undefined ||
+            !connectedMaximum.isGreaterThan(0) ||
+            (limit > 0 && connectedMaximum.isGreaterThan(limit))
+                ? limit
+                : connectedMaximum.toNumber();
+        setAmount(selectedAmount);
+    };
+
+    const clearCommittedAmounts = () => {
+        if (!invoiceInputDisabled()) {
+            return;
+        }
+
+        ++quoteRequestId;
+        clearQuoteDebounce();
+        setQuoteLoading(false);
+        resetAmounts();
+        setAmountChanged(Side.Send);
     };
 
     onMount(() => {
@@ -761,12 +820,15 @@ const Create = () => {
                                 </span>
                                 <Show when={!destinationLocked()}>
                                     <SwapLimits
-                                        minimum={minimum()}
                                         maximum={maximum()}
-                                        minLabel={t("min")}
                                         maxLabel={t("max")}
                                         loading={limitActionsLoading()}
+                                        maximumEnabled={
+                                            maximum() > 0 ||
+                                            pair().canZeroAmount
+                                        }
                                         onSelectAmount={setAmount}
+                                        onSelectMaximum={setMaxAmount}
                                     />
                                 </Show>
                                 <Show when={sendAmountQuoteLoading()}>
@@ -901,24 +963,37 @@ const Create = () => {
                         <hr class="spacer" />
                     </Show>
                 </Show>
-                <Show
-                    when={
-                        pair().requiredInput === RequiredInput.Invoice ||
-                        (pair().requiredInput === RequiredInput.Unknown &&
-                            pair().toAsset === LN)
-                    }>
-                    <Show when={webln()}>
+                <Show when={requiresInvoiceInput() && !destinationLocked()}>
+                    <Show when={webln() && !invoiceInputDisabled()}>
                         <WeblnButton />
                         <hr class="spacer" />
                     </Show>
-                    <Show when={!destinationLocked()}>
-                        <InvoiceInput />
-                        <hr class="spacer" />
+                    <Show
+                        when={invoiceInputDisabled()}
+                        fallback={<InvoiceInput />}>
+                        <div
+                            class="committed-invoice-row"
+                            data-testid="committed-invoice-row">
+                            <InvoiceInput
+                                class="committed-invoice-input"
+                                disabled={invoiceInputDisabled()}
+                                placeholder={t("commitment_invoice_deferred")}
+                            />
+                            <button
+                                type="button"
+                                class="btn-small invoice-slot-action"
+                                data-testid="committed-invoice-clear"
+                                onClick={clearCommittedAmounts}>
+                                {t("clear_amount")}
+                            </button>
+                        </div>
                     </Show>
+                    <hr class="spacer" />
                 </Show>
                 <Show
                     when={
                         isMobile() &&
+                        !invoiceInputDisabled() &&
                         !destinationLocked() &&
                         (pair().toAsset === LN ||
                             config.assets?.[pair().toAsset]?.type ===
