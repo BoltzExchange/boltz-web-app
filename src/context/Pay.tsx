@@ -39,7 +39,6 @@ import {
     type SubmarineSwap,
     isEvmSwap,
 } from "../utils/swapCreator";
-import { patchEncryptedSwapMetadata } from "../utils/swapMetadata";
 import { useGlobalContext } from "./Global";
 
 type SwapStatus = {
@@ -91,7 +90,6 @@ const PayProvider = (props: { children: JSX.Element }) => {
         modifySwapStorage,
         zeroConf,
         getSwaps,
-        rescueFile,
     } = useGlobalContext();
     const [failureReason, setFailureReason] = createSignal<string>("");
     const [swap, setSwap] = createSignal<SomeSwap | null>(null, {
@@ -213,12 +211,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     return;
                 }
 
-                const updatedSwap = await modifySwap(swapId, (s) => {
+                await modifySwap(swapId, (s) => {
                     s.lockupTx = lockupTxId;
                 });
-                if (updatedSwap !== null) {
-                    await patchEncryptedSwapMetadata(updatedSwap, rescueFile());
-                }
             }
 
             return;

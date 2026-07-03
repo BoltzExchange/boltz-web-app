@@ -175,6 +175,12 @@ type RestorableSwapDetails = {
     preimageHash?: string;
 };
 
+export type EmptyResponse = Record<string, never>;
+
+type SwapMetadataRequest = {
+    metadata: string;
+};
+
 export type RestorableSwap = {
     id: string;
     type: SwapType;
@@ -209,6 +215,9 @@ export type QuoteData = {
     quote: string;
     data: unknown;
 };
+
+const metadataRequest = (metadata?: string): Partial<SwapMetadataRequest> =>
+    metadata === undefined ? {} : { metadata };
 
 export type QuoteCalldata = {
     to: Address;
@@ -291,6 +300,7 @@ export const createSubmarineSwap = (
     invoice: string,
     pairHash: string,
     refundPublicKey?: string,
+    metadata?: string,
 ): Promise<SubmarineCreatedResponse> =>
     fetcher("/v2/swap/submarine", {
         from,
@@ -299,6 +309,7 @@ export const createSubmarineSwap = (
         refundPublicKey,
         pairHash,
         referralId: getReferralId(),
+        ...metadataRequest(metadata),
     });
 
 export const createReverseSwap = (
@@ -309,6 +320,7 @@ export const createReverseSwap = (
     pairHash: string,
     claimPublicKey?: string,
     claimAddress?: string,
+    metadata?: string,
 ): Promise<ReverseCreatedResponse> =>
     fetcher("/v2/swap/reverse", {
         from,
@@ -319,6 +331,7 @@ export const createReverseSwap = (
         claimAddress,
         referralId: getReferralId(),
         pairHash,
+        ...metadataRequest(metadata),
     });
 
 export const createChainSwap = (
@@ -330,6 +343,7 @@ export const createChainSwap = (
     refundPublicKey: string | undefined,
     claimAddress: string | undefined,
     pairHash: string,
+    metadata?: string,
 ): Promise<ChainSwapCreatedResponse> =>
     fetcher("/v2/swap/chain", {
         from,
@@ -341,13 +355,18 @@ export const createChainSwap = (
         pairHash,
         referralId: getReferralId(),
         userLockAmount,
+        ...metadataRequest(metadata),
     });
 
 export const patchSwapMetadata = (
     id: string,
     metadata: string,
-): Promise<Record<string, never>> =>
-    fetcher(`/v2/swap/${id}/metadata`, { metadata }, { method: "PATCH" });
+): Promise<EmptyResponse> =>
+    fetcher<EmptyResponse>(
+        `/v2/swap/${id}/metadata`,
+        { metadata },
+        { method: "PATCH" },
+    );
 
 export const getPartialRefundSignature = async (
     id: string,

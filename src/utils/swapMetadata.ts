@@ -1,6 +1,6 @@
 import { hex } from "@scure/base";
 import { patchSwapMetadata } from "boltz-swaps/client";
-import { BridgeKind, SwapPosition } from "boltz-swaps/types";
+import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type { EncodedHop } from "./Pair";
@@ -16,13 +16,29 @@ type SwapMetadataBridge = Pick<
     BridgeDetail,
     "sourceAsset" | "destinationAsset" | "kind" | "position"
 >;
-
-export type SwapMetadataPayload = Pick<
+type SwapMetadataDex = Pick<DexDetail, "hops" | "position" | "quoteAmount">;
+type SwapMetadataTxIdentity = Pick<
     SwapBase,
     "lockupTx" | "commitmentLockupTxHash"
-> & {
-    dex?: DexDetail;
+>;
+type SwapMetadataDexDetails = NonNullable<EncodedHop["dexDetails"]>;
+type SwapMetadataRoute = {
+    dex?: SwapMetadataDex;
     bridge?: SwapMetadataBridge;
+};
+export type SwapMetadataSource = SwapMetadataTxIdentity & {
+    dex?: DexDetail;
+    bridge?: BridgeDetail;
+};
+
+export type SwapMetadataPayload = SwapMetadataTxIdentity & SwapMetadataRoute;
+
+// The payload plus the id of the swap it belongs to, sealed in so that
+// the backend cannot serve one swap's metadata for another. Optional only
+// because the creation flow encrypts before the backend assigns an id;
+// payloads carrying a lockup transaction must always be bound
+type SwapMetadataPlaintext = SwapMetadataPayload & {
+    swapId?: string;
 };
 
 const IV_LENGTH = 12;
@@ -30,145 +46,130 @@ const IV_LENGTH = 12;
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-const topLevelMetadataKeys = new Set([
-    "dex",
-    "bridge",
-    "lockupTx",
-    "commitmentLockupTxHash",
-]);
-const dexMetadataKeys = new Set(["hops", "position", "quoteAmount"]);
-const bridgeMetadataKeys = new Set([
-    "sourceAsset",
-    "destinationAsset",
-    "kind",
-    "position",
-]);
-
 const toBufferSource = (view: Uint8Array): Uint8Array<ArrayBuffer> =>
     new Uint8Array(view);
 
-const assertObject = (
-    value: unknown,
-    context: string,
-): Record<string, unknown> => {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-        throw new Error(`${context} must be an object`);
-    }
+type Parser<T> = (value: unknown, context: string) => T;
 
-    return value as Record<string, unknown>;
-};
+// A schema must provide a parser for every key of T, each returning that
+// field's exact type. Adding, removing, renaming or retyping a field in the
+// schema types breaks compilation here, so parsers cannot drift silently.
+type Schema<T> = { [K in keyof Required<T>]: Parser<T[K]> };
 
-const assertKnownKeys = (
-    object: Record<string, unknown>,
-    keys: Set<string>,
-    context: string,
-) => {
-    const unknownKey = Object.keys(object).find((key) => !keys.has(key));
-    if (unknownKey !== undefined) {
-        throw new Error(`${context} contains unknown field ${unknownKey}`);
-    }
-};
-
-const readString = (
-    object: Record<string, unknown>,
-    key: string,
-    context: string,
-): string => {
-    const value = object[key];
+const parseString: Parser<string> = (value, context) => {
     if (typeof value !== "string") {
-        throw new Error(`${context}.${key} must be a string`);
+        throw new Error(`${context} must be a string`);
     }
 
     return value;
 };
 
-const isSwapPosition = (value: unknown): value is SwapPosition =>
-    value === SwapPosition.Pre || value === SwapPosition.Post;
-
-const readSwapPosition = (
-    object: Record<string, unknown>,
-    key: string,
-    context: string,
-): SwapPosition => {
-    const value = object[key];
-    if (!isSwapPosition(value)) {
-        throw new Error(`${context}.${key} must be a swap position`);
+const parseNumberOrString: Parser<number | string> = (value, context) => {
+    if (typeof value !== "number" && typeof value !== "string") {
+        throw new Error(`${context} must be a number or string`);
     }
 
     return value;
 };
 
-const parseDexMetadata = (value: unknown): DexDetail => {
-    const object = assertObject(value, "swap metadata dex");
-    assertKnownKeys(object, dexMetadataKeys, "swap metadata dex");
+const parseEnum = <T extends Record<string, string>>(
+    values: T,
+): Parser<T[keyof T]> => {
+    const members = Object.values(values);
 
-    if (!Array.isArray(object.hops)) {
-        throw new Error("swap metadata dex.hops must be an array");
-    }
+    return (value, context) => {
+        if (!members.includes(value as string)) {
+            throw new Error(`${context} must be one of ${members.join(", ")}`);
+        }
 
-    const quoteAmount = object.quoteAmount;
-    if (typeof quoteAmount !== "number" && typeof quoteAmount !== "string") {
-        throw new Error(
-            "swap metadata dex.quoteAmount must be a number or string",
-        );
-    }
-
-    return {
-        hops: object.hops as EncodedHop[],
-        position: readSwapPosition(object, "position", "swap metadata dex"),
-        quoteAmount,
+        return value as T[keyof T];
     };
 };
 
-const parseBridgeMetadata = (value: unknown): SwapMetadataBridge => {
-    const object = assertObject(value, "swap metadata bridge");
-    assertKnownKeys(object, bridgeMetadataKeys, "swap metadata bridge");
+const parseOptional =
+    <T>(parser: Parser<T>): Parser<T | undefined> =>
+    (value, context) =>
+        value === undefined ? undefined : parser(value, context);
 
-    const kind = object.kind;
-    if (!Object.values(BridgeKind).includes(kind as BridgeKind)) {
-        throw new Error("swap metadata bridge.kind must be a bridge kind");
-    }
+const parseArray =
+    <T>(parser: Parser<T>): Parser<T[]> =>
+    (value, context) => {
+        if (!Array.isArray(value)) {
+            throw new Error(`${context} must be an array`);
+        }
 
-    return {
-        sourceAsset: readString(object, "sourceAsset", "swap metadata bridge"),
-        destinationAsset: readString(
-            object,
-            "destinationAsset",
-            "swap metadata bridge",
-        ),
-        kind: kind as BridgeKind,
-        position: readSwapPosition(object, "position", "swap metadata bridge"),
+        return value.map((item, index) => parser(item, `${context}[${index}]`));
     };
-};
 
-const parseSwapMetadataPayload = (value: unknown): SwapMetadataPayload => {
-    const object = assertObject(value, "swap metadata");
-    assertKnownKeys(object, topLevelMetadataKeys, "swap metadata");
+const parseObject =
+    <T>(schema: Schema<T>): Parser<T> =>
+    (value, context) => {
+        if (
+            typeof value !== "object" ||
+            value === null ||
+            Array.isArray(value)
+        ) {
+            throw new Error(`${context} must be an object`);
+        }
+        const record = value as Record<string, unknown>;
 
-    const payload: SwapMetadataPayload = {};
+        const unknownKey = Object.keys(record).find((key) => !(key in schema));
+        if (unknownKey !== undefined) {
+            throw new Error(`${context} contains unknown field ${unknownKey}`);
+        }
 
-    if (object.dex !== undefined) {
-        payload.dex = parseDexMetadata(object.dex);
-    }
+        const result: Record<string, unknown> = {};
+        for (const key of Object.keys(schema)) {
+            const parse = (schema as Record<string, Parser<unknown>>)[key];
+            const parsed = parse(record[key], `${context}.${key}`);
+            if (parsed !== undefined) {
+                result[key] = parsed;
+            }
+        }
 
-    if (object.bridge !== undefined) {
-        payload.bridge = parseBridgeMetadata(object.bridge);
-    }
+        return result as T;
+    };
 
-    if (object.lockupTx !== undefined) {
-        payload.lockupTx = readString(object, "lockupTx", "swap metadata");
-    }
+const parseHopMetadata = parseObject<EncodedHop>({
+    type: parseEnum(SwapType),
+    from: parseString,
+    to: parseString,
+    dexDetails: parseOptional(
+        parseObject<SwapMetadataDexDetails>({
+            chain: parseString,
+            tokenIn: parseString,
+            tokenOut: parseString,
+        }),
+    ),
+});
 
-    if (object.commitmentLockupTxHash !== undefined) {
-        payload.commitmentLockupTxHash = readString(
-            object,
-            "commitmentLockupTxHash",
-            "swap metadata",
-        );
-    }
+const parseSwapMetadataPlaintext = parseObject<SwapMetadataPlaintext>({
+    dex: parseOptional(
+        parseObject<SwapMetadataDex>({
+            hops: parseArray(parseHopMetadata),
+            position: parseEnum(SwapPosition),
+            quoteAmount: parseNumberOrString,
+        }),
+    ),
+    bridge: parseOptional(
+        parseObject<SwapMetadataBridge>({
+            sourceAsset: parseString,
+            destinationAsset: parseString,
+            kind: parseEnum(BridgeKind),
+            position: parseEnum(SwapPosition),
+        }),
+    ),
+    lockupTx: parseOptional(parseString),
+    commitmentLockupTxHash: parseOptional(parseString),
+    swapId: parseOptional(parseString),
+});
 
-    return payload;
-};
+const hasMetadataTxIdentity = (payload: SwapMetadataPayload): boolean =>
+    payload.lockupTx !== undefined ||
+    payload.commitmentLockupTxHash !== undefined;
+
+const hasRouteMetadata = (payload: SwapMetadataPayload): boolean =>
+    payload.dex !== undefined || payload.bridge !== undefined;
 
 const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
     const keyMaterial = await crypto.subtle.importKey(
@@ -184,7 +185,7 @@ const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
             name: "HKDF",
             hash: "SHA-256",
             salt: new Uint8Array(0),
-            info: new Uint8Array(0),
+            info: toBufferSource(textEncoder.encode("swapMetadata/aes-gcm/v1")),
         },
         keyMaterial,
         { name: "AES-GCM", length: 256 },
@@ -195,8 +196,14 @@ const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
 
 export const encryptSwapMetadata = async (
     mnemonic: string,
-    payload: SwapMetadataPayload,
+    payload: SwapMetadataPlaintext,
 ): Promise<string> => {
+    if (payload.swapId === undefined && hasMetadataTxIdentity(payload)) {
+        throw new Error(
+            "swap metadata with a lockup transaction must be bound to a swap",
+        );
+    }
+
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
     const key = await deriveAesKey(mnemonic);
 
@@ -217,6 +224,7 @@ export const encryptSwapMetadata = async (
 
 export const decryptSwapMetadata = async (
     mnemonic: string,
+    swapId: string,
     metadata: string,
 ): Promise<SwapMetadataPayload> => {
     const envelope = hex.decode(metadata);
@@ -235,44 +243,66 @@ export const decryptSwapMetadata = async (
         toBufferSource(ciphertext),
     );
 
-    return parseSwapMetadataPayload(JSON.parse(textDecoder.decode(plaintext)));
+    const { swapId: boundSwapId, ...payload } = parseSwapMetadataPlaintext(
+        JSON.parse(textDecoder.decode(plaintext)),
+        "swap metadata",
+    );
+
+    if (boundSwapId !== undefined && boundSwapId !== swapId) {
+        throw new Error("swap metadata is bound to a different swap");
+    }
+
+    if (boundSwapId === undefined && hasMetadataTxIdentity(payload)) {
+        throw new Error(
+            "swap metadata with a lockup transaction must be bound to a swap",
+        );
+    }
+
+    return payload;
 };
 
-export const buildSwapMetadataPayloadFromSwap = (
-    swap: SomeSwap,
+export const buildSwapMetadataPayload = (
+    fields: SwapMetadataSource,
 ): SwapMetadataPayload | undefined => {
     const payload: SwapMetadataPayload = {};
 
-    if (swap.dex !== undefined) {
-        payload.dex = swap.dex;
-    }
-
-    if (swap.bridge !== undefined) {
-        payload.bridge = {
-            sourceAsset: swap.bridge.sourceAsset,
-            destinationAsset: swap.bridge.destinationAsset,
-            kind: swap.bridge.kind,
-            position: swap.bridge.position,
+    if (fields.dex !== undefined) {
+        payload.dex = {
+            hops: fields.dex.hops,
+            position: fields.dex.position,
+            quoteAmount: fields.dex.quoteAmount,
         };
     }
 
-    if (swap.lockupTx !== undefined) {
-        payload.lockupTx = swap.lockupTx;
+    if (fields.bridge !== undefined) {
+        payload.bridge = {
+            sourceAsset: fields.bridge.sourceAsset,
+            destinationAsset: fields.bridge.destinationAsset,
+            kind: fields.bridge.kind,
+            position: fields.bridge.position,
+        };
     }
 
-    if (swap.commitmentLockupTxHash !== undefined) {
-        payload.commitmentLockupTxHash = swap.commitmentLockupTxHash;
+    if (fields.lockupTx !== undefined) {
+        payload.lockupTx = fields.lockupTx;
+    }
+
+    if (fields.commitmentLockupTxHash !== undefined) {
+        payload.commitmentLockupTxHash = fields.commitmentLockupTxHash;
     }
 
     return Object.keys(payload).length > 0 ? payload : undefined;
 };
 
-const hasMetadataTxIdentity = (payload: SwapMetadataPayload): boolean =>
-    payload.lockupTx !== undefined ||
-    payload.commitmentLockupTxHash !== undefined;
-
-const hasRouteMetadata = (payload: SwapMetadataPayload): boolean =>
-    payload.dex !== undefined || payload.bridge !== undefined;
+export const buildSwapMetadataPayloadFromSwap = (
+    swap: SomeSwap,
+): SwapMetadataPayload | undefined =>
+    buildSwapMetadataPayload({
+        bridge: swap.bridge,
+        commitmentLockupTxHash: swap.commitmentLockupTxHash,
+        dex: swap.dex,
+        lockupTx: swap.lockupTx,
+    });
 
 export const patchEncryptedSwapMetadata = async (
     swap: SomeSwap,
@@ -298,7 +328,10 @@ export const patchEncryptedSwapMetadata = async (
     try {
         await patchSwapMetadata(
             swap.id,
-            await encryptSwapMetadata(mnemonic, payload),
+            await encryptSwapMetadata(mnemonic, {
+                ...payload,
+                swapId: swap.id,
+            }),
         );
     } catch (error) {
         log.warn("Failed to patch swap metadata", {

@@ -150,6 +150,7 @@ export const mapRestorableSwaps = async (
             try {
                 const metadata = await decryptSwapMetadata(
                     mnemonic,
+                    swap.id,
                     swap.metadata,
                 );
                 return {

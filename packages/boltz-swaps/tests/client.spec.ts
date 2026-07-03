@@ -1,4 +1,6 @@
 import {
+    createChainSwap,
+    createReverseSwap,
     createSubmarineSwap,
     getSwapStatuses,
     patchSwapMetadata,
@@ -134,18 +136,52 @@ describe("boltzClient swap metadata", () => {
         fetcherMock.mockResolvedValue({});
     });
 
-    test("create requests do not forward metadata", async () => {
+    test("create requests store encrypted route metadata when provided", async () => {
         await createSubmarineSwap(
             "WBTC",
             "BTC",
             "lninvoice",
             "pair-hash",
             "refundpub",
+            "encrypted-metadata",
         );
 
         expect(fetcherMock).toHaveBeenCalledWith(
             "/v2/swap/submarine",
-            expect.not.objectContaining({ metadata: expect.anything() }),
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
+        );
+
+        fetcherMock.mockClear();
+        await createReverseSwap(
+            "BTC",
+            "TBTC",
+            1_000,
+            "preimagehash",
+            "pair-hash",
+            "claimpub",
+            "claimaddr",
+            "encrypted-metadata",
+        );
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/reverse",
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
+        );
+
+        fetcherMock.mockClear();
+        await createChainSwap(
+            "BTC",
+            "TBTC",
+            1_000,
+            "preimagehash",
+            "claimpub",
+            "refundpub",
+            "claimaddr",
+            "pair-hash",
+            "encrypted-metadata",
+        );
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/chain",
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
         );
     });
 
