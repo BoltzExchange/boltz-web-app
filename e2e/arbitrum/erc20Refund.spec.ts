@@ -42,7 +42,8 @@ const tbtcFundingSource = getAddress(
 );
 const tbtcSendAmount = "0.001";
 const tbtcFundingAmount = parseUnits("0.01", 18);
-const timeoutBlocks = 400;
+// Past the TBTC chain timeout delta of 7200 blocks (1440 minutes at 12s blocks)
+const timeoutBlocks = 7250;
 
 const clearBrowserStorage = async (page: Page) => {
     await page.evaluate(async () => {
