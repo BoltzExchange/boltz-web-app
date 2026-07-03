@@ -53,8 +53,11 @@ import {
     filterHydratedEvmSwaps,
     getEvmRescueAction,
     getEvmScanTargets,
+    getRestoredEvmClaimChainId,
+    getRestoredEvmClaimTransactionHash,
     getSwapDate,
     mapHydratedRestorableSwaps,
+    mapRestoredEvmClaimResult,
     mergeEvmRescueResults,
     mergeRestoredEvmSwaps,
     normalizeEvmId,
@@ -578,6 +581,88 @@ export const useExternalRescueSearch = () => {
         return { byAsset, unmatchedByAsset, update, updateUnmatched };
     };
 
+    const deriveRestoredEvmClaimResults = async (
+        swaps: RestoredEvmSwap[],
+        currentRescueFile: RescueFile,
+        signal: AbortSignal,
+    ): Promise<EvmRescueResult[]> => {
+        const byChainId = new Map<number, RestoredEvmSwap[]>();
+
+        for (const swap of swaps) {
+            const preimageHash = normalizeEvmId(swap.preimageHash);
+            const transactionHash = normalizeEvmId(
+                getRestoredEvmClaimTransactionHash(swap),
+            );
+            const chainId = getRestoredEvmClaimChainId(swap);
+
+            if (
+                preimageHash === "" ||
+                transactionHash === "" ||
+                chainId === undefined
+            ) {
+                continue;
+            }
+
+            byChainId.set(chainId, [...(byChainId.get(chainId) ?? []), swap]);
+        }
+
+        const results: EvmRescueResult[] = [];
+
+        await Promise.all(
+            [...byChainId.entries()].map(async ([chainId, chainSwaps]) => {
+                const worker = new PreimageHashesWorker();
+                const remaining = new Map<string, RestoredEvmSwap[]>();
+
+                for (const swap of chainSwaps) {
+                    const preimageHash = normalizeEvmId(swap.preimageHash);
+                    remaining.set(preimageHash, [
+                        ...(remaining.get(preimageHash) ?? []),
+                        swap,
+                    ]);
+                }
+
+                const collectMatches = () => {
+                    for (const [preimageHash, swaps] of remaining) {
+                        const entry = worker.map.get(preimageHash);
+                        if (entry === undefined) {
+                            continue;
+                        }
+
+                        for (const swap of swaps) {
+                            const result = mapRestoredEvmClaimResult(
+                                swap,
+                                entry.preimage,
+                            );
+                            if (result !== undefined) {
+                                results.push(result);
+                            }
+                        }
+
+                        remaining.delete(preimageHash);
+                    }
+                };
+
+                try {
+                    worker.start(currentRescueFile.mnemonic, chainId, signal);
+
+                    collectMatches();
+                    while (
+                        remaining.size > 0 &&
+                        !worker.isDone &&
+                        !signal.aborted
+                    ) {
+                        await worker.waitForNextBatch();
+                        collectMatches();
+                    }
+                } finally {
+                    worker.terminate();
+                }
+            }),
+        );
+
+        return signal.aborted ? [] : results;
+    };
+
     const runBtcRestore = async (
         currentRescueFile: RescueFile,
         signal: AbortSignal,
@@ -609,6 +694,14 @@ export const useExternalRescueSearch = () => {
             );
 
             appendRestoredEvmSwaps(restoredEvmSwaps);
+            appendEvmSwaps(
+                RskRescueMode.Claim,
+                await deriveRestoredEvmClaimResults(
+                    restoredEvmSwaps,
+                    currentRescueFile,
+                    signal,
+                ),
+            );
 
             setBtcState({
                 swaps: mapHydratedRestorableSwaps(hydratedRestorableSwaps),

@@ -1,12 +1,17 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { assetAmountToSats, createAssetProvider } from "boltz-swaps/evm";
+import {
+    assetAmountToSats,
+    createAssetProvider,
+    satsToAssetAmount,
+} from "boltz-swaps/evm";
 import { isEmptyPreimageHash } from "boltz-swaps/evm/commitment";
 import {
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "boltz-swaps/evm/logs";
-import { AssetKind, RskRescueMode } from "boltz-swaps/types";
+import { getSignerForGasAbstraction } from "boltz-swaps/evm/transaction";
+import { AssetKind, RskRescueMode, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
@@ -16,6 +21,7 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
+import { getAddress } from "viem";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
@@ -36,11 +42,16 @@ import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim } from "../rif/Signer";
+import {
+    claimHops,
+    getClaimAssetForRoute,
+} from "../status/TransactionConfirmed";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
+import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
 import { GasAbstractionType } from "../utils/swapCreator";
 import type { EvmRescueResult } from "./external-rescue/types";
@@ -135,23 +146,69 @@ const ClaimState = (props: {
     setClaimTxId: Setter<string>;
 }) => {
     const navigate = useNavigate();
-    const { t } = useGlobalContext();
+    const { t, slippage } = useGlobalContext();
     const { signer, getEtherSwap, getErc20Swap, getGasAbstractionSigner } =
         useWeb3Signer();
     const { evmRescuableSwaps, rescueFile } = useRescueContext();
     const params = useParams();
 
     const preimage = () => {
+        const preimageHash =
+            props.claimData.restoredSwap?.preimageHash ??
+            props.claimData.preimageHash;
         const swapFromContext = evmRescuableSwaps().find(
-            (s) => s.preimageHash === props.claimData.preimageHash,
+            (s) => s.preimageHash === preimageHash,
         );
         return swapFromContext?.preimage
             ? Buffer.from(swapFromContext.preimage, "hex")
             : undefined;
     };
 
-    const getGasAbstraction = async (): Promise<GasAbstractionType> => {
-        if (props.asset === RBTC) {
+    const dexDetails = () =>
+        props.claimData.dex ?? props.claimData.restoredSwap?.dex;
+    const bridgeDetails = () =>
+        props.claimData.bridge ?? props.claimData.restoredSwap?.bridge;
+    const routedDex = () => {
+        const dex = dexDetails();
+        return dex?.position === SwapPosition.Post && dex.hops.length > 0
+            ? dex
+            : undefined;
+    };
+    const postBridge = () => {
+        const bridge = bridgeDetails();
+        return bridge?.position === SwapPosition.Post ? bridge : undefined;
+    };
+    const restoredReceiveAsset = () =>
+        props.claimData.restoredSwap?.to ?? props.asset;
+    const routeClaimAsset = () =>
+        getClaimAssetForRoute(restoredReceiveAsset(), dexDetails());
+    const finalReceiveAsset = () => {
+        if (routedDex() === undefined) {
+            return restoredReceiveAsset();
+        }
+
+        const bridge = postBridge();
+        if (bridge !== undefined) {
+            return bridge.destinationAsset;
+        }
+
+        const dex = routedDex();
+        if (dex !== undefined) {
+            return dex.hops[dex.hops.length - 1].to;
+        }
+
+        return restoredReceiveAsset();
+    };
+    const claimDestination = (useOriginalDestination: boolean) =>
+        useOriginalDestination
+            ? (props.claimData.restoredSwap?.originalDestination ??
+              signer()?.address)
+            : signer()?.address;
+
+    const getGasAbstraction = async (
+        asset: string,
+    ): Promise<GasAbstractionType> => {
+        if (asset === RBTC) {
             const sig = signer();
             if (sig === undefined) {
                 throw new Error("missing signer for gas check");
@@ -167,7 +224,7 @@ const ClaimState = (props: {
             return GasAbstractionType.None;
         }
 
-        if (getKindForAsset(props.asset) === AssetKind.ERC20) {
+        if (getKindForAsset(asset) === AssetKind.ERC20) {
             return GasAbstractionType.Signer;
         }
 
@@ -178,26 +235,75 @@ const ClaimState = (props: {
         const currentPreimage = preimage();
         if (!currentPreimage) return;
 
-        const asset = props.asset;
+        const asset = routeClaimAsset();
         const { amount, claimAddress, refundAddress, timelock } =
             props.claimData;
+        const amountSats = assetAmountToSats(amount, asset);
 
         try {
-            const gasAbstraction = await getGasAbstraction();
+            const gasAbstraction = await getGasAbstraction(asset);
             const sig = signer();
             if (sig === undefined) {
                 throw new Error("missing signer for claim");
+            }
+            const dex = routedDex();
+            const destination = claimDestination(dex !== undefined);
+            if (destination === undefined) {
+                throw new Error("missing claim destination");
+            }
+
+            if (dex !== undefined) {
+                const gasAbstractionSigner = getGasAbstractionSigner(
+                    asset,
+                    rescueFile(),
+                );
+                const claimSigner = getSignerForGasAbstraction(
+                    gasAbstraction,
+                    sig,
+                    gasAbstractionSigner,
+                );
+                const hopDexDetails = dex.hops[0].dexDetails;
+                if (claimSigner === undefined) {
+                    throw new Error("missing signer for routed claim");
+                }
+                if (hopDexDetails === undefined) {
+                    throw new Error("claim hop is missing DEX details");
+                }
+
+                const quote = await fetchDexQuote(
+                    hopDexDetails,
+                    satsToAssetAmount(amountSats, asset),
+                );
+                const transactionHash = await claimHops(
+                    dex.hops,
+                    gasAbstraction,
+                    asset,
+                    currentPreimage.toString("hex"),
+                    amountSats,
+                    refundAddress,
+                    Number(timelock),
+                    destination,
+                    () => claimSigner,
+                    getErc20Swap(asset),
+                    slippage(),
+                    quote,
+                    false,
+                    postBridge(),
+                );
+
+                props.setClaimTxId(transactionHash);
+                return;
             }
 
             const { transactionHash } = await claimAsset({
                 gasAbstraction,
                 asset,
                 preimage: currentPreimage.toString("hex"),
-                amount: assetAmountToSats(amount, asset),
+                amount: amountSats,
                 claimAddress,
                 refundAddress,
                 timeoutBlockHeight: Number(timelock),
-                destination: sig.address,
+                destination: getAddress(destination),
                 signer: () => sig,
                 gasAbstractionSigner: getGasAbstractionSigner(
                     asset,
@@ -228,12 +334,12 @@ const ClaimState = (props: {
                 </>
             }>
             <ContractTransaction
-                asset={props.asset}
+                asset={routeClaimAsset()}
                 onClick={claimTransaction}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {
                     button: t("continue"),
-                    asset: props.asset,
+                    asset: finalReceiveAsset(),
                 })}
                 waitingText={t("tx_ready_to_claim")}
             />

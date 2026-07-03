@@ -1,7 +1,12 @@
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
-import { type SwapContract, isEmptyPreimageHash } from "boltz-swaps/evm";
-import { RskRescueMode } from "boltz-swaps/types";
+import {
+    type SwapContract,
+    isEmptyPreimageHash,
+    satsToAssetAmount,
+} from "boltz-swaps/evm";
+import { type AssetType, RskRescueMode, SwapPosition } from "boltz-swaps/types";
 import log from "loglevel";
+import { type Hex, getAddress, zeroAddress } from "viem";
 
 import { config } from "../../config";
 import { RBTC, TBTC, WBTC } from "../../consts/Assets";
@@ -19,6 +24,7 @@ import {
     type EvmRescueResult,
     type EvmScanTarget,
     RescueResultSource,
+    type RestorableEvmClaimDetails,
     type RestoredEvmSwap,
     type UnifiedRescueResult,
 } from "./types";
@@ -43,7 +49,9 @@ export const normalizeEvmId = (value: string | undefined): string =>
     value?.toLowerCase().replace(/^0x/, "") ?? "";
 
 type RestoredEvmMatchReason =
-    "metadata-lockup-transaction" | "metadata-commitment-transaction";
+    | "metadata-lockup-transaction"
+    | "metadata-commitment-transaction"
+    | "restore-claim-transaction";
 
 type RestoredEvmMatch = {
     restoredSwap: RestoredEvmSwap;
@@ -87,6 +95,102 @@ export const mergeEvmRescueResults = (
 const hasPreimageHash = (swap: RestorableSwap): swap is RestoredEvmSwap =>
     swap.preimageHash !== undefined;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isRestorableEvmClaimDetails = (
+    value: unknown,
+): value is RestorableEvmClaimDetails => {
+    if (!isRecord(value)) {
+        return false;
+    }
+
+    if (
+        typeof value.contractAddress !== "string" ||
+        typeof value.claimAddress !== "string" ||
+        typeof value.timeoutBlockHeight !== "number"
+    ) {
+        return false;
+    }
+
+    if (
+        value.transaction !== undefined &&
+        (!isRecord(value.transaction) ||
+            typeof value.transaction.id !== "string")
+    ) {
+        return false;
+    }
+
+    return value.amount === undefined || typeof value.amount === "number";
+};
+
+export const getRestoredEvmClaimDetails = (
+    swap: RestorableSwap,
+): RestorableEvmClaimDetails | undefined => {
+    const evmClaimDetails = (swap as { evmClaimDetails?: unknown })
+        .evmClaimDetails;
+    if (isRestorableEvmClaimDetails(evmClaimDetails)) {
+        return evmClaimDetails;
+    }
+
+    const claimDetails = (swap as { claimDetails?: unknown }).claimDetails;
+    return isRestorableEvmClaimDetails(claimDetails) ? claimDetails : undefined;
+};
+
+export const getRestoredEvmClaimTransactionHash = (
+    swap: RestorableSwap,
+): string | undefined => getRestoredEvmClaimDetails(swap)?.transaction?.id;
+
+export const getRestoredEvmClaimAsset = (swap: RestoredEvmSwap): string => {
+    if (swap.dex?.position === SwapPosition.Post) {
+        return swap.dex.hops[0]?.from ?? swap.to;
+    }
+
+    return swap.to;
+};
+
+export const getRestoredEvmClaimChainId = (
+    swap: RestoredEvmSwap,
+): number | undefined =>
+    config.assets?.[getRestoredEvmClaimAsset(swap)]?.network?.chainId;
+
+const prefixHex = (value: string): Hex =>
+    (value.startsWith("0x") ? value : `0x${value}`) as Hex;
+
+export const mapRestoredEvmClaimResult = (
+    swap: RestoredEvmSwap,
+    preimage: string,
+): EvmRescueResult | undefined => {
+    const details = getRestoredEvmClaimDetails(swap);
+    const transactionHash = details?.transaction?.id;
+    const asset = getRestoredEvmClaimAsset(swap);
+
+    if (
+        details === undefined ||
+        transactionHash === undefined ||
+        normalizeEvmId(swap.preimageHash) === "" ||
+        config.assets?.[asset]?.network?.chainId === undefined
+    ) {
+        return undefined;
+    }
+
+    return {
+        action: RskRescueMode.Claim,
+        asset: asset as AssetType,
+        blockNumber: 0,
+        transactionHash: prefixHex(transactionHash),
+        preimageHash: normalizeEvmId(swap.preimageHash) as Hex,
+        preimage: normalizeEvmId(preimage) as Hex,
+        amount: satsToAssetAmount(details.amount ?? 0, asset),
+        claimAddress: getAddress(details.claimAddress),
+        refundAddress: zeroAddress,
+        timelock: BigInt(details.timeoutBlockHeight),
+        restoredSwap: swap,
+        dex: swap.dex,
+        bridge: swap.bridge,
+    };
+};
+
 const getRestoredEvmMatchDetails = (
     swap: EvmRescueResult,
     restoredSwaps: RestoredEvmSwap[],
@@ -108,6 +212,17 @@ const getRestoredEvmMatchDetails = (
             return {
                 restoredSwap: restored,
                 reason: "metadata-commitment-transaction",
+            };
+        }
+
+        if (
+            txHash !== "" &&
+            normalizeEvmId(getRestoredEvmClaimTransactionHash(restored)) ===
+                txHash
+        ) {
+            return {
+                restoredSwap: restored,
+                reason: "restore-claim-transaction",
             };
         }
     }
@@ -153,6 +268,7 @@ const getRestoredEvmSwapKey = (swap: RestoredEvmSwap) =>
     normalizeEvmId(swap.preimageHash) ||
     normalizeEvmId(swap.lockupTx) ||
     normalizeEvmId(swap.commitmentLockupTxHash) ||
+    normalizeEvmId(getRestoredEvmClaimTransactionHash(swap)) ||
     swap.id;
 
 export const mergeRestoredEvmSwaps = (
@@ -297,7 +413,9 @@ export const filterHydratedEvmSwaps = (
         (swap): swap is RestoredEvmSwap =>
             hasPreimageHash(swap) &&
             (normalizeEvmId(swap.lockupTx) !== "" ||
-                normalizeEvmId(swap.commitmentLockupTxHash) !== ""),
+                normalizeEvmId(swap.commitmentLockupTxHash) !== "" ||
+                normalizeEvmId(getRestoredEvmClaimTransactionHash(swap)) !==
+                    ""),
     );
 
 export const mapRestorableSwaps = async (

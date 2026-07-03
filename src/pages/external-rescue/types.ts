@@ -52,8 +52,18 @@ export type RestoredEvmSwap = RestorableSwap & {
     preimageHash: string;
     lockupTx?: string;
     commitmentLockupTxHash?: string;
+    originalDestination?: string;
     dex?: DexDetail;
     bridge?: BridgeDetail;
+};
+
+export type RestorableEvmClaimDetails = {
+    type?: "evm";
+    contractAddress: string;
+    claimAddress: string;
+    transaction?: { id: string };
+    amount?: number;
+    timeoutBlockHeight: number;
 };
 
 export type EvmRescueResult = LogRefundData & {
