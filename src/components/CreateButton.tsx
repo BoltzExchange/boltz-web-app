@@ -585,13 +585,13 @@ const CreateButton = () => {
             let dex: SwapMetadataSource["dex"];
             let bridge: SwapMetadataSource["bridge"];
             const buildCreationMetadata = async (
-                creationData: Pick<
+                creationData?: Pick<
                     CreationData,
                     "hops" | "hopsPosition" | "sendAmount" | "receiveAmount"
                 >,
             ): Promise<string | undefined> => {
                 dex =
-                    creationData.hopsPosition !== undefined
+                    creationData?.hopsPosition !== undefined
                         ? {
                               hops: creationData.hops,
                               position: creationData.hopsPosition,
@@ -760,6 +760,7 @@ const CreateButton = () => {
                         if (mrhRescue === null) {
                             throw new Error("missing rescue file");
                         }
+                        const metadata = await buildCreationMetadata();
                         const chainSwap = await createChain(
                             assetSend(),
                             bip21Asset,
@@ -771,6 +772,7 @@ const CreateButton = () => {
                             mrhRescue,
                             newKey,
                             originalDestination(),
+                            metadata,
                         );
 
                         data = {

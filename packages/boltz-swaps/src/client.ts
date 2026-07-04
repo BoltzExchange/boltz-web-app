@@ -177,10 +177,6 @@ type RestorableSwapDetails = {
 
 export type EmptyResponse = Record<string, never>;
 
-type SwapMetadataRequest = {
-    metadata: string;
-};
-
 export type RestorableSwap = {
     id: string;
     type: SwapType;
@@ -215,9 +211,6 @@ export type QuoteData = {
     quote: string;
     data: unknown;
 };
-
-const metadataRequest = (metadata?: string): Partial<SwapMetadataRequest> =>
-    metadata === undefined ? {} : { metadata };
 
 export type QuoteCalldata = {
     to: Address;
@@ -309,7 +302,7 @@ export const createSubmarineSwap = (
         refundPublicKey,
         pairHash,
         referralId: getReferralId(),
-        ...metadataRequest(metadata),
+        metadata,
     });
 
 export const createReverseSwap = (
@@ -331,7 +324,7 @@ export const createReverseSwap = (
         claimAddress,
         referralId: getReferralId(),
         pairHash,
-        ...metadataRequest(metadata),
+        metadata,
     });
 
 export const createChainSwap = (
@@ -355,7 +348,7 @@ export const createChainSwap = (
         pairHash,
         referralId: getReferralId(),
         userLockAmount,
-        ...metadataRequest(metadata),
+        metadata,
     });
 
 export const patchSwapMetadata = (
