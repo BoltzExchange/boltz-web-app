@@ -183,6 +183,14 @@ type RestorableSwapDetails = {
 
 export type EmptyResponse = Record<string, never>;
 
+type RestorableEvmClaimDetails = {
+    contractAddress: string;
+    claimAddress: string;
+    transaction?: { id: string };
+    amount?: number;
+    timeoutBlockHeight: number;
+};
+
 export type RestorableSwap = {
     id: string;
     type: SwapType;
@@ -190,9 +198,11 @@ export type RestorableSwap = {
     from: string;
     to: string;
     createdAt: number;
+    preimageHash?: string;
     claimPrivateKey?: string;
     claimDetails?: RestorableSwapDetails;
     refundDetails?: RestorableSwapDetails;
+    evmClaimDetails?: RestorableEvmClaimDetails;
     metadata?: string;
 };
 

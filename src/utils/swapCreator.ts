@@ -70,6 +70,7 @@ export type BridgeDetail = BridgeRoute & {
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
     evmSendCandidate?: PendingEvmBridgeSend;
+    refundAddress?: string;
 
     // Recovery state when a pre-bridge DEX quote falls short and the bridged
     // funds must be retried or refunded back to the original sender.

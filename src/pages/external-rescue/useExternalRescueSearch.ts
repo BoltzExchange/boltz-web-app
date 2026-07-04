@@ -3,9 +3,10 @@ import {
     type SwapContract,
     createProvider,
     getTimelockBlockNumber,
+    isEmptyPreimageHash,
     scanLockupEvents,
 } from "boltz-swaps/evm";
-import { type LogRefundData, RskRescueMode } from "boltz-swaps/types";
+import { RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     createEffect,
@@ -43,14 +44,20 @@ import {
 } from "../../utils/rescueDerivation";
 import { type RescueFile, getPathGasAbstraction } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
+import { hydrateRestorableSwapsMetadata } from "../../utils/swapMetadata";
 import { PreimageHashesWorker } from "../../workers/preimageHashes/PreimageHashesWorker";
 import {
     arbitrumRescueAssets,
+    enrichEvmRescueResults,
     fetchPaginatedRestorableSwaps,
+    filterHydratedEvmSwaps,
     getEvmRescueAction,
     getEvmScanTargets,
     getSwapDate,
-    mapRestorableSwaps,
+    mapHydratedRestorableSwaps,
+    mergeEvmRescueResults,
+    mergeRestoredEvmSwaps,
+    normalizeEvmId,
     sortUnifiedResults,
 } from "./scan";
 import {
@@ -60,6 +67,7 @@ import {
     RecoveryMethod,
     type RecoveryOption,
     RescueResultSource,
+    type RestoredEvmSwap,
     type ScanProgress,
     type UnifiedRescueResult,
 } from "./types";
@@ -93,6 +101,7 @@ type EvmState = {
     unmatchedRefundSwaps: number;
     unmatchedClaimSwaps: number;
     sweepableBalances: GasAbstractionSweep[];
+    restoredSwaps: RestoredEvmSwap[];
 };
 
 type ExternalRescueState = {
@@ -120,8 +129,45 @@ const initialExternalRescueState = (): ExternalRescueState => ({
         unmatchedRefundSwaps: 0,
         unmatchedClaimSwaps: 0,
         sweepableBalances: [],
+        restoredSwaps: [],
     },
 });
+
+type RestoreSwapAssets = {
+    assetSend?: string;
+    assetReceive?: string;
+    from?: string;
+    preimageHash?: string;
+    to?: string;
+};
+
+export const getRestorePreimageHash = (swap: { preimageHash?: string }) =>
+    normalizeEvmId(swap.preimageHash);
+
+export const isEvmRestoreCandidate = (swap: RestoreSwapAssets) =>
+    getRestorePreimageHash(swap) !== "" &&
+    [swap.assetReceive, swap.to, swap.assetSend, swap.from].some(
+        (asset) =>
+            asset !== undefined &&
+            config.assets?.[asset]?.network?.chainId !== undefined,
+    );
+
+export const shouldShowEvmRestoreResult = (
+    swap: RestoreSwapAssets,
+    evmRescuePreimageHashes: Set<string>,
+    claimProgress: string | undefined,
+) => {
+    if (!isEvmRestoreCandidate(swap)) {
+        return true;
+    }
+
+    const preimageHash = getRestorePreimageHash(swap);
+    if (evmRescuePreimageHashes.has(preimageHash)) {
+        return false;
+    }
+
+    return claimProgress === undefined;
+};
 
 export const useExternalRescueSearch = () => {
     const { t } = useGlobalContext();
@@ -198,12 +244,30 @@ export const useExternalRescueSearch = () => {
                 action === RskRescueMode.Refund
                     ? {
                           ...current.evm,
-                          refundSwaps: current.evm.refundSwaps.concat(events),
+                          refundSwaps: mergeEvmRescueResults(
+                              current.evm.refundSwaps,
+                              events,
+                          ),
                       }
                     : {
                           ...current.evm,
-                          claimSwaps: current.evm.claimSwaps.concat(events),
+                          claimSwaps: mergeEvmRescueResults(
+                              current.evm.claimSwaps,
+                              events,
+                          ),
                       },
+        }));
+    };
+    const appendRestoredEvmSwaps = (swaps: RestoredEvmSwap[]) => {
+        setState((current) => ({
+            ...current,
+            evm: {
+                ...current.evm,
+                restoredSwaps: mergeRestoredEvmSwaps(
+                    current.evm.restoredSwaps,
+                    swaps,
+                ),
+            },
         }));
     };
     const [currentResultPage, setCurrentResultPage] = createSignal(1);
@@ -223,11 +287,29 @@ export const useExternalRescueSearch = () => {
         },
     );
 
+    const enrichedEvmRefundSwaps = createMemo(() =>
+        enrichEvmRescueResults(state.evm.refundSwaps, state.evm.restoredSwaps),
+    );
+    const enrichedEvmClaimSwaps = createMemo(() =>
+        enrichEvmRescueResults(state.evm.claimSwaps, state.evm.restoredSwaps),
+    );
+
+    const allEvmSwaps = createMemo(() => [
+        ...enrichedEvmRefundSwaps(),
+        ...enrichedEvmClaimSwaps(),
+    ]);
+    const shouldDeferEvmResult = (swap: EvmRescueResult) =>
+        state.btc.searchState === BtcSearchState.Loading &&
+        swap.restoredSwap === undefined;
+    const visibleEvmSwaps = createMemo(() =>
+        allEvmSwaps().filter((swap) => !shouldDeferEvmResult(swap)),
+    );
+    const pendingEvmClaimCandidates = createMemo(
+        () => allEvmSwaps().filter(shouldDeferEvmResult).length,
+    );
+
     createEffect(() => {
-        setEvmRescuableSwaps([
-            ...state.evm.refundSwaps,
-            ...state.evm.claimSwaps,
-        ]);
+        setEvmRescuableSwaps(allEvmSwaps());
     });
 
     const activeMethods = createMemo<RecoveryMethod[]>(() => {
@@ -282,10 +364,41 @@ export const useExternalRescueSearch = () => {
     const currentEvmProgress = createMemo(
         () => state.evm.claimProgress ?? state.evm.refundProgress,
     );
+    const evmRescuePreimageHashes = createMemo(
+        () =>
+            new Set(
+                visibleEvmSwaps()
+                    .flatMap((swap) => [
+                        swap.preimageHash,
+                        swap.restoredSwap?.preimageHash,
+                    ])
+                    .filter(
+                        (preimageHash): preimageHash is string =>
+                            normalizeEvmId(preimageHash) !== "" &&
+                            !isEmptyPreimageHash(preimageHash),
+                    )
+                    .map(normalizeEvmId),
+            ),
+    );
+    const shouldShowRestoreResult = (swap: RestoreSwapAssets) =>
+        shouldShowEvmRestoreResult(
+            swap,
+            evmRescuePreimageHashes(),
+            state.evm.claimProgress,
+        );
+    const pendingRestoreCandidates = createMemo(
+        () =>
+            (btcRescueList() ?? []).filter(
+                (swap) =>
+                    isEvmRestoreCandidate(swap) &&
+                    !shouldShowRestoreResult(swap),
+            ).length,
+    );
 
     const unifiedResults = createMemo(() => {
-        const btcResults: UnifiedRescueResult[] = (btcRescueList() ?? []).map(
-            (swap) => {
+        const btcResults: UnifiedRescueResult[] = (btcRescueList() ?? [])
+            .filter(shouldShowRestoreResult)
+            .map((swap): UnifiedRescueResult => {
                 const action = swap.action ?? RescueAction.Pending;
                 return {
                     source: RescueResultSource.Restore,
@@ -295,23 +408,21 @@ export const useExternalRescueSearch = () => {
                     sortValue: getSwapDate(swap),
                     swap,
                 };
+            });
+        const evmResults: UnifiedRescueResult[] = visibleEvmSwaps().map(
+            (swap) => {
+                const action = getEvmRescueAction(swap);
+                return {
+                    source: RescueResultSource.Evm,
+                    key: `evm:${swap.action}:${swap.asset}:${swap.transactionHash}`,
+                    action,
+                    evmAction: swap.action,
+                    actionable: !RescueNoAction.includes(action),
+                    sortValue: swap.blockNumber,
+                    swap,
+                };
             },
         );
-        const evmResults: UnifiedRescueResult[] = [
-            ...state.evm.refundSwaps,
-            ...state.evm.claimSwaps,
-        ].map((swap) => {
-            const action = getEvmRescueAction(swap);
-            return {
-                source: RescueResultSource.Evm,
-                key: `evm:${swap.action}:${swap.asset}:${swap.transactionHash}`,
-                action,
-                evmAction: swap.action,
-                actionable: !RescueNoAction.includes(action),
-                sortValue: swap.blockNumber,
-                swap,
-            };
-        });
         const sweepResults: UnifiedRescueResult[] =
             state.evm.sweepableBalances.map((swap) => ({
                 source: RescueResultSource.Sweep,
@@ -328,6 +439,12 @@ export const useExternalRescueSearch = () => {
             ...sweepResults,
         ]);
     });
+    const resultDisplaySlotCount = createMemo(
+        () =>
+            unifiedResults().length +
+            pendingRestoreCandidates() +
+            pendingEvmClaimCandidates(),
+    );
 
     const resetSearchResults = () => {
         setSearchState({ hasSearched: false, error: undefined });
@@ -347,6 +464,7 @@ export const useExternalRescueSearch = () => {
             unmatchedRefundSwaps: 0,
             unmatchedClaimSwaps: 0,
             sweepableBalances: [],
+            restoredSwaps: [],
         });
         setRescuableSwaps([]);
     };
@@ -478,13 +596,22 @@ export const useExternalRescueSearch = () => {
             if (signal.aborted) {
                 return;
             }
-            setRescuableSwaps(restorableSwaps);
 
-            setBtcState({
-                swaps: await mapRestorableSwaps(
+            const hydratedRestorableSwaps =
+                await hydrateRestorableSwapsMetadata(
                     restorableSwaps,
                     currentRescueFile.mnemonic,
-                ),
+                );
+            setRescuableSwaps(hydratedRestorableSwaps);
+
+            const restoredEvmSwaps = filterHydratedEvmSwaps(
+                hydratedRestorableSwaps,
+            );
+
+            appendRestoredEvmSwaps(restoredEvmSwaps);
+
+            setBtcState({
+                swaps: mapHydratedRestorableSwaps(hydratedRestorableSwaps),
                 searchState: BtcSearchState.Ready,
             });
         } catch (e) {
@@ -509,6 +636,7 @@ export const useExternalRescueSearch = () => {
         onEvents: (events: EvmRescueResult[]) => void,
         mnemonic?: string,
     ) => {
+        const provider = createProvider([target.providerUrl]);
         const extraAddresses: string[] = [];
         if (mnemonic) {
             const chainId = config.assets?.[target.asset]?.network?.chainId;
@@ -527,7 +655,7 @@ export const useExternalRescueSearch = () => {
             try {
                 currentHeight = BigInt(
                     await getTimelockBlockNumber(
-                        createProvider([target.providerUrl]),
+                        provider,
                         target.asset as AssetType,
                     ),
                 );
@@ -575,13 +703,13 @@ export const useExternalRescueSearch = () => {
             scanProgress.update(target.asset, progress, derivedKeys);
 
             if (events.length > 0) {
-                onEvents(
-                    events.map((event: LogRefundData) => ({
-                        ...event,
-                        action,
-                        currentHeight,
-                    })),
-                );
+                const evmEvents = events.map((event) => ({
+                    ...event,
+                    action,
+                    currentHeight,
+                }));
+
+                onEvents(evmEvents);
             }
             scanProgress.updateUnmatched(target.asset, unmatchedSwaps);
         }
@@ -783,8 +911,10 @@ export const useExternalRescueSearch = () => {
             current: currentResults,
             currentEvmProgress,
             currentPage: currentResultPage,
+            displaySlotCount: resultDisplaySlotCount,
             hasAny: hasAnyResults,
             open: openResult,
+            pendingRestoreCandidates,
             setCurrent: setCurrentResults,
             setCurrentPage: setCurrentResultPage,
         },

@@ -1,9 +1,10 @@
 import { hex } from "@scure/base";
-import { patchSwapMetadata } from "boltz-swaps/client";
+import { type RestorableSwap, patchSwapMetadata } from "boltz-swaps/client";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type { EncodedHop } from "./Pair";
+import { formatError } from "./errors";
 import type { RescueFile } from "./rescueFile";
 import type {
     BridgeDetail,
@@ -14,7 +15,7 @@ import type {
 
 type SwapMetadataBridge = Pick<
     BridgeDetail,
-    "sourceAsset" | "destinationAsset" | "kind" | "position"
+    "sourceAsset" | "destinationAsset" | "kind" | "position" | "refundAddress"
 >;
 type SwapMetadataDex = Pick<DexDetail, "hops" | "position" | "quoteAmount">;
 type SwapMetadataTxIdentity = Pick<
@@ -32,6 +33,10 @@ export type SwapMetadataSource = SwapMetadataTxIdentity & {
 };
 
 export type SwapMetadataPayload = SwapMetadataTxIdentity & SwapMetadataRoute;
+export type SwapMetadataLocalFields = Pick<
+    SwapMetadataPayload,
+    "dex" | "bridge" | "lockupTx" | "commitmentLockupTxHash"
+>;
 
 // The payload plus the id of the swap it belongs to, sealed in so that
 // the backend cannot serve one swap's metadata for another. Optional only
@@ -169,6 +174,7 @@ const parseSwapMetadataPlaintext = parseObject<SwapMetadataPlaintext>({
             destinationAsset: parseString,
             kind: parseEnum(BridgeKind),
             position: parseEnum(SwapPosition),
+            refundAddress: parseOptional(parseString),
         }),
     ),
     lockupTx: parseOptional(parseString),
@@ -315,6 +321,7 @@ export const buildSwapMetadataPayload = (
             destinationAsset: fields.bridge.destinationAsset,
             kind: fields.bridge.kind,
             position: fields.bridge.position,
+            refundAddress: fields.bridge.refundAddress,
         };
     }
 
@@ -375,3 +382,59 @@ export const patchEncryptedSwapMetadata = async (
         });
     }
 };
+
+export const swapMetadataToLocalFields = (
+    payload: SwapMetadataPayload,
+): SwapMetadataLocalFields => {
+    const fields: SwapMetadataLocalFields = {};
+
+    if (payload.dex !== undefined) {
+        fields.dex = payload.dex;
+    }
+
+    if (payload.bridge !== undefined) {
+        fields.bridge = payload.bridge;
+    }
+
+    if (payload.lockupTx !== undefined) {
+        fields.lockupTx = payload.lockupTx;
+    }
+
+    if (payload.commitmentLockupTxHash !== undefined) {
+        fields.commitmentLockupTxHash = payload.commitmentLockupTxHash;
+    }
+
+    return fields;
+};
+
+export const hydrateRestorableSwapMetadata = async <T extends RestorableSwap>(
+    swap: T,
+    mnemonic: string,
+): Promise<T & SwapMetadataLocalFields> => {
+    if (swap.metadata === undefined) {
+        return swap;
+    }
+
+    try {
+        return {
+            ...swap,
+            ...swapMetadataToLocalFields(
+                await decryptSwapMetadata(mnemonic, swap.id, swap.metadata),
+            ),
+        };
+    } catch (e) {
+        log.warn(
+            `failed to decrypt metadata for swap ${swap.id}, falling back to on-chain assets:`,
+            formatError(e),
+        );
+        return swap;
+    }
+};
+
+export const hydrateRestorableSwapsMetadata = <T extends RestorableSwap>(
+    swaps: T[],
+    mnemonic: string,
+): Promise<(T & SwapMetadataLocalFields)[]> =>
+    Promise.all(
+        swaps.map((swap) => hydrateRestorableSwapMetadata(swap, mnemonic)),
+    );

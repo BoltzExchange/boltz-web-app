@@ -10,12 +10,16 @@ import { formatError } from "../../utils/errors";
 import { RescueAction } from "../../utils/rescue";
 import { type RescueFile, getXpub } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
-import { decryptSwapMetadata } from "../../utils/swapMetadata";
+import {
+    type SwapMetadataLocalFields,
+    hydrateRestorableSwapsMetadata,
+} from "../../utils/swapMetadata";
 import { mapSwap } from "../RefundRescue";
 import {
     type EvmRescueResult,
     type EvmScanTarget,
     RescueResultSource,
+    type RestoredEvmSwap,
     type UnifiedRescueResult,
 } from "./types";
 
@@ -34,6 +38,148 @@ const resultSourcePriority: Record<RescueResultSource, number> = {
 };
 
 export const arbitrumRescueAssets = [TBTC, WBTC] as const;
+
+export const normalizeEvmId = (value: string | undefined): string =>
+    value?.toLowerCase().replace(/^0x/, "") ?? "";
+
+type RestoredEvmMatchReason =
+    | "metadata-lockup-transaction"
+    | "metadata-commitment-transaction";
+
+type RestoredEvmMatch = {
+    restoredSwap: RestoredEvmSwap;
+    reason: RestoredEvmMatchReason;
+};
+
+const getEvmResultKey = (swap: EvmRescueResult) =>
+    [
+        swap.action,
+        swap.asset,
+        normalizeEvmId(swap.transactionHash),
+        normalizeEvmId(swap.preimageHash),
+    ].join(":");
+
+export const mergeEvmRescueResults = (
+    current: EvmRescueResult[],
+    next: EvmRescueResult[],
+): EvmRescueResult[] => {
+    const merged = new Map<string, EvmRescueResult>();
+
+    for (const swap of current) {
+        merged.set(getEvmResultKey(swap), swap);
+    }
+
+    for (const swap of next) {
+        const key = getEvmResultKey(swap);
+        const existing = merged.get(key);
+        merged.set(key, {
+            ...existing,
+            ...swap,
+            restoredSwap: swap.restoredSwap ?? existing?.restoredSwap,
+            dex: swap.dex ?? existing?.dex,
+            bridge: swap.bridge ?? existing?.bridge,
+            preimage: swap.preimage ?? existing?.preimage,
+        });
+    }
+
+    return [...merged.values()];
+};
+
+const hasPreimageHash = (swap: RestorableSwap): swap is RestoredEvmSwap =>
+    swap.preimageHash !== undefined;
+
+const getRestoredEvmMatchDetails = (
+    swap: EvmRescueResult,
+    restoredSwaps: RestoredEvmSwap[],
+): RestoredEvmMatch | undefined => {
+    const txHash = normalizeEvmId(swap.transactionHash);
+
+    for (const restored of restoredSwaps) {
+        if (txHash !== "" && normalizeEvmId(restored.lockupTx) === txHash) {
+            return {
+                restoredSwap: restored,
+                reason: "metadata-lockup-transaction",
+            };
+        }
+
+        if (
+            txHash !== "" &&
+            normalizeEvmId(restored.commitmentLockupTxHash) === txHash
+        ) {
+            return {
+                restoredSwap: restored,
+                reason: "metadata-commitment-transaction",
+            };
+        }
+    }
+
+    return undefined;
+};
+
+export const getRestoredEvmMatch = (
+    swap: EvmRescueResult,
+    restoredSwaps: RestoredEvmSwap[],
+): RestoredEvmSwap | undefined =>
+    getRestoredEvmMatchDetails(swap, restoredSwaps)?.restoredSwap;
+
+export const enrichEvmRescueResults = (
+    swaps: EvmRescueResult[],
+    restoredSwaps: RestoredEvmSwap[],
+): EvmRescueResult[] =>
+    swaps.map((swap) => {
+        const match = getRestoredEvmMatchDetails(swap, restoredSwaps);
+        if (match === undefined) {
+            return swap;
+        }
+
+        return {
+            ...swap,
+            restoredSwap: match.restoredSwap,
+            dex: match.restoredSwap.dex,
+            bridge: match.restoredSwap.bridge,
+        };
+    });
+
+export const mapRestoredEvmSwaps = async (
+    swaps: RestorableSwap[],
+    mnemonic: string,
+): Promise<RestoredEvmSwap[]> => {
+    return await hydrateRestorableSwapsMetadata(
+        swaps.filter(hasPreimageHash),
+        mnemonic,
+    ).then(filterHydratedEvmSwaps);
+};
+
+const getRestoredEvmSwapKey = (swap: RestoredEvmSwap) =>
+    normalizeEvmId(swap.preimageHash) ||
+    normalizeEvmId(swap.lockupTx) ||
+    normalizeEvmId(swap.commitmentLockupTxHash) ||
+    swap.id;
+
+export const mergeRestoredEvmSwaps = (
+    current: RestoredEvmSwap[],
+    next: RestoredEvmSwap[],
+): RestoredEvmSwap[] => {
+    const merged = new Map<string, RestoredEvmSwap>();
+
+    for (const swap of current) {
+        merged.set(getRestoredEvmSwapKey(swap), swap);
+    }
+
+    for (const swap of next) {
+        const key = getRestoredEvmSwapKey(swap);
+        const existing = merged.get(key);
+        merged.set(key, {
+            ...existing,
+            ...swap,
+            evmClaimDetails: swap.evmClaimDetails ?? existing?.evmClaimDetails,
+            dex: swap.dex ?? existing?.dex,
+            bridge: swap.bridge ?? existing?.bridge,
+        });
+    }
+
+    return [...merged.values()];
+};
 
 export const getSwapDate = (swap: {
     date?: number;
@@ -136,41 +282,32 @@ export const fetchPaginatedRestorableSwaps = async (
     return restorableSwaps;
 };
 
+type HydratedRestorableSwap = RestorableSwap & SwapMetadataLocalFields;
+
+export const mapHydratedRestorableSwaps = (
+    swaps: HydratedRestorableSwap[],
+): Partial<SomeSwap>[] =>
+    swaps
+        .map(mapSwap)
+        .filter((swap): swap is Partial<SomeSwap> => swap !== undefined);
+
+export const filterHydratedEvmSwaps = (
+    swaps: HydratedRestorableSwap[],
+): RestoredEvmSwap[] =>
+    swaps.filter(
+        (swap): swap is RestoredEvmSwap =>
+            hasPreimageHash(swap) &&
+            (normalizeEvmId(swap.lockupTx) !== "" ||
+                normalizeEvmId(swap.commitmentLockupTxHash) !== ""),
+    );
+
 export const mapRestorableSwaps = async (
     swaps: RestorableSwap[],
     mnemonic: string,
-): Promise<Partial<SomeSwap>[]> => {
-    const mapped = await Promise.all(
-        swaps.map(async (swap) => {
-            const base = mapSwap(swap);
-            if (base === undefined || swap.metadata === undefined) {
-                return base;
-            }
-
-            try {
-                const metadata = await decryptSwapMetadata(
-                    mnemonic,
-                    swap.id,
-                    swap.metadata,
-                );
-                return {
-                    ...base,
-                    ...metadata,
-                };
-            } catch (e) {
-                log.warn(
-                    `failed to decrypt metadata for swap ${swap.id}, falling back to on-chain assets:`,
-                    formatError(e),
-                );
-                return base;
-            }
-        }),
+): Promise<Partial<SomeSwap>[]> =>
+    mapHydratedRestorableSwaps(
+        await hydrateRestorableSwapsMetadata(swaps, mnemonic),
     );
-
-    return mapped.filter(
-        (swap): swap is Partial<SomeSwap> => swap !== undefined,
-    );
-};
 
 export const getEvmScanTargets = (
     getEtherSwap: (asset: string) => SwapContract,

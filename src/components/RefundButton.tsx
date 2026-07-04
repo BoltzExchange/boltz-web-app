@@ -343,7 +343,8 @@ const buildRefundFollowUpCalls = async (
             );
         }
 
-        resolvedDestination = await resolveBridgeSender(bridge);
+        resolvedDestination =
+            bridge.refundAddress ?? (await resolveBridgeSender(bridge));
     }
 
     if (dexDetails === undefined || dexDetails.position !== SwapPosition.Pre) {

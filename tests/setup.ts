@@ -47,6 +47,7 @@ if (runtimeConfig.assets && mainnetConfig.assets) {
     runtimeConfig.assets.TBTC ??= mainnetConfig.assets.TBTC;
     runtimeConfig.assets.WBTC ??= mainnetConfig.assets.WBTC;
     runtimeConfig.assets.USDT0 ??= mainnetConfig.assets.USDT0;
+    runtimeConfig.assets["USDT0-SOL"] ??= mainnetConfig.assets["USDT0-SOL"];
     runtimeConfig.assets.USDC ??= mainnetConfig.assets.USDC;
 }
 

@@ -4,10 +4,16 @@ import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { vi } from "vitest";
 
-import { WBTC, getAssetDisplaySymbol } from "../../src/consts/Assets";
+import { WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
+import { Results } from "../../src/pages/external-rescue/Results";
 import { mapRestorableSwaps } from "../../src/pages/external-rescue/scan";
+import {
+    BtcSearchState,
+    RescueResultSource,
+} from "../../src/pages/external-rescue/types";
+import { RescueAction } from "../../src/utils/rescue";
 import {
     type SomeSwap,
     getFinalAssetReceive,
@@ -563,9 +569,95 @@ describe("RescueExternal", () => {
         const assets = row.querySelectorAll(".asset");
         expect(assets).toHaveLength(2);
         expect(assets[0]).toHaveAttribute("data-asset", "LBTC");
-        expect(assets[1]).toHaveAttribute(
-            "data-asset",
-            getAssetDisplaySymbol(finalAssetReceive),
+        expect(assets[1]).toHaveAttribute("data-asset", "USDT");
+        expect(assets[1]).toHaveAttribute("data-network", "solana");
+    });
+
+    test("should display metadata swap assets for routed restored refund rows", () => {
+        const result = {
+            source: RescueResultSource.Restore,
+            key: "restore:metadata-refund-swap",
+            action: RescueAction.Refund,
+            actionable: true,
+            sortValue: 1,
+            swap: {
+                id: "metadata-refund-swap",
+                type: SwapType.Chain,
+                status: "transaction.lockupFailed",
+                date: 1,
+                assetSend: "TBTC",
+                assetReceive: "L-BTC",
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: "USDT0",
+                            to: "TBTC",
+                        },
+                    ],
+                    position: SwapPosition.Pre,
+                    quoteAmount: 13334,
+                },
+                bridge: {
+                    sourceAsset: "USDT0-SOL",
+                    destinationAsset: "USDT0",
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Pre,
+                },
+            },
+        };
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Results
+                        state={
+                            {
+                                btc: {
+                                    loadedSwaps: 0,
+                                    searchState: BtcSearchState.Ready,
+                                    listLoading: false,
+                                },
+                                evm: {
+                                    unmatchedRefundSwaps: 0,
+                                    unmatchedClaimSwaps: 0,
+                                },
+                                search: {
+                                    hasSearched: true,
+                                    isSearching: false,
+                                },
+                            } as any
+                        }
+                        results={
+                            {
+                                all: () => [result],
+                                current: () => [result],
+                                currentEvmProgress: () => undefined,
+                                currentPage: () => 1,
+                                displaySlotCount: () => 1,
+                                hasAny: () => true,
+                                open: vi.fn(),
+                                setCurrent: vi.fn(),
+                                setCurrentPage: vi.fn(),
+                            } as any
+                        }
+                    />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
         );
+
+        const row = screen.getByTestId("swaplist-item-metadata-refund-swap");
+        const assets = row.querySelectorAll(".asset");
+
+        expect(row).toHaveTextContent(i18n.en.refund);
+        expect(assets).toHaveLength(2);
+        expect(assets[0]).toHaveAttribute("data-asset", "USDT");
+        expect(assets[0]).toHaveAttribute("data-network", "solana");
+        expect(assets[1]).toHaveAttribute("data-asset", "LBTC");
+        expect(row.querySelector('[data-asset="TBTC"]')).toBeNull();
     });
 });
