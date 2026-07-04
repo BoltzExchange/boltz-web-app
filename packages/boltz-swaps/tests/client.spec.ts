@@ -1,5 +1,9 @@
 import {
+    createChainSwap,
+    createReverseSwap,
+    createSubmarineSwap,
     getSwapStatuses,
+    patchSwapMetadata,
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "boltz-swaps/client";
@@ -123,5 +127,71 @@ describe("getSwapStatuses", () => {
             "could not find swap",
         );
         expect(fetcherMock).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("boltzClient swap metadata", () => {
+    beforeEach(() => {
+        fetcherMock.mockReset();
+        fetcherMock.mockResolvedValue({});
+    });
+
+    test("create requests store encrypted route metadata when provided", async () => {
+        await createSubmarineSwap(
+            "WBTC",
+            "BTC",
+            "lninvoice",
+            "pair-hash",
+            "refundpub",
+            "encrypted-metadata",
+        );
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine",
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
+        );
+
+        fetcherMock.mockClear();
+        await createReverseSwap(
+            "BTC",
+            "TBTC",
+            1_000,
+            "preimagehash",
+            "pair-hash",
+            "claimpub",
+            "claimaddr",
+            "encrypted-metadata",
+        );
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/reverse",
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
+        );
+
+        fetcherMock.mockClear();
+        await createChainSwap(
+            "BTC",
+            "TBTC",
+            1_000,
+            "preimagehash",
+            "claimpub",
+            "refundpub",
+            "claimaddr",
+            "pair-hash",
+            "encrypted-metadata",
+        );
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/chain",
+            expect.objectContaining({ metadata: "encrypted-metadata" }),
+        );
+    });
+
+    test("patches metadata on the metadata endpoint", async () => {
+        await patchSwapMetadata("swap-id", "encrypted-metadata");
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/swap-id/metadata",
+            { metadata: "encrypted-metadata" },
+            { method: "PATCH" },
+        );
     });
 });

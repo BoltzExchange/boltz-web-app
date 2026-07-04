@@ -270,6 +270,7 @@ export const createSubmarine = async (
     gasAbstraction: GasAbstraction,
     newKey: newKeyFn,
     originalDestination?: string,
+    metadata?: string,
 ): Promise<SubmarineSwap> => {
     const key = await newKey(assetSend as AssetType);
     const res = await createSubmarineSwap(
@@ -280,6 +281,7 @@ export const createSubmarine = async (
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
+        metadata,
     );
 
     return {
@@ -309,6 +311,7 @@ export const createReverse = async (
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
+    metadata?: string,
 ): Promise<ReverseSwap> => {
     const key = await newKey(assetReceive as AssetType);
     const preimage = generatePreimage({
@@ -327,6 +330,7 @@ export const createReverse = async (
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
         claimAddress,
+        metadata,
     );
 
     return {
@@ -357,6 +361,7 @@ export const createChain = async (
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
+    metadata?: string,
 ): Promise<ChainSwap> => {
     const claimKey = await newKey(assetReceive as AssetType);
     const refundKey = await newKey(assetSend as AssetType);
@@ -380,6 +385,7 @@ export const createChain = async (
             : undefined,
         claimAddress,
         pairHash,
+        metadata,
     );
 
     return {

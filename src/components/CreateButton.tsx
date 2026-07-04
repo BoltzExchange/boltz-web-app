@@ -43,7 +43,7 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop } from "../utils/Pair";
+import Pair, { type CreationData } from "../utils/Pair";
 import { calculateSendAmount } from "../utils/calculate";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -77,6 +77,11 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
+import {
+    type SwapMetadataSource,
+    buildSwapMetadataPayload,
+    encryptSwapMetadata,
+} from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
@@ -577,8 +582,38 @@ const CreateButton = () => {
     ): Promise<boolean> => {
         try {
             let data!: SomeSwap;
-            let hops!: EncodedHop[];
-            let hopsPosition: SwapPosition | undefined;
+            let dex: SwapMetadataSource["dex"];
+            let bridge: SwapMetadataSource["bridge"];
+            const buildCreationMetadata = async (
+                creationData?: Pick<
+                    CreationData,
+                    "hops" | "hopsPosition" | "sendAmount" | "receiveAmount"
+                >,
+            ): Promise<string | undefined> => {
+                dex =
+                    creationData?.hopsPosition !== undefined
+                        ? {
+                              hops: creationData.hops,
+                              position: creationData.hopsPosition,
+                              quoteAmount:
+                                  creationData.hopsPosition ===
+                                  SwapPosition.Post
+                                      ? Number(creationData.receiveAmount)
+                                      : Number(creationData.sendAmount),
+                          }
+                        : undefined;
+                bridge =
+                    buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
+                    buildBridgeDetail(assetReceive(), SwapPosition.Post);
+
+                const payload = buildSwapMetadataPayload({ dex, bridge });
+                const mnemonic = rescueFile()?.mnemonic;
+                if (payload === undefined || mnemonic === undefined) {
+                    return undefined;
+                }
+
+                return await encryptSwapMetadata(mnemonic, payload);
+            };
 
             switch (swapType()) {
                 case SwapType.Submarine: {
@@ -590,8 +625,8 @@ const CreateButton = () => {
                         if (creationData === undefined) {
                             throw new Error("missing swap creation data");
                         }
-                        hops = creationData.hops;
-                        hopsPosition = creationData.hopsPosition;
+                        const metadata =
+                            await buildCreationMetadata(creationData);
                         data = await createSubmarine(
                             creationData.from,
                             creationData.to,
@@ -602,6 +637,7 @@ const CreateButton = () => {
                             gasAbstraction,
                             newKey,
                             originalDestination(),
+                            metadata,
                         );
                     };
 
@@ -724,6 +760,7 @@ const CreateButton = () => {
                         if (mrhRescue === null) {
                             throw new Error("missing rescue file");
                         }
+                        const metadata = await buildCreationMetadata();
                         const chainSwap = await createChain(
                             assetSend(),
                             bip21Asset,
@@ -735,6 +772,7 @@ const CreateButton = () => {
                             mrhRescue,
                             newKey,
                             originalDestination(),
+                            metadata,
                         );
 
                         data = {
@@ -773,8 +811,7 @@ const CreateButton = () => {
                     if (rescue === null) {
                         throw new Error("missing rescue file");
                     }
-                    hops = creationData.hops;
-                    hopsPosition = creationData.hopsPosition;
+                    const metadata = await buildCreationMetadata(creationData);
                     data = await createReverse(
                         creationData.from,
                         creationData.to,
@@ -786,6 +823,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
+                        metadata,
                     );
                     break;
                 }
@@ -802,8 +840,7 @@ const CreateButton = () => {
                     if (rescue === null) {
                         throw new Error("missing rescue file");
                     }
-                    hops = creationData.hops;
-                    hopsPosition = creationData.hopsPosition;
+                    const metadata = await buildCreationMetadata(creationData);
                     data = await createChain(
                         creationData.from,
                         creationData.to,
@@ -815,6 +852,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
+                        metadata,
                     );
                     break;
                 }
@@ -845,24 +883,10 @@ const CreateButton = () => {
                 ),
             });
 
-            const bridge =
-                buildBridgeDetail(assetSend(), SwapPosition.Pre) ??
-                buildBridgeDetail(assetReceive(), SwapPosition.Post);
-
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
-                dex:
-                    hopsPosition !== undefined
-                        ? {
-                              hops,
-                              position: hopsPosition,
-                              quoteAmount:
-                                  hopsPosition === SwapPosition.Post
-                                      ? Number(receiveAmount())
-                                      : Number(sendAmount()),
-                          }
-                        : undefined,
+                dex,
                 bridge,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps

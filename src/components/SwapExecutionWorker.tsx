@@ -80,6 +80,7 @@ import {
     type SubmarineSwap,
     getLockupGasAbstraction,
 } from "../utils/swapCreator";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadata";
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
@@ -226,7 +227,7 @@ const isTaskRelevant = (
 };
 
 export const SwapExecutionWorker = () => {
-    const { getSwap, getSwaps, slippage, pairs, fetchPairs } =
+    const { getSwap, getSwaps, slippage, pairs, fetchPairs, rescueFile } =
         useGlobalContext();
     const { swap } = usePayContext();
     const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
@@ -249,6 +250,7 @@ export const SwapExecutionWorker = () => {
             return false;
         }
 
+        await patchEncryptedSwapMetadata(latestSwap, rescueFile());
         log.info(
             `Swap execution persisted ${source} commitment lockup transaction`,
             getSwapExecutionLogContext(latestSwap.id, {

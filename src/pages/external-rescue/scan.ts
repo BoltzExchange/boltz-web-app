@@ -10,6 +10,7 @@ import { formatError } from "../../utils/errors";
 import { RescueAction } from "../../utils/rescue";
 import { type RescueFile, getXpub } from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
+import { decryptSwapMetadata } from "../../utils/swapMetadata";
 import { mapSwap } from "../RefundRescue";
 import {
     type EvmRescueResult,
@@ -135,10 +136,41 @@ export const fetchPaginatedRestorableSwaps = async (
     return restorableSwaps;
 };
 
-export const mapRestorableSwapList = (swaps: RestorableSwap[]) =>
-    swaps
-        .map((swap) => mapSwap(swap))
-        .filter((swap): swap is Partial<SomeSwap> => swap !== undefined);
+export const mapRestorableSwaps = async (
+    swaps: RestorableSwap[],
+    mnemonic: string,
+): Promise<Partial<SomeSwap>[]> => {
+    const mapped = await Promise.all(
+        swaps.map(async (swap) => {
+            const base = mapSwap(swap);
+            if (base === undefined || swap.metadata === undefined) {
+                return base;
+            }
+
+            try {
+                const metadata = await decryptSwapMetadata(
+                    mnemonic,
+                    swap.id,
+                    swap.metadata,
+                );
+                return {
+                    ...base,
+                    ...metadata,
+                };
+            } catch (e) {
+                log.warn(
+                    `failed to decrypt metadata for swap ${swap.id}, falling back to on-chain assets:`,
+                    formatError(e),
+                );
+                return base;
+            }
+        }),
+    );
+
+    return mapped.filter(
+        (swap): swap is Partial<SomeSwap> => swap !== undefined,
+    );
+};
 
 export const getEvmScanTargets = (
     getEtherSwap: (asset: string) => SwapContract,

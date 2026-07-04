@@ -258,6 +258,7 @@ vi.mock("../../src/context/Global", () => ({
         slippage: () => 0.5,
         fetchPairs: mockFetchPairs,
         pairs: mockPairs,
+        rescueFile: () => null,
     }),
 }));
 

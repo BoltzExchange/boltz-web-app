@@ -207,6 +207,10 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 data.transaction !== undefined
             ) {
                 const lockupTxId = data.transaction.id;
+                if (lockupTxId === undefined) {
+                    return;
+                }
+
                 await modifySwap(swapId, (s) => {
                     s.lockupTx = lockupTxId;
                 });
