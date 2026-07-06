@@ -19,7 +19,9 @@ export * from "./interfaces/index.ts";
 
 export * as bridge from "./bridge/index.ts";
 export * as cctp from "./cctp/index.ts";
+export * as deposit from "./deposit/index.ts";
 export * as evm from "./evm/index.ts";
 export * as oft from "./oft/index.ts";
 export * as solana from "./solana/index.ts";
+export * as storage from "./storage/index.ts";
 export * as tron from "./tron/index.ts";
