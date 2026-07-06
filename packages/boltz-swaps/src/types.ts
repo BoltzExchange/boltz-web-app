@@ -26,6 +26,12 @@ export enum GasAbstractionType {
 
 export const arbitrumChainId = 42161;
 
+export type FetchOptions = {
+    signal?: AbortSignal;
+    // Bounds the whole operation end-to-end, not each request.
+    timeoutMs?: number;
+};
+
 export type AssetType =
     | "LN"
     | "BTC"

@@ -4,10 +4,40 @@ import { hex } from "@scure/base";
 import bolt11 from "bolt11";
 import * as Bolt12 from "bolt12-utils";
 
+import { getConfiguredNetwork } from "./config.ts";
+
 export enum InvoiceType {
     Bolt11 = "bolt11",
     Bolt12 = "bolt12",
 }
+
+const bolt11Prefixes = {
+    mainnet: "lnbc",
+    testnet: "lntb",
+    regtest: "lnbcrt",
+};
+
+export const isInvoice = (data: string): boolean => {
+    if (typeof data !== "string") {
+        return false;
+    }
+
+    const value = data.toLowerCase();
+    const prefix = bolt11Prefixes[getConfiguredNetwork()];
+    if (
+        prefix === bolt11Prefixes.mainnet &&
+        value.startsWith(bolt11Prefixes.regtest)
+    ) {
+        return false;
+    }
+    // BOLT11 HRP: prefix, optional amount with multiplier, then the "1"
+    // separator; prefix alone (e.g. a "lnbc@host" Lightning address) is not
+    // an invoice.
+    return (
+        new RegExp(`^${prefix}(\\d+[munp]?)?1.`).test(value) ||
+        /^lni1./.test(value)
+    );
+};
 
 export type DecodedInvoice = {
     type: InvoiceType;

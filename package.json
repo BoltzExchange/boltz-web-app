@@ -35,7 +35,7 @@
     },
     "scripts": {
         "start": "bun run regtest && vite",
-        "test": "bun run regtest && vitest run --dir ./tests && bun --filter boltz-swaps test",
+        "test": "bun run regtest && bun --filter boltz-swaps build && vitest run --dir ./tests && bun --filter boltz-swaps test",
         "test:e2e": "bun run regtest && bun --filter boltz-swaps build && playwright test",
         "playwright:install": "playwright install --with-deps chromium",
         "dev": "vite",

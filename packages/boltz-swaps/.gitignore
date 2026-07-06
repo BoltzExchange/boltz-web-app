@@ -1,4 +1,6 @@
 src/generated/*
 !src/generated/*-idl.json
 !src/generated/README.md
+!src/generated/dnssec/
+!src/generated/dnssec/**
 .tsbuildinfo
