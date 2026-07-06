@@ -201,6 +201,43 @@ describe("fetchLnurl", () => {
         expect((err as LnurlAmountError).limitMsat).toBe(1_000);
     });
 
+    test("throws the reason of a LUD-06 error on the metadata response", async () => {
+        fetchExternalJsonMock.mockResolvedValueOnce({
+            status: "ERROR",
+            reason: "user not found",
+        });
+
+        await expect(fetchLnurl("user@example.com", 1000)).rejects.toThrow(
+            "user not found",
+        );
+        expect(fetchExternalJsonMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("throws the reason of a LUD-06 error on the callback response", async () => {
+        fetchExternalJsonMock
+            .mockResolvedValueOnce({
+                minSendable: 1_000,
+                maxSendable: 2_000_000,
+                callback: "https://example.com/cb",
+            })
+            .mockResolvedValueOnce({
+                status: "error",
+                reason: "route not found",
+            });
+
+        await expect(fetchLnurl("user@example.com", 1000)).rejects.toThrow(
+            "route not found",
+        );
+    });
+
+    test("throws a generic error on a LUD-06 error without a reason", async () => {
+        fetchExternalJsonMock.mockResolvedValueOnce({ status: "ERROR" });
+
+        await expect(fetchLnurl("user@example.com", 1000)).rejects.toThrow(
+            "LNURL error",
+        );
+    });
+
     test("aborts in-flight requests when the caller signal aborts", async () => {
         const controller = new AbortController();
         fetchExternalJsonMock.mockImplementationOnce(

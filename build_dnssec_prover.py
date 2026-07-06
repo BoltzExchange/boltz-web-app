@@ -18,6 +18,7 @@ Both land under src/generated/ so they inherit the repo's eslint/prettier ignore
 
 import base64
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -42,11 +43,12 @@ INIT_THROW = "throw new Error('dnssec wasm bytes must be provided to init()');"
 
 def build_wasm() -> None:
     subprocess.run(
-        "wasm-pack build --target web --release && rm -f Cargo.lock && rm -rf target/",
+        ["wasm-pack", "build", "--target", "web", "--release"],
         cwd=WASMPACK_DIR,
-        shell=True,
         check=True,
     )
+    (WASMPACK_DIR / "Cargo.lock").unlink(missing_ok=True)
+    shutil.rmtree(WASMPACK_DIR / "target", ignore_errors=True)
 
 
 def write_glue() -> None:

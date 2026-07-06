@@ -18,6 +18,13 @@ type LnurlCallbackResponse = {
     pr: string;
 };
 
+// LUD-06 errors are returned in the body, possibly with an HTTP 200
+// (LUD-01: clients should ignore status codes).
+type LnurlErrorResponse = {
+    status?: string;
+    reason?: string;
+};
+
 const emailRegex =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
@@ -51,6 +58,12 @@ export const isLnurl = (data: string | null | undefined): boolean => {
     );
 };
 
+const checkLnurlError = (data: LnurlErrorResponse): void => {
+    if (data.status?.toUpperCase() === "ERROR") {
+        throw new Error(data.reason ?? "LNURL error");
+    }
+};
+
 const checkLnurlResponse = (amountMsat: bigint, data: LnurlResponse): void => {
     getLogger().debug(
         "lnurl amount check: (x, min, max)",
@@ -75,11 +88,10 @@ export const fetchLnurlInvoice = async (
     const url = new URL(data.callback);
     url.searchParams.set("amount", amountMsat.toString());
     getLogger().debug("fetching invoice", url.toString());
-    const res = await fetchExternalJson<LnurlCallbackResponse>(
-        url.toString(),
-        opts?.timeoutMs,
-        { signal: opts?.signal },
-    );
+    const res = await fetchExternalJson<
+        LnurlCallbackResponse & LnurlErrorResponse
+    >(url.toString(), opts?.timeoutMs, { signal: opts?.signal });
+    checkLnurlError(res);
     getLogger().debug("fetched invoice", res);
     return res.pr;
 };
@@ -105,9 +117,12 @@ export const fetchLnurl = async (
     const amountMsat = BigInt(Math.round(amountSat * 1_000));
     getLogger().debug("Fetching LNURL:", url);
 
-    const res = await fetchExternalJson<LnurlResponse>(url, timeoutMs, {
-        signal,
-    });
+    const res = await fetchExternalJson<LnurlResponse & LnurlErrorResponse>(
+        url,
+        timeoutMs,
+        { signal },
+    );
+    checkLnurlError(res);
     checkLnurlResponse(amountMsat, res);
     return await fetchLnurlInvoice(amountMsat, res, { signal, timeoutMs });
 };
