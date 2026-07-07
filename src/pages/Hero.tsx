@@ -29,7 +29,6 @@ export const Hero = () => {
     const navigate = useNavigate();
 
     const [numChannel, setNumChannel] = createSignal(0);
-    const [numPeers, setNumPeers] = createSignal(0);
     const [capacity, setCapacity] = createSignal(0);
     const [oldestChannel, setOldestChannel] = createSignal("0");
 
@@ -50,7 +49,6 @@ export const Hero = () => {
             const stats = statsRes.BTC.total;
 
             setNumChannel(stats.channels);
-            setNumPeers(stats.peers);
             setCapacity(stats.capacity);
 
             const difference = Date.now() - stats.oldestChannel * 1000;
@@ -128,10 +126,6 @@ export const Hero = () => {
                         <small>{t("num_channels")}</small>
                     </div>
                     <div class="number">
-                        {formatStatsAmount(numPeers())}{" "}
-                        <small>{t("peers")}</small>
-                    </div>
-                    <div class="number">
                         {formatStatsAmount(capacity(), denomination())}{" "}
                         <small>
                             {t("capacity", {
@@ -162,6 +156,12 @@ export const Hero = () => {
                         <ExternalLink
                             href="https://bancolibre.com/"
                             class="bancoLibre"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://getbittr.com/"
+                            class="bittr"
                         />
                     </div>
                     <div>
@@ -199,8 +199,26 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
+                            href="https://www.dzap.io/"
+                            class="dzap"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://www.eclairbtc.com/"
+                            class="eclair"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
                             href="https://www.fedi.xyz/"
                             class="fedi"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://www.freedomia.io/"
+                            class="freedomia"
                         />
                     </div>
                     <div>
@@ -220,9 +238,24 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
+                            href="https://hodlhodl.com/"
+                            class="hodlhodl"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
                             href="https://lnbits.com/"
                             class="lnbits"
                         />
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://mannabitcoin.com/"
+                            class="manna"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink href="https://nuri.com/" class="nuri" />
                     </div>
                     <div>
                         <ExternalLink
@@ -244,10 +277,28 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
+                            href="https://thebitcoincompany.com/"
+                            class="theBitcoinCompany"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
                             href="https://thunderhub.io/"
                             class="thunderhub">
                             Thunderhub
                         </ExternalLink>
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://wdk.tether.io/"
+                            class="wdk"
+                        />
+                    </div>
+                    <div>
+                        <ExternalLink
+                            href="https://zenobank.io/"
+                            class="zeno"
+                        />
                     </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
@@ -260,15 +311,12 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
-                            href="https://blockstream.com/"
-                            class="blockstream"
-                        />
-                    </div>
-                    <div>
-                        <ExternalLink
                             href="https://rootstocklabs.com/"
                             class="rootstocklabs"
                         />
+                    </div>
+                    <div>
+                        <ExternalLink href="https://usdt0.to/" class="usdt0" />
                     </div>
                 </div>
             </Show>

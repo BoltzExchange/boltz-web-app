@@ -119,7 +119,8 @@ h3 {
 
 #numbers {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 0 90px;
     margin: 50px 0 122px;
     padding: 0 42px;
 }
@@ -209,20 +210,20 @@ h3 {
     height: 32px;
 }
 
-.blockstream {
+.usdt0 {
     display: inline-block;
-    background: url(../assets/blockstream.webp);
+    background: url("../assets/usdt0.svg?v=2");
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 170px;
-    height: 58px;
+    width: 174.1px;
+    height: 50px;
 }
 .rootstocklabs {
     display: inline-block;
     background: url(../assets/rootstocklabs.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 155px;
+    width: 204.6px;
     height: 50px;
 }
 .arklabs {
@@ -230,8 +231,8 @@ h3 {
     background: url(../assets/arklabs.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 124px;
-    height: 69px;
+    width: 150.4px;
+    height: 50px;
 }
 .fuji {
     display: inline-block;
@@ -349,6 +350,87 @@ h3 {
     background-repeat: no-repeat;
     width: 181px;
     height: 50px;
+}
+.dzap {
+    display: inline-block;
+    background: url(../assets/dzap.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 110px;
+    height: 31px;
+}
+.freedomia {
+    display: inline-block;
+    background: url(../assets/freedomia.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 200px;
+    height: 34px;
+}
+.bittr {
+    display: inline-block;
+    background: url(../assets/bittr.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 126px;
+    height: 45px;
+}
+.eclair {
+    display: inline-block;
+    background: url(../assets/eclair.webp);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 140px;
+    height: 40px;
+}
+.hodlhodl {
+    display: inline-block;
+    background: url(../assets/hodl-hodl.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 165px;
+    height: 32px;
+}
+.nuri {
+    display: inline-block;
+    background: url(../assets/nuri.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 50px;
+    height: 50px;
+}
+.zeno {
+    display: inline-block;
+    background: url(../assets/zeno.webp);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+}
+.manna {
+    display: inline-block;
+    background: url(../assets/manna.webp);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 89px;
+    height: 50px;
+}
+.wdk {
+    display: inline-block;
+    background: url(../assets/wdk.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 124px;
+    height: 45px;
+}
+.theBitcoinCompany {
+    display: inline-block;
+    background: url(../assets/the-bitcoin-company.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 160px;
+    height: 43px;
 }
 
 #partners,
