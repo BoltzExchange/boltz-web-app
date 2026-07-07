@@ -35,6 +35,7 @@ import {
     expect,
     getRegtestTokenAddress,
     getStablesE2eWalletAddress,
+    getStoredSwap,
     getTokenBalance,
     lbtcSendAmount,
     stablesFundingAmount,
@@ -45,6 +46,7 @@ import {
     waitForBridgeTxHash,
     waitForDexQuote,
     waitForEthereumRpc,
+    waitForLockupTxHash,
 } from "./shared";
 
 // Funds the test wallet with gas + USDT0-ETH by impersonating a whale on the
@@ -353,6 +355,59 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
             await waitForBridgeTxHash(page, swapId),
             walletAddress,
         );
+    });
+
+    test("claims a USDT0-Arbitrum to L-BTC chain swap", async ({
+        arbitrum,
+        page,
+    }) => {
+        test.setTimeout(fullFlowTestTimeout);
+
+        const walletAddress = await getArbWalletAddress(arbitrum.publicClient);
+        await clearEoaDelegation(arbitrum.publicClient, walletAddress);
+        await fundArbitrumStablesE2eWallet(
+            arbitrum.publicClient,
+            walletAddress,
+        );
+        await injectWalletProvider({
+            page,
+            publicClient: arbitrum.publicClient,
+            walletClient: createWalletClient({
+                account: walletAddress,
+                chain: arbitrum.chain,
+                transport: http(arbitrum.rpcUrl, { timeout: actionTimeout }),
+            }),
+            chain: arbitrum.chain,
+        });
+
+        await waitForDexQuote({
+            tokenIn: getRegtestTokenAddress("USDT0"),
+            tokenOut: getRegtestTokenAddress("TBTC"),
+            amountIn: parseUnits("39.996", 6),
+            label: "USDT0 -> TBTC",
+        });
+
+        const swapId = await createSwap(
+            page,
+            "USDT0",
+            "L-BTC",
+            await getLiquidAddress(),
+            usdt0EthSendAmount,
+            { walletAddress },
+        );
+        await expect
+            .poll(
+                async () => (await getStoredSwap(page, swapId))?.dex?.position,
+                { timeout: actionTimeout },
+            )
+            .toBe("pre");
+
+        await lockupCommitment(page, walletAddress);
+        await waitForLockupTxHash(page, swapId);
+
+        await expect(
+            page.locator("div[data-status='transaction.claimed']"),
+        ).toBeVisible({ timeout: fullFlowTestTimeout });
     });
 
     test("offers a source-asset refund when the backend rejects the commitment", async ({

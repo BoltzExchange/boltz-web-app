@@ -177,6 +177,10 @@ export const waitForDexQuote = async (args: {
 };
 
 type StoredSwap = {
+    dex?: {
+        position?: string;
+        quoteAmount?: number | string;
+    };
     bridge?: { txHash?: Hex };
     lockupTx?: Hex;
     commitmentLockupTxHash?: Hex;
