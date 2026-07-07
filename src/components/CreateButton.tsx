@@ -132,7 +132,7 @@ const buildDexDetail = (
     position: SwapPosition | undefined,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
-    amountChanged: Side,
+    sourceAmount?: BigNumber,
 ): DexDetail | undefined => {
     if (position === undefined) {
         return undefined;
@@ -147,13 +147,13 @@ const buildDexDetail = (
                 : Number(sendAmount),
     };
 
-    if (position !== SwapPosition.Pre || amountChanged !== Side.Send) {
+    if (position !== SwapPosition.Pre || sourceAmount === undefined) {
         return dex;
     }
 
     return {
         ...dex,
-        sourceAmount: toDexAmount(sendAmount, hops[0].from).toString(),
+        sourceAmount: toDexAmount(sourceAmount, hops[0].from).toString(),
     };
 };
 
@@ -588,7 +588,6 @@ const CreateButton = () => {
                               creationData.hopsPosition,
                               creationData.sendAmount,
                               creationData.receiveAmount,
-                              amountChanged(),
                           )
                         : undefined;
                 bridge =
@@ -961,7 +960,7 @@ const CreateButton = () => {
             SwapPosition.Pre,
             sendAmount(),
             BigNumber(0),
-            Side.Send,
+            sendAmount(),
         );
         const bridge = buildBridgeDetail(
             assetSend(),
