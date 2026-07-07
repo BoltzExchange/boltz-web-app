@@ -43,6 +43,13 @@ type SwapMetadataPlaintext = SwapMetadataPayload & {
 
 const IV_LENGTH = 12;
 
+// Major version of the plaintext schema, independent of the crypto envelope
+// version in deriveAesKey's HKDF info. Additive fields keep this major and are
+// ignored by older readers (parseObject drops unknown keys); a breaking or
+// security-relevant change must bump the major so older readers reject the blob
+// in assertSupportedVersion instead of silently mis-reading it.
+const SWAP_METADATA_VERSION = 1;
+
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -113,11 +120,9 @@ const parseObject =
         }
         const record = value as Record<string, unknown>;
 
-        const unknownKey = Object.keys(record).find((key) => !(key in schema));
-        if (unknownKey !== undefined) {
-            throw new Error(`${context} contains unknown field ${unknownKey}`);
-        }
-
+        // Unknown keys are ignored, not rejected: a newer app version may add
+        // fields within the same major, and the payload is authenticated, so
+        // extra keys can only come from our own newer writer, never a backend.
         const result: Record<string, unknown> = {};
         for (const key of Object.keys(schema)) {
             const parse = (schema as Record<string, Parser<unknown>>)[key];
@@ -171,6 +176,19 @@ const hasMetadataTxIdentity = (payload: SwapMetadataPayload): boolean =>
 const hasRouteMetadata = (payload: SwapMetadataPayload): boolean =>
     payload.dex !== undefined || payload.bridge !== undefined;
 
+const assertSupportedVersion = (value: unknown): void => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new Error("swap metadata must be an object");
+    }
+
+    const version = (value as Record<string, unknown>).version;
+    if (version !== SWAP_METADATA_VERSION) {
+        throw new Error(
+            `unsupported swap metadata version: ${String(version)}`,
+        );
+    }
+};
+
 const deriveAesKey = async (mnemonic: string): Promise<CryptoKey> => {
     const keyMaterial = await crypto.subtle.importKey(
         "raw",
@@ -211,7 +229,14 @@ export const encryptSwapMetadata = async (
         await crypto.subtle.encrypt(
             { name: "AES-GCM", iv: toBufferSource(iv) },
             key,
-            toBufferSource(textEncoder.encode(JSON.stringify(payload))),
+            toBufferSource(
+                textEncoder.encode(
+                    JSON.stringify({
+                        ...payload,
+                        version: SWAP_METADATA_VERSION,
+                    }),
+                ),
+            ),
         ),
     );
 
@@ -243,8 +268,11 @@ export const decryptSwapMetadata = async (
         toBufferSource(ciphertext),
     );
 
+    const parsed: unknown = JSON.parse(textDecoder.decode(plaintext));
+    assertSupportedVersion(parsed);
+
     const { swapId: boundSwapId, ...payload } = parseSwapMetadataPlaintext(
-        JSON.parse(textDecoder.decode(plaintext)),
+        parsed,
         "swap metadata",
     );
 
