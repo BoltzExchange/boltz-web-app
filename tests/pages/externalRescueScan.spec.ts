@@ -5,10 +5,7 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 
-import {
-    getEvmDisplayAssets,
-    getEvmFinalAsset,
-} from "../../src/pages/external-rescue/Results";
+import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
     mapRestoredEvmSwaps,
@@ -254,7 +251,6 @@ describe("external EVM rescue scan helpers", () => {
             },
         };
 
-        expect(getEvmFinalAsset(refund)).toBe("USDT0-SOL");
         expect(getEvmDisplayAssets(refund)).toEqual(["USDT0-SOL"]);
     });
 
@@ -269,7 +265,6 @@ describe("external EVM rescue scan helpers", () => {
             },
         };
 
-        expect(getEvmFinalAsset(refund)).toBe("TBTC");
         expect(getEvmDisplayAssets(refund)).toEqual(["TBTC"]);
     });
 

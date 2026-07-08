@@ -32,13 +32,6 @@ import {
 } from "./types";
 import type { ExternalRescueSearch } from "./useExternalRescueSearch";
 
-export const getEvmFinalAsset = (swap: EvmRescueResult) => {
-    const assets = getEvmDisplayAssets(swap);
-    return swap.action === RskRescueMode.Refund
-        ? assets[0]!
-        : assets[assets.length - 1]!;
-};
-
 export const getEvmDisplayAssets = (swap: EvmRescueResult) => {
     const bridge = swap.bridge ?? swap.restoredSwap?.bridge;
     const dex = swap.dex ?? swap.restoredSwap?.dex;
