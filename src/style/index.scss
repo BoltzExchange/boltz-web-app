@@ -314,6 +314,116 @@ hr.spacer {
     text-align: right;
     overflow-wrap: break-word;
 }
+
+.commitment-invoice-header {
+    text-align: center;
+    margin: 16px 0 14px;
+}
+
+.commitment-invoice-heading {
+    margin: 0 0 10px;
+    font-size: 1.08rem;
+    line-height: 1.35;
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.commitment-invoice-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    color: var(--color-white-50);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    margin: 0 auto;
+}
+
+.commitment-lockup-transaction {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    background: transparent;
+    color: var(--color-white-60);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+
+    svg {
+        height: 14px;
+        width: 14px;
+    }
+}
+
+@media (hover: hover) {
+    .commitment-lockup-transaction:hover {
+        background-color: transparent;
+        color: var(--color-text);
+    }
+}
+
+.commitment-copy-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0;
+    background: transparent;
+    color: var(--color-white-60);
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+
+    svg {
+        height: 14px;
+        width: 14px;
+    }
+}
+
+@media (hover: hover) {
+    .commitment-copy-amount:hover {
+        background-color: transparent;
+        color: var(--color-text);
+    }
+}
+
+.commitment-copy-amount.btn-active {
+    background-color: transparent;
+    color: var(--color-text);
+}
+
+.commitment-invoice-meta-separator {
+    width: 1px;
+    height: 13px;
+    background-color: var(--color-white-15);
+}
+
+.commitment-invoice-input {
+    margin-top: 14px;
+}
+
+.btn.commitment-invoice-submit {
+    margin-top: 10px;
+    min-height: 38px;
+    padding-block: 8px;
+}
+
+.commitment-action-separator {
+    margin: 12px 0 10px;
+    border-color: var(--color-white-15);
+}
+
+.commitment-refund-action {
+    margin-top: 0;
+    text-align: center;
+}
+
+.commitment-refund-action .btn {
+    margin-top: 0;
+}
+
 .fees-dyn,
 .icons > div {
     position: relative;
@@ -443,12 +553,14 @@ hr.spacer {
     }
 }
 
-.btn-explorer {
+.btn-explorer,
+.commitment-refund-action .btn {
     background: var(--color-tertiary);
     color: var(--color-text);
 }
 @media (hover: hover) {
-    .btn-explorer:hover {
+    .btn-explorer:hover,
+    .commitment-refund-action .btn:not(:disabled):hover {
         background: var(--color-secondary-100);
         color: var(--color-tertiary);
     }
@@ -559,6 +671,67 @@ input.invalid,
 textarea.invalid {
     outline: none;
     border-color: var(--color-error-500);
+}
+.committed-invoice-row {
+    position: relative;
+}
+.committed-invoice-input:disabled {
+    opacity: 1;
+    background: color-mix(
+        in srgb,
+        var(--color-secondary-800) 76%,
+        var(--color-medium-gray)
+    );
+    border-color: var(--color-white-10);
+    color: var(--color-white-30);
+    cursor: not-allowed;
+    -webkit-text-fill-color: var(--color-white-30);
+}
+.committed-invoice-input:disabled::placeholder {
+    color: var(--color-white-30);
+}
+.committed-invoice-row .invoice-slot-action {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    padding: 0 7px;
+    border-color: var(--color-white-05);
+    background: var(--color-white-05);
+    color: var(--color-white-50);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.invoice-slot-action {
+    flex: 0 0 auto;
+    border: 1px solid var(--color-white-15);
+    background: var(--color-secondary-700);
+    color: var(--color-text);
+    font-weight: 600;
+}
+@media (hover: hover) {
+    .invoice-slot-action:hover {
+        background: var(--color-secondary-100);
+        color: var(--color-secondary-700);
+    }
+}
+.invoice-slot-action:focus-visible,
+.invoice-slot-action:active {
+    background: var(--color-secondary-100);
+    color: var(--color-secondary-700);
+}
+.committed-invoice-row .invoice-slot-action:focus-visible,
+.committed-invoice-row .invoice-slot-action:active {
+    border-color: var(--color-white-10);
+    background: var(--color-white-10);
+    color: var(--color-white-80);
+}
+@media (hover: hover) {
+    .committed-invoice-row .invoice-slot-action:hover {
+        border-color: var(--color-white-10);
+        background: var(--color-white-10);
+        color: var(--color-white-80);
+    }
 }
 .fees-dyn label {
     display: block;
@@ -1480,6 +1653,7 @@ textarea.invalid {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
     gap: 0.3rem;
 }
 
@@ -1487,7 +1661,7 @@ textarea.invalid {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 20rem;
+    width: min(20rem, 100%);
     padding: 10px 12px;
     margin: 0;
     text-align: center;

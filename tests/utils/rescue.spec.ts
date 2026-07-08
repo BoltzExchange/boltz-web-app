@@ -11,6 +11,7 @@ import {
 import {
     RescueAction,
     createRescueList,
+    hasSwapTimedOut,
     isSwapClaimable,
 } from "../../src/utils/rescue";
 import type {
@@ -223,6 +224,27 @@ describe("rescue", () => {
                 ).toEqual(false);
             },
         );
+    });
+
+    describe("hasSwapTimedOut", () => {
+        test("uses commitment lockup timeout block height", () => {
+            const swap = {
+                type: SwapType.Commitment,
+                timeoutBlockHeight: 123,
+            } as SomeSwap;
+
+            expect(hasSwapTimedOut(swap, 122)).toBe(false);
+            expect(hasSwapTimedOut(swap, 123)).toBe(true);
+        });
+
+        test("does not time out commitments without persisted timeout data", () => {
+            expect(
+                hasSwapTimedOut(
+                    { type: SwapType.Commitment } as SomeSwap,
+                    Number.MAX_SAFE_INTEGER,
+                ),
+            ).toBe(false);
+        });
     });
 
     describe("createRescueList", () => {

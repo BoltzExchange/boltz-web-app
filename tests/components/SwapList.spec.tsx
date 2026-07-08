@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { SwapType } from "boltz-swaps/types";
 
 import SwapList, { type Swap } from "../../src/components/SwapList";
 import { BTC, LN } from "../../src/consts/Assets";
@@ -76,6 +77,24 @@ describe("SwapList", () => {
 
         const item = screen.getByTestId(`swaplist-item-${swap.id}`);
         expect(item.tagName).toEqual("A");
+        expect(item.getAttribute("href")).toEqual(`/swap/${swap.id}`);
+    });
+
+    it("should keep local commitment links pointed at the full swap id", () => {
+        const swap = {
+            id: "12345678-1234-1234-1234-123456789abc",
+            type: SwapType.Commitment,
+            date: new Date().getTime(),
+            assetSend: BTC,
+            assetReceive: LN,
+        } as SomeSwap;
+
+        render(
+            () => <SwapList swapsSignal={() => [swap]} action={() => "view"} />,
+            { wrapper: contextWrapper },
+        );
+
+        const item = screen.getByTestId(`swaplist-item-${swap.id}`);
         expect(item.getAttribute("href")).toEqual(`/swap/${swap.id}`);
     });
 

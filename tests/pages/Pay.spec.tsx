@@ -1,5 +1,5 @@
 import type * as SolidRouter from "@solidjs/router";
-import { useLocation } from "@solidjs/router";
+import { useLocation, useParams } from "@solidjs/router";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { getLockupTransaction, getSwapStatus } from "boltz-swaps/client";
@@ -94,6 +94,9 @@ vi.mock("../../src/utils/rescue", () => ({
 vi.mock("../../src/components/QrCode", () => ({
     default: () => <div data-testid="mock-qrcode" />,
 }));
+vi.mock("../../src/status/CommitmentCreated", () => ({
+    default: () => <div data-testid="commitment-created" />,
+}));
 
 const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
@@ -127,6 +130,7 @@ vi.mock("localforage", () => ({
 }));
 
 const mockUseLocation = vi.mocked(useLocation);
+const mockUseParams = vi.mocked(useParams);
 mockUseLocation.mockReturnValue({
     hash: "",
     key: "",
@@ -162,6 +166,9 @@ describe("Pay", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.history.replaceState({}, "", "/");
+        mockUseParams.mockReturnValue({
+            id: "123",
+        } as ReturnType<typeof useParams>);
         swapsGetItemMock.mockResolvedValue({
             id: "123",
             type: SwapType.Chain,
@@ -182,6 +189,24 @@ describe("Pay", () => {
         mockGetSwapStatus.mockResolvedValue({
             status: swapStatusFailed.TransactionRefunded,
         });
+    });
+
+    test("should not show commitment ids in the title", async () => {
+        const commitmentId = "commitment-12345678-1234-1234-1234-123456789abc";
+        mockUseParams.mockReturnValue({
+            id: commitmentId,
+        } as ReturnType<typeof useParams>);
+        swapsGetItemMock.mockResolvedValue({
+            id: commitmentId,
+            type: SwapType.Commitment,
+            assetReceive: BTC,
+            assetSend: LBTC,
+        } as SomeSwap);
+
+        renderPay();
+
+        const title = await screen.findByRole("heading", { level: 2 });
+        expect(title).not.toHaveTextContent(commitmentId);
     });
 
     test("should rename `transaction.refunded` to `swap.waitingForRefund` on ChainSwap", async () => {
