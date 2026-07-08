@@ -580,6 +580,14 @@ const CreateButton = () => {
                     "hops" | "hopsPosition" | "sendAmount" | "receiveAmount"
                 >,
             ): Promise<string | undefined> => {
+                const sourceAmount =
+                    amountChanged() === Side.Send ? sendAmount() : undefined;
+                bridge =
+                    buildBridgeDetail(
+                        assetSend(),
+                        SwapPosition.Pre,
+                        sourceAmount,
+                    ) ?? buildBridgeDetail(assetReceive(), SwapPosition.Post);
                 dex =
                     creationData?.hops !== undefined &&
                     creationData?.hopsPosition !== undefined
@@ -588,16 +596,11 @@ const CreateButton = () => {
                               creationData.hopsPosition,
                               creationData.sendAmount,
                               creationData.receiveAmount,
+                              // If the bridge is involved, the source amount is already
+                              // persisted on the bridge and isn't involved in the DEX quote.
+                              bridge === undefined ? sourceAmount : undefined,
                           )
                         : undefined;
-                bridge =
-                    buildBridgeDetail(
-                        assetSend(),
-                        SwapPosition.Pre,
-                        amountChanged() === Side.Send
-                            ? sendAmount()
-                            : undefined,
-                    ) ?? buildBridgeDetail(assetReceive(), SwapPosition.Post);
 
                 const payload = buildSwapMetadataPayload({ dex, bridge });
                 const mnemonic = rescueFile()?.mnemonic;
