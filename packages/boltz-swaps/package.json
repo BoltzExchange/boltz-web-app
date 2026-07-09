@@ -225,9 +225,10 @@
         "dist"
     ],
     "scripts": {
-        "build": "rm -rf .tsbuildinfo dist/ && tsc",
-        "dev": "tsc --watch",
-        "tsc": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json && tsc --noEmit -p examples/tsconfig.json && tsc --noEmit -p integration/tsconfig.json",
+        "build": "rm -rf .tsbuildinfo dist/ && bun run tsc:bin",
+        "dev": "bun run tsc:bin -- --watch",
+        "tsc:bin": "node node_modules/typescript7/bin/tsc",
+        "tsc": "bun run tsc:bin -- --noEmit && bun run tsc:bin -- --noEmit -p tests/tsconfig.json && bun run tsc:bin -- --noEmit -p examples/tsconfig.json && bun run tsc:bin -- --noEmit -p integration/tsconfig.json",
         "test": "vitest run",
         "test:integration": "vitest run --config vitest.integration.config.mjs",
         "check:lazy": "node scripts/check-eager-loads.mjs",
@@ -331,6 +332,7 @@
         "@codama/renderers-js": "^2.2.0",
         "boltz-core": "catalog:",
         "codama": "^1.6.0",
+        "typescript7": "npm:typescript@^7.0.2",
         "vitest": "catalog:"
     }
 }

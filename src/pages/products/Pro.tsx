@@ -27,9 +27,10 @@ const formatDate = (timestamp: number): string => {
     return dateFormatter.format(date);
 };
 
-const proFeeSample: Point[] = feeSample.fees.map(
-    (fee): Point => ({ x: formatDate(fee[0]), y: fee[1] }),
-);
+const proFeeSample: Point[] = feeSample.fees.map((fee): Point => ({
+    x: formatDate(fee[0]),
+    y: fee[1],
+}));
 
 enum OptionCardType {
     ExternalLink = "external-link",

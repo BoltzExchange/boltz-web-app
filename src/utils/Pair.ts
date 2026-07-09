@@ -600,15 +600,13 @@ export default class Pair {
     // `preBridgeDriver` resolved, and vice versa for post. These helpers
     // encapsulate the `!` assertion in one place.
     private requirePreBridge = ():
-        | { driver: BridgeDriver; route: BridgeRoute }
-        | undefined => {
+        { driver: BridgeDriver; route: BridgeRoute } | undefined => {
         if (this.preBridge === undefined) return undefined;
         return { driver: this.preBridgeDriver!, route: this.preBridge };
     };
 
     private requirePostBridge = ():
-        | { driver: BridgeDriver; route: BridgeRoute }
-        | undefined => {
+        { driver: BridgeDriver; route: BridgeRoute } | undefined => {
         if (this.postBridge === undefined) return undefined;
         return { driver: this.postBridgeDriver!, route: this.postBridge };
     };

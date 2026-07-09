@@ -41,9 +41,15 @@ const logPersistenceTransformPlugin = () => ({
             return null;
         }
 
+        // "jsx" only for .jsx/.tsx: in plain .ts files, babel 8 parses
+        // generic arrows like `<T>(x) =>` as JSX when the plugin is enabled
         const ast = parse(code, {
             sourceType: "module",
-            plugins: ["typescript", "jsx", "importMeta"],
+            plugins: [
+                "typescript",
+                "importMeta",
+                ...(/\.[cm]?[tj]sx$/.test(normalizedId) ? ["jsx"] : []),
+            ],
         });
         const loglevelImportNames = new Set();
 

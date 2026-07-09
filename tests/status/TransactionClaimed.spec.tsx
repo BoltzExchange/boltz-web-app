@@ -27,9 +27,9 @@ describe("TransactionClaimed", () => {
         name                                                | swap
         ${"normal swaps"}                                   | ${{ type: SwapType.Submarine }}
         ${"reverse swaps to RBTC"} | ${{
-    type: SwapType.Reverse,
-    assetReceive: RBTC,
-}}
+            type: SwapType.Reverse,
+            assetReceive: RBTC,
+        }}
         ${"reverse swaps to BTC with claim transactions"}   | ${{ type: SwapType.Reverse, assetReceive: BTC, claimTx: "txid" }}
         ${"reverse swaps to L-BTC with claim transactions"} | ${{ type: SwapType.Reverse, assetReceive: LBTC, claimTx: "txid" }}
     `("should show success for $name", async ({ swap }) => {

@@ -102,8 +102,7 @@ const fetchCctpMessage = async (
             forwardTxHash: readOptionalString(rawEntry, "forwardTxHash"),
             message: readOptionalString(rawEntry, "message") as Hex | undefined,
             attestation: readOptionalString(rawEntry, "attestation") as
-                | Hex
-                | undefined,
+                Hex | undefined,
             status: readOptionalString(rawEntry, "status"),
         };
 

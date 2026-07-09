@@ -1062,9 +1062,7 @@ const SendToBridge = (props: {
                                                 setNeedsApproval={
                                                     setNeedsApproval
                                                 }
-                                                approvalTarget={
-                                                    approvalTarget()!
-                                                }
+                                                approvalTarget={approvalTarget()!}
                                             />
                                         ) : (
                                             <ApproveErc20

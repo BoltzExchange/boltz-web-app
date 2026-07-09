@@ -72,11 +72,7 @@ export type OftReceivedEvent = {
     logIndex: number;
 };
 export type OftTransportRunner =
-    | PublicClient
-    | Signer
-    | SolanaWalletProvider
-    | TronConnector
-    | undefined;
+    PublicClient | Signer | SolanaWalletProvider | TronConnector | undefined;
 
 export type OftTransportClient = {
     transport: NetworkTransport;

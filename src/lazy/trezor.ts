@@ -15,8 +15,7 @@ import Loader from "boltz-swaps/lazy";
 export default new Loader("Trezor", async () => {
     const mod = await import("@trezor/connect-web");
     const candidate = mod.default as
-        | typeof TrezorConnect
-        | { default: typeof TrezorConnect };
+        typeof TrezorConnect | { default: typeof TrezorConnect };
     return "ethereumGetAddress" in candidate ? candidate : candidate.default;
 });
 

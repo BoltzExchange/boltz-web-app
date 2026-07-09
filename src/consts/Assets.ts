@@ -29,16 +29,10 @@ export type AssetType =
     | typeof USDC;
 
 export type RefundableAssetType =
-    | typeof BTC
-    | typeof LBTC
-    | typeof RBTC
-    | typeof TBTC;
+    typeof BTC | typeof LBTC | typeof RBTC | typeof TBTC;
 
 export type blockChainsAssets =
-    | typeof BTC
-    | typeof LBTC
-    | typeof RBTC
-    | typeof ETH;
+    typeof BTC | typeof LBTC | typeof RBTC | typeof ETH;
 
 const assetDisplayOrder: string[] = [
     LN,
