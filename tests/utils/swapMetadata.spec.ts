@@ -328,6 +328,30 @@ describe("patchEncryptedSwapMetadata", () => {
         ).rejects.toThrow(/bound to a different swap/);
     });
 
+    test("patches routed commitment metadata bound to the backend swap id", async () => {
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Submarine,
+                id: "backend-swap-id",
+                commitmentLockupTxHash: "0xcommitment",
+                dex: samplePayload.dex,
+                bridge: samplePayload.bridge,
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).toHaveBeenCalledOnce();
+        const [patchedSwapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
+        expect(patchedSwapId).toBe("backend-swap-id");
+        await expect(
+            decryptSwapMetadata(mnemonic, "backend-swap-id", metadata),
+        ).resolves.toEqual({
+            commitmentLockupTxHash: "0xcommitment",
+            dex: samplePayload.dex,
+            bridge: samplePayload.bridge,
+        });
+    });
+
     test("does not patch tx identity without route metadata", async () => {
         await patchEncryptedSwapMetadata(
             {

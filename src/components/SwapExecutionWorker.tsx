@@ -1555,9 +1555,12 @@ export const SwapExecutionWorker = () => {
                     throw error;
                 }
 
-                await modifySwap(storedSwap.id, (s) => {
+                const latestSwap = await modifySwap(storedSwap.id, (s) => {
                     s.commitmentSignatureSubmitted = true;
                 });
+                if (latestSwap !== null) {
+                    await patchEncryptedSwapMetadata(latestSwap, rescueFile());
+                }
                 log.info(
                     "Swap execution marked commitment signature submitted",
                     getSwapExecutionLogContext(storedSwap.id, {
