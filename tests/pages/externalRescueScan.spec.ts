@@ -8,6 +8,7 @@ import {
 import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
+    filterHydratedEvmSwaps,
     mapRestoredEvmClaimResult,
     mapRestoredEvmSwaps,
     mergeEvmRescueResults,
@@ -532,6 +533,144 @@ describe("external EVM rescue scan helpers", () => {
 
         expect(result?.asset).toBe("TBTC");
         expect(result?.amount).toBe(700_000_000_000_000n);
+    });
+
+    test("merges scan and restore-derived claims despite hash format differences", () => {
+        // Scan results carry 0x-prefixed identifiers while restore-derived
+        // results are unprefixed; both must collapse into one entry.
+        const restoreDerived = mapRestoredEvmClaimResult(
+            {
+                ...restoredSwap,
+                lockupTx: undefined,
+                commitmentLockupTxHash: undefined,
+            },
+            "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        );
+
+        if (restoreDerived === undefined) {
+            throw new Error("missing restored EVM claim result");
+        }
+
+        for (const [current, next] of [
+            [[baseEvent], [restoreDerived]],
+            [[restoreDerived], [baseEvent]],
+        ]) {
+            const merged = mergeEvmRescueResults(current, next);
+            expect(merged).toHaveLength(1);
+            expect(merged[0].preimage).toBeDefined();
+            expect(merged[0].restoredSwap?.id).toBe("swap-id");
+        }
+    });
+
+    test("enriches scanner claims with the restored claim transaction hash", () => {
+        const [enriched] = enrichEvmRescueResults(
+            [baseEvent],
+            [
+                {
+                    ...restoredSwap,
+                    lockupTx: undefined,
+                    commitmentLockupTxHash: undefined,
+                    evmClaimDetails: {
+                        ...restoredSwap.evmClaimDetails!,
+                        transaction: {
+                            id: baseEvent.transactionHash
+                                .toUpperCase()
+                                .replace(/^0X/, ""),
+                        },
+                    },
+                },
+            ],
+        );
+
+        expect(enriched.restoredSwap?.id).toBe("swap-id");
+        expect(enriched.dex?.hops[0].to).toBe("USDT0");
+    });
+
+    test("normalizes identifiers in restored claim results", () => {
+        const result = mapRestoredEvmClaimResult(
+            {
+                ...restoredSwap,
+                preimageHash: baseEvent.preimageHash.toUpperCase(),
+                evmClaimDetails: {
+                    ...restoredSwap.evmClaimDetails!,
+                    transaction: {
+                        id: baseEvent.transactionHash.replace(/^0x/, ""),
+                    },
+                },
+            },
+            "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+        );
+
+        expect(result?.transactionHash).toBe(baseEvent.transactionHash);
+        expect(result?.preimageHash).toBe(
+            baseEvent.preimageHash.replace(/^0x/, ""),
+        );
+        expect(result?.preimage).toBe("c".repeat(64));
+    });
+
+    test("does not map restored claims with missing or unknown details", () => {
+        const preimage =
+            "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+
+        expect(
+            mapRestoredEvmClaimResult(
+                { ...restoredSwap, evmClaimDetails: undefined },
+                preimage,
+            ),
+        ).toBeUndefined();
+        expect(
+            mapRestoredEvmClaimResult(
+                {
+                    ...restoredSwap,
+                    evmClaimDetails: {
+                        ...restoredSwap.evmClaimDetails!,
+                        transaction: undefined,
+                    },
+                },
+                preimage,
+            ),
+        ).toBeUndefined();
+        expect(
+            mapRestoredEvmClaimResult(
+                { ...restoredSwap, preimageHash: "0x" },
+                preimage,
+            ),
+        ).toBeUndefined();
+        expect(
+            mapRestoredEvmClaimResult(
+                {
+                    ...restoredSwap,
+                    dex: {
+                        ...restoredSwap.dex!,
+                        hops: [
+                            { type: SwapType.Dex, from: "DOGE", to: "USDT0" },
+                        ],
+                    },
+                },
+                preimage,
+            ),
+        ).toBeUndefined();
+    });
+
+    test("keeps swaps with only a claim transaction when filtering hydrated EVM swaps", () => {
+        const claimOnly = {
+            ...restoredSwap,
+            lockupTx: undefined,
+            commitmentLockupTxHash: undefined,
+        };
+
+        expect(filterHydratedEvmSwaps([claimOnly])).toEqual([claimOnly]);
+        expect(
+            filterHydratedEvmSwaps([
+                {
+                    ...claimOnly,
+                    evmClaimDetails: {
+                        ...restoredSwap.evmClaimDetails!,
+                        transaction: undefined,
+                    },
+                },
+            ]),
+        ).toEqual([]);
     });
 
     test("does not match restored metadata on empty identifiers", () => {

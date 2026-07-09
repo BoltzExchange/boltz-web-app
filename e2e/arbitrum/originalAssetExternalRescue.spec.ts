@@ -29,6 +29,7 @@ import {
     expect,
     fundErc20FromWhale,
     getRegtestTokenAddress,
+    getStoredSwap,
     getTokenBalance,
     lbtcSendAmount,
     mineArbitrumBlocks,
@@ -43,6 +44,9 @@ const originalAssetRescueTimeout = 240_000;
 const usdt0FundingAmount = parseUnits("500", 6);
 const refundWalletIndex = 8;
 const claimWalletIndex = 9;
+// Deliberately different from the wallet used for the rescue so the test
+// proves funds go to the original destination, not the connected signer.
+const claimDestinationIndex = 7;
 
 const getArbitrumWalletAddress = async (
     pageClient: PublicClient,
@@ -405,6 +409,10 @@ describeArbitrumE2e("Arbitrum original-asset external rescue e2e", () => {
             arbitrum.publicClient,
             claimWalletIndex,
         );
+        const destinationAddress = await getArbitrumWalletAddress(
+            arbitrum.publicClient,
+            claimDestinationIndex,
+        );
         const token = getRegtestTokenAddress("USDT0");
 
         await clearEoaDelegation(arbitrum.publicClient, walletAddress);
@@ -427,7 +435,12 @@ describeArbitrumE2e("Arbitrum original-asset external rescue e2e", () => {
         });
         await waitForStableChainPairHash("L-BTC", "TBTC");
 
-        const balanceBeforeClaim = await getTokenBalance(
+        const destinationBalanceBefore = await getTokenBalance(
+            arbitrum.publicClient,
+            token,
+            destinationAddress,
+        );
+        const walletBalanceBefore = await getTokenBalance(
             arbitrum.publicClient,
             token,
             walletAddress,
@@ -437,9 +450,14 @@ describeArbitrumE2e("Arbitrum original-asset external rescue e2e", () => {
             page,
             "L-BTC",
             "USDT0",
-            walletAddress,
+            destinationAddress,
             lbtcSendAmount,
-            { walletAddress, rescueFilePath },
+            { rescueFilePath },
+        );
+
+        const storedSwap = await getStoredSwap(page, swapId);
+        expect(storedSwap?.originalDestination?.toLowerCase()).toBe(
+            destinationAddress.toLowerCase(),
         );
 
         await page
@@ -482,13 +500,19 @@ describeArbitrumE2e("Arbitrum original-asset external rescue e2e", () => {
                     await getTokenBalance(
                         arbitrum.publicClient,
                         token,
-                        walletAddress,
+                        destinationAddress,
                     ),
                 {
                     timeout: actionTimeout,
-                    message: "external rescue claims the original USDT0 asset",
+                    message:
+                        "external rescue claims USDT0 to the original destination",
                 },
             )
-            .toBeGreaterThan(balanceBeforeClaim);
+            .toBeGreaterThan(destinationBalanceBefore);
+
+        // The connected rescue wallet must not receive the claimed funds.
+        expect(
+            await getTokenBalance(arbitrum.publicClient, token, walletAddress),
+        ).toBe(walletBalanceBefore);
     });
 });

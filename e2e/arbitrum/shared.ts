@@ -212,6 +212,7 @@ type StoredSwap = {
     bridge?: { txHash?: Hex };
     lockupTx?: Hex;
     commitmentLockupTxHash?: Hex;
+    originalDestination?: string;
 };
 
 export const getStoredSwap = async (

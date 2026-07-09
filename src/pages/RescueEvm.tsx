@@ -54,6 +54,7 @@ import { estimateFeesPerGas } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
 import { GasAbstractionType } from "../utils/swapCreator";
+import { normalizeEvmId } from "./external-rescue/scan";
 import type { EvmRescueResult } from "./external-rescue/types";
 
 type RescueData = EvmRescueResult & { currentHeight: bigint };
@@ -153,11 +154,12 @@ const ClaimState = (props: {
     const params = useParams();
 
     const preimage = () => {
-        const preimageHash =
+        const preimageHash = normalizeEvmId(
             props.claimData.restoredSwap?.preimageHash ??
-            props.claimData.preimageHash;
+                props.claimData.preimageHash,
+        );
         const swapFromContext = evmRescuableSwaps().find(
-            (s) => s.preimageHash === preimageHash,
+            (s) => normalizeEvmId(s.preimageHash) === preimageHash,
         );
         return swapFromContext?.preimage
             ? Buffer.from(swapFromContext.preimage, "hex")
