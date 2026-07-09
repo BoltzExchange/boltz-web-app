@@ -79,9 +79,7 @@ export type RouteBridgeLeg<A extends string = string> = {
 };
 
 export type RouteLeg<A extends string = string> =
-    | RouteChainSwapLeg<A>
-    | RouteDexLeg
-    | RouteBridgeLeg<A>;
+    RouteChainSwapLeg<A> | RouteDexLeg | RouteBridgeLeg<A>;
 
 export type RouteQuote<A extends string = string> = {
     from: A;

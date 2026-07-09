@@ -44,8 +44,7 @@ export type PendingEvmCctpBridgeSend = {
 };
 
 export type PendingEvmBridgeSend =
-    | PendingEvmOftBridgeSend
-    | PendingEvmCctpBridgeSend;
+    PendingEvmOftBridgeSend | PendingEvmCctpBridgeSend;
 
 export type PendingSolanaOftBridgeSend = {
     kind: PendingBridgeSendKind.SolanaOft;

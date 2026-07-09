@@ -1098,8 +1098,7 @@ describe("SwapExecutionWorker", () => {
         await waitFor(() => {
             const savedSwap = mockSetSwapStorage.mock.calls.at(-1)?.[0];
             const bridge = savedSwap?.bridge as
-                | Record<string, unknown>
-                | undefined;
+                Record<string, unknown> | undefined;
 
             expect(bridge?.txHash).toBeUndefined();
             expect(bridge?.details).toBeUndefined();

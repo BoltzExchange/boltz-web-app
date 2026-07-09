@@ -34,14 +34,7 @@ export type FetchOptions = {
 };
 
 export type AssetType =
-    | "LN"
-    | "BTC"
-    | "L-BTC"
-    | "RBTC"
-    | "TBTC"
-    | "WBTC"
-    | "USDT0"
-    | "USDC";
+    "LN" | "BTC" | "L-BTC" | "RBTC" | "TBTC" | "WBTC" | "USDT0" | "USDC";
 
 export type RefundableAssetType = "BTC" | "L-BTC" | "RBTC" | "TBTC";
 

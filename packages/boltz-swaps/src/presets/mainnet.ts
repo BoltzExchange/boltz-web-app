@@ -26,19 +26,10 @@ import {
 } from "../types.ts";
 
 export type CoreMainnetAsset =
-    | "BTC"
-    | "L-BTC"
-    | "ARK"
-    | "RBTC"
-    | "TBTC"
-    | "WBTC"
-    | "USDT0"
-    | "USDC";
+    "BTC" | "L-BTC" | "ARK" | "RBTC" | "TBTC" | "WBTC" | "USDT0" | "USDC";
 
 export type MainnetAsset =
-    | CoreMainnetAsset
-    | CctpVariantAsset
-    | Usdt0VariantAsset;
+    CoreMainnetAsset | CctpVariantAsset | Usdt0VariantAsset;
 
 export type MainnetConfigOverrides = {
     boltzApiUrl?: string;

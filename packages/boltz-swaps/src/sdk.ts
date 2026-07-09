@@ -111,8 +111,7 @@ import type { Asset } from "./types.ts";
 import type { UtxoAsset, UtxoNetwork } from "./utxo/index.ts";
 
 export type BoltzClientConfig<A extends string = string> =
-    | BoltzSwapsConfigInput<A>
-    | (() => BoltzSwapsConfigInput<A>);
+    BoltzSwapsConfigInput<A> | (() => BoltzSwapsConfigInput<A>);
 
 // Helper for declaring an asset registry with literal-typed keys preserved
 // for use with `createBoltzClient`. Combine with `AssetSymbolOf` to derive

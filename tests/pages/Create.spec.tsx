@@ -731,8 +731,7 @@ describe("Create", () => {
 
                 const currentPair = signals.pair();
                 let resolveFirstQuote:
-                    | ((amount: BigNumber) => void)
-                    | undefined;
+                    ((amount: BigNumber) => void) | undefined;
                 const firstQuote = new Promise<BigNumber>((resolve) => {
                     resolveFirstQuote = resolve;
                 });

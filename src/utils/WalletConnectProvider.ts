@@ -35,9 +35,7 @@ export type WalletConnectAccount = {
 };
 
 export type WalletConnectRuntimeProvider =
-    | RawEvmProvider
-    | SolanaWalletProvider
-    | TronConnector;
+    RawEvmProvider | SolanaWalletProvider | TronConnector;
 
 class WalletConnectProvider implements EIP1193Provider {
     private static openModal: Setter<boolean>;
