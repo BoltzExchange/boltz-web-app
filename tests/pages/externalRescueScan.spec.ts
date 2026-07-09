@@ -5,6 +5,10 @@ import {
     SwapType,
 } from "boltz-swaps/types";
 
+import {
+    getEvmRefundDisplayAmount,
+    getEvmRefundDisplayQuoteParams,
+} from "../../src/pages/RescueEvm";
 import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
@@ -357,6 +361,59 @@ describe("external EVM rescue scan helpers", () => {
         ).toEqual(["USDT0-SOL", "L-BTC"]);
     });
 
+    test("displays pre-bridge refund amounts in the original source asset", () => {
+        const refund = {
+            ...baseEvent,
+            action: RskRescueMode.Refund,
+            asset: "TBTC",
+            amount: 1_102_000_000_000n,
+            tokenAddress: "0x0000000000000000000000000000000000000004",
+            restoredSwap: {
+                ...restoredSwap,
+                from: "TBTC",
+                to: "L-BTC",
+                bridge: {
+                    sourceAsset: "USDT0-SOL",
+                    destinationAsset: "USDT0",
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Pre,
+                },
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: "USDT0",
+                            to: "TBTC",
+                            dexDetails: {
+                                chain: "ARB",
+                                tokenIn:
+                                    "0x0000000000000000000000000000000000000005",
+                                tokenOut:
+                                    "0x0000000000000000000000000000000000000004",
+                            },
+                        },
+                    ],
+                    position: SwapPosition.Pre,
+                    quoteAmount: 1_100_000,
+                },
+            },
+        } as EvmRescueResult;
+
+        expect(getEvmRefundDisplayAmount(refund, "TBTC")).toMatchObject({
+            asset: "USDT0-SOL",
+        });
+        expect(
+            getEvmRefundDisplayAmount(refund, "TBTC").amount.toString(),
+        ).toBe("1100000");
+        expect(getEvmRefundDisplayQuoteParams(refund, "TBTC")).toEqual({
+            amount: 1_102_000_000_000n,
+            asset: "USDT0-SOL",
+            chain: "ARB",
+            tokenIn: "0x0000000000000000000000000000000000000004",
+            tokenOut: "0x0000000000000000000000000000000000000005",
+        });
+    });
+
     test("does not attach QzNPe7rckJCp metadata to a zero-preimage refund row by amount", async () => {
         const mnemonic =
             "awake father sword slab matrix myth cargo lock river thumb inspire speed";
@@ -452,13 +509,25 @@ describe("external EVM rescue scan helpers", () => {
         ]);
 
         expect(isEvmRestoreCandidate(restoreRow)).toBe(true);
-        expect(
-            shouldShowEvmRestoreResult(
-                restoreRow,
-                evmPreimageHashes,
-                undefined,
-            ),
-        ).toBe(false);
+        expect(shouldShowEvmRestoreResult(restoreRow, evmPreimageHashes)).toBe(
+            false,
+        );
+    });
+
+    test("shows unmatched EVM restore rows while the chain scan is still running", () => {
+        const restoreRow = {
+            id: "restore-only",
+            type: SwapType.Chain,
+            status: "transaction.server.confirmed",
+            createdAt: 1782787562,
+            from: "TBTC",
+            to: "L-BTC",
+            preimageHash:
+                "c75a1b92ece410e13823372edceb1fc148c37d36586c2ccd8b2c78dac1556a8e",
+        };
+
+        expect(isEvmRestoreCandidate(restoreRow)).toBe(true);
+        expect(shouldShowEvmRestoreResult(restoreRow, new Set())).toBe(true);
     });
 
     test("falls back to the routed EVM asset pair for unmatched claim rows", () => {

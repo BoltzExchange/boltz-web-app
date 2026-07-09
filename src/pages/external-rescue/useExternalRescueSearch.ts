@@ -53,11 +53,8 @@ import {
     filterHydratedEvmSwaps,
     getEvmRescueAction,
     getEvmScanTargets,
-    getRestoredEvmClaimChainId,
-    getRestoredEvmClaimTransactionHash,
     getSwapDate,
     mapHydratedRestorableSwaps,
-    mapRestoredEvmClaimResult,
     mergeEvmRescueResults,
     mergeRestoredEvmSwaps,
     normalizeEvmId,
@@ -158,18 +155,13 @@ export const isEvmRestoreCandidate = (swap: RestoreSwapAssets) =>
 export const shouldShowEvmRestoreResult = (
     swap: RestoreSwapAssets,
     evmRescuePreimageHashes: Set<string>,
-    claimProgress: string | undefined,
 ) => {
     if (!isEvmRestoreCandidate(swap)) {
         return true;
     }
 
     const preimageHash = getRestorePreimageHash(swap);
-    if (evmRescuePreimageHashes.has(preimageHash)) {
-        return false;
-    }
-
-    return claimProgress === undefined;
+    return !evmRescuePreimageHashes.has(preimageHash);
 };
 
 export const useExternalRescueSearch = () => {
@@ -384,19 +376,7 @@ export const useExternalRescueSearch = () => {
             ),
     );
     const shouldShowRestoreResult = (swap: RestoreSwapAssets) =>
-        shouldShowEvmRestoreResult(
-            swap,
-            evmRescuePreimageHashes(),
-            state.evm.claimProgress,
-        );
-    const pendingRestoreCandidates = createMemo(
-        () =>
-            (btcRescueList() ?? []).filter(
-                (swap) =>
-                    isEvmRestoreCandidate(swap) &&
-                    !shouldShowRestoreResult(swap),
-            ).length,
-    );
+        shouldShowEvmRestoreResult(swap, evmRescuePreimageHashes());
 
     const unifiedResults = createMemo(() => {
         const btcResults: UnifiedRescueResult[] = (btcRescueList() ?? [])
@@ -443,10 +423,7 @@ export const useExternalRescueSearch = () => {
         ]);
     });
     const resultDisplaySlotCount = createMemo(
-        () =>
-            unifiedResults().length +
-            pendingRestoreCandidates() +
-            pendingEvmClaimCandidates(),
+        () => unifiedResults().length + pendingEvmClaimCandidates(),
     );
 
     const resetSearchResults = () => {
@@ -581,88 +558,6 @@ export const useExternalRescueSearch = () => {
         return { byAsset, unmatchedByAsset, update, updateUnmatched };
     };
 
-    const deriveRestoredEvmClaimResults = async (
-        swaps: RestoredEvmSwap[],
-        currentRescueFile: RescueFile,
-        signal: AbortSignal,
-    ): Promise<EvmRescueResult[]> => {
-        const byChainId = new Map<number, RestoredEvmSwap[]>();
-
-        for (const swap of swaps) {
-            const preimageHash = normalizeEvmId(swap.preimageHash);
-            const transactionHash = normalizeEvmId(
-                getRestoredEvmClaimTransactionHash(swap),
-            );
-            const chainId = getRestoredEvmClaimChainId(swap);
-
-            if (
-                preimageHash === "" ||
-                transactionHash === "" ||
-                chainId === undefined
-            ) {
-                continue;
-            }
-
-            byChainId.set(chainId, [...(byChainId.get(chainId) ?? []), swap]);
-        }
-
-        const results: EvmRescueResult[] = [];
-
-        await Promise.all(
-            [...byChainId.entries()].map(async ([chainId, chainSwaps]) => {
-                const worker = new PreimageHashesWorker();
-                const remaining = new Map<string, RestoredEvmSwap[]>();
-
-                for (const swap of chainSwaps) {
-                    const preimageHash = normalizeEvmId(swap.preimageHash);
-                    remaining.set(preimageHash, [
-                        ...(remaining.get(preimageHash) ?? []),
-                        swap,
-                    ]);
-                }
-
-                const collectMatches = () => {
-                    for (const [preimageHash, swaps] of remaining) {
-                        const entry = worker.map.get(preimageHash);
-                        if (entry === undefined) {
-                            continue;
-                        }
-
-                        for (const swap of swaps) {
-                            const result = mapRestoredEvmClaimResult(
-                                swap,
-                                entry.preimage,
-                            );
-                            if (result !== undefined) {
-                                results.push(result);
-                            }
-                        }
-
-                        remaining.delete(preimageHash);
-                    }
-                };
-
-                try {
-                    worker.start(currentRescueFile.mnemonic, chainId, signal);
-
-                    collectMatches();
-                    while (
-                        remaining.size > 0 &&
-                        !worker.isDone &&
-                        !signal.aborted
-                    ) {
-                        await worker.waitForNextBatch();
-                        collectMatches();
-                    }
-                } finally {
-                    worker.terminate();
-                }
-            }),
-        );
-
-        return signal.aborted ? [] : results;
-    };
-
     const runBtcRestore = async (
         currentRescueFile: RescueFile,
         signal: AbortSignal,
@@ -694,14 +589,6 @@ export const useExternalRescueSearch = () => {
             );
 
             appendRestoredEvmSwaps(restoredEvmSwaps);
-            appendEvmSwaps(
-                RskRescueMode.Claim,
-                await deriveRestoredEvmClaimResults(
-                    restoredEvmSwaps,
-                    currentRescueFile,
-                    signal,
-                ),
-            );
 
             setBtcState({
                 swaps: mapHydratedRestorableSwaps(hydratedRestorableSwaps),
@@ -1007,7 +894,6 @@ export const useExternalRescueSearch = () => {
             displaySlotCount: resultDisplaySlotCount,
             hasAny: hasAnyResults,
             open: openResult,
-            pendingRestoreCandidates,
             setCurrent: setCurrentResults,
             setCurrentPage: setCurrentResultPage,
         },

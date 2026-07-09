@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { quoteDexAmountIn } from "boltz-swaps/client";
 import {
     assetAmountToSats,
     createAssetProvider,
@@ -18,6 +19,7 @@ import {
     type Setter,
     Show,
     Switch,
+    createMemo,
     createResource,
     createSignal,
 } from "solid-js";
@@ -54,10 +56,106 @@ import { estimateFeesPerGas } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
 import { GasAbstractionType } from "../utils/swapCreator";
+import { getEvmDisplayAssets } from "./external-rescue/Results";
 import { normalizeEvmId } from "./external-rescue/scan";
 import type { EvmRescueResult } from "./external-rescue/types";
 
 type RescueData = EvmRescueResult & { currentHeight: bigint };
+type EvmRefundDisplayAmount = {
+    amount: BigNumber;
+    asset: string;
+};
+
+type EvmRefundDisplayQuoteParams = {
+    amount: bigint;
+    asset: string;
+    chain: string;
+    tokenIn: string;
+    tokenOut: string;
+};
+
+const getEvmRefundDexDetails = (refundData: EvmRescueResult) =>
+    refundData.dex ?? refundData.restoredSwap?.dex;
+
+const getEvmRefundBridgeDetails = (refundData: EvmRescueResult) =>
+    refundData.bridge ?? refundData.restoredSwap?.bridge;
+
+export const getEvmRefundDisplayAmount = (
+    refundData: EvmRescueResult,
+    asset: string,
+): EvmRefundDisplayAmount => {
+    const dex = getEvmRefundDexDetails(refundData);
+    const displayAsset =
+        getEvmDisplayAssets({
+            ...refundData,
+            action: RskRescueMode.Refund,
+            asset: asset as AssetType,
+        })[0] ?? asset;
+
+    if (dex?.position === SwapPosition.Pre) {
+        return {
+            amount: new BigNumber(dex.quoteAmount.toString()),
+            asset: displayAsset,
+        };
+    }
+
+    return {
+        amount: new BigNumber(
+            assetAmountToSats(refundData.amount, asset).toString(),
+        ),
+        asset,
+    };
+};
+
+export const getEvmRefundDisplayQuoteParams = (
+    refundData: EvmRescueResult,
+    asset: string,
+): EvmRefundDisplayQuoteParams | undefined => {
+    const dex = getEvmRefundDexDetails(refundData);
+    const hopDexDetails =
+        dex?.position === SwapPosition.Pre
+            ? dex.hops[0]?.dexDetails
+            : undefined;
+
+    if (hopDexDetails === undefined || refundData.tokenAddress === undefined) {
+        return undefined;
+    }
+
+    return {
+        amount: refundData.amount,
+        asset: getEvmRefundDisplayAmount(refundData, asset).asset,
+        chain: hopDexDetails.chain,
+        tokenIn: refundData.tokenAddress,
+        tokenOut: hopDexDetails.tokenIn,
+    };
+};
+
+const fetchEvmRefundDisplayQuote = async (
+    params: EvmRefundDisplayQuoteParams,
+): Promise<EvmRefundDisplayAmount | undefined> => {
+    try {
+        const [quote] = await quoteDexAmountIn(
+            params.chain,
+            params.tokenIn,
+            params.tokenOut,
+            params.amount,
+        );
+
+        if (quote === undefined) {
+            return undefined;
+        }
+
+        return {
+            amount: new BigNumber(quote.quote),
+            asset: params.asset,
+        };
+    } catch (error) {
+        log.warn("failed to fetch EVM refund display quote", {
+            error: formatError(error),
+        });
+        return undefined;
+    }
+};
 
 const RefundState = (props: {
     asset: string;
@@ -70,6 +168,20 @@ const RefundState = (props: {
     const { rescueFile } = useRescueContext();
 
     const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
+    const dexDetails = () => getEvmRefundDexDetails(props.refundData);
+    const bridgeDetails = () => getEvmRefundBridgeDetails(props.refundData);
+    const displayQuoteParams = createMemo(() =>
+        getEvmRefundDisplayQuoteParams(props.refundData, props.asset),
+    );
+    const [quotedDisplayAmount] = createResource(
+        displayQuoteParams,
+        fetchEvmRefundDisplayQuote,
+    );
+    const displayQuoteLoading = () =>
+        displayQuoteParams() !== undefined && quotedDisplayAmount.loading;
+    const displayAmount = () =>
+        quotedDisplayAmount() ??
+        getEvmRefundDisplayAmount(props.refundData, props.asset);
 
     const gasAbstraction = () => {
         if (isErc20() && rescueFile()) {
@@ -94,32 +206,33 @@ const RefundState = (props: {
 
     return (
         <>
-            <p>
-                {t("refund")}{" "}
-                {formatAmount(
-                    new BigNumber(
-                        assetAmountToSats(
-                            props.refundData.amount,
-                            props.asset,
-                        ).toString(),
-                    ),
-                    denomination(),
-                    separator(),
-                    props.asset,
-                )}{" "}
-                {formatDenomination(denomination(), props.asset)}
-            </p>
+            <div class="rescue-evm-refund-amount">
+                <span>{t("refund")}</span>
+                <Show
+                    when={!displayQuoteLoading()}
+                    fallback={
+                        <LoadingSpinner class="inner-spinner inline-spinner" />
+                    }>
+                    <span>
+                        {formatAmount(
+                            displayAmount().amount,
+                            denomination(),
+                            separator(),
+                            displayAmount().asset,
+                        )}{" "}
+                        {formatDenomination(
+                            denomination(),
+                            displayAmount().asset,
+                        )}
+                    </span>
+                </Show>
+            </div>
 
             <RefundButton
                 asset={props.asset}
                 swapId={props.refundData.restoredSwap?.id}
-                dexDetails={
-                    props.refundData.dex ?? props.refundData.restoredSwap?.dex
-                }
-                bridge={
-                    props.refundData.bridge ??
-                    props.refundData.restoredSwap?.bridge
-                }
+                dexDetails={dexDetails()}
+                bridge={bridgeDetails()}
                 setRefundTxId={
                     props.setRefundTxId as Setter<string | undefined>
                 }

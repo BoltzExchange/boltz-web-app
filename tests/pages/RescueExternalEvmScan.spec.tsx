@@ -235,6 +235,72 @@ describe("RescueExternal EVM scan", () => {
         expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(1);
     });
 
+    test("does not render restored EVM claims without a scanner-confirmed lockup", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "horse olympic laundry marriage material private arch civil theory crew alone thank";
+        const transactionHash =
+            "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+
+        mockGetRestorableSwaps.mockResolvedValueOnce([
+            {
+                id: "restored-claim-only",
+                type: SwapType.Chain,
+                status: "transaction.server.confirmed",
+                createdAt: 1,
+                from: "L-BTC",
+                to: TBTC,
+                preimageHash:
+                    "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                evmClaimDetails: {
+                    amount: 1_000,
+                    claimAddress: "0x0000000000000000000000000000000000000001",
+                    contractAddress:
+                        "0x0000000000000000000000000000000000000003",
+                    timeoutBlockHeight: 123,
+                    transaction: { id: transactionHash },
+                },
+            } as RestorableSwap,
+        ]);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        await waitFor(() =>
+            expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(2),
+        );
+        await waitFor(() => expect(mockScanLockupEvents).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(screen.queryByText(/Scan progress/)).toBeNull(),
+        );
+
+        expect(
+            screen.queryByTestId(
+                `swaplist-item-evm:${RskRescueMode.Claim}:${TBTC}:${transactionHash}`,
+            ),
+        ).toBeNull();
+        expect(screen.queryByText("block: 0")).toBeNull();
+    });
+
     test("renders restored EVM claim metadata as original swap assets", async () => {
         const user = userEvent.setup();
         const mnemonic =
