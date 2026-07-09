@@ -8,6 +8,7 @@ import {
 import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
+    mapRestoredEvmClaimResult,
     mapRestoredEvmSwaps,
     mergeEvmRescueResults,
 } from "../../src/pages/external-rescue/scan";
@@ -485,6 +486,52 @@ describe("external EVM rescue scan helpers", () => {
                 restoredSwap,
             }),
         ).toEqual(["L-BTC", "USDT0-SOL"]);
+    });
+
+    test("maps restored post-dex claims from restore transaction metadata only", () => {
+        const transactionHash =
+            "0x1111111111111111111111111111111111111111111111111111111111111111";
+        const result = mapRestoredEvmClaimResult(
+            {
+                ...restoredSwap,
+                lockupTx: undefined,
+                commitmentLockupTxHash: undefined,
+                bridge: undefined,
+                evmClaimDetails: {
+                    ...restoredSwap.evmClaimDetails!,
+                    amount: 70_000,
+                    transaction: { id: transactionHash },
+                },
+            },
+            "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        );
+
+        if (result === undefined) {
+            throw new Error("missing restored EVM claim result");
+        }
+
+        expect(result.action).toBe(RskRescueMode.Claim);
+        expect(result.asset).toBe("TBTC");
+        expect(result.transactionHash).toBe(transactionHash);
+        expect(result.bridge).toBeUndefined();
+        expect(result.dex?.position).toBe(SwapPosition.Post);
+        expect(getEvmDisplayAssets(result)).toEqual(["L-BTC", "USDT0"]);
+    });
+
+    test("maps restored EVM claim amount to token units", () => {
+        const result = mapRestoredEvmClaimResult(
+            {
+                ...restoredSwap,
+                evmClaimDetails: {
+                    ...restoredSwap.evmClaimDetails!,
+                    amount: 70_000,
+                },
+            },
+            "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        );
+
+        expect(result?.asset).toBe("TBTC");
+        expect(result?.amount).toBe(700_000_000_000_000n);
     });
 
     test("does not match restored metadata on empty identifiers", () => {
