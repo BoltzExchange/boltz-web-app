@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import {
     type SwapContract,
@@ -12,8 +14,18 @@ import { config } from "../../config";
 import { RBTC, TBTC, WBTC } from "../../consts/Assets";
 import { paginationLimit } from "../../consts/Pagination";
 import { formatError } from "../../utils/errors";
+import { fetcher } from "../../utils/helper";
 import { RescueAction } from "../../utils/rescue";
-import { type RescueFile, getXpub } from "../../utils/rescueFile";
+import {
+    evmAccountFromPrivateKey,
+    mnemonicToHDKey,
+} from "../../utils/rescueDerivation";
+import {
+    type RescueFile,
+    derivePreimageFromRescueKey,
+    getPathGasAbstraction,
+    getXpub,
+} from "../../utils/rescueFile";
 import type { SomeSwap } from "../../utils/swapCreator";
 import {
     type SwapMetadataLocalFields,
@@ -47,6 +59,31 @@ export const arbitrumRescueAssets = [TBTC, WBTC] as const;
 
 export const normalizeEvmId = (value: string | undefined): string =>
     value?.toLowerCase().replace(/^0x/, "") ?? "";
+
+const getRestorableSwapKey = (swap: RestorableSwap): string => swap.id;
+
+export const mergeRestorableSwaps = (
+    ...swapGroups: RestorableSwap[][]
+): RestorableSwap[] => {
+    const merged = new Map<string, RestorableSwap>();
+
+    for (const swaps of swapGroups) {
+        for (const swap of swaps) {
+            const existing = merged.get(getRestorableSwapKey(swap));
+            merged.set(getRestorableSwapKey(swap), {
+                ...existing,
+                ...swap,
+                metadata: swap.metadata ?? existing?.metadata,
+                claimDetails: swap.claimDetails ?? existing?.claimDetails,
+                refundDetails: swap.refundDetails ?? existing?.refundDetails,
+                evmClaimDetails:
+                    swap.evmClaimDetails ?? existing?.evmClaimDetails,
+            });
+        }
+    }
+
+    return [...merged.values()];
+};
 
 type RestoredEvmMatchReason =
     | "metadata-lockup-transaction"
@@ -121,7 +158,11 @@ const isRestorableEvmClaimDetails = (
         return false;
     }
 
-    return value.amount === undefined || typeof value.amount === "number";
+    if (value.amount !== undefined && typeof value.amount !== "number") {
+        return false;
+    }
+
+    return value.keyIndex === undefined || typeof value.keyIndex === "number";
 };
 
 export const getRestoredEvmClaimDetails = (
@@ -140,6 +181,24 @@ export const getRestoredEvmClaimDetails = (
 export const getRestoredEvmClaimTransactionHash = (
     swap: RestorableSwap,
 ): string | undefined => getRestoredEvmClaimDetails(swap)?.transaction?.id;
+
+const getRestorableDetailKeyIndex = (value: unknown): number | undefined => {
+    if (!isRecord(value)) {
+        return undefined;
+    }
+
+    return typeof value.keyIndex === "number" ? value.keyIndex : undefined;
+};
+
+export const getRestoredEvmClaimKeyIndex = (
+    swap: RestorableSwap,
+): number | undefined =>
+    getRestorableDetailKeyIndex(
+        (swap as { evmClaimDetails?: unknown }).evmClaimDetails,
+    ) ??
+    getRestorableDetailKeyIndex(
+        (swap as { claimDetails?: unknown }).claimDetails,
+    );
 
 export const getRestoredEvmClaimAsset = (swap: RestoredEvmSwap): string => {
     if (swap.dex?.position === SwapPosition.Post) {
@@ -189,6 +248,33 @@ export const mapRestoredEvmClaimResult = (
         dex: swap.dex,
         bridge: swap.bridge,
     };
+};
+
+export const mapRestoredEvmClaimResultFromRescueKey = (
+    swap: RestoredEvmSwap,
+    rescueFile: RescueFile,
+): EvmRescueResult | undefined => {
+    const keyIndex = getRestoredEvmClaimKeyIndex(swap);
+    const asset = getRestoredEvmClaimAsset(swap);
+    if (keyIndex === undefined) {
+        return undefined;
+    }
+
+    const preimage = derivePreimageFromRescueKey(
+        rescueFile,
+        keyIndex,
+        asset as AssetType,
+    );
+    const preimageHex = hex.encode(preimage);
+    const expectedHash = normalizeEvmId(swap.preimageHash);
+    if (
+        expectedHash !== "" &&
+        normalizeEvmId(hex.encode(sha256(preimage))) !== expectedHash
+    ) {
+        return undefined;
+    }
+
+    return mapRestoredEvmClaimResult(swap, preimageHex);
 };
 
 const getRestoredEvmMatchDetails = (
@@ -395,6 +481,92 @@ export const fetchPaginatedRestorableSwaps = async (
     }
 
     return restorableSwaps;
+};
+
+export const getEvmRestoreChainIds = (): number[] =>
+    Array.from(
+        new Set(
+            Object.values(config.assets ?? {})
+                .map((asset) => asset.network?.chainId)
+                .filter(
+                    (chainId): chainId is number => typeof chainId === "number",
+                ),
+        ),
+    );
+
+export const getEvmRestoreAccounts = (
+    rescueFile: RescueFile,
+    chainIds = getEvmRestoreChainIds(),
+) => {
+    const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
+    const seen = new Set<string>();
+
+    return chainIds.flatMap((chainId) => {
+        const account = evmAccountFromPrivateKey(
+            hdKey.derive(getPathGasAbstraction(chainId)).privateKey,
+        );
+        const key = account.address.toLowerCase();
+        if (seen.has(key)) {
+            return [];
+        }
+        seen.add(key);
+        return [{ chainId, account }];
+    });
+};
+
+export const getEvmRestoreMessage = (address: string, timestamp: number) =>
+    `Boltz swap restore\naddress: ${address}\ntimestamp: ${timestamp}`;
+
+export const getRestorableSwapsByEvmAddress = async (
+    account: ReturnType<typeof evmAccountFromPrivateKey>,
+    signal: AbortSignal,
+): Promise<RestorableSwap[]> => {
+    const timestamp = Math.floor(Date.now() / 1_000);
+    const address = getAddress(account.address);
+    const signature = await account.signMessage({
+        message: getEvmRestoreMessage(address, timestamp),
+    });
+
+    return await fetcher<RestorableSwap[]>(
+        "/v2/swap/restore",
+        {
+            address,
+            timestamp,
+            signature,
+        },
+        { signal },
+        30_000,
+    );
+};
+
+export const fetchEvmAddressRestorableSwaps = async (
+    rescueFile: RescueFile,
+    signal: AbortSignal,
+): Promise<RestorableSwap[]> => {
+    const results = await Promise.allSettled(
+        getEvmRestoreAccounts(rescueFile).map(async ({ account, chainId }) => ({
+            chainId,
+            address: account.address,
+            swaps: await getRestorableSwapsByEvmAddress(account, signal),
+        })),
+    );
+
+    const swaps: RestorableSwap[][] = [];
+    for (const result of results) {
+        if (result.status === "fulfilled") {
+            swaps.push(result.value.swaps);
+            continue;
+        }
+
+        if (!signal.aborted) {
+            log.warn(
+                "failed to restore swaps by EVM claim address:",
+                formatError(result.reason),
+            );
+        }
+    }
+
+    return mergeRestorableSwaps(...swaps);
 };
 
 type HydratedRestorableSwap = RestorableSwap & SwapMetadataLocalFields;

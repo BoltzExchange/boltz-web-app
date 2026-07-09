@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import {
     BridgeKind,
     RskRescueMode,
@@ -13,7 +15,9 @@ import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
     filterHydratedEvmSwaps,
+    getEvmRestoreMessage,
     mapRestoredEvmClaimResult,
+    mapRestoredEvmClaimResultFromRescueKey,
     mapRestoredEvmSwaps,
     mergeEvmRescueResults,
 } from "../../src/pages/external-rescue/scan";
@@ -25,6 +29,10 @@ import {
     isEvmRestoreCandidate,
     shouldShowEvmRestoreResult,
 } from "../../src/pages/external-rescue/useExternalRescueSearch";
+import {
+    type RescueFile,
+    derivePreimageFromRescueKey,
+} from "../../src/utils/rescueFile";
 import { encryptSwapMetadata } from "../../src/utils/swapMetadata";
 
 const baseEvent: EvmRescueResult = {
@@ -602,6 +610,40 @@ describe("external EVM rescue scan helpers", () => {
 
         expect(result?.asset).toBe("TBTC");
         expect(result?.amount).toBe(700_000_000_000_000n);
+    });
+
+    test("maps signed EVM address restore claims with the rescue key index", () => {
+        const rescueFile: RescueFile = {
+            mnemonic:
+                "awake father sword slab matrix myth cargo lock river thumb inspire speed",
+        };
+        const preimage = derivePreimageFromRescueKey(rescueFile, 0, "TBTC");
+        const preimageHash = hex.encode(sha256(preimage));
+        const result = mapRestoredEvmClaimResultFromRescueKey(
+            {
+                ...restoredSwap,
+                preimageHash,
+                evmClaimDetails: {
+                    ...restoredSwap.evmClaimDetails!,
+                    keyIndex: 0,
+                } as RestoredEvmSwap["evmClaimDetails"] & { keyIndex: number },
+            },
+            rescueFile,
+        );
+
+        expect(Buffer.from(preimage).toString("hex")).toBe(result?.preimage);
+        expect(result?.restoredSwap?.id).toBe("swap-id");
+    });
+
+    test("builds EVM address restore proof messages", () => {
+        expect(
+            getEvmRestoreMessage(
+                "0x0000000000000000000000000000000000000001",
+                1_234,
+            ),
+        ).toBe(
+            "Boltz swap restore\naddress: 0x0000000000000000000000000000000000000001\ntimestamp: 1234",
+        );
     });
 
     test("merges scan and restore-derived claims despite hash format differences", () => {

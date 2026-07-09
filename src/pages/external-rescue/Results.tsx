@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { getGasAbstractionSweepDisplayAmount } from "boltz-swaps/evm";
-import { RskRescueMode } from "boltz-swaps/types";
+import { RskRescueMode, SwapType } from "boltz-swaps/types";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Match, Show, Switch } from "solid-js";
 
@@ -12,6 +12,7 @@ import Pagination, {
 import { SwapIcons, SwapListAssetIcon } from "../../components/SwapIcons";
 import { getSwapListHeight } from "../../components/SwapList";
 import { hiddenInformation } from "../../components/settings/PrivacyMode";
+import { LN } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { formatAmount, formatDenomination } from "../../utils/denomination";
 import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
@@ -42,7 +43,10 @@ export const getEvmDisplayAssets = (swap: EvmRescueResult) => {
     const base = {
         bridge,
         dex: shouldUseDex ? dex : undefined,
-        assetSend: swap.restoredSwap?.from ?? swap.asset,
+        assetSend:
+            swap.restoredSwap?.type === SwapType.Reverse
+                ? LN
+                : (swap.restoredSwap?.from ?? swap.asset),
         assetReceive: swap.restoredSwap?.to ?? swap.asset,
     } as SwapBase;
     const assetSend = getFinalAssetSend(base, true);
