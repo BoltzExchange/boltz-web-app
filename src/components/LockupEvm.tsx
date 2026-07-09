@@ -1,5 +1,6 @@
 import type { RouterCall } from "boltz-swaps/bridge";
 import {
+    type Pairs,
     type QuoteData,
     encodeDexQuote,
     getCommitmentLockupDetails,
@@ -55,6 +56,7 @@ import { formatAssetAmountForLog } from "../utils/denomination";
 import { getNativeEvmLockupSpendableBalance } from "../utils/evmLockup";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
+import { hopShortfallIsRenegotiable } from "../utils/hopLockup";
 import { estimateFeesPerGas } from "../utils/provider";
 import type { RescueFile } from "../utils/rescueFile";
 import {
@@ -285,6 +287,8 @@ const lockupWithHops = async (
     getSwap: (id: string) => Promise<SomeSwap | null>,
     modifySwap: ReturnType<typeof useModifySwap>,
     rescueFile: RescueFile | null,
+    pairs: Accessor<Pairs | undefined>,
+    fetchPairs: () => Promise<void>,
     hopInputAmount?: bigint,
 ): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
@@ -321,6 +325,47 @@ const lockupWithHops = async (
             ),
             quoteData: quote.data,
         });
+
+        // The exact-input quote can fall below the swap's expected amount if the
+        // rate moved; block a non-renegotiable shortfall before signing rather
+        // than locking into an "insufficient amount" rejection.
+        if (hopInputAmount !== undefined) {
+            const quotedLockupAmount = BigInt(quote.quote);
+            if (
+                quotedLockupAmount <
+                calculateAmountOutMin(lockupAmount, slippage)
+            ) {
+                const swap = await getSwap(swapId);
+                if (
+                    swap === null ||
+                    !(await hopShortfallIsRenegotiable(
+                        swap,
+                        quotedLockupAmount,
+                        slippage,
+                        pairs,
+                        fetchPairs,
+                    ))
+                ) {
+                    throw new Error(
+                        "hop lockup quote is below the swap's required amount",
+                    );
+                }
+                log.warn(
+                    "Locking hop quote below required amount; lockup clears renegotiation minimum",
+                    {
+                        swapId,
+                        quotedLockupAmount: formatAssetAmountForLog(
+                            quotedLockupAmount,
+                            hop.to,
+                        ),
+                        requiredAmount: formatAssetAmountForLog(
+                            lockupAmount,
+                            hop.to,
+                        ),
+                    },
+                );
+            }
+        }
 
         const router = createRouterContract(hop.from, transactionSigner);
         const calldata = await encodeDexQuote(
@@ -482,7 +527,8 @@ const LockupTransaction = (props: {
     hops?: EncodedHop[];
     hopInputAmount?: bigint;
 }) => {
-    const { t, slippage, getSwap, rescueFile } = useGlobalContext();
+    const { t, slippage, getSwap, rescueFile, pairs, fetchPairs } =
+        useGlobalContext();
     const {
         getErc20Swap,
         getEtherSwap,
@@ -543,6 +589,8 @@ const LockupTransaction = (props: {
                             getSwap,
                             modifySwap,
                             rescueFile(),
+                            pairs,
+                            fetchPairs,
                             props.hopInputAmount,
                         );
                     } else if (

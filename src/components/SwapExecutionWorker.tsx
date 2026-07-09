@@ -14,7 +14,6 @@ import {
 import { encodeDexQuote, getCommitmentLockupDetails } from "boltz-swaps/client";
 import {
     type AlchemyCall,
-    assetAmountToSats,
     createAssetProvider,
     prefix0x,
     satsToAssetAmount,
@@ -70,6 +69,7 @@ import { useModifySwap } from "../hooks/useModifySwap";
 import { formatAssetAmountForLog } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
+import { hopShortfallIsRenegotiable } from "../utils/hopLockup";
 import { type ClaimQuote, fetchDexQuote } from "../utils/quoter";
 import {
     type BridgeDetail,
@@ -353,33 +353,6 @@ export const SwapExecutionWorker = () => {
         });
     };
 
-    // A pre-bridge quote below the slippage threshold can still be locked when
-    // the backend is able to renegotiate the shortfall. That is only possible
-    // for chain swaps whose lockup amount still clears the pair minimum;
-    // otherwise locking is pointless and the swap should block for a refund.
-    const shouldLockBelowThresholdQuote = async (
-        swap: SomeSwap,
-        quoteAmountOut: bigint,
-    ): Promise<boolean> => {
-        if (swap.type !== SwapType.Chain) {
-            return false;
-        }
-
-        const chainSwap = swap as ChainSwap;
-        const lockupAmount = calculateAmountOutMin(quoteAmountOut, slippage());
-        await fetchPairs();
-        const minimal =
-            pairs()?.[SwapType.Chain]?.[chainSwap.assetSend]?.[
-                chainSwap.assetReceive
-            ]?.limits.minimal;
-
-        return (
-            minimal === undefined ||
-            assetAmountToSats(lockupAmount, chainSwap.assetSend) >=
-                BigInt(minimal)
-        );
-    };
-
     const fetchPreBridgeDexQuote = async ({
         swap,
         swapId,
@@ -439,7 +412,13 @@ export const SwapExecutionWorker = () => {
             // threshold. If locking the shortfall is still viable, do it now
             // instead of burning the remaining attempts.
             if (
-                await shouldLockBelowThresholdQuote(swap, quote.trade.amountOut)
+                await hopShortfallIsRenegotiable(
+                    swap,
+                    quote.trade.amountOut,
+                    slippage(),
+                    pairs,
+                    fetchPairs,
+                )
             ) {
                 log.info(
                     "Swap execution locking pre-bridge quote below threshold; lockup clears renegotiation minimum",
