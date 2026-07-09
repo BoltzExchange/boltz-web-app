@@ -63,6 +63,7 @@ export type RestorableEvmClaimDetails = {
     claimAddress: string;
     transaction?: { id: string };
     amount?: number;
+    keyIndex?: number;
     timeoutBlockHeight: number;
 };
 

@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import { render, screen, waitFor } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
@@ -14,6 +16,7 @@ import { TBTC, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
 import type * as RescueUtils from "../../src/utils/rescue";
+import { derivePreimageFromRescueKey } from "../../src/utils/rescueFile";
 import { encryptSwapMetadata } from "../../src/utils/swapMetadata";
 import { TestComponent, contextWrapper } from "../helper";
 
@@ -23,12 +26,14 @@ const {
     mockGetTransaction,
     mockGetSweepableGasAbstractionBalances,
     mockPreimageHashesWorker,
+    mockRestoreByAddressFetch,
     mockScanLockupEvents,
 } = vi.hoisted(() => ({
     mockCreateRescueList: vi.fn(),
     mockGetErc20Swap: vi.fn(() => ({})),
     mockGetTransaction: vi.fn(() => Promise.resolve({ input: "0x" })),
     mockGetSweepableGasAbstractionBalances: vi.fn(),
+    mockRestoreByAddressFetch: vi.fn(),
     mockPreimageHashesWorker: vi.fn(function PreimageHashesWorker() {
         return {
             isDone: true,
@@ -75,6 +80,8 @@ vi.mock("boltz-swaps/evm", () => ({
     getTimelockBlockNumber: vi.fn(() => Promise.resolve(0)),
     isEmptyPreimageHash: (preimageHash: string | undefined) =>
         preimageHash?.replace(/^0x/i, "").toLowerCase() === "00".repeat(32),
+    satsToAssetAmount: (amount: number | bigint, asset?: string) =>
+        asset === "TBTC" ? BigInt(amount) * 10n ** 10n : BigInt(amount),
     scanLockupEvents: mockScanLockupEvents,
 }));
 
@@ -137,6 +144,13 @@ describe("RescueExternal EVM scan", () => {
         vi.stubEnv("VITE_RSK_LOG_SCAN_ENDPOINT", "http://localhost:8545");
         vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "");
         mockGetRestorableSwaps.mockResolvedValue([]);
+        mockRestoreByAddressFetch.mockResolvedValue(
+            new Response(JSON.stringify([]), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        vi.stubGlobal("fetch", mockRestoreByAddressFetch);
         mockCreateRescueList.mockImplementation(
             (swaps: Record<string, unknown>[]) =>
                 Promise.resolve(
@@ -149,6 +163,7 @@ describe("RescueExternal EVM scan", () => {
 
     afterEach(() => {
         vi.unstubAllEnvs();
+        vi.unstubAllGlobals();
     });
 
     test("passes a preimage derivation worker to claim scans", async () => {
@@ -233,6 +248,102 @@ describe("RescueExternal EVM scan", () => {
             );
         });
         expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(1);
+    });
+
+    test("renders signed EVM address restore results as claim rows", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const transactionHash =
+            "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const preimage = derivePreimageFromRescueKey({ mnemonic }, 0, TBTC);
+        const restoredSwap: RestorableSwap = {
+            id: "evm-address-restored",
+            type: SwapType.Reverse,
+            status: "transaction.confirmed",
+            createdAt: 1,
+            from: "BTC",
+            to: TBTC,
+            preimageHash: hex.encode(sha256(preimage)),
+            evmClaimDetails: {
+                amount: 1_000,
+                claimAddress: "0x0000000000000000000000000000000000000001",
+                contractAddress: "0x0000000000000000000000000000000000000003",
+                keyIndex: 0,
+                timeoutBlockHeight: 123,
+                transaction: { id: transactionHash },
+            } as RestorableSwap["evmClaimDetails"],
+            metadata: await encryptSwapMetadata(mnemonic, {
+                swapId: "evm-address-restored",
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: TBTC,
+                            to: "USDT0",
+                            dexDetails: {
+                                chain: "ARB",
+                                tokenIn:
+                                    "0x0000000000000000000000000000000000000004",
+                                tokenOut:
+                                    "0x0000000000000000000000000000000000000005",
+                            },
+                        },
+                    ],
+                    position: SwapPosition.Post,
+                    quoteAmount: 1_000,
+                },
+                bridge: {
+                    sourceAsset: "USDT0",
+                    destinationAsset: "USDT0-SOL",
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Post,
+                },
+            }),
+        };
+        mockRestoreByAddressFetch.mockResolvedValue(
+            new Response(JSON.stringify([restoredSwap]), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        const row = await screen.findByTestId(
+            `swaplist-item-evm:${RskRescueMode.Claim}:${TBTC}:${transactionHash}`,
+        );
+        const assets = row.querySelectorAll(".asset");
+
+        expect(row).not.toHaveClass("disabled");
+        expect(row).toHaveTextContent(i18n.en.claim);
+        expect(
+            screen.queryByTestId("swaplist-item-evm-address-restored"),
+        ).toBeNull();
+        expect(assets).toHaveLength(2);
+        expect(assets[0]).toHaveAttribute("data-asset", "LN");
+        expect(assets[1]).toHaveAttribute("data-asset", "USDT");
+        expect(assets[1]).toHaveAttribute("data-network", "solana");
     });
 
     test("does not render restored EVM claims without a scanner-confirmed lockup", async () => {

@@ -49,13 +49,16 @@ import { PreimageHashesWorker } from "../../workers/preimageHashes/PreimageHashe
 import {
     arbitrumRescueAssets,
     enrichEvmRescueResults,
+    fetchEvmAddressRestorableSwaps,
     fetchPaginatedRestorableSwaps,
     filterHydratedEvmSwaps,
     getEvmRescueAction,
     getEvmScanTargets,
     getSwapDate,
     mapHydratedRestorableSwaps,
+    mapRestoredEvmClaimResultFromRescueKey,
     mergeEvmRescueResults,
+    mergeRestorableSwaps,
     mergeRestoredEvmSwaps,
     normalizeEvmId,
     sortUnifiedResults,
@@ -568,18 +571,31 @@ export const useExternalRescueSearch = () => {
         });
 
         try {
-            const restorableSwaps = await fetchPaginatedRestorableSwaps(
-                currentRescueFile,
-                (loadedSwaps) => setBtcState({ loadedSwaps }),
-                signal,
-            );
+            const [xpubRestorableSwaps, evmAddressRestorableSwaps] =
+                await Promise.all([
+                    fetchPaginatedRestorableSwaps(
+                        currentRescueFile,
+                        (loadedSwaps) => setBtcState({ loadedSwaps }),
+                        signal,
+                    ),
+                    fetchEvmAddressRestorableSwaps(currentRescueFile, signal),
+                ]);
             if (signal.aborted) {
                 return;
             }
 
+            const restorableSwaps = mergeRestorableSwaps(
+                xpubRestorableSwaps,
+                evmAddressRestorableSwaps,
+            );
             const hydratedRestorableSwaps =
                 await hydrateRestorableSwapsMetadata(
                     restorableSwaps,
+                    currentRescueFile.mnemonic,
+                );
+            const hydratedEvmAddressRestorableSwaps =
+                await hydrateRestorableSwapsMetadata(
+                    evmAddressRestorableSwaps,
                     currentRescueFile.mnemonic,
                 );
             setRescuableSwaps(hydratedRestorableSwaps);
@@ -587,8 +603,19 @@ export const useExternalRescueSearch = () => {
             const restoredEvmSwaps = filterHydratedEvmSwaps(
                 hydratedRestorableSwaps,
             );
+            const restoredEvmAddressClaimSwaps = filterHydratedEvmSwaps(
+                hydratedEvmAddressRestorableSwaps,
+            )
+                .map((swap) =>
+                    mapRestoredEvmClaimResultFromRescueKey(
+                        swap,
+                        currentRescueFile,
+                    ),
+                )
+                .filter((swap): swap is EvmRescueResult => swap !== undefined);
 
             appendRestoredEvmSwaps(restoredEvmSwaps);
+            appendEvmSwaps(RskRescueMode.Claim, restoredEvmAddressClaimSwaps);
 
             setBtcState({
                 swaps: mapHydratedRestorableSwaps(hydratedRestorableSwaps),
