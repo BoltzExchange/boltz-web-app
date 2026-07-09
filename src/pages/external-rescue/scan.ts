@@ -43,8 +43,7 @@ export const normalizeEvmId = (value: string | undefined): string =>
     value?.toLowerCase().replace(/^0x/, "") ?? "";
 
 type RestoredEvmMatchReason =
-    | "metadata-lockup-transaction"
-    | "metadata-commitment-transaction";
+    "metadata-lockup-transaction" | "metadata-commitment-transaction";
 
 type RestoredEvmMatch = {
     restoredSwap: RestoredEvmSwap;

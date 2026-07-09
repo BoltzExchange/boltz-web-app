@@ -235,7 +235,7 @@ describe("external EVM rescue scan helpers", () => {
     });
 
     test("falls back to the original source asset for unmatched pre-bridge refund rows", () => {
-        const refund = {
+        const refund: EvmRescueResult = {
             ...baseEvent,
             action: RskRescueMode.Refund,
             bridge: {
@@ -255,7 +255,7 @@ describe("external EVM rescue scan helpers", () => {
     });
 
     test("does not infer source asset from unmatched pre-dex refund rows", () => {
-        const refund = {
+        const refund: EvmRescueResult = {
             ...baseEvent,
             action: RskRescueMode.Refund,
             dex: {
