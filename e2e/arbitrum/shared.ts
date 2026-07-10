@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Locator, Page, Response } from "@playwright/test";
 import { oftAbi } from "boltz-swaps/oft";
 import {
     type Address,
@@ -691,6 +691,223 @@ export const expectOftSendTx = async (
     expect(isAddressEqual(sent.args.fromAddress, walletAddress)).toBe(true);
     expect(sent.args.amountSentLD).toBeGreaterThan(0n);
     expect(sent.args.amountReceivedLD).toBeGreaterThan(0n);
+};
+
+export const getArbitrumWalletAddress = async (
+    pageClient: PublicClient,
+    index: number,
+): Promise<Address> => {
+    const accounts = (await pageClient.request({
+        method: "eth_accounts",
+        params: [],
+    } as never)) as Address[];
+    const walletAddress = accounts[index];
+    if (walletAddress === undefined) {
+        throw new Error(`Arbitrum account #${index} is not available in Anvil`);
+    }
+
+    return getAddress(walletAddress);
+};
+
+export const clearBrowserStorage = async (page: Page) => {
+    await page.evaluate(async () => {
+        window.localStorage.clear();
+
+        await Promise.all(
+            ["swaps", "lastUsedEvmIndex"].map(
+                (name) =>
+                    new Promise<void>((resolve, reject) => {
+                        const request = indexedDB.deleteDatabase(name);
+                        request.onsuccess = () => resolve();
+                        request.onerror = () => reject(request.error);
+                        request.onblocked = () =>
+                            reject(new Error(`deleting ${name} was blocked`));
+                    }),
+            ),
+        );
+    });
+};
+
+const isMetadataPatchResponse = (response: Response, swapId: string) => {
+    const request = response.request();
+    if (request.method() !== "PATCH") {
+        return false;
+    }
+
+    return new URL(response.url()).pathname === `/v2/swap/${swapId}/metadata`;
+};
+
+export const waitForMetadataPatch = async (page: Page, swapId: string) => {
+    const response = await page.waitForResponse(
+        (res) => isMetadataPatchResponse(res, swapId),
+        { timeout: actionTimeout },
+    );
+
+    expect(response.ok()).toBe(true);
+    const body = response.request().postDataJSON() as { metadata?: unknown };
+    expect(typeof body.metadata).toBe("string");
+    expect(body.metadata).toMatch(/^[0-9a-f]+$/);
+
+    return response;
+};
+
+const hasRestoredMetadataForSwap = (body: unknown, swapId: string) =>
+    Array.isArray(body) &&
+    body.some((value) => {
+        if (typeof value !== "object" || value === null) {
+            return false;
+        }
+
+        const swap = value as { id?: unknown; metadata?: unknown };
+        return (
+            swap.id === swapId &&
+            typeof swap.metadata === "string" &&
+            /^[0-9a-f]+$/.test(swap.metadata)
+        );
+    });
+
+export const waitForMetadataRestore = async (page: Page, swapId: string) => {
+    await page.waitForResponse(
+        async (response) => {
+            const request = response.request();
+            if (
+                request.method() !== "POST" ||
+                new URL(response.url()).pathname !== "/v2/swap/restore" ||
+                !response.ok()
+            ) {
+                return false;
+            }
+
+            return hasRestoredMetadataForSwap(
+                await response.json().catch(() => undefined),
+                swapId,
+            );
+        },
+        { timeout: actionTimeout },
+    );
+};
+
+const fetchPairHash = async (
+    endpoint: "chain" | "reverse",
+    from: string,
+    to: string,
+) => {
+    const response = await fetch(
+        `${config.apiUrl.normal}/v2/swap/${endpoint}`,
+        {
+            signal: AbortSignal.timeout(10_000),
+        },
+    );
+    if (!response.ok) {
+        return undefined;
+    }
+
+    const pairs = (await response.json()) as Record<
+        string,
+        Record<string, { hash?: unknown }>
+    >;
+    const hash = pairs[from]?.[to]?.hash;
+    return typeof hash === "string" ? hash : undefined;
+};
+
+export const waitForStablePairHash = async (
+    endpoint: "chain" | "reverse",
+    from: string,
+    to: string,
+) => {
+    let previous: string | undefined;
+    let stableReads = 0;
+
+    await expect
+        .poll(
+            async () => {
+                const hash = await fetchPairHash(endpoint, from, to).catch(
+                    () => undefined,
+                );
+                if (hash === undefined) {
+                    previous = undefined;
+                    stableReads = 0;
+                    return "";
+                }
+
+                if (hash === previous) {
+                    stableReads += 1;
+                } else {
+                    previous = hash;
+                    stableReads = 0;
+                }
+
+                return stableReads >= 2 ? hash : "";
+            },
+            {
+                timeout: actionTimeout,
+                intervals: [1_000, 2_000, 2_000],
+                message: `${from} -> ${to} ${endpoint} pair hash is stable`,
+            },
+        )
+        .toMatch(/^[0-9a-f]{64}$/);
+};
+
+export const expectAssetPair = async (
+    item: Locator,
+    from: string,
+    to: string,
+) => {
+    await expect(item.locator(`.asset[data-asset='${from}']`)).toBeVisible();
+    await expect(item.locator(`.asset[data-asset='${to}']`)).toBeVisible();
+};
+
+export const startExternalRescue = async (page: Page) => {
+    await page.goto("/rescue");
+    await page
+        .getByRole("button", { name: dict.en.rescue_external_swap })
+        .click();
+};
+
+export const scanAndSelectExternalResult = async ({
+    page,
+    swapId,
+    walletAddress,
+    rescueFilePath,
+    action,
+    assets,
+}: {
+    page: Page;
+    swapId: string;
+    walletAddress: Address;
+    rescueFilePath: string;
+    action: string;
+    assets: [string, string];
+}) => {
+    const resultItems = page.locator(".rescue-external-results .swaplist-item");
+    const actionItem = resultItems
+        .filter({
+            has: page.getByRole("link", {
+                name: action,
+                exact: true,
+            }),
+        })
+        .first();
+
+    await expect(async () => {
+        await startExternalRescue(page);
+        await page.getByTestId("refundUpload").setInputFiles(rescueFilePath);
+        await connectWallet(page, walletAddress);
+        const metadataRestore = waitForMetadataRestore(page, swapId);
+        await page
+            .getByRole("button", { name: dict.en.rescue, exact: true })
+            .click();
+        await metadataRestore;
+
+        await expect(actionItem).toBeVisible({ timeout: actionTimeout });
+        await expect(resultItems).toHaveCount(1);
+        await expectAssetPair(actionItem, ...assets);
+    }).toPass({
+        timeout: actionTimeout * 2,
+        intervals: [2_000, 5_000, 10_000],
+    });
+
+    await actionItem.click();
 };
 
 export type { Address, Hex, PublicClient, WalletClient };

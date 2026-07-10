@@ -593,19 +593,16 @@ export const useExternalRescueSearch = () => {
                     restorableSwaps,
                     currentRescueFile.mnemonic,
                 );
-            const hydratedEvmAddressRestorableSwaps =
-                await hydrateRestorableSwapsMetadata(
-                    evmAddressRestorableSwaps,
-                    currentRescueFile.mnemonic,
-                );
             setRescuableSwaps(hydratedRestorableSwaps);
 
             const restoredEvmSwaps = filterHydratedEvmSwaps(
                 hydratedRestorableSwaps,
             );
-            const restoredEvmAddressClaimSwaps = filterHydratedEvmSwaps(
-                hydratedEvmAddressRestorableSwaps,
-            )
+            const evmAddressSwapIds = new Set(
+                evmAddressRestorableSwaps.map((swap) => swap.id),
+            );
+            const restoredEvmAddressClaimSwaps = restoredEvmSwaps
+                .filter((swap) => evmAddressSwapIds.has(swap.id))
                 .map((swap) =>
                     mapRestoredEvmClaimResultFromRescueKey(
                         swap,

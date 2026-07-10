@@ -116,6 +116,8 @@ export const mergeEvmRescueResults = (
     for (const swap of next) {
         const key = getEvmResultKey(swap);
         const existing = merged.get(key);
+        // Restore-derived results carry placeholder blockNumber/amount/
+        // refundAddress; scan values must win regardless of arrival order.
         merged.set(key, {
             ...existing,
             ...swap,
@@ -123,6 +125,13 @@ export const mergeEvmRescueResults = (
             dex: swap.dex ?? existing?.dex,
             bridge: swap.bridge ?? existing?.bridge,
             preimage: swap.preimage ?? existing?.preimage,
+            blockNumber:
+                swap.blockNumber || (existing?.blockNumber ?? swap.blockNumber),
+            amount: swap.amount || (existing?.amount ?? swap.amount),
+            refundAddress:
+                swap.refundAddress === zeroAddress
+                    ? (existing?.refundAddress ?? swap.refundAddress)
+                    : swap.refundAddress,
         });
     }
 
@@ -268,7 +277,7 @@ export const mapRestoredEvmClaimResultFromRescueKey = (
     const preimageHex = hex.encode(preimage);
     const expectedHash = normalizeEvmId(swap.preimageHash);
     if (
-        expectedHash !== "" &&
+        expectedHash === "" ||
         normalizeEvmId(hex.encode(sha256(preimage))) !== expectedHash
     ) {
         return undefined;

@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
+import { SwapType } from "boltz-swaps/types";
 
-import { btcToSat } from "../src/utils/denomination";
+import { calculateSendAmount } from "../src/utils/calculate";
+import { btcToSat, satToBtc } from "../src/utils/denomination";
 import {
     addReferral,
     bitcoinSendToAddress,
@@ -11,6 +13,7 @@ import {
     generateInvoiceWithRoutingHint,
     getLiquidAddress,
     getReferrals,
+    getSubmarinePairFees,
     lookupInvoiceLnd,
     setReferral,
     verifyRescueFile,
@@ -24,6 +27,11 @@ test.describe("Submarine swap", () => {
     });
 
     test("Submarine swap BTC/BTC", async ({ page }) => {
+        // The miner fee component of the quote depends on the backend's
+        // current fee estimate, so the expectation must be derived from the
+        // live pair data rather than hardcoded.
+        const fees = await getSubmarinePairFees("BTC", "BTC");
+
         await page.goto("/");
 
         const divFlipAssets = page.locator("#flip-assets");
@@ -35,10 +43,18 @@ test.describe("Submarine swap", () => {
         );
         await inputReceiveAmount.fill(receiveAmount);
 
+        const expectedSendAmount = satToBtc(
+            calculateSendAmount(
+                btcToSat(BigNumber(receiveAmount)),
+                fees.percentage,
+                fees.minerFees,
+                SwapType.Submarine,
+            ),
+        ).toString();
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
         const sendAmount = await expectApproxAmount(
             inputSendAmount,
-            "0.01001031",
+            expectedSendAmount,
         );
 
         const invoiceInput = page.locator("input[data-testid='invoice']");
