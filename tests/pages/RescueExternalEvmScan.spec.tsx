@@ -23,14 +23,17 @@ import { TestComponent, contextWrapper } from "../helper";
 const {
     mockCreateRescueList,
     mockGetErc20Swap,
+    mockGetLogsFromReceipt,
     mockGetTransaction,
     mockGetSweepableGasAbstractionBalances,
     mockPreimageHashesWorker,
     mockRestoreByAddressFetch,
     mockScanLockupEvents,
+    mockSigner,
 } = vi.hoisted(() => ({
     mockCreateRescueList: vi.fn(),
     mockGetErc20Swap: vi.fn(() => ({})),
+    mockGetLogsFromReceipt: vi.fn(),
     mockGetTransaction: vi.fn(() => Promise.resolve({ input: "0x" })),
     mockGetSweepableGasAbstractionBalances: vi.fn(),
     mockRestoreByAddressFetch: vi.fn(),
@@ -66,6 +69,11 @@ const {
             unmatchedSwaps: 0,
         };
     }),
+    mockSigner: {
+        current: {
+            address: "0x0000000000000000000000000000000000000001",
+        } as { address: string } | undefined,
+    },
 }));
 
 vi.mock("boltz-swaps/client", () => ({
@@ -77,6 +85,7 @@ vi.mock("boltz-swaps/evm", () => ({
         asset === "TBTC" ? amount / 10n ** 10n : amount,
     createAssetProvider: vi.fn(() => ({})),
     createProvider: vi.fn(() => ({ getTransaction: mockGetTransaction })),
+    getLogsFromReceipt: mockGetLogsFromReceipt,
     getTimelockBlockNumber: vi.fn(() => Promise.resolve(0)),
     isEmptyPreimageHash: (preimageHash: string | undefined) =>
         preimageHash?.replace(/^0x/i, "").toLowerCase() === "00".repeat(32),
@@ -112,9 +121,7 @@ vi.mock("../../src/context/Web3", () => ({
         providers: () => ({}),
         setOpenWalletConnectModal: vi.fn(),
         setWalletConnected: vi.fn(),
-        signer: () => ({
-            address: "0x0000000000000000000000000000000000000001",
-        }),
+        signer: () => mockSigner.current,
         switchNetwork: vi.fn(),
         walletConnected: () => true,
     }),
@@ -159,6 +166,9 @@ describe("RescueExternal EVM scan", () => {
         );
         mockGetTransaction.mockResolvedValue({ input: "0x" });
         mockGetSweepableGasAbstractionBalances.mockResolvedValue([]);
+        mockSigner.current = {
+            address: "0x0000000000000000000000000000000000000001",
+        };
     });
 
     afterEach(() => {
@@ -248,6 +258,197 @@ describe("RescueExternal EVM scan", () => {
             );
         });
         expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(1);
+    });
+
+    test("restores DEX refunds with only the rescue key", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const transactionHash =
+            "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+        const { getEvmRestoreAccounts } =
+            await import("../../src/pages/external-rescue/scan");
+        const refundAddress = getEvmRestoreAccounts({ mnemonic })[0].account
+            .address;
+        const restoredSwap: RestorableSwap = {
+            id: "restored-refund",
+            type: SwapType.Chain,
+            status: "transaction.server.confirmed",
+            createdAt: 1,
+            from: TBTC,
+            to: "L-BTC",
+            preimageHash:
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            metadata: await encryptSwapMetadata(mnemonic, {
+                swapId: "restored-refund",
+                lockupTx: transactionHash,
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: "USDT0",
+                            to: TBTC,
+                        },
+                    ],
+                    position: SwapPosition.Pre,
+                    quoteAmount: 1_000,
+                },
+            }),
+        };
+        mockSigner.current = undefined;
+        mockRestoreByAddressFetch.mockResolvedValue(
+            new Response(JSON.stringify([restoredSwap]), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        mockGetLogsFromReceipt.mockResolvedValue({
+            asset: TBTC,
+            blockNumber: 100,
+            transactionHash,
+            preimageHash: restoredSwap.preimageHash,
+            amount: 1_000_000_000_000n,
+            claimAddress: "0x0000000000000000000000000000000000000002",
+            refundAddress,
+            timelock: 0n,
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        const row = await screen.findByTestId(
+            `swaplist-item-evm:${RskRescueMode.Refund}:${TBTC}:${transactionHash}`,
+        );
+        expect(row).toHaveTextContent(i18n.en.refund);
+        expect(row).not.toHaveClass("disabled");
+        await waitFor(() => {
+            expect(mockScanLockupEvents).toHaveBeenCalledWith(
+                expect.any(AbortSignal),
+                expect.anything(),
+                expect.objectContaining({
+                    action: RskRescueMode.Refund,
+                    filter: expect.objectContaining({
+                        address: refundAddress,
+                    }),
+                }),
+                undefined,
+            );
+            expect(mockScanLockupEvents).toHaveBeenCalledWith(
+                expect.any(AbortSignal),
+                expect.anything(),
+                expect.objectContaining({
+                    action: RskRescueMode.Claim,
+                    filter: expect.objectContaining({
+                        address: refundAddress,
+                    }),
+                }),
+                expect.any(Object),
+            );
+        });
+        const scannedAssets = (
+            mockScanLockupEvents.mock.calls as unknown[][]
+        ).map((call) => (call[2] as { asset: string }).asset);
+        expect(scannedAssets).not.toContain("RBTC");
+    });
+
+    test("rejects restored refunds whose refund address is not a rescue key", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const transactionHash =
+            "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+        const restoredSwap: RestorableSwap = {
+            id: "restored-refund",
+            type: SwapType.Chain,
+            status: "transaction.server.confirmed",
+            createdAt: 1,
+            from: TBTC,
+            to: "L-BTC",
+            preimageHash:
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            metadata: await encryptSwapMetadata(mnemonic, {
+                swapId: "restored-refund",
+                lockupTx: transactionHash,
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: "USDT0",
+                            to: TBTC,
+                        },
+                    ],
+                    position: SwapPosition.Pre,
+                    quoteAmount: 1_000,
+                },
+            }),
+        };
+        mockSigner.current = undefined;
+        mockRestoreByAddressFetch.mockResolvedValue(
+            new Response(JSON.stringify([restoredSwap]), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        mockGetLogsFromReceipt.mockResolvedValue({
+            asset: TBTC,
+            blockNumber: 100,
+            transactionHash,
+            preimageHash: restoredSwap.preimageHash,
+            amount: 1_000_000_000_000n,
+            claimAddress: "0x0000000000000000000000000000000000000002",
+            refundAddress: "0x00000000000000000000000000000000000000ff",
+            timelock: 0n,
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        await waitFor(() => {
+            expect(mockGetLogsFromReceipt).toHaveBeenCalled();
+        });
+        await expect(
+            screen.findByTestId(
+                `swaplist-item-evm:${RskRescueMode.Refund}:${TBTC}:${transactionHash}`,
+                {},
+                { timeout: 1_500 },
+            ),
+        ).rejects.toThrow();
     });
 
     test("renders signed EVM address restore results as claim rows", async () => {

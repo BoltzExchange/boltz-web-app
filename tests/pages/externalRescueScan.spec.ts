@@ -9,6 +9,7 @@ import {
 } from "boltz-swaps/types";
 import { type Hex, getAddress, recoverMessageAddress } from "viem";
 
+import { config } from "../../src/config";
 import {
     getEvmRefundDisplayAmount,
     getEvmRefundDisplayQuoteParams,
@@ -18,6 +19,7 @@ import {
     enrichEvmRescueResults,
     filterHydratedEvmSwaps,
     getEvmRestoreAccounts,
+    getEvmRestoreChainIds,
     getEvmRestoreMessage,
     getRestorableSwapsByEvmAddress,
     mapRestoredEvmClaimResult,
@@ -83,6 +85,12 @@ const restoredSwap: RestoredEvmSwap = {
 };
 
 describe("external EVM rescue scan helpers", () => {
+    test("excludes the RBTC chain from rescue-key address restores", () => {
+        expect(getEvmRestoreChainIds()).not.toContain(
+            config.assets?.RBTC?.network?.chainId,
+        );
+    });
+
     test("deduplicates chain scan and backend restore events", () => {
         const merged = mergeEvmRescueResults(
             [baseEvent],
