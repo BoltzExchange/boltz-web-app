@@ -199,7 +199,7 @@ describe("RescueExternal", () => {
         expect(tbtcChip).toHaveAttribute("data-active", "false");
         expect(tbtcChip).toHaveAttribute(
             "data-tooltip",
-            i18n.en.rescue_external_requires_rescue_key,
+            i18n.en.rescue_external_requires_rescue_key_wallet,
         );
         expect(wbtcChip).toHaveAttribute("data-active", "false");
         expect(wbtcChip).toHaveAttribute(
@@ -232,14 +232,17 @@ describe("RescueExternal", () => {
             within(rbtcRefundChip).getByLabelText("Wallet required"),
         ).toHaveAttribute("data-active", "false");
 
-        expect(tbtcChip).toHaveAttribute("data-active", "true");
-        expect(tbtcChip).not.toHaveAttribute("data-tooltip");
+        expect(tbtcChip).toHaveAttribute("data-active", "false");
+        expect(tbtcChip).toHaveAttribute(
+            "data-tooltip",
+            i18n.en.rescue_external_requires_rescue_key_wallet,
+        );
         expect(
             within(tbtcChip).getByLabelText("Rescue key required"),
         ).toHaveAttribute("data-active", "true");
         expect(
-            within(tbtcChip).queryByLabelText("Wallet required"),
-        ).not.toBeInTheDocument();
+            within(tbtcChip).getByLabelText("Wallet required"),
+        ).toHaveAttribute("data-active", "false");
 
         expect(wbtcChip).toHaveAttribute("data-active", "true");
         expect(wbtcChip).not.toHaveAttribute("data-tooltip");

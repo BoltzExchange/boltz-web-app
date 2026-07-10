@@ -40,7 +40,7 @@ export const recoveryOptions: RecoveryOption[] = [
         asset: TBTC,
         className: "asset-TBTC",
         actions: [RescueAction.Refund, RescueAction.Claim],
-        methods: [RecoveryMethod.Key],
+        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
     },
     {
         asset: WBTC,
