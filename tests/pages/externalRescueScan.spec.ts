@@ -1,11 +1,13 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
+import type { RestorableSwap } from "boltz-swaps/client";
 import {
     BridgeKind,
     RskRescueMode,
     SwapPosition,
     SwapType,
 } from "boltz-swaps/types";
+import { type Hex, getAddress, recoverMessageAddress } from "viem";
 
 import {
     getEvmRefundDisplayAmount,
@@ -15,11 +17,14 @@ import { getEvmDisplayAssets } from "../../src/pages/external-rescue/Results";
 import {
     enrichEvmRescueResults,
     filterHydratedEvmSwaps,
+    getEvmRestoreAccounts,
     getEvmRestoreMessage,
+    getRestorableSwapsByEvmAddress,
     mapRestoredEvmClaimResult,
     mapRestoredEvmClaimResultFromRescueKey,
     mapRestoredEvmSwaps,
     mergeEvmRescueResults,
+    mergeRestorableSwaps,
 } from "../../src/pages/external-rescue/scan";
 import type {
     EvmRescueResult,
@@ -646,6 +651,155 @@ describe("external EVM rescue scan helpers", () => {
         );
     });
 
+    test("sends a verifiable EVM address restore request payload", async () => {
+        const rescueFile: RescueFile = {
+            mnemonic:
+                "awake father sword slab matrix myth cargo lock river thumb inspire speed",
+        };
+        const [{ account }] = getEvmRestoreAccounts(rescueFile);
+        const fetchMock = vi.fn().mockResolvedValue(
+            new Response(JSON.stringify([]), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        vi.stubGlobal("fetch", fetchMock);
+
+        try {
+            const before = Math.floor(Date.now() / 1_000);
+            await getRestorableSwapsByEvmAddress(
+                account,
+                new AbortController().signal,
+            );
+            const after = Math.floor(Date.now() / 1_000);
+
+            expect(fetchMock).toHaveBeenCalledTimes(1);
+            const [url, options] = fetchMock.mock.calls[0] as [
+                string,
+                RequestInit,
+            ];
+            expect(url).toContain("/v2/swap/restore");
+            expect(options.method).toBe("POST");
+
+            const body = JSON.parse(options.body as string) as {
+                address: string;
+                timestamp: number;
+                signature: Hex;
+            };
+            expect(body.address).toBe(getAddress(account.address));
+            expect(body.timestamp).toBeGreaterThanOrEqual(before);
+            expect(body.timestamp).toBeLessThanOrEqual(after);
+            expect(
+                await recoverMessageAddress({
+                    message: getEvmRestoreMessage(body.address, body.timestamp),
+                    signature: body.signature,
+                }),
+            ).toBe(getAddress(account.address));
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
+    test("rejects rescue key claims when the derived preimage does not match", () => {
+        const rescueFile: RescueFile = {
+            mnemonic:
+                "awake father sword slab matrix myth cargo lock river thumb inspire speed",
+        };
+        const preimage = derivePreimageFromRescueKey(rescueFile, 0, "TBTC");
+        const preimageHash = hex.encode(sha256(preimage));
+        const withClaimDetails = (keyIndex: number, hash: string) => ({
+            ...restoredSwap,
+            preimageHash: hash,
+            evmClaimDetails: {
+                ...restoredSwap.evmClaimDetails!,
+                keyIndex,
+            } as RestoredEvmSwap["evmClaimDetails"] & { keyIndex: number },
+        });
+
+        // Wrong key index: the derived preimage hashes to something else.
+        expect(
+            mapRestoredEvmClaimResultFromRescueKey(
+                withClaimDetails(1, preimageHash),
+                rescueFile,
+            ),
+        ).toBeUndefined();
+        // Missing preimage hash: nothing to verify against.
+        expect(
+            mapRestoredEvmClaimResultFromRescueKey(
+                withClaimDetails(0, ""),
+                rescueFile,
+            ),
+        ).toBeUndefined();
+    });
+
+    test("merges restorable swap groups by id and keeps existing details", () => {
+        const evmClaimDetails = {
+            contractAddress: "0x0000000000000000000000000000000000000003",
+            claimAddress: "0x0000000000000000000000000000000000000001",
+            keyIndex: 0,
+            timeoutBlockHeight: 123,
+        } as RestorableSwap["evmClaimDetails"];
+        const xpubSwap: RestorableSwap = {
+            id: "swap-a",
+            type: SwapType.Reverse,
+            status: "swap.created",
+            createdAt: 1,
+            from: "BTC",
+            to: "TBTC",
+            metadata: "xpub-metadata",
+            evmClaimDetails,
+        };
+        const addressSwap: RestorableSwap = {
+            id: "swap-a",
+            type: SwapType.Reverse,
+            status: "transaction.confirmed",
+            createdAt: 1,
+            from: "BTC",
+            to: "TBTC",
+        };
+        const otherSwap: RestorableSwap = {
+            id: "swap-b",
+            type: SwapType.Chain,
+            status: "swap.created",
+            createdAt: 2,
+            from: "L-BTC",
+            to: "TBTC",
+        };
+
+        const merged = mergeRestorableSwaps(
+            [xpubSwap, otherSwap],
+            [addressSwap],
+        );
+
+        expect(merged).toHaveLength(2);
+        const swapA = merged.find((swap) => swap.id === "swap-a");
+        // Later groups win for fields they define...
+        expect(swapA?.status).toBe("transaction.confirmed");
+        // ...but must not drop details only the earlier group carried.
+        expect(swapA?.metadata).toBe("xpub-metadata");
+        expect(swapA?.evmClaimDetails).toEqual(evmClaimDetails);
+        expect(merged.find((swap) => swap.id === "swap-b")).toBeDefined();
+    });
+
+    test("prefers later restorable swap details when both groups define them", () => {
+        const base: RestorableSwap = {
+            id: "swap-a",
+            type: SwapType.Reverse,
+            status: "swap.created",
+            createdAt: 1,
+            from: "BTC",
+            to: "TBTC",
+        };
+
+        const merged = mergeRestorableSwaps(
+            [{ ...base, metadata: "xpub-metadata" }],
+            [{ ...base, metadata: "address-metadata" }],
+        );
+
+        expect(merged).toHaveLength(1);
+        expect(merged[0].metadata).toBe("address-metadata");
+    });
+
     test("merges scan and restore-derived claims despite hash format differences", () => {
         // Scan results carry 0x-prefixed identifiers while restore-derived
         // results are unprefixed; both must collapse into one entry.
@@ -670,6 +824,35 @@ describe("external EVM rescue scan helpers", () => {
             expect(merged).toHaveLength(1);
             expect(merged[0].preimage).toBeDefined();
             expect(merged[0].restoredSwap?.id).toBe("swap-id");
+        }
+    });
+
+    test("keeps scan lockup fields when restore-derived claims merge in either order", () => {
+        // Restore-derived results carry placeholder blockNumber/amount/
+        // refundAddress; the scan values must survive regardless of which
+        // side arrives first.
+        const restoreDerived = mapRestoredEvmClaimResult(
+            {
+                ...restoredSwap,
+                lockupTx: undefined,
+                commitmentLockupTxHash: undefined,
+            },
+            "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        );
+
+        if (restoreDerived === undefined) {
+            throw new Error("missing restored EVM claim result");
+        }
+
+        for (const [current, next] of [
+            [[baseEvent], [restoreDerived]],
+            [[restoreDerived], [baseEvent]],
+        ]) {
+            const merged = mergeEvmRescueResults(current, next);
+            expect(merged).toHaveLength(1);
+            expect(merged[0].blockNumber).toBe(baseEvent.blockNumber);
+            expect(merged[0].amount).toBe(baseEvent.amount);
+            expect(merged[0].refundAddress).toBe(baseEvent.refundAddress);
         }
     });
 
