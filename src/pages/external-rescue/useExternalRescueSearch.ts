@@ -1,12 +1,14 @@
 import { useNavigate } from "@solidjs/router";
 import {
     type SwapContract,
+    createAssetProvider,
     createProvider,
+    getLogsFromReceipt,
     getTimelockBlockNumber,
     isEmptyPreimageHash,
     scanLockupEvents,
 } from "boltz-swaps/evm";
-import { RskRescueMode } from "boltz-swaps/types";
+import { AssetKind, RskRescueMode } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     createEffect,
@@ -23,7 +25,7 @@ import type {
     RescueFileResult,
 } from "../../components/RescueFileUpload";
 import { config } from "../../config";
-import type { AssetType } from "../../consts/Assets";
+import { type AssetType, RBTC, getKindForAsset } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { useRescueContext } from "../../context/Rescue";
 import { useWeb3Signer } from "../../context/Web3";
@@ -53,6 +55,7 @@ import {
     fetchPaginatedRestorableSwaps,
     filterHydratedEvmSwaps,
     getEvmRescueAction,
+    getEvmRestoreAccounts,
     getEvmScanTargets,
     getSwapDate,
     mapHydratedRestorableSwaps,
@@ -611,8 +614,84 @@ export const useExternalRescueSearch = () => {
                 )
                 .filter((swap): swap is EvmRescueResult => swap !== undefined);
 
+            const rescueAddresses = new Set(
+                getEvmRestoreAccounts(currentRescueFile).map(({ account }) =>
+                    account.address.toLowerCase(),
+                ),
+            );
+            const restoredEvmAddressRefundSwaps = (
+                await Promise.all(
+                    restoredEvmSwaps
+                        .filter((swap) => evmAddressSwapIds.has(swap.id))
+                        .map(
+                            async (
+                                swap,
+                            ): Promise<EvmRescueResult | undefined> => {
+                                const asset = swap.from;
+                                const transactionHash =
+                                    swap.commitmentLockupTxHash ??
+                                    swap.lockupTx;
+                                if (
+                                    asset === RBTC ||
+                                    transactionHash === undefined ||
+                                    config.assets?.[asset]?.network?.chainId ===
+                                        undefined
+                                ) {
+                                    return undefined;
+                                }
+
+                                try {
+                                    const provider = createAssetProvider(asset);
+                                    const contract =
+                                        getKindForAsset(asset) ===
+                                        AssetKind.ERC20
+                                            ? getErc20Swap(asset)
+                                            : getEtherSwap(asset);
+                                    const [logData, currentHeight] =
+                                        await Promise.all([
+                                            getLogsFromReceipt(
+                                                provider,
+                                                asset as AssetType,
+                                                contract,
+                                                transactionHash,
+                                            ),
+                                            getTimelockBlockNumber(
+                                                provider,
+                                                asset as AssetType,
+                                            ),
+                                        ]);
+
+                                    if (
+                                        !rescueAddresses.has(
+                                            logData.refundAddress.toLowerCase(),
+                                        )
+                                    ) {
+                                        return undefined;
+                                    }
+
+                                    return {
+                                        ...logData,
+                                        action: RskRescueMode.Refund,
+                                        currentHeight: BigInt(currentHeight),
+                                        restoredSwap: swap,
+                                        dex: swap.dex,
+                                        bridge: swap.bridge,
+                                    } satisfies EvmRescueResult;
+                                } catch (error) {
+                                    log.warn(
+                                        `failed to restore EVM refund for swap ${swap.id}:`,
+                                        formatError(error),
+                                    );
+                                    return undefined;
+                                }
+                            },
+                        ),
+                )
+            ).filter((swap): swap is EvmRescueResult => swap !== undefined);
+
             appendRestoredEvmSwaps(restoredEvmSwaps);
             appendEvmSwaps(RskRescueMode.Claim, restoredEvmAddressClaimSwaps);
+            appendEvmSwaps(RskRescueMode.Refund, restoredEvmAddressRefundSwaps);
 
             setBtcState({
                 swaps: mapHydratedRestorableSwaps(hydratedRestorableSwaps),
@@ -633,7 +712,7 @@ export const useExternalRescueSearch = () => {
 
     const runSingleScan = async (
         target: EvmScanTarget,
-        signerAddress: Address,
+        signerAddress: Address | undefined,
         action: RskRescueMode,
         scanProgress: ScanProgress,
         signal: AbortSignal,
@@ -641,6 +720,7 @@ export const useExternalRescueSearch = () => {
         mnemonic?: string,
     ) => {
         const provider = createProvider([target.providerUrl]);
+        let scanAddress = signerAddress;
         const extraAddresses: string[] = [];
         if (mnemonic) {
             const chainId = config.assets?.[target.asset]?.network?.chainId;
@@ -648,10 +728,21 @@ export const useExternalRescueSearch = () => {
                 const gasKey = mnemonicToHDKey(mnemonic).derive(
                     getPathGasAbstraction(chainId),
                 );
-                extraAddresses.push(
-                    evmAccountFromPrivateKey(gasKey.privateKey).address,
-                );
+                const rescueAddress = evmAccountFromPrivateKey(
+                    gasKey.privateKey,
+                ).address;
+                if (scanAddress === undefined) {
+                    scanAddress = rescueAddress;
+                } else if (
+                    scanAddress.toLowerCase() !== rescueAddress.toLowerCase()
+                ) {
+                    extraAddresses.push(rescueAddress);
+                }
             }
+        }
+
+        if (scanAddress === undefined) {
+            return;
         }
 
         let currentHeight: bigint | undefined;
@@ -684,7 +775,7 @@ export const useExternalRescueSearch = () => {
                 providerUrl: target.providerUrl,
                 scanInterval: target.scanInterval,
                 filter: {
-                    address: signerAddress,
+                    address: scanAddress,
                     extraAddresses:
                         extraAddresses.length > 0 ? extraAddresses : undefined,
                 },
@@ -721,7 +812,7 @@ export const useExternalRescueSearch = () => {
 
     const runEvmScan = async (
         action: RskRescueMode,
-        signerAddress: Address,
+        signerAddress: Address | undefined,
         signal: AbortSignal,
         currentRescueFile?: RescueFile,
     ) => {
@@ -730,6 +821,7 @@ export const useExternalRescueSearch = () => {
             getErc20Swap as (a: string) => SwapContract,
             action,
             currentRescueFile !== undefined,
+            signerAddress !== undefined,
         );
 
         if (targets.length === 0) {
@@ -752,7 +844,9 @@ export const useExternalRescueSearch = () => {
         const scanProgress = createScanProgress(setProgress, setUnmatched);
 
         const sweepBalances =
-            action === RskRescueMode.Refund && currentRescueFile !== undefined
+            action === RskRescueMode.Refund &&
+            currentRescueFile !== undefined &&
+            signerAddress !== undefined
                 ? getSweepableGasAbstractionBalances({
                       destination: signerAddress,
                       rescueFile: currentRescueFile,
@@ -815,8 +909,8 @@ export const useExternalRescueSearch = () => {
                 tasks.push(runBtcRestore(currentRescueFile, signal));
             }
 
-            if (currentSigner && evmAvailable) {
-                const signerAddress = currentSigner.address;
+            if (evmAvailable && (currentSigner || currentRescueFile)) {
+                const signerAddress = currentSigner?.address;
 
                 if (signal.aborted) {
                     return;

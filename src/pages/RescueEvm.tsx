@@ -28,6 +28,7 @@ import { getAddress } from "viem";
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
+import ConnectWallet from "../components/ConnectWallet";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
@@ -228,6 +229,13 @@ const RefundState = (props: {
                 </Show>
             </div>
 
+            <Show
+                when={
+                    signer() === undefined &&
+                    gasAbstraction()?.signer !== undefined
+                }>
+                <ConnectWallet asset={props.asset} />
+            </Show>
             <RefundButton
                 asset={props.asset}
                 swapId={props.refundData.restoredSwap?.id}
@@ -242,6 +250,15 @@ const RefundState = (props: {
                 transactionSigner={gasAbstraction()?.signer}
                 destination={destination()}
             />
+            <Show
+                when={
+                    signer() === undefined &&
+                    gasAbstraction()?.signer === undefined
+                }>
+                <button class="btn" disabled>
+                    {t("refund")}
+                </button>
+            </Show>
             <hr />
             <BlockExplorer
                 typeLabel={"lockup_tx"}
@@ -448,16 +465,27 @@ const ClaimState = (props: {
                     </button>
                 </>
             }>
-            <ContractTransaction
-                asset={routeClaimAsset()}
-                onClick={claimTransaction}
-                buttonText={t("continue")}
-                promptText={t("transaction_prompt_receive", {
-                    button: t("continue"),
-                    asset: finalReceiveAsset(),
-                })}
-                waitingText={t("tx_ready_to_claim")}
-            />
+            <Show
+                when={signer() !== undefined}
+                fallback={
+                    <>
+                        <ConnectWallet asset={routeClaimAsset()} />
+                        <button class="btn" disabled>
+                            {t("claim")}
+                        </button>
+                    </>
+                }>
+                <ContractTransaction
+                    asset={routeClaimAsset()}
+                    onClick={claimTransaction}
+                    buttonText={t("continue")}
+                    promptText={t("transaction_prompt_receive", {
+                        button: t("continue"),
+                        asset: finalReceiveAsset(),
+                    })}
+                    waitingText={t("tx_ready_to_claim")}
+                />
+            </Show>
         </Show>
     );
 };
@@ -471,7 +499,7 @@ const RescueEvm = () => {
 
     const { t } = useGlobalContext();
     const { evmRescuableSwaps } = useRescueContext();
-    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+    const { getEtherSwap, getErc20Swap } = useWeb3Signer();
 
     const getSwapContract = (asset: string) =>
         getKindForAsset(asset) === AssetKind.ERC20
@@ -486,10 +514,6 @@ const RescueEvm = () => {
     );
 
     const [rescueData] = createResource<RescueData | undefined>(async () => {
-        if (signer() === undefined) {
-            return undefined;
-        }
-
         const provider = createAssetProvider(params.asset);
         const contract = getSwapContract(params.asset);
 
@@ -539,102 +563,91 @@ const RescueEvm = () => {
 
     return (
         <div class="frame">
-            <Show
-                when={signer() !== undefined}
-                fallback={<h2>{t("no_wallet")}</h2>}>
-                <Switch>
-                    <Match when={rescueData.state === "ready"}>
-                        <SettingsCog />
-                        <SettingsMenu />
-                        <h2
-                            class="frame-title"
-                            style={{ "margin-bottom": "6px" }}>
-                            {pageTitle()} {cropString(params.txHash, 15, 5)}
-                        </h2>
-                        <hr />
-                        <Switch>
-                            <Match when={canRefund()}>
-                                <Show
-                                    when={refundTxId() === undefined}
-                                    fallback={
-                                        <>
-                                            <p>{t("refunded")}</p>
-                                            <hr />
-                                            <BlockExplorer
-                                                typeLabel={"refund_tx"}
-                                                asset={params.asset}
-                                                kind={
-                                                    BlockExplorerTargetKind.Tx
-                                                }
-                                                id={refundTxId()!}
-                                            />
-                                        </>
-                                    }>
-                                    <RefundState
-                                        asset={params.asset}
-                                        lockupTxHash={params.txHash}
-                                        refundData={rescueData()!}
-                                        setRefundTxId={
-                                            setRefundTxId as Setter<string>
-                                        }
-                                    />
-                                </Show>
-                            </Match>
-                            <Match when={!isRefundAction()}>
-                                <Show
-                                    when={claimTxId() === undefined}
-                                    fallback={
-                                        <>
-                                            <p>{t("claimed")}</p>
-                                            <hr />
-                                            <BlockExplorer
-                                                typeLabel={"claim_tx"}
-                                                asset={params.asset}
-                                                kind={
-                                                    BlockExplorerTargetKind.Tx
-                                                }
-                                                id={claimTxId()!}
-                                            />
-                                        </>
-                                    }>
-                                    <ClaimState
-                                        asset={params.asset}
-                                        lockupTxHash={params.txHash}
-                                        claimData={rescueData()!}
-                                        setClaimTxId={
-                                            setClaimTxId as Setter<string>
-                                        }
-                                    />
-                                </Show>
-                            </Match>
-                            <Match
-                                when={isRefundAction() && !timelockExpired()}>
-                                <RefundEta
-                                    timeoutEta={() =>
-                                        getTimeoutEta(
-                                            params.asset as blockChainsAssets,
-                                            Number(rescueData()!.timelock),
-                                            Number(rescueData()!.currentHeight),
-                                        )
-                                    }
-                                    timeoutBlockHeight={() =>
-                                        Number(rescueData()!.timelock)
-                                    }
+            <Switch>
+                <Match when={rescueData.state === "ready"}>
+                    <SettingsCog />
+                    <SettingsMenu />
+                    <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
+                        {pageTitle()} {cropString(params.txHash, 15, 5)}
+                    </h2>
+                    <hr />
+                    <Switch>
+                        <Match when={canRefund()}>
+                            <Show
+                                when={refundTxId() === undefined}
+                                fallback={
+                                    <>
+                                        <p>{t("refunded")}</p>
+                                        <hr />
+                                        <BlockExplorer
+                                            typeLabel={"refund_tx"}
+                                            asset={params.asset}
+                                            kind={BlockExplorerTargetKind.Tx}
+                                            id={refundTxId()!}
+                                        />
+                                    </>
+                                }>
+                                <RefundState
                                     asset={params.asset}
+                                    lockupTxHash={params.txHash}
+                                    refundData={rescueData()!}
+                                    setRefundTxId={
+                                        setRefundTxId as Setter<string>
+                                    }
                                 />
-                            </Match>
-                        </Switch>
-                    </Match>
-                    <Match when={rescueData.state === "pending"}>
-                        <h2>{pageTitle()}</h2>
-                        <LoadingSpinner />
-                    </Match>
-                    <Match when={rescueData.state === "errored"}>
-                        <h2>{t("error")}</h2>
-                        <h3>{formatError(rescueData.error)}</h3>
-                    </Match>
-                </Switch>
-            </Show>
+                            </Show>
+                        </Match>
+                        <Match when={!isRefundAction()}>
+                            <Show
+                                when={claimTxId() === undefined}
+                                fallback={
+                                    <>
+                                        <p>{t("claimed")}</p>
+                                        <hr />
+                                        <BlockExplorer
+                                            typeLabel={"claim_tx"}
+                                            asset={params.asset}
+                                            kind={BlockExplorerTargetKind.Tx}
+                                            id={claimTxId()!}
+                                        />
+                                    </>
+                                }>
+                                <ClaimState
+                                    asset={params.asset}
+                                    lockupTxHash={params.txHash}
+                                    claimData={rescueData()!}
+                                    setClaimTxId={
+                                        setClaimTxId as Setter<string>
+                                    }
+                                />
+                            </Show>
+                        </Match>
+                        <Match when={isRefundAction() && !timelockExpired()}>
+                            <RefundEta
+                                timeoutEta={() =>
+                                    getTimeoutEta(
+                                        params.asset as blockChainsAssets,
+                                        Number(rescueData()!.timelock),
+                                        Number(rescueData()!.currentHeight),
+                                    )
+                                }
+                                timeoutBlockHeight={() =>
+                                    Number(rescueData()!.timelock)
+                                }
+                                asset={params.asset}
+                            />
+                        </Match>
+                    </Switch>
+                </Match>
+                <Match when={rescueData.state === "pending"}>
+                    <h2>{pageTitle()}</h2>
+                    <LoadingSpinner />
+                </Match>
+                <Match when={rescueData.state === "errored"}>
+                    <h2>{t("error")}</h2>
+                    <h3>{formatError(rescueData.error)}</h3>
+                </Match>
+            </Switch>
         </div>
     );
 };

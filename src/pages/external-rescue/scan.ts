@@ -499,6 +499,10 @@ export const getEvmRestoreChainIds = (): number[] =>
                 .map((asset) => asset.network?.chainId)
                 .filter(
                     (chainId): chainId is number => typeof chainId === "number",
+                )
+                .filter(
+                    (chainId) =>
+                        chainId !== config.assets?.[RBTC]?.network?.chainId,
                 ),
         ),
     );
@@ -612,11 +616,12 @@ export const getEvmScanTargets = (
     getErc20Swap: (asset: string) => SwapContract,
     action: RskRescueMode,
     hasRescueFile: boolean,
+    includeRbtc = true,
 ): EvmScanTarget[] => {
     const targets: EvmScanTarget[] = [];
 
     const rskEndpoint = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
-    if (rskEndpoint) {
+    if (rskEndpoint && includeRbtc) {
         targets.push({
             asset: RBTC,
             providerUrl: rskEndpoint,
