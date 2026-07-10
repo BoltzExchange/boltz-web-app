@@ -4,6 +4,7 @@ import { For, Match, Switch } from "solid-js";
 import {
     BTC,
     LBTC,
+    LN,
     RBTC,
     TBTC,
     USDC,
@@ -17,6 +18,12 @@ import { RescueAction } from "../../utils/rescue";
 import { RecoveryMethod, type RecoveryOption } from "./types";
 
 export const recoveryOptions: RecoveryOption[] = [
+    {
+        asset: LN,
+        className: "asset-LN",
+        actions: [RescueAction.Refund, RescueAction.Claim],
+        methods: [RecoveryMethod.Key],
+    },
     {
         asset: BTC,
         className: "asset-BTC",
@@ -33,25 +40,25 @@ export const recoveryOptions: RecoveryOption[] = [
         asset: TBTC,
         className: "asset-TBTC",
         actions: [RescueAction.Refund, RescueAction.Claim],
-        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
+        methods: [RecoveryMethod.Key],
     },
     {
         asset: WBTC,
         className: "asset-WBTC",
         actions: [RescueAction.Refund, RescueAction.Claim],
-        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
+        methods: [RecoveryMethod.Key],
     },
     {
         asset: USDT0,
         className: "asset-USDT",
         actions: [RescueAction.Refund, RescueAction.Claim],
-        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
+        methods: [RecoveryMethod.Key],
     },
     {
         asset: USDC,
         className: "asset-USDC",
         actions: [RescueAction.Refund, RescueAction.Claim],
-        methods: [RecoveryMethod.Key, RecoveryMethod.Wallet],
+        methods: [RecoveryMethod.Key],
     },
     {
         asset: RBTC,
