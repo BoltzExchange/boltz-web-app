@@ -70,3 +70,34 @@ index 63c2646..0c2bb9d 100755
  
  [[currencies]]
  symbol = "BTC"
+diff --git a/regtest/images/boltz-backend/arbitrum.conf b/regtest/images/boltz-backend/arbitrum.conf
+index 82a8593..96f705d 100644
+--- a/regtest/images/boltz-backend/arbitrum.conf
++++ b/regtest/images/boltz-backend/arbitrum.conf
+@@ -29,6 +29,26 @@ swapTypes = ["chain"]
+   swapMaximal = 2880
+   swapTaproot = 10080
+ 
++# Reverse swaps (LN -> TBTC) power the reverse DEX swap e2e coverage.
++[[pairs]]
++base = "TBTC"
++quote = "BTC"
++rate = 1
++fee = 0
++swapInFee = 0
++
++maxSwapAmount = 1_000_000
++minSwapAmount = 2_500
++
++swapTypes = ["reverse"]
++
++  [pairs.timeoutDelta]
++  chain = 1440
++  reverse = 1440
++  swapMinimal = 1440
++  swapMaximal = 2880
++  swapTaproot = 10080
++
+ [arbitrum]
+ networkName = "Arbitrum"
+ providerEndpoint = "ws://anvil-arb:8545"
