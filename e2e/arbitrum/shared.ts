@@ -874,7 +874,8 @@ export const scanAndSelectExternalResult = async ({
 }: {
     page: Page;
     swapId: string;
-    walletAddress: Address;
+    // Omitted: the scan runs with only the rescue key
+    walletAddress?: Address;
     rescueFilePath: string;
     action: string;
     assets: [string, string];
@@ -892,7 +893,9 @@ export const scanAndSelectExternalResult = async ({
     await expect(async () => {
         await startExternalRescue(page);
         await page.getByTestId("refundUpload").setInputFiles(rescueFilePath);
-        await connectWallet(page, walletAddress);
+        if (walletAddress !== undefined) {
+            await connectWallet(page, walletAddress);
+        }
         const metadataRestore = waitForMetadataRestore(page, swapId);
         await page
             .getByRole("button", { name: dict.en.rescue, exact: true })

@@ -621,14 +621,14 @@ export const getEvmScanTargets = (
     const targets: EvmScanTarget[] = [];
 
     const rskEndpoint = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
-    if (rskEndpoint && includeRbtc) {
+    if (!rskEndpoint) {
+        log.warn("rsk log endpoint not set");
+    } else if (includeRbtc) {
         targets.push({
             asset: RBTC,
             providerUrl: rskEndpoint,
             contract: getEtherSwap(RBTC),
         });
-    } else {
-        log.warn("rsk log endpoint not set");
     }
 
     const skipArbitrum = action === RskRescueMode.Refund && !hasRescueFile;

@@ -51,6 +51,7 @@ import {
 } from "../status/TransactionConfirmed";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { resolveLockupTokenFunder } from "../utils/evmLockup";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
@@ -194,16 +195,55 @@ const RefundState = (props: {
         return undefined;
     };
 
+    // Pre-bridge refunds resolve their destination from the bridge instead
+    const needsResolvedDestination = () =>
+        dexDetails()?.position === SwapPosition.Pre &&
+        bridgeDetails()?.position !== SwapPosition.Pre;
+
+    const [resolvedFunder] = createResource(
+        () => {
+            if (signer() !== undefined || !isErc20() || !rescueFile()) {
+                return undefined;
+            }
+            if (!needsResolvedDestination()) {
+                return undefined;
+            }
+            const tokenIn = dexDetails()?.hops[0]?.dexDetails?.tokenIn;
+            if (tokenIn === undefined) {
+                return undefined;
+            }
+            return {
+                asset: props.asset,
+                tokenIn,
+                txHash: props.lockupTxHash,
+            };
+        },
+        (lookup) =>
+            resolveLockupTokenFunder(
+                lookup.asset,
+                lookup.tokenIn,
+                lookup.txHash,
+            ),
+    );
+
     const destination = () => {
         if (!isErc20() || !rescueFile()) {
             return undefined;
         }
         try {
-            return signer()?.address;
+            return (
+                signer()?.address ??
+                (resolvedFunder.state === "ready"
+                    ? resolvedFunder()
+                    : undefined)
+            );
         } catch {
             return undefined;
         }
     };
+
+    const destinationMissing = () =>
+        needsResolvedDestination() && destination() === undefined;
 
     return (
         <>
@@ -232,7 +272,9 @@ const RefundState = (props: {
             <Show
                 when={
                     signer() === undefined &&
-                    gasAbstraction()?.signer !== undefined
+                    gasAbstraction()?.signer !== undefined &&
+                    destinationMissing() &&
+                    !resolvedFunder.loading
                 }>
                 <ConnectWallet asset={props.asset} />
             </Show>
@@ -241,6 +283,7 @@ const RefundState = (props: {
                 swapId={props.refundData.restoredSwap?.id}
                 dexDetails={dexDetails()}
                 bridge={bridgeDetails()}
+                disabled={destinationMissing()}
                 setRefundTxId={
                     props.setRefundTxId as Setter<string | undefined>
                 }
@@ -337,6 +380,18 @@ const ClaimState = (props: {
               signer()?.address)
             : signer()?.address;
 
+    const canClaimWithoutWallet = () =>
+        routedDex() !== undefined &&
+        props.claimData.restoredSwap?.originalDestination !== undefined &&
+        getKindForAsset(routeClaimAsset()) === AssetKind.ERC20 &&
+        rescueFile() !== undefined;
+
+    const signerOverride = () =>
+        signer() ??
+        (canClaimWithoutWallet()
+            ? getGasAbstractionSigner(routeClaimAsset(), rescueFile())
+            : undefined);
+
     const getGasAbstraction = async (
         asset: string,
     ): Promise<GasAbstractionType> => {
@@ -375,9 +430,6 @@ const ClaimState = (props: {
         try {
             const gasAbstraction = await getGasAbstraction(asset);
             const sig = signer();
-            if (sig === undefined) {
-                throw new Error("missing signer for claim");
-            }
             const dex = routedDex();
             const destination = claimDestination(dex !== undefined);
             if (destination === undefined) {
@@ -427,6 +479,10 @@ const ClaimState = (props: {
                 return;
             }
 
+            if (sig === undefined) {
+                throw new Error("missing signer for claim");
+            }
+
             const { transactionHash } = await claimAsset({
                 gasAbstraction,
                 asset,
@@ -466,7 +522,7 @@ const ClaimState = (props: {
                 </>
             }>
             <Show
-                when={signer() !== undefined}
+                when={signer() !== undefined || canClaimWithoutWallet()}
                 fallback={
                     <>
                         <ConnectWallet asset={routeClaimAsset()} />
@@ -477,6 +533,7 @@ const ClaimState = (props: {
                 }>
                 <ContractTransaction
                     asset={routeClaimAsset()}
+                    signerOverride={signerOverride}
                     onClick={claimTransaction}
                     buttonText={t("continue")}
                     promptText={t("transaction_prompt_receive", {

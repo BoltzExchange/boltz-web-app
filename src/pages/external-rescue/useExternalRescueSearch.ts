@@ -619,6 +619,24 @@ export const useExternalRescueSearch = () => {
                     account.address.toLowerCase(),
                 ),
             );
+            const timelockHeights = new Map<
+                string,
+                ReturnType<typeof getTimelockBlockNumber>
+            >();
+            const getCurrentTimelockHeight = (
+                asset: string,
+                provider: Parameters<typeof getTimelockBlockNumber>[0],
+            ) => {
+                let height = timelockHeights.get(asset);
+                if (height === undefined) {
+                    height = getTimelockBlockNumber(
+                        provider,
+                        asset as AssetType,
+                    );
+                    timelockHeights.set(asset, height);
+                }
+                return height;
+            };
             const restoredEvmAddressRefundSwaps = (
                 await Promise.all(
                     restoredEvmSwaps
@@ -655,9 +673,9 @@ export const useExternalRescueSearch = () => {
                                                 contract,
                                                 transactionHash,
                                             ),
-                                            getTimelockBlockNumber(
+                                            getCurrentTimelockHeight(
+                                                asset,
                                                 provider,
-                                                asset as AssetType,
                                             ),
                                         ]);
 
