@@ -808,6 +808,37 @@ describe("external EVM rescue scan helpers", () => {
         expect(merged[0].metadata).toBe("address-metadata");
     });
 
+    test("keeps the preimage hash and claim key when a later group omits them", () => {
+        const base: RestorableSwap = {
+            id: "swap-a",
+            type: SwapType.Reverse,
+            status: "swap.created",
+            createdAt: 1,
+            from: "BTC",
+            to: "TBTC",
+        };
+
+        const merged = mergeRestorableSwaps(
+            [
+                {
+                    ...base,
+                    preimageHash:
+                        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                    claimPrivateKey: "claim-key",
+                },
+            ],
+            // Spreading a swap that carries these fields as explicit
+            // undefined must not clobber the values of the earlier group
+            [{ ...base, preimageHash: undefined, claimPrivateKey: undefined }],
+        );
+
+        expect(merged).toHaveLength(1);
+        expect(merged[0].preimageHash).toBe(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        );
+        expect(merged[0].claimPrivateKey).toBe("claim-key");
+    });
+
     test("merges scan and restore-derived claims despite hash format differences", () => {
         // Scan results carry 0x-prefixed identifiers while restore-derived
         // results are unprefixed; both must collapse into one entry.

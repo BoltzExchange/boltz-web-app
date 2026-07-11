@@ -29,11 +29,13 @@ const preimage =
 
 const {
     mockGetLogsFromReceipt,
+    mockQuoteDexAmountIn,
     mockResolveLockupTokenFunder,
     paramsMock,
     rescueSwaps,
 } = vi.hoisted(() => ({
     mockGetLogsFromReceipt: vi.fn(),
+    mockQuoteDexAmountIn: vi.fn(),
     mockResolveLockupTokenFunder: vi.fn(),
     paramsMock: {
         current: {
@@ -44,6 +46,14 @@ const {
     },
     rescueSwaps: { current: [] as EvmRescueResult[] },
 }));
+
+vi.mock("boltz-swaps/client", async () => {
+    const actual = await vi.importActual("boltz-swaps/client");
+    return {
+        ...actual,
+        quoteDexAmountIn: mockQuoteDexAmountIn,
+    };
+});
 
 vi.mock("@solidjs/router", async () => {
     const actual = await vi.importActual<typeof SolidRouter>("@solidjs/router");
@@ -110,6 +120,16 @@ vi.mock("../../src/context/Rescue", async () => {
     const actual = await vi.importActual<typeof RescueContextModule>(
         "../../src/context/Rescue",
     );
+    // Back rescueSwaps.current with a signal so writes after render are
+    // reactive, like the real context
+    const { createSignal } = await import("solid-js");
+    const [swaps, setSwaps] = createSignal<EvmRescueResult[]>(
+        rescueSwaps.current,
+    );
+    Object.defineProperty(rescueSwaps, "current", {
+        get: () => swaps(),
+        set: setSwaps,
+    });
     return {
         ...actual,
         RescueProvider: (props: { children: JSX.Element }) => (
@@ -136,7 +156,8 @@ vi.mock("../../src/components/RefundButton", () => ({
     ),
 }));
 
-const { default: RescueEvm } = await import("../../src/pages/RescueEvm");
+const { default: RescueEvm, fetchEvmRefundDisplayQuote } =
+    await import("../../src/pages/RescueEvm");
 
 const logData = {
     asset: TBTC,
@@ -211,6 +232,7 @@ describe("RescueEvm", () => {
             action: RskRescueMode.Claim,
         };
         mockGetLogsFromReceipt.mockResolvedValue(logData);
+        mockQuoteDexAmountIn.mockResolvedValue([]);
         mockResolveLockupTokenFunder.mockResolvedValue(originalFunder);
         rescueSwaps.current = [
             {
@@ -396,5 +418,86 @@ describe("RescueEvm", () => {
             screen.queryByRole("button", { name: "Connect wallet" }),
         ).toBeNull();
         expect(screen.queryByRole("button", { name: "Claim" })).toBeNull();
+    });
+
+    test("attaches routed claim metadata when the scan populates the context after load", async () => {
+        rescueSwaps.current = [];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        expect(
+            await screen.findByText(i18n.en.claim_scan_required),
+        ).toBeInTheDocument();
+
+        rescueSwaps.current = [
+            {
+                ...logData,
+                action: RskRescueMode.Claim,
+                preimage,
+                restoredSwap: {
+                    ...restoredSwap,
+                    originalDestination,
+                    dex: postDex,
+                },
+            },
+        ];
+
+        expect(
+            await screen.findByRole("button", { name: i18n.en.continue }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(i18n.en.claim_scan_required)).toBeNull();
+    });
+
+    test("shows the live DEX quote for a pre-DEX refund in the original asset", async () => {
+        const lockupTokenAddress = "0x0000000000000000000000000000000000000011";
+        paramsMock.current.action = RskRescueMode.Refund;
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            tokenAddress: lockupTokenAddress,
+        });
+        mockQuoteDexAmountIn.mockResolvedValue([{ quote: "1100000" }]);
+        rescueSwaps.current = [
+            {
+                ...logData,
+                action: RskRescueMode.Refund,
+                currentHeight: 1_000n,
+                tokenAddress: lockupTokenAddress,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Chain,
+                    from: TBTC,
+                    to: "L-BTC",
+                    dex: preDex,
+                },
+            },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        expect(await screen.findByText("1.1 USDT")).toBeInTheDocument();
+        expect(mockQuoteDexAmountIn).toHaveBeenCalledWith(
+            preDex.hops[0].dexDetails!.chain,
+            lockupTokenAddress,
+            preDex.hops[0].dexDetails!.tokenIn,
+            logData.amount,
+        );
+    });
+
+    test("converts DEX quote base units for non-routed display assets", async () => {
+        mockQuoteDexAmountIn.mockResolvedValue([
+            { quote: (10n ** 12n).toString() },
+        ]);
+
+        const result = await fetchEvmRefundDisplayQuote({
+            amount: 1n,
+            asset: TBTC,
+            chain: "ARB",
+            tokenIn: "0x0000000000000000000000000000000000000010",
+            tokenOut: "0x0000000000000000000000000000000000000011",
+        });
+
+        // 10^12 base units of an 18-decimal asset are 100 sats
+        expect(result?.asset).toBe(TBTC);
+        expect(result?.amount.toString()).toBe("100");
     });
 });

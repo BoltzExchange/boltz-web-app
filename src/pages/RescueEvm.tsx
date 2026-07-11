@@ -49,6 +49,7 @@ import {
     claimHops,
     getClaimAssetForRoute,
 } from "../status/TransactionConfirmed";
+import { fromDexAmount } from "../utils/Pair";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { resolveLockupTokenFunder } from "../utils/evmLockup";
@@ -132,7 +133,7 @@ export const getEvmRefundDisplayQuoteParams = (
     };
 };
 
-const fetchEvmRefundDisplayQuote = async (
+export const fetchEvmRefundDisplayQuote = async (
     params: EvmRefundDisplayQuoteParams,
 ): Promise<EvmRefundDisplayAmount | undefined> => {
     try {
@@ -148,7 +149,7 @@ const fetchEvmRefundDisplayQuote = async (
         }
 
         return {
-            amount: new BigNumber(quote.quote),
+            amount: fromDexAmount(BigInt(quote.quote), params.asset),
             asset: params.asset,
         };
     } catch (error) {
@@ -570,7 +571,7 @@ const RescueEvm = () => {
         undefined,
     );
 
-    const [rescueData] = createResource<RescueData | undefined>(async () => {
+    const [chainData] = createResource(async () => {
         const provider = createAssetProvider(params.asset);
         const contract = getSwapContract(params.asset);
 
@@ -583,18 +584,34 @@ const RescueEvm = () => {
             ),
             getTimelockBlockNumber(provider, params.asset as AssetType),
         ]);
-        const contextData = evmRescuableSwaps().find(
+
+        return {
+            ...logData,
+            currentHeight: BigInt(currentHeight),
+        };
+    });
+
+    // Reactive so routed swap metadata still attaches when the scan
+    // populates the context after the on-chain data has resolved
+    const contextData = createMemo(() =>
+        evmRescuableSwaps().find(
             (swap) =>
                 swap.action === params.action &&
                 swap.transactionHash.toLowerCase() ===
                     params.txHash.toLowerCase(),
-        );
+        ),
+    );
+
+    const rescueData = createMemo<RescueData | undefined>(() => {
+        const data = chainData();
+        if (data === undefined) {
+            return undefined;
+        }
 
         return {
-            ...contextData,
-            ...logData,
+            ...contextData(),
+            ...data,
             action: params.action,
-            currentHeight: BigInt(currentHeight),
         };
     });
 
@@ -621,7 +638,7 @@ const RescueEvm = () => {
     return (
         <div class="frame">
             <Switch>
-                <Match when={rescueData.state === "ready"}>
+                <Match when={chainData.state === "ready"}>
                     <SettingsCog />
                     <SettingsMenu />
                     <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
@@ -696,13 +713,13 @@ const RescueEvm = () => {
                         </Match>
                     </Switch>
                 </Match>
-                <Match when={rescueData.state === "pending"}>
+                <Match when={chainData.state === "pending"}>
                     <h2>{pageTitle()}</h2>
                     <LoadingSpinner />
                 </Match>
-                <Match when={rescueData.state === "errored"}>
+                <Match when={chainData.state === "errored"}>
                     <h2>{t("error")}</h2>
-                    <h3>{formatError(rescueData.error)}</h3>
+                    <h3>{formatError(chainData.error)}</h3>
                 </Match>
             </Switch>
         </div>

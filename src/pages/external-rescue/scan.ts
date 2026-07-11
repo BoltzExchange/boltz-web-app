@@ -74,6 +74,9 @@ export const mergeRestorableSwaps = (
                 ...existing,
                 ...swap,
                 metadata: swap.metadata ?? existing?.metadata,
+                preimageHash: swap.preimageHash ?? existing?.preimageHash,
+                claimPrivateKey:
+                    swap.claimPrivateKey ?? existing?.claimPrivateKey,
                 claimDetails: swap.claimDetails ?? existing?.claimDetails,
                 refundDetails: swap.refundDetails ?? existing?.refundDetails,
                 evmClaimDetails:
