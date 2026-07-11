@@ -11,7 +11,7 @@ import { vi } from "vitest";
 
 import { LN, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
-import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
+import Rescue from "../../src/pages/Rescue";
 import { Results } from "../../src/pages/external-rescue/Results";
 import { mapRestorableSwaps } from "../../src/pages/external-rescue/scan";
 import {
@@ -78,7 +78,7 @@ vi.mock("../../src/utils/rescue", async () => {
 
 const mockGetRestorableSwaps = vi.mocked(getRestorableSwaps);
 
-describe("RescueExternal", () => {
+describe("Rescue", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetRestorableSwaps.mockReset();
@@ -89,7 +89,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -107,7 +107,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -116,7 +116,7 @@ describe("RescueExternal", () => {
         );
 
         expect(
-            await screen.findByText(i18n.en.rescue_external_swap),
+            await screen.findByText(i18n.en.rescue_swaps),
         ).toBeInTheDocument();
         expect(screen.queryByText("Bitcoin / Liquid")).not.toBeInTheDocument();
         expect(screen.queryByText("EVM")).not.toBeInTheDocument();
@@ -134,7 +134,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -169,7 +169,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -278,7 +278,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -315,7 +315,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -359,7 +359,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -385,7 +385,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -448,7 +448,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -551,7 +551,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {

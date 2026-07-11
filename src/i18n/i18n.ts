@@ -119,7 +119,6 @@ const dict = {
             "Scanning for rescuable swaps across EVM chains...",
         connected_wallet_no_swaps:
             "The connected wallet does not contain any rescuable swaps.",
-        rescue_external_swap: "Rescue External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter a {{ asset }} address to receive your refund on:",
@@ -367,6 +366,7 @@ const dict = {
         claim: "Claim",
         claimed: "Swap has been claimed successfully!",
         rescue: "Rescue",
+        rescue_swaps: "Rescue swaps",
         rescue_swap: "Rescue Swap",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Could not get swap {{ id }}",
@@ -522,7 +522,7 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
         rescue_external_select_method: "Select at least one rescue method",
         rescue_external_subtitle:
-            "Choose one or both rescue methods to rescue a swap that is not available in this browser's swap history.",
+            "Use this page to rescue swaps that are missing from your browser history or are stuck before completion.",
         rescue_external_coverage: "Rescuable with the provided rescue methods",
         rescue_external_requires_rescue_key: "Requires rescue key",
         rescue_external_requires_wallet: "Requires wallet",
@@ -670,7 +670,6 @@ const dict = {
             "Scanne nach wiederherstellbaren Swaps auf EVM-Chains...",
         connected_wallet_no_swaps:
             "Das verbundene Rootstock Wallet enthält keine wiederherstellbaren Swaps.",
-        rescue_external_swap: "Externen Swap Retten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -931,6 +930,7 @@ const dict = {
         claim: "Claimen",
         claimed: "Swap wurde erfolgreich geclaimt!",
         rescue: "Retten",
+        rescue_swaps: "Swaps retten",
         rescue_swap: "Swap retten",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Swap {{ id }} konnte nicht abgerufen werden",
@@ -1235,7 +1235,6 @@ const dict = {
             "Escaneando en busca de intercambios rescatables en cadenas EVM...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectado no contiene ningún intercambio rescatable.",
-        rescue_external_swap: "Rescatar Intercambio Externo",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduce la dirección de tu monedero {{ asset }} para reembolsar",
@@ -1493,6 +1492,7 @@ const dict = {
         claim: "Reclamar",
         claimed: "¡El intercambio ha sido reclamado exitosamente!",
         rescue: "Rescatar",
+        rescue_swaps: "Rescatar intercambios",
         rescue_swap: "Rescatar Intercambio",
         claim_swap: "Reclamar: {{ id }}",
         failed_get_swap: "No se pudo obtener el intercambio {{ id }}",
@@ -1798,7 +1798,6 @@ const dict = {
             "Procurando trocas resgatáveis em redes EVM...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém nenhuma troca resgatável.",
-        rescue_external_swap: "Resgatar troca externa",
         history_no_swaps: "Parece que ainda não foram feitas trocas.",
         refund_address_header:
             "Informe um endereço {{ asset }} para receber seu reembolso:",
@@ -2051,6 +2050,7 @@ const dict = {
         claim: "Reivindicar",
         claimed: "Troca reivindicada com sucesso!",
         rescue: "Resgatar",
+        rescue_swaps: "Resgatar trocas",
         rescue_swap: "Resgatar Troca",
         claim_swap: "Reivindicar: {{ id }}",
         failed_get_swap: "Não foi possível obter a troca {{ id }}",
@@ -2343,7 +2343,6 @@ const dict = {
         refund_external_scanning_evm: "正在扫描 EVM 链上的可恢复交换...",
         connected_wallet_no_swaps:
             "已连接的Rootstock钱包中不包含任何可恢复的交换。",
-        rescue_external_swap: "救援外部交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
@@ -2569,6 +2568,7 @@ const dict = {
         claim: "索赔",
         claimed: "交换已成功索赔！",
         rescue: "救援",
+        rescue_swaps: "救援交换",
         rescue_swap: "救援交换",
         claim_swap: "索赔：{{ id }}",
         failed_get_swap: "无法获取交换 {{ id }}",
@@ -2855,7 +2855,6 @@ const dict = {
             "EVM チェーン上の復旧可能なスワップを検索中です...",
         connected_wallet_no_swaps:
             "接続されたRootstockウォレットには、復元可能なスワップは含まれていません。",
-        rescue_external_swap: "外部スワップの復旧",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
@@ -3108,6 +3107,7 @@ const dict = {
         claim: "クレーム",
         claimed: "スワップが正常にクレームされました！",
         rescue: "救済",
+        rescue_swaps: "スワップを救済",
         rescue_swap: "スワップを救済",
         claim_swap: "クレーム：{{ id }}",
         failed_get_swap: "スワップ {{ id }} を取得できませんでした",

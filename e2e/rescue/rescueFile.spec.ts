@@ -122,9 +122,6 @@ test.describe("Rescue file", () => {
         await createAndVerifySwap(page, rescueFileJson);
 
         await page.getByRole("link", { name: "Rescue" }).click();
-        await page
-            .getByRole("button", { name: "Rescue external swap" })
-            .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);
         await page
@@ -176,9 +173,6 @@ test.describe("Rescue file", () => {
             .toBe(true);
 
         await page.getByRole("link", { name: "Rescue" }).click();
-        await page
-            .getByRole("button", { name: "Rescue external swap" })
-            .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);
         await page

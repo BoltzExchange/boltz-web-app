@@ -14,7 +14,7 @@ import { vi } from "vitest";
 
 import { TBTC, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
-import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
+import Rescue from "../../src/pages/Rescue";
 import type * as RescueUtils from "../../src/utils/rescue";
 import { derivePreimageFromRescueKey } from "../../src/utils/rescueFile";
 import { encryptSwapMetadata } from "../../src/utils/swapMetadata";
@@ -145,7 +145,7 @@ vi.mock("../../src/workers/preimageHashes/PreimageHashesWorker", () => ({
 
 const mockGetRestorableSwaps = vi.mocked(getRestorableSwaps);
 
-describe("RescueExternal EVM scan", () => {
+describe("Rescue EVM scan", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.stubEnv("VITE_RSK_LOG_SCAN_ENDPOINT", "http://localhost:8545");
@@ -183,7 +183,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -227,7 +227,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -318,7 +318,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -423,7 +423,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -513,7 +513,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -579,7 +579,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -705,7 +705,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -848,7 +848,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -980,7 +980,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -1024,7 +1024,7 @@ describe("RescueExternal EVM scan", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {

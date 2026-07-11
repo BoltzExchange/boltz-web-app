@@ -232,7 +232,7 @@ const UnifiedRescueList = (props: {
                             }`}
                             onClick={() => props.results.open(result)}>
                             <a
-                                class="btn-small"
+                                class="btn-small swaplist-action"
                                 href="#"
                                 onClick={(e) => e.preventDefault()}>
                                 {resultActionLabel(result.action, t)}

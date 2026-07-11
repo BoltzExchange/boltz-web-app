@@ -83,9 +83,6 @@ const blockChainSwapClaim = async (page: Page) => {
 
 const startExternalRescue = async (page: Page) => {
     await page.goto("/rescue");
-    await page
-        .getByRole("button", { name: dict.en.rescue_external_swap })
-        .click();
 };
 
 // Retry the upload + scan until the swap shows refundable; the scan never refetches on its own.

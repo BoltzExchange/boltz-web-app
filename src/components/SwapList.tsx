@@ -57,7 +57,11 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
 };
 
 // to avoid layout shift when changing pages
-export const getSwapListHeight = (swaps: SomeSwap[], isMobile: boolean) => {
+export const getSwapListHeight = (
+    swaps: SomeSwap[],
+    isMobile: boolean,
+    desktopItemsPerPageOverride?: number,
+) => {
     if (isMobile) {
         return {
             "min-height":
@@ -69,8 +73,8 @@ export const getSwapListHeight = (swaps: SomeSwap[], isMobile: boolean) => {
 
     return {
         "min-height":
-            swaps.length > desktopItemsPerPage
-                ? `${45 * desktopItemsPerPage}px`
+            swaps.length > (desktopItemsPerPageOverride ?? desktopItemsPerPage)
+                ? `${45 * (desktopItemsPerPageOverride ?? desktopItemsPerPage)}px`
                 : "auto",
     };
 };
@@ -86,21 +90,24 @@ const SwapListItem = (props: {
     action: (swap: Swap) => string;
     hideStatusOnMobile?: boolean;
     hideDateOnMobile?: boolean;
+    hideDateLabel?: boolean;
+    disableNoAction?: boolean;
     onClick?: (swap: Swap) => void;
     onDelete?: (e: Event, swapId: string) => void;
 }) => {
     const { t, privacyMode } = useGlobalContext();
 
-    const isDisabled = () =>
+    const hasNoAction = () =>
         props.swap.action !== undefined &&
         RescueNoAction.includes(props.swap.action);
+    const isDisabled = () => (props.disableNoAction ?? true) && hasNoAction();
     const isLink = () => props.onClick === undefined && !isDisabled();
 
     return (
         <Dynamic
             component={isLink() ? A : "div"}
             data-testid={`swaplist-item-${props.swap.id}`}
-            class={`swaplist-item ${isDisabled() ? "disabled" : ""}`}
+            class={`swaplist-item ${hasNoAction() ? "no-action" : ""} ${isDisabled() ? "disabled" : ""}`}
             href={isLink() ? `/swap/${props.swap.id}` : undefined}
             onClick={
                 isLink()
@@ -111,7 +118,7 @@ const SwapListItem = (props: {
                       }
             }>
             <span
-                class={`btn-small ${props.hideStatusOnMobile ? "hidden-mobile" : ""}`}>
+                class={`btn-small swaplist-action ${props.hideStatusOnMobile ? "hidden-mobile" : ""}`}>
                 {props.action(props.swap)}
             </span>
             <SwapIcons swap={props.swap} />
@@ -123,7 +130,7 @@ const SwapListItem = (props: {
             </span>
             <span
                 class={`swaplist-asset-date ${props.hideDateOnMobile ? "hidden-mobile" : ""}`}>
-                {t("created")}:&nbsp;
+                <Show when={!props.hideDateLabel}>{t("created")}:&nbsp;</Show>
                 <span class="monospace">
                     {formatDate(getSwapDate(props.swap))}
                 </span>
@@ -148,6 +155,8 @@ const SwapList = (props: {
     surroundingSeparators?: boolean;
     hideStatusOnMobile?: boolean;
     hideDateOnMobile?: boolean;
+    hideDateLabel?: boolean;
+    disableNoAction?: boolean;
 }) => {
     const { deleteSwap, t, privacyMode } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal<Swap[]>([]);
@@ -184,6 +193,8 @@ const SwapList = (props: {
                             action={props.action}
                             hideStatusOnMobile={props.hideStatusOnMobile}
                             hideDateOnMobile={props.hideDateOnMobile}
+                            hideDateLabel={props.hideDateLabel}
+                            disableNoAction={props.disableNoAction}
                             onClick={props.onClick}
                             onDelete={
                                 props.onDelete ? deleteSwapAction : undefined

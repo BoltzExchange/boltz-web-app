@@ -859,9 +859,6 @@ export const expectAssetPair = async (
 
 export const startExternalRescue = async (page: Page) => {
     await page.goto("/rescue");
-    await page
-        .getByRole("button", { name: dict.en.rescue_external_swap })
-        .click();
 };
 
 export const scanAndSelectExternalResult = async ({

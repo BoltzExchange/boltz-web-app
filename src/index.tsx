@@ -9,7 +9,6 @@ import {
     type RouteSectionProps,
     Router,
     useLocation,
-    useParams,
 } from "@solidjs/router";
 import { setLogger } from "boltz-swaps/logger";
 import log from "loglevel";
@@ -44,7 +43,6 @@ import RefundRescue from "./pages/RefundRescue";
 import Rescue from "./pages/Rescue";
 import RescueEvm from "./pages/RescueEvm";
 import Terms from "./pages/Terms";
-import RescueExternal from "./pages/external-rescue/RescueExternal";
 import Btcpay from "./pages/products/Btcpay";
 import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
@@ -138,32 +136,20 @@ const App = (props: RouteSectionProps) => {
     );
 };
 
-const redirectRefundToRescue = () => {
-    const search = window.location.search;
+const redirectLegacyRescuePaths = () => {
+    const redirect = () => (
+        <Navigate href={`/rescue${window.location.search}`} />
+    );
 
     return (
         <>
-            <Route
-                path="/refund"
-                component={() => <Navigate href={`/rescue${search}`} />}
-            />
-            <Route
-                path="/refund/external"
-                component={() => (
-                    <Navigate href={`/rescue/external${search}`} />
-                )}
-            />
-            <Route
-                path="/refund/external/:type"
-                component={() => {
-                    const params = useParams<{ type: string }>();
-                    return (
-                        <Navigate
-                            href={`/rescue/external/${params.type}${search}`}
-                        />
-                    );
-                }}
-            />
+            <Route path="/refund" component={redirect} />
+            <Route path="/refund/external" component={redirect} />
+            <Route path="/refund/external/:type" component={redirect} />
+            <Route path="/refund/external/:type/:mode" component={redirect} />
+            <Route path="/rescue/external" component={redirect} />
+            <Route path="/rescue/external/:type" component={redirect} />
+            <Route path="/rescue/external/:type/:mode" component={redirect} />
         </>
     );
 };
@@ -192,15 +178,9 @@ const cleanup = render(
             />
             <Route path="/error" component={() => <Error />} />
             <Route path="/rescue" component={Rescue} />
-            <Route path="/rescue/external" component={RescueExternal} />
-            <Route path="/rescue/external/:type" component={RescueExternal} />
-            <Route
-                path="/rescue/external/:type/:mode"
-                component={RescueExternal}
-            />
             <Route path="/rescue/claim/:id" component={ClaimRescue} />
             <Route path="/rescue/refund/:id" component={RefundRescue} />
-            {redirectRefundToRescue()}
+            {redirectLegacyRescuePaths()}
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />

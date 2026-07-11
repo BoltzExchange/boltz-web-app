@@ -92,9 +92,6 @@ test.describe("Asset Rescue", () => {
         await waitForUTXOs(LBTC, address, 1);
 
         await page.getByRole("link", { name: "Rescue" }).click();
-        await page
-            .getByRole("button", { name: dict.en.rescue_external_swap })
-            .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
         await page
             .getByRole("button", { name: dict.en.rescue, exact: true })

@@ -1,152 +1,51 @@
-import { useNavigate } from "@solidjs/router";
-import { type Accessor, Show, createResource, createSignal } from "solid-js";
+import { Show } from "solid-js";
 
-import LoadingSpinner from "../components/LoadingSpinner";
-import Pagination, {
-    desktopItemsPerPage,
-    mobileItemsPerPage,
-} from "../components/Pagination";
-import SwapList, {
-    type Swap,
-    getSwapListHeight,
-    sortSwaps,
-} from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { type tFn, useGlobalContext } from "../context/Global";
-import "../style/tabs.scss";
-import { isMobile } from "../utils/helper";
-import { RescueAction, createRescueList } from "../utils/rescue";
-import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { useGlobalContext } from "../context/Global";
+import "../style/asset.scss";
+import "../style/rescueExternal.scss";
 import ErrorWasm from "./ErrorWasm";
-
-export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
-    switch (swap.action) {
-        case RescueAction.Pending:
-            return t("in_progress");
-        case RescueAction.Claim:
-            return t("claim");
-        case RescueAction.Refund:
-            return t("refund");
-        case RescueAction.Failed:
-            return t("failed");
-        case RescueAction.Successful:
-        default:
-            return t("completed");
-    }
-};
+import { MethodSelection } from "./external-rescue/MethodSelection";
+import { Results } from "./external-rescue/Results";
+import { useExternalRescueSearch } from "./external-rescue/useExternalRescueSearch";
 
 const Rescue = () => {
-    const navigate = useNavigate();
-    const { getSwaps, wasmSupported, t } = useGlobalContext();
-
-    const [currentPage, setCurrentPage] = createSignal(1);
-    const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
-    const [loading, setLoading] = createSignal(false);
-
-    const [allSwaps] = createResource(
-        currentPage,
-        async () => await getSwaps(),
-    );
-
-    const [refundList] = createResource(
-        currentSwaps,
-        async (swaps: SomeSwap[]) => {
-            setLoading(true);
-            return await createRescueList(swaps, true).finally(() =>
-                setLoading(false),
-            );
-        },
-    );
+    const { t, wasmSupported } = useGlobalContext();
+    const { actions, results, selection, state } = useExternalRescueSearch();
 
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
-            <div id="refund">
-                <div class="frame refund" data-testid="refundFrame">
+            <div id="refund" class="rescue-external">
+                <div
+                    class="frame rescue-external-frame"
+                    data-testid="refundFrame">
                     <header>
                         <SettingsCog />
-                        <h2 class="frame-title">{t("rescue_swap")}</h2>
+                        <h2 class="frame-title">{t("rescue_swaps")}</h2>
                     </header>
+
                     <Show
-                        when={(allSwaps()?.length ?? 0) > 0}
+                        when={!selection.showResultsPage()}
                         fallback={
                             <>
-                                <p class="frame-text">
-                                    {t("no_rescuable_swaps")}
-                                </p>
-                                <hr />
+                                <Results state={state} results={results} />
+                                <div class="btns rescue-external-actions">
+                                    <button
+                                        class="btn"
+                                        type="button"
+                                        onClick={actions.backToMethodSelection}>
+                                        {t("back")}
+                                    </button>
+                                </div>
                             </>
                         }>
-                        <Show
-                            when={!loading()}
-                            fallback={
-                                <div
-                                    class="center"
-                                    style={getSwapListHeight(
-                                        allSwaps() ?? [],
-                                        isMobile(),
-                                    )}>
-                                    <LoadingSpinner />
-                                </div>
-                            }>
-                            <div
-                                style={getSwapListHeight(
-                                    allSwaps() ?? [],
-                                    isMobile(),
-                                )}>
-                                <SwapList
-                                    swapsSignal={
-                                        refundList as unknown as Accessor<
-                                            Swap[]
-                                        >
-                                    }
-                                    action={(swap) => {
-                                        return rescueListAction({ t, swap });
-                                    }}
-                                    onClick={(swap) => {
-                                        navigate(`/swap/${swap.id}`, {
-                                            state: {
-                                                timedOutRefundable:
-                                                    swap.timedOut,
-                                                waitForSwapTimeout:
-                                                    swap.waitForSwapTimeout,
-                                            },
-                                        });
-                                    }}
-                                    hideDateOnMobile
-                                />
-                            </div>
-                        </Show>
-                        <Pagination
-                            items={
-                                allSwaps as unknown as Accessor<SubmarineSwap[]>
-                            }
-                            setDisplayedItems={(swaps: SubmarineSwap[]) =>
-                                setCurrentSwaps(swaps)
-                            }
-                            sort={
-                                sortSwaps as unknown as (
-                                    items: SubmarineSwap[],
-                                ) => SubmarineSwap[]
-                            }
-                            totalItems={allSwaps()?.length ?? 0}
-                            currentPage={currentPage}
-                            setCurrentPage={setCurrentPage}
-                            itemsPerPage={
-                                isMobile()
-                                    ? mobileItemsPerPage
-                                    : desktopItemsPerPage
-                            }
+                        <MethodSelection
+                            actions={actions}
+                            selection={selection}
                         />
-                        <hr />
                     </Show>
-                    <h4>{t("cant_find_swap")}</h4>
-                    <p class="frame-text">{t("rescue_external_explainer")}</p>
-                    <button
-                        class="btn"
-                        onClick={() => navigate(`/rescue/external`)}>
-                        {t("rescue_external_swap")}
-                    </button>
+
                     <SettingsMenu />
                 </div>
             </div>

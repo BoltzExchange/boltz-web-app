@@ -31,7 +31,7 @@ import {
 const fileName = "rescue.json";
 
 const navigateToSwapRescue = async (page: Page, swapId: string) => {
-    await page.getByRole("link", { name: "Rescue" }).click();
+    await page.getByRole("link", { name: "History" }).click();
     const swapItem = page.locator(`div[data-testid='swaplist-item-${swapId}']`);
     await expect(page.getByTestId("loading-spinner")).not.toBeVisible({
         timeout: 15_000,
@@ -196,15 +196,12 @@ const executeRefund = async (
 ) => {
     if (isExternalRescue) {
         await page.getByRole("link", { name: "Rescue" }).click();
-        await page
-            .getByRole("button", { name: "Rescue external swap" })
-            .click();
         await page.getByTestId("refundUpload").setInputFiles(fileName);
         await page
             .getByRole("button", { name: dict.en.rescue, exact: true })
             .click();
     } else {
-        await page.getByRole("link", { name: "Rescue" }).click();
+        await page.getByRole("link", { name: "History" }).click();
         await expect(page.getByTestId("loading-spinner")).not.toBeVisible({
             timeout: 15_000,
         });
