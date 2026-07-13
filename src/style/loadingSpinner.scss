@@ -34,6 +34,19 @@
     }
 }
 
+.inline-spinner {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.rescue-evm-refund-amount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    margin: 1em 0;
+}
+
 .restore-loading-spinner {
     margin-top: 0;
 }

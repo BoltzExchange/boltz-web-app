@@ -159,7 +159,7 @@ const getPostBridgeQuoteOptions = async (
         .buildQuoteOptions(bridge.destinationAsset, destination, getGasToken);
 
 const getAcceptedQuoteAmount = async (
-    amount: number,
+    amount: number | bigint,
     claimAsset: string,
     hop: EncodedHop,
     quote: ClaimQuote,
@@ -267,7 +267,7 @@ const claimErc20ViaRouter = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
-    amount: number,
+    amount: number | bigint,
     refundAddress: string,
     timeoutBlockHeight: number,
     destination: string,
@@ -332,7 +332,7 @@ const claimErc20ViaRouterBridge = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
-    amount: number,
+    amount: number | bigint,
     refundAddress: string,
     timeoutBlockHeight: number,
     destination: string,
@@ -529,7 +529,7 @@ const getHopRouterClaimExecution = (
 
 const getGasTokenRouterClaimExecution = async (
     asset: string,
-    amount: number,
+    amount: number | bigint,
     destination: string,
 ): Promise<RouterClaimExecution> => {
     const assetAmount = satsToAssetAmount(amount, asset);
@@ -562,12 +562,12 @@ const getGasTokenRouterClaimExecution = async (
     };
 };
 
-const claimHops = async (
+export const claimHops = async (
     hops: EncodedHop[],
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
-    amount: number,
+    amount: number | bigint,
     refundAddress: string,
     timeoutBlockHeight: number,
     destination: string,

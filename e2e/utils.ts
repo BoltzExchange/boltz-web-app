@@ -435,6 +435,18 @@ export const generateInvoiceWithRoutingHint = async (
     return swapRes.invoice as string;
 };
 
+export const getSubmarinePairFees = async (
+    from: string,
+    to: string,
+): Promise<{ percentage: number; minerFees: number }> => {
+    const res = await axios.get(`${config.apiUrl!.normal}/v2/swap/submarine`);
+    const fees = res.data?.[from]?.[to]?.fees;
+    if (fees === undefined) {
+        throw new Error(`no submarine pair fees for ${from} -> ${to}`);
+    }
+    return fees as { percentage: number; minerFees: number };
+};
+
 export const fetchBip21Invoice = async (invoice: string) => {
     const requestContext = await request.newContext();
 

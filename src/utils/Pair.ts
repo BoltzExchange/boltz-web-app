@@ -78,7 +78,7 @@ export const toDexAmount = (
         : satsToAssetAmount(toIntegerAmount(amount), asset);
 
 /** Convert an EVM base unit amount from the DEX API back to internal representation. */
-const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
+export const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
     isRoutedAsset(asset)
         ? BigNumber(amount.toString())
         : BigNumber(assetAmountToSats(amount, asset).toString());

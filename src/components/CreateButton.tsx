@@ -602,7 +602,14 @@ const CreateButton = () => {
                           )
                         : undefined;
 
-                const payload = buildSwapMetadataPayload({ dex, bridge });
+                const payload = buildSwapMetadataPayload({
+                    dex,
+                    bridge,
+                    originalDestination:
+                        dex !== undefined || bridge !== undefined
+                            ? getOriginalDestination()
+                            : undefined,
+                });
                 const mnemonic = rescueFile()?.mnemonic;
                 if (payload === undefined || mnemonic === undefined) {
                     return undefined;
