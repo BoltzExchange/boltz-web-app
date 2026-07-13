@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import type * as BoltzClientModule from "boltz-swaps/client";
 import type * as BoltzContractsModule from "boltz-swaps/evm/contracts";
-import { SwapPosition } from "boltz-swaps/types";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 import { createSignal } from "solid-js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -25,6 +25,12 @@ const getGasAbstractionSigner = vi.fn();
 const fetchDexQuote = vi.fn<(...args: unknown[]) => Promise<ClaimQuote>>();
 const sendPopulatedTransaction =
     vi.fn<(...args: unknown[]) => Promise<string>>();
+const claimAsset =
+    vi.fn<
+        (args: {
+            amount: number;
+        }) => Promise<{ transactionHash: string; receiveAmount: bigint }>
+    >();
 
 vi.mock("../../src/context/Global", () => ({
     useGlobalContext: () => ({
@@ -42,7 +48,12 @@ vi.mock("../../src/context/Pay", () => ({
 }));
 
 vi.mock("../../src/context/Web3", () => ({
-    useWeb3Signer: () => ({ getErc20Swap, signer, getGasAbstractionSigner }),
+    useWeb3Signer: () => ({
+        getEtherSwap: vi.fn(),
+        getErc20Swap,
+        signer,
+        getGasAbstractionSigner,
+    }),
 }));
 
 vi.mock("../../src/hooks/useModifySwap", () => ({
@@ -81,6 +92,7 @@ vi.mock("boltz-swaps/client", async (importOriginal) => ({
 
 vi.mock("../../src/utils/evmTransaction", async (importOriginal) => ({
     ...(await importOriginal<typeof EvmTransactionModule>()),
+    claimAsset: (...args: Parameters<typeof claimAsset>) => claimAsset(...args),
     sendPopulatedTransaction: (...args: unknown[]) =>
         sendPopulatedTransaction(...args),
 }));
@@ -94,7 +106,8 @@ vi.mock("../../src/components/ContractTransaction", () => ({
     default: () => null,
 }));
 
-const { AutoClaimHops } = await import("../../src/status/TransactionConfirmed");
+const { AutoClaimHops, ClaimEvm } =
+    await import("../../src/status/TransactionConfirmed");
 
 const makeSigner = (address: string) =>
     ({
@@ -122,10 +135,9 @@ const dexDetail = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
-const renderAutoClaimHops = () =>
+const renderAutoClaimHops = (dex = dexDetail) =>
     render(() => (
         <AutoClaimHops
-            amount={1_000}
             swapId="swap-1"
             gasAbstraction={GasAbstractionType.Signer}
             preimage="0xpreimage"
@@ -135,7 +147,7 @@ const renderAutoClaimHops = () =>
             refundAddress={signerAddress}
             timeoutBlockHeight={100}
             getGasToken={false}
-            dex={dexDetail}
+            dex={dex}
             autoClaimEnabled={true}
         />
     ));
@@ -149,6 +161,7 @@ describe("AutoClaimHops", () => {
         getSwap.mockResolvedValue({
             id: "swap-1",
             sendAmount: 1_000,
+            claimDetails: { amount: 1_000 },
             dex: dexDetail,
         } as SomeSwap);
         sendPopulatedTransaction.mockResolvedValue("0xclaimtx");
@@ -162,7 +175,7 @@ describe("AutoClaimHops", () => {
         expect(
             await screen.findByText("dex_quote_changed"),
         ).toBeInTheDocument();
-        expect(getSwap).not.toHaveBeenCalled();
+        expect(getSwap).toHaveBeenCalledWith("swap-1");
         expect(sendPopulatedTransaction).not.toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalled();
     });
@@ -195,5 +208,163 @@ describe("AutoClaimHops", () => {
         );
         expect(screen.queryByText("dex_quote_changed")).toBeNull();
         expect(notify).not.toHaveBeenCalled();
+    });
+
+    test("reloads a persisted replacement quote amount instead of quoting a stale zero", async () => {
+        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
+        setSwapSignal({
+            id: "swap-1",
+            claimDetails: { amount: 0 },
+            dex: staleDexDetail,
+        } as SomeSwap);
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            sendAmount: 1_000,
+            claimDetails: { amount: 991 },
+            dex: dexDetail,
+        } as SomeSwap);
+        fetchDexQuote.mockResolvedValue(makeQuote(2_000_000n));
+
+        renderAutoClaimHops(staleDexDetail);
+
+        await waitFor(() => expect(fetchDexQuote).toHaveBeenCalled());
+        expect(fetchDexQuote.mock.calls[0][1]).toBe(991n);
+        await waitFor(() =>
+            expect(sendPopulatedTransaction).toHaveBeenCalledTimes(1),
+        );
+        expect(notify).not.toHaveBeenCalled();
+    });
+
+    test("uses the persisted replacement quote output for the slippage check", async () => {
+        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            sendAmount: 1_000,
+            claimDetails: { amount: 991 },
+            dex: dexDetail,
+        } as SomeSwap);
+        fetchDexQuote.mockResolvedValue(makeQuote(500_000n));
+
+        renderAutoClaimHops(staleDexDetail);
+
+        expect(
+            await screen.findByText("dex_quote_changed"),
+        ).toBeInTheDocument();
+        expect(sendPopulatedTransaction).not.toHaveBeenCalled();
+        expect(notify).not.toHaveBeenCalled();
+    });
+
+    test("fails closed without requesting a DEX quote when persisted amounts are zero", async () => {
+        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            claimDetails: { amount: 0 },
+            dex: staleDexDetail,
+        } as SomeSwap);
+
+        renderAutoClaimHops(staleDexDetail);
+
+        expect(
+            await screen.findByText(/has invalid persisted claim state/),
+        ).toBeInTheDocument();
+        expect(getSwap).toHaveBeenCalledTimes(1);
+        expect(fetchDexQuote).not.toHaveBeenCalled();
+        expect(sendPopulatedTransaction).not.toHaveBeenCalled();
+    });
+});
+
+describe("ClaimEvm", () => {
+    const renderClaimEvm = () =>
+        render(() => (
+            <ClaimEvm
+                swapId="swap-1"
+                gasAbstraction={GasAbstractionType.Signer}
+                preimage="0xpreimage"
+                assetSend="BTC"
+                assetReceive="USDT0"
+                signerAddress={signerAddress}
+                claimAddress={signerAddress}
+                refundAddress={signerAddress}
+                timeoutBlockHeight={100}
+                finalReceive="USDT0"
+                getGasToken={false}
+                autoClaimEnabled={true}
+            />
+        ));
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        setSigner(makeSigner(signerAddress));
+        claimAsset.mockResolvedValue({
+            transactionHash: "0xclaimtx",
+            receiveAmount: 991n,
+        });
+    });
+
+    test("claims a chain swap with the persisted claim amount", async () => {
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Chain,
+            claimDetails: { amount: 991 },
+        } as SomeSwap);
+
+        renderClaimEvm();
+
+        await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
+        expect(getSwap).toHaveBeenCalledWith("swap-1");
+        expect(claimAsset.mock.calls[0][0].amount).toBe(991);
+    });
+
+    test("claims a reverse swap with its persisted onchain amount", async () => {
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Reverse,
+            onchainAmount: 777,
+        } as SomeSwap);
+
+        renderClaimEvm();
+
+        await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
+        expect(claimAsset.mock.calls[0][0].amount).toBe(777);
+    });
+
+    test("fails closed when the persisted claim amount is still zero", async () => {
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Chain,
+            claimDetails: { amount: 0 },
+        } as SomeSwap);
+
+        renderClaimEvm();
+
+        expect(
+            await screen.findByText(/has invalid persisted claim state/),
+        ).toBeInTheDocument();
+        expect(getSwap).toHaveBeenCalledTimes(1);
+        expect(claimAsset).not.toHaveBeenCalled();
+    });
+
+    test("retries a failed auto claim without a reload", async () => {
+        getSwap
+            .mockResolvedValueOnce({
+                id: "swap-1",
+                type: SwapType.Chain,
+                claimDetails: { amount: 0 },
+            } as SomeSwap)
+            .mockResolvedValue({
+                id: "swap-1",
+                type: SwapType.Chain,
+                claimDetails: { amount: 991 },
+            } as SomeSwap);
+
+        renderClaimEvm();
+
+        fireEvent.click(await screen.findByText("retry"));
+
+        await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
+        expect(claimAsset.mock.calls[0][0].amount).toBe(991);
+        expect(
+            screen.queryByText(/has invalid persisted claim state/),
+        ).toBeNull();
     });
 });

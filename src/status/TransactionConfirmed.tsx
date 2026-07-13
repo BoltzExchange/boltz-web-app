@@ -57,6 +57,10 @@ import { useModifySwap } from "../hooks/useModifySwap";
 import type { DictKey } from "../i18n/i18n";
 import type { EncodedHop } from "../utils/Pair";
 import {
+    isPositivePersistedAmount,
+    withChainSwapQuoteLock,
+} from "../utils/chainSwapQuote";
+import {
     formatAmount,
     formatAssetAmountForLog,
     getDecimals,
@@ -93,6 +97,13 @@ type RouterClaimExecution = {
     finalToken: string;
     minAmountOut: bigint;
     quotes: RouterExecutionQuote[];
+};
+
+type FreshClaimQuote = {
+    quote: ClaimQuote;
+    amount: bigint;
+    claimAmount: number;
+    expectedAmount: number | string;
 };
 
 export const normalizePersistedReceiveAmount = (
@@ -656,7 +667,6 @@ const Amount = (props: {
 };
 
 export const AutoClaimHops = (props: {
-    amount: number;
     swapId: string;
     gasAbstraction: GasAbstractionType;
     preimage: string;
@@ -678,23 +688,21 @@ export const AutoClaimHops = (props: {
     const [error, setError] = createSignal<string | undefined>(undefined);
     const [loading, setLoading] = createSignal(false);
     const [freshQuote, setFreshQuote] = createSignal<
-        | {
-              quote: ClaimQuote;
-              amount: bigint;
-          }
-        | undefined
+        FreshClaimQuote | undefined
     >(undefined);
     const [quoteAccepted, setQuoteAccepted] = createSignal(false);
 
-    const quoteThreshold = () =>
+    const quoteThreshold = (expectedAmount: number | string) =>
         calculateAmountOutMin(
-            parsePersistedQuoteAmount(props.dex.quoteAmount),
+            parsePersistedQuoteAmount(expectedAmount),
             slippage(),
         );
     const claimAsset = () =>
         getClaimAssetForRoute(props.assetReceive, props.dex);
-    const isOutsideSlippage = (quoteAmount: bigint) =>
-        quoteAmount < quoteThreshold();
+    const isOutsideSlippage = (
+        quoteAmount: bigint,
+        expectedAmount: number | string,
+    ) => quoteAmount < quoteThreshold(expectedAmount);
 
     const needsApproval = () => {
         const quote = freshQuote();
@@ -702,13 +710,10 @@ export const AutoClaimHops = (props: {
             return false;
         }
 
-        return isOutsideSlippage(quote.amount);
+        return isOutsideSlippage(quote.amount, quote.expectedAmount);
     };
 
-    const executeClaim = async (quote: {
-        quote: ClaimQuote;
-        amount: bigint;
-    }) => {
+    const executeClaim = async (quote: FreshClaimQuote) => {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
@@ -756,7 +761,7 @@ export const AutoClaimHops = (props: {
                         props.gasAbstraction,
                         claimAsset(),
                         props.preimage,
-                        props.amount,
+                        quote.claimAmount,
                         props.refundAddress!,
                         props.timeoutBlockHeight,
                         props.signerAddress!,
@@ -800,9 +805,29 @@ export const AutoClaimHops = (props: {
                 }
 
                 try {
+                    const swapId = props.swapId;
+                    const currentSwap = await withChainSwapQuoteLock(
+                        swapId,
+                        () => getSwap<ChainSwap>(swapId),
+                    );
+                    if (currentSwap === null) {
+                        throw new Error(
+                            `swap ${swapId} is missing from storage`,
+                        );
+                    }
+                    const claimAmount = currentSwap.claimDetails.amount;
+                    const expectedAmount = currentSwap.dex?.quoteAmount;
+                    if (
+                        !isPositivePersistedAmount(claimAmount) ||
+                        !isPositivePersistedAmount(expectedAmount)
+                    ) {
+                        throw new Error(
+                            `swap ${swapId} has invalid persisted claim state`,
+                        );
+                    }
                     const hop = getSingleClaimHop(props.dex.hops);
                     const amountIn = satsToAssetAmount(
-                        props.amount,
+                        claimAmount,
                         claimAsset(),
                     );
                     const useDexGasToken =
@@ -821,7 +846,7 @@ export const AutoClaimHops = (props: {
                         return;
                     }
                     const quoteAmount = await getAcceptedQuoteAmount(
-                        props.amount,
+                        claimAmount,
                         claimAsset(),
                         hop,
                         quote,
@@ -829,14 +854,15 @@ export const AutoClaimHops = (props: {
                         props.getGasToken === true,
                         props.bridge,
                     );
-                    const freshQuoteData = {
+                    const freshQuoteData: FreshClaimQuote = {
                         quote,
                         amount: quoteAmount,
+                        claimAmount,
+                        expectedAmount,
                     };
                     setFreshQuote(freshQuoteData);
 
-                    if (!isOutsideSlippage(quoteAmount)) {
-                        // Within slippage tolerance, auto-claim
+                    if (!isOutsideSlippage(quoteAmount, expectedAmount)) {
                         await withAutoClaimLock(props.swapId, async () => {
                             await untrack(() => executeClaim(freshQuoteData));
                         });
@@ -850,10 +876,10 @@ export const AutoClaimHops = (props: {
                                 quoteAmount,
                                 finalReceiveAsset,
                             )} is below threshold ${formatAssetAmountForLog(
-                                quoteThreshold(),
+                                quoteThreshold(expectedAmount),
                                 finalReceiveAsset,
                             )} (expected ${formatAssetAmountForLog(
-                                props.dex.quoteAmount,
+                                expectedAmount,
                                 finalReceiveAsset,
                             )}, slippage ${slippage()})`,
                         );
@@ -912,7 +938,7 @@ export const AutoClaimHops = (props: {
                 <div class="quote">
                     <Amount
                         label={"sent"}
-                        amount={props.amount}
+                        amount={freshQuote()!.claimAmount}
                         asset={props.assetSend}
                     />
                     <ImArrowDown size={15} style={{ opacity: 0.5 }} />
@@ -948,8 +974,7 @@ export const AutoClaimHops = (props: {
 };
 
 // TODO: use bignumber for amounts
-const ClaimEvm = (props: {
-    amount: number;
+export const ClaimEvm = (props: {
     swapId: string;
     gasAbstraction: GasAbstractionType;
     preimage: string;
@@ -968,8 +993,10 @@ const ClaimEvm = (props: {
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
         useWeb3Signer();
-    const { t, slippage } = useGlobalContext();
+    const { t, slippage, getSwap } = useGlobalContext();
     const modifySwap = useModifySwap();
+
+    const [error, setError] = createSignal<string | undefined>(undefined);
 
     const claimableWithoutInteraction = () =>
         props.gasAbstraction === GasAbstractionType.Signer;
@@ -984,6 +1011,21 @@ const ClaimEvm = (props: {
         }
         if (props.refundAddress === undefined) {
             throw new Error("missing refund address for claim");
+        }
+
+        const swapId = props.swapId;
+        const currentSwap = await withChainSwapQuoteLock(swapId, () =>
+            getSwap(swapId),
+        );
+        if (currentSwap === null) {
+            throw new Error(`swap ${swapId} is missing from storage`);
+        }
+        const claimAmount =
+            currentSwap.type === SwapType.Chain
+                ? (currentSwap as ChainSwap).claimDetails.amount
+                : (currentSwap as ReverseSwap).onchainAmount;
+        if (!isPositivePersistedAmount(claimAmount)) {
+            throw new Error(`swap ${swapId} has invalid persisted claim state`);
         }
 
         let result: ClaimResult;
@@ -1003,7 +1045,7 @@ const ClaimEvm = (props: {
             }
             const execution = await getGasTokenRouterClaimExecution(
                 props.assetReceive,
-                props.amount,
+                claimAmount,
                 props.signerAddress,
             );
             result = {
@@ -1011,7 +1053,7 @@ const ClaimEvm = (props: {
                     props.gasAbstraction,
                     props.assetReceive,
                     props.preimage,
-                    props.amount,
+                    claimAmount,
                     props.refundAddress,
                     props.timeoutBlockHeight,
                     props.signerAddress,
@@ -1031,7 +1073,7 @@ const ClaimEvm = (props: {
                 gasAbstraction: props.gasAbstraction,
                 asset: props.assetReceive,
                 preimage: props.preimage,
-                amount: props.amount,
+                amount: claimAmount,
                 claimAddress: getAddress(props.claimAddress),
                 refundAddress: getAddress(props.refundAddress),
                 timeoutBlockHeight: props.timeoutBlockHeight,
@@ -1058,14 +1100,24 @@ const ClaimEvm = (props: {
         });
     };
 
+    const runAutoClaim = async () => {
+        setError(undefined);
+        try {
+            await withAutoClaimLock(props.swapId, async () => {
+                await untrack(() => claimWithoutHops());
+            });
+        } catch (e) {
+            log.error("Auto claim failed", e);
+            setError(formatError(e));
+        }
+    };
+
     createEffect(
         on(
             () => props.autoClaimEnabled,
             async (autoClaimEnabled) => {
                 if (autoClaimEnabled && claimableWithoutInteraction()) {
-                    await withAutoClaimLock(props.swapId, async () => {
-                        await untrack(() => claimWithoutHops());
-                    });
+                    await runAutoClaim();
                 }
             },
         ),
@@ -1084,7 +1136,6 @@ const ClaimEvm = (props: {
                     gasAbstraction={props.gasAbstraction}
                     preimage={props.preimage}
                     signerAddress={props.signerAddress}
-                    amount={props.amount}
                     refundAddress={props.refundAddress}
                     timeoutBlockHeight={props.timeoutBlockHeight}
                     assetSend={props.assetSend}
@@ -1096,22 +1147,33 @@ const ClaimEvm = (props: {
                 />
             }>
             <Show
-                when={!claimableWithoutInteraction()}
-                fallback={<LoadingSpinner />}>
-                <ContractTransaction
-                    asset={props.assetReceive}
-                    onClick={claimWithoutHops}
-                    address={{
-                        address: props.signerAddress!,
-                        derivationPath: props.derivationPath,
-                    }}
-                    buttonText={t("continue")}
-                    promptText={t("transaction_prompt_receive", {
-                        button: t("continue"),
-                        asset: props.finalReceive,
-                    })}
-                    waitingText={t("tx_ready_to_claim")}
-                />
+                when={!error()}
+                fallback={
+                    <div class="error-container">
+                        <p>{error()}</p>
+                        <button class="btn btn-primary" onClick={runAutoClaim}>
+                            {t("retry")}
+                        </button>
+                    </div>
+                }>
+                <Show
+                    when={!claimableWithoutInteraction()}
+                    fallback={<LoadingSpinner />}>
+                    <ContractTransaction
+                        asset={props.assetReceive}
+                        onClick={claimWithoutHops}
+                        address={{
+                            address: props.signerAddress!,
+                            derivationPath: props.derivationPath,
+                        }}
+                        buttonText={t("continue")}
+                        promptText={t("transaction_prompt_receive", {
+                            button: t("continue"),
+                            asset: props.finalReceive,
+                        })}
+                        waitingText={t("tx_ready_to_claim")}
+                    />
+                </Show>
             </Show>
         </Show>
     );
@@ -1152,7 +1214,6 @@ const TransactionConfirmed = () => {
                         signerAddress={
                             chain.originalDestination || chain.signer
                         }
-                        amount={chain.claimDetails.amount!}
                         derivationPath={chain.derivationPath}
                         claimAddress={chain.claimAddress}
                         refundAddress={chain.claimDetails.refundAddress}
@@ -1175,7 +1236,6 @@ const TransactionConfirmed = () => {
                     swapId={reverse.id}
                     gasAbstraction={getClaimGasAbstraction(reverse)}
                     preimage={reverse.preimage}
-                    amount={reverse.onchainAmount}
                     signerAddress={
                         reverse.originalDestination || reverse.signer
                     }

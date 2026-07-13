@@ -1,11 +1,12 @@
 import {
+    type ChainPairTypeTaproot,
     type LockupTransaction,
     getChainSwapTransactions,
     getReverseTransaction,
     postChainSwapDetails,
 } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
-import { getTransaction } from "boltz-swaps/utxo";
+import { getOutputAmount, getTransaction } from "boltz-swaps/utxo";
 import log from "loglevel";
 import {
     type Accessor,
@@ -24,13 +25,18 @@ import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import { createSwapModifier } from "../hooks/useModifySwap";
 import { getTransactionOutSpend } from "../utils/blockchain";
 import {
+    isPositivePersistedAmount,
+    withChainSwapQuoteLock,
+} from "../utils/chainSwapQuote";
+import {
     claim,
     createSubmarineSignature,
     createTheirPartialChainSwapSignature,
     findSwapOutputVout,
 } from "../utils/claim";
+import { decodeAddress, findOutputByScript } from "../utils/compat";
 import { formatError } from "../utils/errors";
-import { getPair } from "../utils/helper";
+import { getPair, parseBlindingKey } from "../utils/helper";
 import { isSwapClaimable } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -167,6 +173,48 @@ const PayProvider = (props: { children: JSX.Element }) => {
         }
     };
 
+    const recoverChainSwapAmounts = async (
+        swap: ChainSwap,
+        lockupTxHex: string,
+    ): Promise<ChainSwap | null> => {
+        const claimFee = getPair<ChainPairTypeTaproot>(
+            pairs(),
+            SwapType.Chain,
+            swap.assetSend,
+            swap.assetReceive,
+        )?.fees.minerFees.user.claim;
+        if (claimFee === undefined) {
+            return null;
+        }
+
+        const output = findOutputByScript(
+            swap.assetReceive,
+            getTransaction(swap.assetReceive).fromHex(lockupTxHex),
+            decodeAddress(swap.assetReceive, swap.claimDetails.lockupAddress)
+                .script,
+        );
+        if (output === undefined) {
+            return null;
+        }
+
+        const lockupAmount = await getOutputAmount(swap.assetReceive, {
+            ...output,
+            blindingPrivateKey: parseBlindingKey(swap, false),
+        } as never);
+        const receiveAmount = lockupAmount - (claimFee + 1);
+        if (receiveAmount <= 0) {
+            return null;
+        }
+
+        log.info(
+            `Recovered receive amount ${receiveAmount} for swap ${swap.id} from its server lockup`,
+        );
+        return await modifySwap<ChainSwap>(swap.id, (s) => {
+            s.receiveAmount = receiveAmount;
+            s.claimDetails.amount = lockupAmount;
+        });
+    };
+
     const [claimingSwaps, setClaimingSwaps] = createSignal(new Set<string>(), {
         equals: false,
     });
@@ -253,10 +301,36 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     return swaps;
                 });
 
+                const transaction = data.transaction as { hex: string };
+                let claimableSwap = await withChainSwapQuoteLock(swapId, () =>
+                    getSwap<ReverseSwap | ChainSwap>(swapId),
+                );
+                if (
+                    claimableSwap === null ||
+                    claimableSwap.claimTx !== undefined
+                ) {
+                    return;
+                }
+                if (!isPositivePersistedAmount(claimableSwap.receiveAmount)) {
+                    claimableSwap =
+                        claimableSwap.type !== SwapType.Chain
+                            ? null
+                            : await recoverChainSwapAmounts(
+                                  claimableSwap as ChainSwap,
+                                  transaction.hex,
+                              );
+                    if (claimableSwap === null) {
+                        log.warn(
+                            `Deferring claim of swap ${swapId}: receive amount is not positive yet`,
+                        );
+                        return;
+                    }
+                }
+
                 const res = await claim(
                     deriveKey,
-                    currentSwap as ReverseSwap | ChainSwap,
-                    data.transaction as { hex: string },
+                    claimableSwap,
+                    transaction,
                     true,
                 );
                 if (res === undefined) {
