@@ -500,4 +500,28 @@ describe("RescueEvm", () => {
         expect(result?.asset).toBe(TBTC);
         expect(result?.amount.toString()).toBe("100");
     });
+
+    test("titles a restored swap with its swap id", async () => {
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        await waitFor(() => {
+            expect(document.querySelector(".frame-title")).toHaveTextContent(
+                "restored-dex",
+            );
+        });
+    });
+
+    test("titles an unmatched lockup with the cropped transaction hash", async () => {
+        rescueSwaps.current = [
+            { ...logData, action: RskRescueMode.Claim, preimage },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        await waitFor(() => {
+            expect(document.querySelector(".frame-title")).toHaveTextContent(
+                "0xaaa...aaaaa",
+            );
+        });
+    });
 });

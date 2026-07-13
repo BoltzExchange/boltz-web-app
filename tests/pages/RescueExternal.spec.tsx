@@ -1,7 +1,12 @@
 import { render, screen, waitFor, within } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
-import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
+import {
+    BridgeKind,
+    RskRescueMode,
+    SwapPosition,
+    SwapType,
+} from "boltz-swaps/types";
 import { vi } from "vitest";
 
 import { LN, WBTC } from "../../src/consts/Assets";
@@ -661,5 +666,101 @@ describe("RescueExternal", () => {
         expect(assets[0]).toHaveAttribute("data-network", "solana");
         expect(assets[1]).toHaveAttribute("data-asset", "LBTC");
         expect(row.querySelector('[data-asset="TBTC"]')).toBeNull();
+    });
+
+    test("should show the restored swap id for enriched EVM rows and the tx hash otherwise", () => {
+        const enrichedTxHash = `0x${"a".repeat(64)}`;
+        const scannedTxHash = `0x${"b".repeat(64)}`;
+        const enriched = {
+            source: RescueResultSource.Evm,
+            key: `evm:claim:TBTC:${enrichedTxHash}`,
+            action: RescueAction.Claim,
+            evmAction: RskRescueMode.Claim,
+            actionable: true,
+            sortValue: 100,
+            swap: {
+                action: RskRescueMode.Claim,
+                asset: "TBTC",
+                blockNumber: 100,
+                transactionHash: enrichedTxHash,
+                restoredSwap: {
+                    id: "restored-evm-swap",
+                    type: SwapType.Reverse,
+                    status: "transaction.confirmed",
+                    createdAt: 1,
+                    from: "L-BTC",
+                    to: "TBTC",
+                    preimageHash: "bb",
+                },
+            },
+        };
+        const scanned = {
+            source: RescueResultSource.Evm,
+            key: `evm:refund:TBTC:${scannedTxHash}`,
+            action: RescueAction.Refund,
+            evmAction: RskRescueMode.Refund,
+            actionable: true,
+            sortValue: 99,
+            swap: {
+                action: RskRescueMode.Refund,
+                asset: "TBTC",
+                blockNumber: 99,
+                transactionHash: scannedTxHash,
+            },
+        };
+        const results = [enriched, scanned];
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Results
+                        state={
+                            {
+                                btc: {
+                                    loadedSwaps: 0,
+                                    searchState: BtcSearchState.Ready,
+                                    listLoading: false,
+                                },
+                                evm: {
+                                    unmatchedRefundSwaps: 0,
+                                    unmatchedClaimSwaps: 0,
+                                },
+                                search: {
+                                    hasSearched: true,
+                                    isSearching: false,
+                                },
+                            } as any
+                        }
+                        results={
+                            {
+                                all: () => results,
+                                current: () => results,
+                                currentEvmProgress: () => undefined,
+                                currentPage: () => 1,
+                                displaySlotCount: () => results.length,
+                                hasAny: () => true,
+                                open: vi.fn(),
+                                setCurrent: vi.fn(),
+                                setCurrentPage: vi.fn(),
+                            } as any
+                        }
+                    />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const enrichedRow = screen.getByTestId(`swaplist-item-${enriched.key}`);
+        expect(
+            within(enrichedRow).getByText("restored-evm-swap"),
+        ).toBeInTheDocument();
+
+        const scannedRow = screen.getByTestId(`swaplist-item-${scanned.key}`);
+        expect(
+            within(scannedRow).getByText("0xbbb...bbbbb"),
+        ).toBeInTheDocument();
     });
 });

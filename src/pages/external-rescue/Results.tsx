@@ -152,7 +152,10 @@ const formatResultDetail = (
 const resultId = (result: UnifiedRescueResult) => {
     switch (result.source) {
         case RescueResultSource.Evm:
-            return cropString(result.swap.transactionHash, 15, 5);
+            return (
+                result.swap.restoredSwap?.id ??
+                cropString(result.swap.transactionHash, 15, 5)
+            );
         case RescueResultSource.Sweep:
             return cropString(result.swap.signer.address, 15, 5);
         case RescueResultSource.Restore:

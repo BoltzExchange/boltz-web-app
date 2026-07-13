@@ -642,7 +642,9 @@ const RescueEvm = () => {
                     <SettingsCog />
                     <SettingsMenu />
                     <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
-                        {pageTitle()} {cropString(params.txHash, 15, 5)}
+                        {pageTitle()}{" "}
+                        {contextData()?.restoredSwap?.id ??
+                            cropString(params.txHash, 15, 5)}
                     </h2>
                     <hr />
                     <Switch>
