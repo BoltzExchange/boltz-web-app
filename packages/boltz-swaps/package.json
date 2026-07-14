@@ -180,6 +180,11 @@
             "types": "./dist/tron/index.d.ts",
             "default": "./dist/tron/index.js"
         },
+        "./storage": {
+            "source": "./src/storage/index.ts",
+            "types": "./dist/storage/index.d.ts",
+            "default": "./dist/storage/index.js"
+        },
         "./lazy": {
             "source": "./src/lazy.ts",
             "types": "./dist/lazy.d.ts",
