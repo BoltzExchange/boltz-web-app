@@ -109,6 +109,28 @@ vi.mock("../../src/components/ContractTransaction", () => ({
 const { AutoClaimHops, ClaimEvm } =
     await import("../../src/status/TransactionConfirmed");
 
+beforeEach(() => {
+    Object.defineProperty(navigator, "locks", {
+        configurable: true,
+        value: {
+            request: vi.fn(
+                async (
+                    name: string,
+                    optionsOrCallback:
+                        LockOptions | ((lock: Lock | null) => Promise<unknown>),
+                    callback?: (lock: Lock | null) => Promise<unknown>,
+                ) => {
+                    const run =
+                        typeof optionsOrCallback === "function"
+                            ? optionsOrCallback
+                            : callback!;
+                    return await run({ name, mode: "exclusive" } as Lock);
+                },
+            ),
+        },
+    });
+});
+
 const makeSigner = (address: string) =>
     ({
         address,
@@ -164,6 +186,7 @@ describe("AutoClaimHops", () => {
         getGasAbstractionSigner.mockReturnValue(makeSigner(signerAddress));
         getSwap.mockResolvedValue({
             id: "swap-1",
+            type: SwapType.Chain,
             sendAmount: 1_000,
             claimDetails: { amount: 991 },
             dex: dexDetail,
@@ -215,9 +238,28 @@ describe("AutoClaimHops", () => {
         expect(notify).not.toHaveBeenCalled();
     });
 
+    test("auto-claims a routed reverse swap with its persisted onchain amount", async () => {
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Reverse,
+            onchainAmount: 777,
+            dex: dexDetail,
+        } as SomeSwap);
+        fetchDexQuote.mockResolvedValue(makeQuote(2_000_000n));
+
+        renderAutoClaimHops(staleDexDetail);
+
+        await waitFor(() => expect(fetchDexQuote).toHaveBeenCalled());
+        expect(fetchDexQuote.mock.calls[0][1]).toBe(777n);
+        await waitFor(() =>
+            expect(sendPopulatedTransaction).toHaveBeenCalledTimes(1),
+        );
+    });
+
     test("fails closed without requesting a DEX quote when persisted amounts are zero", async () => {
         getSwap.mockResolvedValue({
             id: "swap-1",
+            type: SwapType.Chain,
             claimDetails: { amount: 0 },
             dex: staleDexDetail,
         } as SomeSwap);
@@ -273,6 +315,20 @@ describe("ClaimEvm", () => {
         await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
         expect(getSwap).toHaveBeenCalledWith("swap-1");
         expect(claimAsset.mock.calls[0][0].amount).toBe(777);
+    });
+
+    test("does not submit another claim when one is already persisted", async () => {
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Chain,
+            claimTx: "0xclaimed",
+            claimDetails: { amount: 991 },
+        } as SomeSwap);
+
+        renderClaimEvm();
+
+        await waitFor(() => expect(getSwap).toHaveBeenCalledWith("swap-1"));
+        expect(claimAsset).not.toHaveBeenCalled();
     });
 
     test("fails closed on a zero persisted amount and claims on retry once it is positive", async () => {

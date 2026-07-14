@@ -12,6 +12,7 @@ const getSwaps = vi.fn((): Promise<SomeSwap[]> => Promise.resolve([]));
 const notify = vi.fn();
 const deriveKey = vi.fn();
 const modifySwapStorage = vi.fn();
+const fetchPairs = vi.fn();
 const pairs = vi.fn();
 const claim =
     vi.fn<(...args: unknown[]) => Promise<{ id: string; claimTx: string }>>();
@@ -24,6 +25,7 @@ vi.mock("../../src/context/Global", () => ({
         getSwaps,
         privacyMode: () => false,
         notify,
+        fetchPairs,
         pairs,
         modifySwapStorage,
         zeroConf: () => false,
@@ -35,6 +37,22 @@ vi.mock("../../src/utils/claim", () => ({
     createSubmarineSignature: vi.fn(),
     createTheirPartialChainSwapSignature: vi.fn(),
     findSwapOutputVout: vi.fn(),
+}));
+
+vi.mock("../../src/utils/compat", () => ({
+    decodeAddress: () => ({
+        script: Buffer.from(
+            "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+            "hex",
+        ),
+    }),
+    findOutputByScript: () => ({
+        amount: 5_000,
+        script: Buffer.from(
+            "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+            "hex",
+        ),
+    }),
 }));
 
 const { PayProvider, usePayContext } = await import("../../src/context/Pay");
@@ -54,6 +72,17 @@ const claimData = {
     transaction: { hex: "0xlockup" },
 };
 
+const lockQueues = new Map<string, Promise<unknown>>();
+const requestLock = <T,>(name: string, callback: () => Promise<T>) => {
+    const previous = lockQueues.get(name) ?? Promise.resolve();
+    const current = previous.then(callback);
+    lockQueues.set(
+        name,
+        current.catch(() => undefined),
+    );
+    return current;
+};
+
 const renderPayContext = () => {
     let context!: PayContextType;
     const Child = () => {
@@ -71,6 +100,11 @@ const renderPayContext = () => {
 describe("PayProvider claimSwap", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        lockQueues.clear();
+        Object.defineProperty(navigator, "locks", {
+            configurable: true,
+            value: { request: vi.fn(requestLock) },
+        });
         pairs.mockReturnValue(undefined);
         claim.mockResolvedValue({ id: "swap-1", claimTx: "0xclaimed" });
         modifySwapStorage.mockImplementation(
@@ -82,7 +116,7 @@ describe("PayProvider claimSwap", () => {
         );
     });
 
-    test("defers a zero-amount claim until it can recover the amount from the server lockup", async () => {
+    test("fetches missing pair data and recovers a zero-amount claim from the server lockup", async () => {
         // The tx pays 5_000 sats to the address
         const lockupAddress = "bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080";
         const serverLockupHex =
@@ -107,27 +141,27 @@ describe("PayProvider claimSwap", () => {
             ...claimData,
             transaction: { hex: serverLockupHex },
         };
-
-        const context = renderPayContext();
-
-        // Without the pair fees the amount cannot be recovered
-        await context.claimSwap("swap-1", lostClaimData);
-        expect(claim).not.toHaveBeenCalled();
-        expect(notify).not.toHaveBeenCalled();
-
-        pairs.mockReturnValue({
+        const pairData = {
             [SwapType.Chain]: {
                 "L-BTC": {
                     BTC: { fees: { minerFees: { user: { claim: 100 } } } },
                 },
             },
-        });
+        };
+        pairs.mockImplementation(() =>
+            fetchPairs.mock.calls.length === 0 ? undefined : pairData,
+        );
+        fetchPairs.mockResolvedValue(undefined);
+
+        const context = renderPayContext();
         await context.claimSwap("swap-1", lostClaimData);
 
+        expect(fetchPairs).toHaveBeenCalledTimes(1);
         expect(claim).toHaveBeenCalledTimes(1);
         const claimedSwap = claim.mock.calls[0][1] as ChainSwap;
         expect(claimedSwap.receiveAmount).toBe(5_000 - 101);
         expect(claimedSwap.claimDetails.amount).toBe(5_000);
+        expect(notify).toHaveBeenCalledWith("success", "swap_completed");
     });
 
     test("waits for an in-flight replacement quote acceptance before claiming", async () => {
@@ -157,5 +191,37 @@ describe("PayProvider claimSwap", () => {
         expect(claim).toHaveBeenCalledTimes(1);
         expect((claim.mock.calls[0][1] as ChainSwap).receiveAmount).toBe(991);
         expect(notify).toHaveBeenCalledWith("success", "swap_completed");
+    });
+
+    test("keeps replacement quote acceptance blocked until the claim is persisted", async () => {
+        getSwap.mockResolvedValue(freshSwap);
+
+        let finishClaim!: () => void;
+        const claimPending = new Promise<void>((resolve) => {
+            finishClaim = resolve;
+        });
+        claim.mockImplementation(async () => {
+            await claimPending;
+            return { id: "swap-1", claimTx: "0xclaimed" };
+        });
+
+        const context = renderPayContext();
+        const claiming = context.claimSwap("swap-1", claimData);
+        await vi.waitFor(() => expect(claim).toHaveBeenCalledTimes(1));
+
+        const acceptance = vi.fn();
+        const accepting = withChainSwapQuoteLock("swap-1", () => {
+            acceptance();
+            return Promise.resolve();
+        });
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(acceptance).not.toHaveBeenCalled();
+
+        finishClaim();
+        await claiming;
+        await accepting;
+
+        expect(modifySwapStorage).toHaveBeenCalled();
+        expect(acceptance).toHaveBeenCalledTimes(1);
     });
 });

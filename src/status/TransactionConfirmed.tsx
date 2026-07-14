@@ -723,6 +723,12 @@ export const AutoClaimHops = (props: {
                 );
                 return;
             }
+            if (currentSwap.claimTx !== undefined) {
+                log.info(
+                    `Skipping auto claim hops for already claimed swap ${props.swapId}`,
+                );
+                return;
+            }
             if (currentSwap.dex === undefined) {
                 log.warn(
                     `Skipping auto claim hops without DEX data for ${props.swapId}`,
@@ -796,99 +802,102 @@ export const AutoClaimHops = (props: {
         }
     };
 
+    const runAutoClaim = async () => {
+        setError(undefined);
+        try {
+            const swapId = props.swapId;
+            // eslint-disable-next-line solid/reactivity
+            await withChainSwapQuoteLock(swapId, async () => {
+                const currentSwap = await getSwap<ChainSwap | ReverseSwap>(
+                    swapId,
+                );
+                if (currentSwap === null) {
+                    throw new Error(`swap ${swapId} is missing from storage`);
+                }
+                const claimAmount =
+                    currentSwap.type === SwapType.Chain
+                        ? currentSwap.claimDetails.amount
+                        : currentSwap.onchainAmount;
+                const expectedAmount = currentSwap.dex?.quoteAmount;
+                if (
+                    !isPositivePersistedAmount(claimAmount) ||
+                    !isPositivePersistedAmount(expectedAmount)
+                ) {
+                    throw new Error(
+                        `swap ${swapId} has invalid persisted claim state`,
+                    );
+                }
+                const hop = getSingleClaimHop(props.dex.hops);
+                const amountIn = satsToAssetAmount(claimAmount, claimAsset());
+                const useDexGasToken =
+                    props.bridge === undefined &&
+                    props.getGasToken === true &&
+                    gasTopUpSupported(claimAsset());
+                const quote = await fetchDexQuote(
+                    hop.dexDetails,
+                    amountIn,
+                    useDexGasToken,
+                    useDexGasToken
+                        ? await getGasTopUpNativeAmount(claimAsset())
+                        : undefined,
+                );
+                if (props.signerAddress === undefined) {
+                    return;
+                }
+                const quoteAmount = await getAcceptedQuoteAmount(
+                    claimAmount,
+                    claimAsset(),
+                    hop,
+                    quote,
+                    props.signerAddress,
+                    props.getGasToken === true,
+                    props.bridge,
+                );
+                const freshQuoteData: FreshClaimQuote = {
+                    quote,
+                    amount: quoteAmount,
+                    claimAmount,
+                    expectedAmount,
+                };
+                setFreshQuote(freshQuoteData);
+
+                if (!isOutsideSlippage(quoteAmount, expectedAmount)) {
+                    await withAutoClaimLock(props.swapId, async () => {
+                        await untrack(() => executeClaim(freshQuoteData));
+                    });
+                } else {
+                    const finalReceiveAsset = getFinalAssetReceive(
+                        swap()!,
+                        true,
+                    );
+                    log.info(
+                        `Claim quote ${formatAssetAmountForLog(
+                            quoteAmount,
+                            finalReceiveAsset,
+                        )} is below threshold ${formatAssetAmountForLog(
+                            quoteThreshold(expectedAmount),
+                            finalReceiveAsset,
+                        )} (expected ${formatAssetAmountForLog(
+                            expectedAmount,
+                            finalReceiveAsset,
+                        )}, slippage ${slippage()})`,
+                    );
+                }
+            });
+        } catch (e) {
+            log.error("Auto claim hops failed", e);
+            const msg = `Transaction failed: ${formatError(e)}`;
+            notify("error", msg);
+            setError(msg);
+        }
+    };
+
     createEffect(
         on(
             () => props.autoClaimEnabled,
             async (autoClaimEnabled) => {
-                if (!autoClaimEnabled) {
-                    return;
-                }
-
-                try {
-                    const swapId = props.swapId;
-                    const currentSwap = await withChainSwapQuoteLock(
-                        swapId,
-                        () => getSwap<ChainSwap>(swapId),
-                    );
-                    if (currentSwap === null) {
-                        throw new Error(
-                            `swap ${swapId} is missing from storage`,
-                        );
-                    }
-                    const claimAmount = currentSwap.claimDetails.amount;
-                    const expectedAmount = currentSwap.dex?.quoteAmount;
-                    if (
-                        !isPositivePersistedAmount(claimAmount) ||
-                        !isPositivePersistedAmount(expectedAmount)
-                    ) {
-                        throw new Error(
-                            `swap ${swapId} has invalid persisted claim state`,
-                        );
-                    }
-                    const hop = getSingleClaimHop(props.dex.hops);
-                    const amountIn = satsToAssetAmount(
-                        claimAmount,
-                        claimAsset(),
-                    );
-                    const useDexGasToken =
-                        props.bridge === undefined &&
-                        props.getGasToken === true &&
-                        gasTopUpSupported(claimAsset());
-                    const quote = await fetchDexQuote(
-                        hop.dexDetails,
-                        amountIn,
-                        useDexGasToken,
-                        useDexGasToken
-                            ? await getGasTopUpNativeAmount(claimAsset())
-                            : undefined,
-                    );
-                    if (props.signerAddress === undefined) {
-                        return;
-                    }
-                    const quoteAmount = await getAcceptedQuoteAmount(
-                        claimAmount,
-                        claimAsset(),
-                        hop,
-                        quote,
-                        props.signerAddress,
-                        props.getGasToken === true,
-                        props.bridge,
-                    );
-                    const freshQuoteData: FreshClaimQuote = {
-                        quote,
-                        amount: quoteAmount,
-                        claimAmount,
-                        expectedAmount,
-                    };
-                    setFreshQuote(freshQuoteData);
-
-                    if (!isOutsideSlippage(quoteAmount, expectedAmount)) {
-                        await withAutoClaimLock(props.swapId, async () => {
-                            await untrack(() => executeClaim(freshQuoteData));
-                        });
-                    } else {
-                        const finalReceiveAsset = getFinalAssetReceive(
-                            swap()!,
-                            true,
-                        );
-                        log.info(
-                            `Claim quote ${formatAssetAmountForLog(
-                                quoteAmount,
-                                finalReceiveAsset,
-                            )} is below threshold ${formatAssetAmountForLog(
-                                quoteThreshold(expectedAmount),
-                                finalReceiveAsset,
-                            )} (expected ${formatAssetAmountForLog(
-                                expectedAmount,
-                                finalReceiveAsset,
-                            )}, slippage ${slippage()})`,
-                        );
-                    }
-                } catch (e) {
-                    log.error("Auto claim hops failed", e);
-                    const msg = `Transaction failed: ${formatError(e)}`;
-                    notify("error", msg);
-                    setError(msg);
+                if (autoClaimEnabled) {
+                    await runAutoClaim();
                 }
             },
         ),
@@ -906,11 +915,14 @@ export const AutoClaimHops = (props: {
                         onClick={async () => {
                             const quote = freshQuote();
                             if (!quote) {
-                                notify("error", t("error_no_quote"));
+                                await runAutoClaim();
                                 return;
                             }
                             setError(undefined);
-                            await executeClaim(quote);
+                            // eslint-disable-next-line solid/reactivity
+                            await withChainSwapQuoteLock(props.swapId, () =>
+                                executeClaim(quote),
+                            );
                         }}>
                         {t("retry")}
                     </button>
@@ -959,7 +971,10 @@ export const AutoClaimHops = (props: {
                                 return;
                             }
                             setQuoteAccepted(true);
-                            await executeClaim(q);
+                            // eslint-disable-next-line solid/reactivity
+                            await withChainSwapQuoteLock(props.swapId, () =>
+                                executeClaim(q),
+                            );
                         }}>
                         {loading() ? (
                             <LoadingSpinner class="inner-spinner" />
@@ -1001,7 +1016,7 @@ export const ClaimEvm = (props: {
     const claimableWithoutInteraction = () =>
         props.gasAbstraction === GasAbstractionType.Signer;
 
-    const claimWithoutHops = async () => {
+    const claimWithoutHopsUnlocked = async () => {
         // Ignore swaps with dex hops here
         if (props.dex !== undefined && props.dex.hops.length > 0) {
             return;
@@ -1014,11 +1029,12 @@ export const ClaimEvm = (props: {
         }
 
         const swapId = props.swapId;
-        const currentSwap = await withChainSwapQuoteLock(swapId, () =>
-            getSwap(swapId),
-        );
+        const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             throw new Error(`swap ${swapId} is missing from storage`);
+        }
+        if (currentSwap.claimTx !== undefined) {
+            return;
         }
         const claimAmount =
             currentSwap.type === SwapType.Chain
@@ -1100,11 +1116,17 @@ export const ClaimEvm = (props: {
         });
     };
 
+    const claimWithoutHops = async () =>
+        await withChainSwapQuoteLock(props.swapId, claimWithoutHopsUnlocked);
+
     const runAutoClaim = async () => {
         setError(undefined);
         try {
-            await withAutoClaimLock(props.swapId, async () => {
-                await untrack(() => claimWithoutHops());
+            // eslint-disable-next-line solid/reactivity
+            await withChainSwapQuoteLock(props.swapId, async () => {
+                await withAutoClaimLock(props.swapId, async () => {
+                    await untrack(() => claimWithoutHopsUnlocked());
+                });
             });
         } catch (e) {
             log.error("Auto claim failed", e);

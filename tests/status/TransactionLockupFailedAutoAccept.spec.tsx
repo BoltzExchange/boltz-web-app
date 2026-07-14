@@ -139,6 +139,15 @@ const makeSwap = () => ({
 describe("TransactionLockupFailed pre-bridge auto-accept", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        Object.defineProperty(navigator, "locks", {
+            configurable: true,
+            value: {
+                request: vi.fn(
+                    async (_name: string, callback: () => Promise<unknown>) =>
+                        await callback(),
+                ),
+            },
+        });
         mocks.swap = makeSwap();
         mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 991 });
     });

@@ -1,8 +1,5 @@
 import BigNumber from "bignumber.js";
 
-// Same-tab serialization fallback for browsers without the Web Locks API.
-const fallbackQueues = new Map<string, Promise<unknown>>();
-
 // 0-amount chain swaps persist 0 until a replacement quote is accepted, so
 // claim paths must not treat such placeholder amounts as claimable.
 export const isPositivePersistedAmount = (
@@ -20,23 +17,9 @@ export const isPositivePersistedAmount = (
     }
 };
 
-// Keeps backend quote acceptance/local persistence ordered before claim reads.
+// Serializes replacement quote acceptance and claim execution for one swap.
 export const withChainSwapQuoteLock = <T>(
     swapId: string,
     fn: () => Promise<T>,
-): Promise<T> => {
-    if (navigator.locks?.request !== undefined) {
-        return navigator.locks.request(
-            `chainSwapReplacementQuote:${swapId}`,
-            fn,
-        );
-    }
-
-    const previous = fallbackQueues.get(swapId) ?? Promise.resolve();
-    const current = previous.then(fn);
-    fallbackQueues.set(
-        swapId,
-        current.catch(() => undefined),
-    );
-    return current;
-};
+): Promise<T> =>
+    navigator.locks.request(`chainSwapReplacementQuote:${swapId}`, fn);
