@@ -45,23 +45,23 @@ describe("withChainSwapQuoteLock", () => {
         }
     });
 
-    // navigator.locks does not exist in the test environment, so these
-    // exercise the same-tab fallback queue.
-    test("serializes callers of the same swap", async () => {
+    // navigator.locks does not exist in the test environment, so this
+    // exercises the same-tab fallback queue.
+    test("serializes callers of the same swap and keeps processing after a rejection", async () => {
         const order: string[] = [];
-        let releaseFirst!: () => void;
+        let failFirst!: () => void;
         const firstPending = new Promise<void>((resolve) => {
-            releaseFirst = resolve;
+            failFirst = resolve;
         });
 
         const first = withChainSwapQuoteLock("swap-1", async () => {
             order.push("first:start");
             await firstPending;
-            order.push("first:end");
+            throw new Error("accept failed");
         });
         const second = withChainSwapQuoteLock("swap-1", () => {
             order.push("second");
-            return Promise.resolve();
+            return Promise.resolve("recovered");
         });
         const otherSwap = withChainSwapQuoteLock("swap-2", () => {
             order.push("other-swap");
@@ -71,27 +71,9 @@ describe("withChainSwapQuoteLock", () => {
         await otherSwap;
         expect(order).toEqual(["first:start", "other-swap"]);
 
-        releaseFirst();
-        await Promise.all([first, second]);
-        expect(order).toEqual([
-            "first:start",
-            "other-swap",
-            "first:end",
-            "second",
-        ]);
-    });
-
-    test("keeps processing the queue after a rejection", async () => {
-        await expect(
-            withChainSwapQuoteLock("swap-1", () =>
-                Promise.reject(new Error("accept failed")),
-            ),
-        ).rejects.toThrow("accept failed");
-
-        await expect(
-            withChainSwapQuoteLock("swap-1", () =>
-                Promise.resolve("recovered"),
-            ),
-        ).resolves.toBe("recovered");
+        failFirst();
+        await expect(first).rejects.toThrow("accept failed");
+        await expect(second).resolves.toBe("recovered");
+        expect(order).toEqual(["first:start", "other-swap", "second"]);
     });
 });

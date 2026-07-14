@@ -82,29 +82,12 @@ describe("PayProvider claimSwap", () => {
         );
     });
 
-    test("defers claiming while the persisted receive amount is zero", async () => {
-        getSwap.mockResolvedValue(staleSwap);
-
-        const context = renderPayContext();
-        await context.claimSwap("swap-1", claimData);
-
-        expect(claim).not.toHaveBeenCalled();
-        expect(notify).not.toHaveBeenCalled();
-    });
-
-    test("recovers the receive amount from the server lockup when persistence was lost", async () => {
+    test("defers a zero-amount claim until it can recover the amount from the server lockup", async () => {
         // The tx pays 5_000 sats to the address
         const lockupAddress = "bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080";
         const serverLockupHex =
             "020000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff018813000000000000160014751e76e8199196d454941c45d1b3a323f1433bd600000000";
 
-        pairs.mockReturnValue({
-            [SwapType.Chain]: {
-                "L-BTC": {
-                    BTC: { fees: { minerFees: { user: { claim: 100 } } } },
-                },
-            },
-        });
         const lostSwap = {
             ...staleSwap,
             claimDetails: { amount: 0, lockupAddress },
@@ -120,12 +103,26 @@ describe("PayProvider claimSwap", () => {
                 return Promise.resolve(swap);
             },
         );
-
-        const context = renderPayContext();
-        await context.claimSwap("swap-1", {
+        const lostClaimData = {
             ...claimData,
             transaction: { hex: serverLockupHex },
+        };
+
+        const context = renderPayContext();
+
+        // Without the pair fees the amount cannot be recovered
+        await context.claimSwap("swap-1", lostClaimData);
+        expect(claim).not.toHaveBeenCalled();
+        expect(notify).not.toHaveBeenCalled();
+
+        pairs.mockReturnValue({
+            [SwapType.Chain]: {
+                "L-BTC": {
+                    BTC: { fees: { minerFees: { user: { claim: 100 } } } },
+                },
+            },
         });
+        await context.claimSwap("swap-1", lostClaimData);
 
         expect(claim).toHaveBeenCalledTimes(1);
         const claimedSwap = claim.mock.calls[0][1] as ChainSwap;

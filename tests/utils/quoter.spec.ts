@@ -126,27 +126,13 @@ describe("quoter DEX quote guard", () => {
         vi.restoreAllMocks();
     });
 
-    test("rejects a zero amount before requesting a DEX quote", async () => {
-        await expect(
-            fetchDexQuote(
-                { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" },
-                0n,
-            ),
-        ).rejects.toThrow(
-            "cannot fetch DEX quote with non-positive amount (0)",
-        );
-    });
+    test("rejects a zero amount before requesting plain and gas-token DEX quotes", async () => {
+        const dexDetails = { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" };
+        const error = "cannot fetch DEX quote with non-positive amount (0)";
 
-    test("rejects a zero trade amount before requesting a gas-token quote", async () => {
-        await expect(
-            fetchDexQuote(
-                { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" },
-                0n,
-                true,
-                1n,
-            ),
-        ).rejects.toThrow(
-            "cannot fetch DEX quote with non-positive amount (0)",
+        await expect(fetchDexQuote(dexDetails, 0n)).rejects.toThrow(error);
+        await expect(fetchDexQuote(dexDetails, 0n, true, 1n)).rejects.toThrow(
+            error,
         );
     });
 

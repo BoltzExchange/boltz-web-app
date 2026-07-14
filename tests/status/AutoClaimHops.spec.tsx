@@ -153,6 +153,10 @@ const renderAutoClaimHops = (dex = dexDetail) =>
     ));
 
 describe("AutoClaimHops", () => {
+    // Amounts must come from storage, so a stale prop with a zeroed quote
+    // amount must not change any behavior
+    const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
+
     beforeEach(() => {
         vi.clearAllMocks();
         setSwapSignal({ id: "swap-1", sendAmount: 1_000 } as SomeSwap);
@@ -161,16 +165,16 @@ describe("AutoClaimHops", () => {
         getSwap.mockResolvedValue({
             id: "swap-1",
             sendAmount: 1_000,
-            claimDetails: { amount: 1_000 },
+            claimDetails: { amount: 991 },
             dex: dexDetail,
         } as SomeSwap);
         sendPopulatedTransaction.mockResolvedValue("0xclaimtx");
     });
 
-    test("prompts for approval when the fresh quote is below the slippage threshold", async () => {
+    test("prompts for approval when the fresh quote is below the persisted slippage threshold", async () => {
         fetchDexQuote.mockResolvedValue(makeQuote(500_000n));
 
-        renderAutoClaimHops();
+        renderAutoClaimHops(staleDexDetail);
 
         expect(
             await screen.findByText("dex_quote_changed"),
@@ -197,32 +201,7 @@ describe("AutoClaimHops", () => {
         expect(notify).not.toHaveBeenCalled();
     });
 
-    test("auto-claims without prompting when the fresh quote is within tolerance", async () => {
-        fetchDexQuote.mockResolvedValue(makeQuote(2_000_000n));
-
-        renderAutoClaimHops();
-
-        await waitFor(() => expect(getSwap).toHaveBeenCalledWith("swap-1"));
-        await waitFor(() =>
-            expect(sendPopulatedTransaction).toHaveBeenCalledTimes(1),
-        );
-        expect(screen.queryByText("dex_quote_changed")).toBeNull();
-        expect(notify).not.toHaveBeenCalled();
-    });
-
-    test("reloads a persisted replacement quote amount instead of quoting a stale zero", async () => {
-        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
-        setSwapSignal({
-            id: "swap-1",
-            claimDetails: { amount: 0 },
-            dex: staleDexDetail,
-        } as SomeSwap);
-        getSwap.mockResolvedValue({
-            id: "swap-1",
-            sendAmount: 1_000,
-            claimDetails: { amount: 991 },
-            dex: dexDetail,
-        } as SomeSwap);
+    test("auto-claims the persisted amount without prompting when the fresh quote is within tolerance", async () => {
         fetchDexQuote.mockResolvedValue(makeQuote(2_000_000n));
 
         renderAutoClaimHops(staleDexDetail);
@@ -232,30 +211,11 @@ describe("AutoClaimHops", () => {
         await waitFor(() =>
             expect(sendPopulatedTransaction).toHaveBeenCalledTimes(1),
         );
-        expect(notify).not.toHaveBeenCalled();
-    });
-
-    test("uses the persisted replacement quote output for the slippage check", async () => {
-        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
-        getSwap.mockResolvedValue({
-            id: "swap-1",
-            sendAmount: 1_000,
-            claimDetails: { amount: 991 },
-            dex: dexDetail,
-        } as SomeSwap);
-        fetchDexQuote.mockResolvedValue(makeQuote(500_000n));
-
-        renderAutoClaimHops(staleDexDetail);
-
-        expect(
-            await screen.findByText("dex_quote_changed"),
-        ).toBeInTheDocument();
-        expect(sendPopulatedTransaction).not.toHaveBeenCalled();
+        expect(screen.queryByText("dex_quote_changed")).toBeNull();
         expect(notify).not.toHaveBeenCalled();
     });
 
     test("fails closed without requesting a DEX quote when persisted amounts are zero", async () => {
-        const staleDexDetail = { ...dexDetail, quoteAmount: "0" };
         getSwap.mockResolvedValue({
             id: "swap-1",
             claimDetails: { amount: 0 },
@@ -301,21 +261,7 @@ describe("ClaimEvm", () => {
         });
     });
 
-    test("claims a chain swap with the persisted claim amount", async () => {
-        getSwap.mockResolvedValue({
-            id: "swap-1",
-            type: SwapType.Chain,
-            claimDetails: { amount: 991 },
-        } as SomeSwap);
-
-        renderClaimEvm();
-
-        await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
-        expect(getSwap).toHaveBeenCalledWith("swap-1");
-        expect(claimAsset.mock.calls[0][0].amount).toBe(991);
-    });
-
-    test("claims a reverse swap with its persisted onchain amount", async () => {
+    test("auto-claims a reverse swap with its persisted onchain amount", async () => {
         getSwap.mockResolvedValue({
             id: "swap-1",
             type: SwapType.Reverse,
@@ -325,10 +271,11 @@ describe("ClaimEvm", () => {
         renderClaimEvm();
 
         await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
+        expect(getSwap).toHaveBeenCalledWith("swap-1");
         expect(claimAsset.mock.calls[0][0].amount).toBe(777);
     });
 
-    test("fails closed when the persisted claim amount is still zero", async () => {
+    test("fails closed on a zero persisted amount and claims on retry once it is positive", async () => {
         getSwap.mockResolvedValue({
             id: "swap-1",
             type: SwapType.Chain,
@@ -340,26 +287,14 @@ describe("ClaimEvm", () => {
         expect(
             await screen.findByText(/has invalid persisted claim state/),
         ).toBeInTheDocument();
-        expect(getSwap).toHaveBeenCalledTimes(1);
         expect(claimAsset).not.toHaveBeenCalled();
-    });
 
-    test("retries a failed auto claim without a reload", async () => {
-        getSwap
-            .mockResolvedValueOnce({
-                id: "swap-1",
-                type: SwapType.Chain,
-                claimDetails: { amount: 0 },
-            } as SomeSwap)
-            .mockResolvedValue({
-                id: "swap-1",
-                type: SwapType.Chain,
-                claimDetails: { amount: 991 },
-            } as SomeSwap);
-
-        renderClaimEvm();
-
-        fireEvent.click(await screen.findByText("retry"));
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Chain,
+            claimDetails: { amount: 991 },
+        } as SomeSwap);
+        fireEvent.click(screen.getByText("retry"));
 
         await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
         expect(claimAsset.mock.calls[0][0].amount).toBe(991);
