@@ -1,4 +1,4 @@
-import { BiSolidHelpCircle } from "solid-icons/bi";
+import { BsInfoCircleFill } from "solid-icons/bs";
 import { For, Show, createSignal } from "solid-js";
 
 import ConnectWallet from "../../components/ConnectWallet";
@@ -101,7 +101,7 @@ export const MethodSelection = (props: MethodSelectionProps) => {
 
             <Show when={isChatwootConfigured()}>
                 <p class="rescue-external-report-hint">
-                    <BiSolidHelpCircle size={16} opacity={0.5} />
+                    <BsInfoCircleFill size={16} opacity={0.5} />
                     {t("rescue_external_report_issue_start")}
                     <a
                         class="rescue-external-report-link"
