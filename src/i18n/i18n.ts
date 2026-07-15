@@ -1088,7 +1088,7 @@ const dict = {
         rescue_external_select_method:
             "Mindestens eine Rettungsmethode auswählen",
         rescue_external_subtitle:
-            "Wähle eine oder beide Rettungsmethoden, um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.",
+            "Nutze diese Seite, um Swaps zu retten, die in deinem Browser-Verlauf fehlen oder vor dem Abschluss hängen geblieben sind.",
         rescue_external_coverage:
             "Rettbar mit den bereitgestellten Rettungsmethoden",
         rescue_external_requires_rescue_key: "Benötigt Rettungsschlüssel",
@@ -1651,7 +1651,7 @@ const dict = {
         rescue_external_select_method:
             "Selecciona al menos un método de rescate",
         rescue_external_subtitle:
-            "Elige uno o ambos métodos de rescate para rescatar un intercambio que no está disponible en el historial de este navegador.",
+            "Usa esta página para rescatar intercambios que no aparecen en el historial de tu navegador o que se han quedado atascados antes de completarse.",
         rescue_external_coverage:
             "Rescatable con los métodos de rescate proporcionados",
         rescue_external_requires_rescue_key: "Requiere clave de rescate",
@@ -2209,7 +2209,7 @@ const dict = {
         rescue_external_select_method:
             "Selecione pelo menos um método de resgate",
         rescue_external_subtitle:
-            "Escolha um ou ambos os métodos de resgate para resgatar uma troca que não está disponível no histórico deste navegador.",
+            "Use esta página para resgatar trocas que não aparecem no histórico do seu navegador ou que ficaram presas antes de serem concluídas.",
         rescue_external_coverage:
             "Resgatável com os métodos de resgate fornecidos",
         rescue_external_requires_rescue_key: "Requer chave de resgate",
@@ -2714,7 +2714,7 @@ const dict = {
         error_occurred: "发生错误：{{ error }}",
         rescue_external_select_method: "至少选择一种救援方式",
         rescue_external_subtitle:
-            "选择一种或两种救援方式，来救援未显示在此浏览器交换历史中的交换。",
+            "使用此页面救援未显示在此浏览器历史记录中或在完成前卡住的交换。",
         rescue_external_coverage: "可使用已提供的救援方式救援",
         rescue_external_requires_rescue_key: "需要救援密钥",
         rescue_external_requires_wallet: "需要钱包",
@@ -3263,7 +3263,7 @@ const dict = {
         rescue_external_select_method:
             "少なくとも1つの復旧方法を選択してください",
         rescue_external_subtitle:
-            "このブラウザのスワップ履歴にないスワップを復旧するため、1つまたは両方の復旧方法を選択してください。",
+            "このページでは、このブラウザのスワップ履歴にない、または完了前に行き詰まったスワップを復旧できます。",
         rescue_external_coverage: "提供された復旧方法で復旧可能",
         rescue_external_requires_rescue_key: "レスキューキーが必要です",
         rescue_external_requires_wallet: "ウォレットが必要です",
