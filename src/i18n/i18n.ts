@@ -185,7 +185,7 @@ const dict = {
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
         transaction_prompt_receive:
-            'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction to receive {{ asset }}.',
+            'Press "{{ button }}" to start claiming {{ asset }}.',
         transaction_failed: "Transaction failed: {{ error }}",
         wallet_request_rejected: "Request was rejected in your wallet.",
         invalid_address: "Invalid {{ asset }} address",
@@ -743,7 +743,7 @@ const dict = {
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
         transaction_prompt_receive:
-            '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion um {{ asset }} zu empfangen.',
+            '"{{ button }}" klicken, um {{ asset }} zu claimen.',
         transaction_failed: "Transaktion fehlgeschlagen: {{ error }}",
         wallet_request_rejected:
             "Die Anfrage wurde in deinem Wallet abgelehnt.",
@@ -1317,7 +1317,7 @@ const dict = {
         transaction_prompt:
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
         transaction_prompt_receive:
-            'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
+            'Pulse "{{ button }}" para comenzar a reclamar {{ asset }}.',
         transaction_failed: "Transacción fallida: {{ error }}",
         wallet_request_rejected: "La solicitud fue rechazada en tu monedero.",
         invalid_address: "Dirección {{ asset }} inválida",
@@ -1885,7 +1885,7 @@ const dict = {
         transaction_prompt:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação exibida.',
         transaction_prompt_receive:
-            'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação para receber {{ asset }}.',
+            'Pressione "{{ button }}" para começar a reivindicar {{ asset }}.',
         transaction_failed: "Falha na transação: {{ error }}",
         wallet_request_rejected: "A solicitação foi rejeitada na sua carteira.",
         invalid_address: "Endereço {{ asset }} inválido",
@@ -2427,8 +2427,7 @@ const dict = {
         back_to_home: "返回首页",
         transaction_prompt:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
-        transaction_prompt_receive:
-            "按“{{ button }}”以打开已连接的钱包并确认显示的交易以便收{{ asset }}。",
+        transaction_prompt_receive: "按“{{ button }}”以开始领取 {{ asset }}。",
         transaction_failed: "交易失败：{{ error }}",
         wallet_request_rejected: "该请求已在您的钱包中被拒绝。",
         invalid_address: "无效的{{ asset }}地址",
@@ -2956,7 +2955,7 @@ const dict = {
         transaction_prompt:
             " 接続したウォレットを開いて、表示されたトランザクションを確認するために　{{ button }} を押してください",
         transaction_prompt_receive:
-            " 接続したウォレットを開いて、{{ asset }} を受け取るために表示されたトランザクションを確認するために {{ button }} を押してください",
+            "{{ asset }} の請求を開始するには {{ button }} を押してください",
         transaction_failed: "トランザクションに失敗しました: {{ error }}",
         wallet_request_rejected: "ウォレットでリクエストが拒否されました。",
         invalid_address: "無効な {{ asset }} アドレス",

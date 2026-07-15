@@ -30,6 +30,7 @@ const preimage =
 const {
     mockGetLogsFromReceipt,
     mockNavigate,
+    mockClaimAsset,
     mockQuoteDexAmountIn,
     mockResolveLockupTokenFunder,
     paramsMock,
@@ -37,6 +38,7 @@ const {
 } = vi.hoisted(() => ({
     mockGetLogsFromReceipt: vi.fn(),
     mockNavigate: vi.fn(),
+    mockClaimAsset: vi.fn(),
     mockQuoteDexAmountIn: vi.fn(),
     mockResolveLockupTokenFunder: vi.fn(),
     paramsMock: {
@@ -91,8 +93,12 @@ vi.mock("../../src/utils/evmLockup", async () => {
     };
 });
 
+vi.mock("../../src/utils/evmTransaction", () => ({
+    claimAsset: mockClaimAsset,
+}));
+
 const gasSigner = {
-    address: "0x0000000000000000000000000000000000000004",
+    address: "0x0000000000000000000000000000000000000004" as const,
     provider: {
         getChainId: () =>
             Promise.resolve(config.assets?.TBTC?.network?.chainId ?? 1),
@@ -234,6 +240,10 @@ describe("RescueEvm", () => {
             action: RskRescueMode.Claim,
         };
         mockGetLogsFromReceipt.mockResolvedValue(logData);
+        mockClaimAsset.mockResolvedValue({
+            transactionHash,
+            receiveAmount: logData.amount,
+        });
         mockQuoteDexAmountIn.mockResolvedValue([]);
         mockResolveLockupTokenFunder.mockResolvedValue(originalFunder);
         rescueSwaps.current = [
@@ -246,15 +256,45 @@ describe("RescueEvm", () => {
         ];
     });
 
-    test("loads a restored DEX claim before the wallet is connected", async () => {
+    test("claims a plain restored ERC20 swap without a connected wallet", async () => {
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        const continueButton = await screen.findByRole("button", {
+            name: i18n.en.continue,
+        });
+        expect(
+            screen.queryByRole("button", { name: "Connect wallet" }),
+        ).toBeNull();
+
+        fireEvent.click(continueButton);
+        await waitFor(() => expect(mockClaimAsset).toHaveBeenCalledOnce());
+        const claimParams = mockClaimAsset.mock.calls[0][0];
+        expect(claimParams.destination).toEqual(logData.claimAddress);
+        expect(claimParams.signer()).toEqual(gasSigner);
+        expect(mockGetLogsFromReceipt).toHaveBeenCalled();
+    });
+
+    test("keeps a plain claim gated when its destination is not recoverable", async () => {
+        const unresolvedClaim = {
+            ...logData,
+            claimAddress: gasSigner.address,
+        };
+        mockGetLogsFromReceipt.mockResolvedValue(unresolvedClaim);
+        rescueSwaps.current = [
+            {
+                ...unresolvedClaim,
+                action: RskRescueMode.Claim,
+                preimage,
+                restoredSwap,
+            },
+        ];
+
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
         expect(
             await screen.findByRole("button", { name: "Connect wallet" }),
         ).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Claim" })).toBeDisabled();
-        expect(screen.queryByText("No wallet connected")).toBeNull();
-        expect(mockGetLogsFromReceipt).toHaveBeenCalled();
     });
 
     test("enables a plain restored refund without a connected wallet", async () => {
