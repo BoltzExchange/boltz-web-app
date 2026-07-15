@@ -125,6 +125,14 @@ describe("Rescue", () => {
             name: i18n.en.rescue_external_select_method,
         });
         expect(searchButton).toBeDisabled();
+
+        const coverageAssets = document.querySelectorAll(
+            ".rescue-external-chip .asset",
+        );
+        expect(coverageAssets.length).toBeGreaterThan(0);
+        coverageAssets.forEach((asset) => {
+            expect(asset).not.toHaveAttribute("data-network");
+        });
     });
 
     test("should enable search after rescue key upload without auto-searching", async () => {
