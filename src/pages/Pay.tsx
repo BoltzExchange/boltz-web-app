@@ -170,7 +170,6 @@ const Pay = () => {
         return (
             currentSwap !== null &&
             currentSwap.type !== SwapType.Reverse &&
-            !isCommitmentSwap(currentSwap) &&
             !rescueFileBackupDone()
         );
     });
@@ -211,11 +210,7 @@ const Pay = () => {
             };
         },
         async ({ backupDone, swap: currentSwap, timedOutRefundable }) => {
-            if (
-                currentSwap.type !== SwapType.Reverse &&
-                !isCommitmentSwap(currentSwap) &&
-                !backupDone
-            ) {
+            if (currentSwap.type !== SwapType.Reverse && !backupDone) {
                 return;
             }
 

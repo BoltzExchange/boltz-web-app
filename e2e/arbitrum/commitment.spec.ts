@@ -59,6 +59,8 @@ const createCommitmentSwap = async (
     await expect(createButton).toBeEnabled({ timeout: actionTimeout });
     await createButton.click();
 
+    await verifyRescueFile(page);
+
     await expect(
         page
             .getByRole("button", { name: /^approve$/i })

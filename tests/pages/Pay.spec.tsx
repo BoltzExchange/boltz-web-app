@@ -292,6 +292,24 @@ describe("Pay", () => {
         expect(mockGetSwapStatus).not.toHaveBeenCalled();
     });
 
+    test("should require backup before funding a commitment swap", async () => {
+        swapsGetItemMock.mockResolvedValue({
+            id: "commitment-123",
+            type: SwapType.Commitment,
+            assetReceive: LN,
+            assetSend: USDT0,
+        } as SomeSwap);
+
+        renderPay(false);
+
+        await screen.findByText(dict.en.download_boltz_rescue_key);
+        expect(screen.queryByTestId("commitment-created")).toBeNull();
+
+        globalSignals.setRescueFileBackupDone(true);
+
+        expect(await screen.findByTestId("commitment-created")).toBeVisible();
+    });
+
     test("should start backup flow on mnemonic step when ?backup=mnemonic is set", async () => {
         window.history.replaceState({}, "", "/?backup=mnemonic");
 
