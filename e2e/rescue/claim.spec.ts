@@ -45,6 +45,17 @@ const claimPendingSwap = async ({
 
     await swapItem.click();
 
+    await expect(page.locator(".frame-header")).toContainText(
+        `Swap: ${swapId}`,
+    );
+    await expect(page.locator(".swap-status")).toContainText("Status:");
+    await expect(
+        page.locator(".frame-header .swaplist-asset .asset"),
+    ).toHaveCount(2);
+    await expect(
+        page.getByRole("link", { name: "Open Lockup Transaction" }),
+    ).toBeVisible();
+
     const inputOnchainAddress = page.locator(
         "input[data-testid='onchainAddress']",
     );

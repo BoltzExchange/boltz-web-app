@@ -9,7 +9,11 @@ import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
 } from "../../components/Pagination";
-import { SwapIcons, SwapListAssetIcon } from "../../components/SwapIcons";
+import {
+    SwapIcons,
+    SwapListAssetIcon,
+    getSwapIconAssets,
+} from "../../components/SwapIcons";
 import { getSwapListHeight } from "../../components/SwapList";
 import { hiddenInformation } from "../../components/settings/PrivacyMode";
 import { LN } from "../../consts/Assets";
@@ -172,14 +176,14 @@ const UnifiedResultAssets = (props: { result: UnifiedRescueResult }) => (
     <Switch>
         <Match when={props.result.source === RescueResultSource.Restore}>
             <SwapIcons
-                swap={
+                assets={getSwapIconAssets(
                     (
                         props.result as Extract<
                             UnifiedRescueResult,
                             { source: RescueResultSource.Restore }
                         >
-                    ).swap
-                }
+                    ).swap,
+                )}
             />
         </Match>
         <Match when={props.result.source === RescueResultSource.Evm}>

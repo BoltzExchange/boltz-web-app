@@ -24,7 +24,7 @@ import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import { SwapIcons } from "../components/SwapIcons";
+import { SwapIcons, getSwapIconAssets } from "../components/SwapIcons";
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -488,7 +488,9 @@ const Pay = () => {
                                           : params.id!,
                                   })}
                             <Show when={swap()}>
-                                <SwapIcons swap={swap()!} />
+                                <SwapIcons
+                                    assets={getSwapIconAssets(swap()!)}
+                                />
                             </Show>
                         </h2>
                         <SettingsCog />

@@ -556,14 +556,24 @@ describe("RescueEvm", () => {
         expect(result?.amount.toString()).toBe("100");
     });
 
-    test("titles a restored swap with its swap id", async () => {
+    test("shows the restored swap header with id, status, and assets", async () => {
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
         await waitFor(() => {
-            expect(document.querySelector(".frame-title")).toHaveTextContent(
+            expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
                 "restored-dex",
             );
         });
+        expect(document.querySelector(".frame")).toHaveAttribute(
+            "data-status",
+            "transaction.confirmed",
+        );
+        expect(document.querySelector(".swap-status")).toHaveTextContent(
+            "transaction.confirmed",
+        );
+        expect(
+            document.querySelectorAll(".frame-header .swaplist-asset .asset"),
+        ).toHaveLength(2);
     });
 
     test("titles an unmatched lockup with the cropped transaction hash", async () => {
@@ -574,7 +584,7 @@ describe("RescueEvm", () => {
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
         await waitFor(() => {
-            expect(document.querySelector(".frame-title")).toHaveTextContent(
+            expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
                 "0xaaa...aaaaa",
             );
         });

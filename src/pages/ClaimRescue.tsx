@@ -14,6 +14,7 @@ import { SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     Match,
+    Show,
     Switch,
     createResource,
     createSignal,
@@ -29,9 +30,9 @@ import {
     unconfidentialExtra,
 } from "../components/Fees";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { SwapIcons } from "../components/SwapIcons";
+import SwapHeader from "../components/SwapHeader";
+import { getSwapIconAssets } from "../components/SwapIcons";
 import { hiddenInformation } from "../components/settings/PrivacyMode";
-import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type AssetType, LN } from "../consts/Assets";
 import { useCreateContext } from "../context/Create";
@@ -190,6 +191,7 @@ const ClaimRescue = () => {
                                 restorableSwap.to as AssetType,
                             ),
                         ),
+                        status: swapStatus.status,
                         transaction: {
                             id: swapStatus.transaction.id,
                             hex: swapStatus.transaction.hex,
@@ -224,6 +226,7 @@ const ClaimRescue = () => {
                         ...restorableSwap,
                         claimPrivateKey: derivedKey,
                         preimage: derivedKey,
+                        status: swapStatus.status,
                         transaction: {
                             id: swapStatus.transaction.id,
                             hex: swapStatus.transaction.hex,
@@ -241,6 +244,9 @@ const ClaimRescue = () => {
             );
         }
     });
+
+    const lockupTransactionId = () =>
+        claimableSwap()?.transaction?.id ?? claimableSwap()?.lockupTx;
 
     const handleInputChange = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
@@ -334,26 +340,20 @@ const ClaimRescue = () => {
 
     return (
         <>
-            <div class="frame">
+            <div class="frame" data-status={claimableSwap()?.status}>
                 <Switch>
                     <Match
                         when={
                             claimableSwap.state === "ready" &&
                             claimableSwap() !== undefined
                         }>
-                        <span class="frame-header">
-                            <h2>
-                                {t("claim_swap", {
-                                    id: privacyMode()
-                                        ? hiddenInformation
-                                        : params.id,
-                                })}
-                                <SwapIcons swap={claimableSwap() as SomeSwap} />
-                            </h2>
-                            <SettingsCog />
-                            <SettingsMenu />
-                        </span>
-                        <hr />
+                        <SwapHeader
+                            id={params.id}
+                            status={claimableSwap()!.status}
+                            assets={getSwapIconAssets(
+                                claimableSwap() as SomeSwap,
+                            )}
+                        />
 
                         <Switch>
                             <Match when={claimTxId() === ""}>
@@ -395,6 +395,18 @@ const ClaimRescue = () => {
                                         t("claim")
                                     )}
                                 </button>
+                                <Show when={lockupTransactionId()}>
+                                    {(id) => (
+                                        <BlockExplorer
+                                            typeLabel={"lockup_tx"}
+                                            asset={
+                                                claimableSwap()!.assetReceive!
+                                            }
+                                            kind={BlockExplorerTargetKind.Tx}
+                                            id={id()}
+                                        />
+                                    )}
+                                </Show>
                             </Match>
                             <Match when={claimTxId() !== ""}>
                                 <p data-testid="claimed">{t("claimed")}</p>
@@ -427,6 +439,7 @@ const ClaimRescue = () => {
                         </p>
                     </Match>
                 </Switch>
+                <SettingsMenu />
             </div>
         </>
     );

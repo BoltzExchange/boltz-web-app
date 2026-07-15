@@ -185,6 +185,12 @@ export type CommitmentSwap = SwapBaseData & {
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap | CommitmentSwap;
 
+export type SwapAssetRoute = Pick<
+    SwapBaseData,
+    "type" | "assetSend" | "assetReceive" | "dex" | "bridge"
+> &
+    Partial<Pick<CommitmentSwap, "sourceAsset" | "initialReceiveAsset">>;
+
 export const isCommitmentSwap = (swap: SwapBaseData): swap is CommitmentSwap =>
     swap.type === SwapType.Commitment;
 
@@ -221,11 +227,11 @@ export const getSwapAddress = (swap: SomeSwap): string => {
 };
 
 export const getFinalAssetSend = (
-    swap: SwapBaseData,
+    swap: SwapAssetRoute,
     coalesceLn: boolean = false,
 ): string => {
-    if (isCommitmentSwap(swap)) {
-        return swap.sourceAsset;
+    if (swap.type === SwapType.Commitment) {
+        return swap.sourceAsset ?? swap.assetSend;
     }
 
     if (swap.bridge?.position === SwapPosition.Pre) {
@@ -244,11 +250,11 @@ export const getFinalAssetSend = (
 };
 
 export const getFinalAssetReceive = (
-    swap: SwapBaseData,
+    swap: SwapAssetRoute,
     coalesceLn: boolean = false,
 ): string => {
-    if (isCommitmentSwap(swap)) {
-        return swap.initialReceiveAsset;
+    if (swap.type === SwapType.Commitment) {
+        return swap.initialReceiveAsset ?? swap.assetReceive;
     }
 
     if (swap.bridge?.position === SwapPosition.Post) {
