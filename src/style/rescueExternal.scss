@@ -222,6 +222,24 @@
         margin-top: 12px;
     }
 
+    .rescue-external-report-hint {
+        margin-top: 16px;
+        color: var(--color-white-60);
+        font-size: 0.8rem;
+        text-align: center;
+
+        svg {
+            margin-right: 4px;
+            vertical-align: -3px;
+        }
+    }
+
+    .rescue-external-report-link {
+        color: inherit;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
     .rescue-external-results {
         margin-top: 12px;
     }

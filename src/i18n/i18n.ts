@@ -522,7 +522,12 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
         rescue_external_select_method: "Select at least one rescue method",
         rescue_external_subtitle:
-            "Use this page to rescue swaps that are missing from your browser history or are stuck before completion.",
+            "Use this page to rescue swaps that are not available in the history tab.",
+        rescue_external_report_issue_start:
+            "If you think your swap failed due to an issue on our side, please ",
+        rescue_external_report_issue_link: "click here",
+        rescue_external_report_issue_end:
+            " to share logs and give us some details about your swap.",
         rescue_external_coverage: "Rescuable with the provided rescue methods",
         rescue_external_requires_rescue_key: "Requires rescue key",
         rescue_external_requires_wallet: "Requires wallet",
@@ -1088,7 +1093,12 @@ const dict = {
         rescue_external_select_method:
             "Mindestens eine Rettungsmethode auswählen",
         rescue_external_subtitle:
-            "Nutze diese Seite, um Swaps zu retten, die in deinem Browser-Verlauf fehlen oder vor dem Abschluss hängen geblieben sind.",
+            "Nutze diese Seite, um Swaps zu retten, die nicht im Historie-Tab verfügbar sind.",
+        rescue_external_report_issue_start:
+            "Wenn du denkst, dass dein Swap aufgrund eines Fehlers auf unserer Seite fehlgeschlagen ist, klicke bitte ",
+        rescue_external_report_issue_link: "hier",
+        rescue_external_report_issue_end:
+            ", um Logs zu teilen und uns einige Details zu deinem Swap mitzuteilen.",
         rescue_external_coverage:
             "Rettbar mit den bereitgestellten Rettungsmethoden",
         rescue_external_requires_rescue_key: "Benötigt Rettungsschlüssel",
@@ -1651,7 +1661,12 @@ const dict = {
         rescue_external_select_method:
             "Selecciona al menos un método de rescate",
         rescue_external_subtitle:
-            "Usa esta página para rescatar intercambios que no aparecen en el historial de tu navegador o que se han quedado atascados antes de completarse.",
+            "Usa esta página para rescatar intercambios que no están disponibles en la pestaña de historia.",
+        rescue_external_report_issue_start:
+            "Si crees que tu intercambio falló debido a un problema de nuestra parte, por favor ",
+        rescue_external_report_issue_link: "haz clic aquí",
+        rescue_external_report_issue_end:
+            " para compartir los logs y darnos algunos detalles sobre tu intercambio.",
         rescue_external_coverage:
             "Rescatable con los métodos de rescate proporcionados",
         rescue_external_requires_rescue_key: "Requiere clave de rescate",
@@ -2209,7 +2224,12 @@ const dict = {
         rescue_external_select_method:
             "Selecione pelo menos um método de resgate",
         rescue_external_subtitle:
-            "Use esta página para resgatar trocas que não aparecem no histórico do seu navegador ou que ficaram presas antes de serem concluídas.",
+            "Use esta página para resgatar trocas que não estão disponíveis na aba de histórico.",
+        rescue_external_report_issue_start:
+            "Se você acha que sua troca falhou devido a um problema do nosso lado, por favor ",
+        rescue_external_report_issue_link: "clique aqui",
+        rescue_external_report_issue_end:
+            " para compartilhar os logs e nos dar alguns detalhes sobre sua troca.",
         rescue_external_coverage:
             "Resgatável com os métodos de resgate fornecidos",
         rescue_external_requires_rescue_key: "Requer chave de resgate",
@@ -2713,8 +2733,12 @@ const dict = {
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
         rescue_external_select_method: "至少选择一种救援方式",
-        rescue_external_subtitle:
-            "使用此页面救援未显示在此浏览器历史记录中或在完成前卡住的交换。",
+        rescue_external_subtitle: "使用此页面救援历史标签页中不可用的交换。",
+        rescue_external_report_issue_start:
+            "如果您认为您的交换因我们方面的问题而失败，请",
+        rescue_external_report_issue_link: "点击此处",
+        rescue_external_report_issue_end:
+            "分享日志并向我们提供有关您交换的一些详细信息。",
         rescue_external_coverage: "可使用已提供的救援方式救援",
         rescue_external_requires_rescue_key: "需要救援密钥",
         rescue_external_requires_wallet: "需要钱包",
@@ -3263,7 +3287,12 @@ const dict = {
         rescue_external_select_method:
             "少なくとも1つの復旧方法を選択してください",
         rescue_external_subtitle:
-            "このページでは、このブラウザのスワップ履歴にない、または完了前に行き詰まったスワップを復旧できます。",
+            "履歴タブにないスワップを復旧するには、このページを使用してください。",
+        rescue_external_report_issue_start:
+            "当方側の問題によりスワップが失敗したと思われる場合は、",
+        rescue_external_report_issue_link: "こちらをクリック",
+        rescue_external_report_issue_end:
+            "してログを共有し、スワップの詳細をお知らせください。",
         rescue_external_coverage: "提供された復旧方法で復旧可能",
         rescue_external_requires_rescue_key: "レスキューキーが必要です",
         rescue_external_requires_wallet: "ウォレットが必要です",

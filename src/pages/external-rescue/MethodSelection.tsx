@@ -1,8 +1,10 @@
-import { For } from "solid-js";
+import { BiSolidHelpCircle } from "solid-icons/bi";
+import { For, Show, createSignal } from "solid-js";
 
 import ConnectWallet from "../../components/ConnectWallet";
 import RescueFileUpload from "../../components/RescueFileUpload";
 import { useGlobalContext } from "../../context/Global";
+import { isChatwootConfigured, postLogsToChatwoot } from "../../utils/chatwoot";
 import { RecoveryChip, missingMethodsTitle, recoveryOptions } from "./Recovery";
 import { RecoveryMethod } from "./types";
 import type { ExternalRescueSearch } from "./useExternalRescueSearch";
@@ -13,8 +15,28 @@ type MethodSelectionProps = {
 };
 
 export const MethodSelection = (props: MethodSelectionProps) => {
-    const { t } = useGlobalContext();
+    const { t, getLogs, notify } = useGlobalContext();
     const activeMethods = () => props.selection.activeMethods();
+
+    const [sharingLogs, setSharingLogs] = createSignal(false);
+
+    const shareLogs = async () => {
+        if (sharingLogs()) {
+            return;
+        }
+
+        setSharingLogs(true);
+        try {
+            await postLogsToChatwoot(await getLogs());
+        } catch (error) {
+            notify(
+                "error",
+                error instanceof Error ? error.message : String(error),
+            );
+        } finally {
+            setSharingLogs(false);
+        }
+    };
 
     return (
         <>
@@ -76,6 +98,20 @@ export const MethodSelection = (props: MethodSelectionProps) => {
                     {props.selection.searchText()}
                 </button>
             </div>
+
+            <Show when={isChatwootConfigured()}>
+                <p class="rescue-external-report-hint">
+                    <BiSolidHelpCircle size={16} opacity={0.5} />
+                    {t("rescue_external_report_issue_start")}
+                    <a
+                        class="rescue-external-report-link"
+                        onClick={() => void shareLogs()}
+                        data-testid="rescue-share-logs">
+                        {t("rescue_external_report_issue_link")}
+                    </a>
+                    {t("rescue_external_report_issue_end")}
+                </p>
+            </Show>
         </>
     );
 };
