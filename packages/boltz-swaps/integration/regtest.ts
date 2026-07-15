@@ -81,6 +81,19 @@ export const elementsSendToAddress = (
 export const generateBitcoinBlock = (): Promise<string> =>
     execInScripts("bitcoin-cli-sim-client -generate");
 
+// Sats received at a wallet-owned Liquid address — esplora cannot see the
+// value of blinded outputs, the owning wallet can.
+export const elementsGetReceivedByAddress = async (
+    address: string,
+): Promise<number> => {
+    const received = JSON.parse(
+        await execInScripts(
+            `elements-cli-sim-client getreceivedbyaddress "${address}"`,
+        ),
+    ) as Record<string, number>;
+    return Math.round((received.bitcoin ?? 0) * 1e8);
+};
+
 export const generateLiquidBlock = (): Promise<string> =>
     execInScripts("elements-cli-sim-client -generate");
 

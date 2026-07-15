@@ -108,22 +108,15 @@ export const makeArbitrumSigner = (): Signer => {
     }) as unknown as Signer;
 };
 
-export const ensureBackendTbtcLiquidity = async (
+// Fund `recipient` with TBTC by impersonating the Uniswap pool on the fork.
+export const fundTbtc = async (
     client: PublicClient,
+    recipient: Address,
+    amount: bigint,
 ): Promise<void> => {
     const code = await client.getCode({ address: TBTC_TOKEN_ADDRESS });
     if (code === undefined || code === "0x") {
         throw new Error("Arbitrum fork is missing the TBTC token contract");
-    }
-
-    if (
-        (await tokenBalance(
-            client,
-            TBTC_TOKEN_ADDRESS,
-            backendWalletAddress,
-        )) >= backendTbtcLiquidity
-    ) {
-        return;
     }
 
     await client.request({
@@ -148,7 +141,7 @@ export const ensureBackendTbtcLiquidity = async (
             address: TBTC_TOKEN_ADDRESS,
             abi: erc20Abi,
             functionName: "transfer",
-            args: [backendWalletAddress, backendTbtcLiquidity],
+            args: [recipient, amount],
         });
         await client.waitForTransactionReceipt({ hash });
     } finally {
@@ -157,4 +150,19 @@ export const ensureBackendTbtcLiquidity = async (
             params: [tbtcFundingSourceAddress] as never,
         });
     }
+};
+
+export const ensureBackendTbtcLiquidity = async (
+    client: PublicClient,
+): Promise<void> => {
+    if (
+        (await tokenBalance(
+            client,
+            TBTC_TOKEN_ADDRESS,
+            backendWalletAddress,
+        )) >= backendTbtcLiquidity
+    ) {
+        return;
+    }
+    await fundTbtc(client, backendWalletAddress, backendTbtcLiquidity);
 };
