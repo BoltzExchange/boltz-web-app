@@ -101,7 +101,7 @@ export const MethodSelection = (props: MethodSelectionProps) => {
 
             <Show when={isChatwootConfigured()}>
                 <p class="rescue-external-report-hint">
-                    <BsInfoCircleFill size={16} opacity={0.5} />
+                    <BsInfoCircleFill size={14} opacity={0.5} />
                     {t("rescue_external_report_issue_start")}
                     <a
                         class="rescue-external-report-link"
