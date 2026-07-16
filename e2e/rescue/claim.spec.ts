@@ -33,8 +33,6 @@ const claimPendingSwap = async ({
 }) => {
     await page.getByRole("link", { name: "Rescue" }).click();
 
-    await page.getByRole("button", { name: "Rescue external swap" }).click();
-
     await page.getByTestId("refundUpload").setInputFiles(rescueFileName);
     await page
         .getByRole("button", { name: dict.en.rescue, exact: true })

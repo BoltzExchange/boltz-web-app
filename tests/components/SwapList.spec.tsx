@@ -146,6 +146,36 @@ describe("SwapList", () => {
         expect(item.className).toContain("disabled");
     });
 
+    it("should allow no-action rows to remain clickable when requested", () => {
+        const swap = {
+            id: "completed-swap",
+            date: new Date().getTime(),
+            assetSend: BTC,
+            assetReceive: LN,
+            action: RescueAction.Successful,
+        } as Swap;
+        const onClick = vi.fn();
+
+        render(
+            () => (
+                <SwapList
+                    swapsSignal={() => [swap]}
+                    action={() => "completed"}
+                    onClick={onClick}
+                    disableNoAction={false}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const item = screen.getByTestId(`swaplist-item-${swap.id}`);
+        expect(item).not.toHaveClass("disabled");
+        expect(item).toHaveClass("no-action");
+
+        fireEvent.click(item);
+        expect(onClick).toHaveBeenCalledWith(swap);
+    });
+
     it("should not trigger row click when delete button is clicked", () => {
         const swap = {
             id: "delete-swap",

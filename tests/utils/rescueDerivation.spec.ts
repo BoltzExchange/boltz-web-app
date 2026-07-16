@@ -111,7 +111,7 @@ describe("rescueDerivation", () => {
             );
         });
 
-        test("Web3.tsx and RescueExternal.tsx derive the same address for the same mnemonic + chainId", () => {
+        test("Web3.tsx and Rescue.tsx derive the same address for the same mnemonic + chainId", () => {
             const rescueFile = { mnemonic: fixtureMnemonic };
 
             const web3Address = evmAccountFromPrivateKey(

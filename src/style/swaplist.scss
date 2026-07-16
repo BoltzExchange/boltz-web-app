@@ -29,13 +29,21 @@
         opacity: 0.5;
         cursor: not-allowed;
 
-        .btn-small {
-            background-color: var(--color-text);
-
-            &:hover {
-                cursor: not-allowed;
-            }
+        &:hover {
+            cursor: not-allowed;
         }
+    }
+
+    &.no-action .swaplist-action {
+        background-color: var(--color-white-60);
+    }
+
+    &.disabled .swaplist-action {
+        background-color: var(--color-white-70);
+    }
+
+    &.disabled .swaplist-action:hover {
+        cursor: not-allowed;
     }
 }
 

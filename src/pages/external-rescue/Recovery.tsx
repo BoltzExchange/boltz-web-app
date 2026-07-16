@@ -11,7 +11,6 @@ import {
     USDT0,
     WBTC,
     getAssetDisplaySymbol,
-    getNetworkBadge,
 } from "../../consts/Assets";
 import type { tFn } from "../../context/Global";
 import { RescueAction } from "../../utils/rescue";
@@ -120,9 +119,7 @@ const RequirementIcon = (props: {
 );
 
 const AssetIcon = (props: RecoveryOption) => (
-    <span
-        class={`asset ${props.className}`}
-        data-network={getNetworkBadge(props.asset)}>
+    <span class={`asset ${props.className}`}>
         <span class="icon" />
     </span>
 );

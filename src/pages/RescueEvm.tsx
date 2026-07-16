@@ -325,7 +325,6 @@ const ClaimState = (props: {
     const { signer, getEtherSwap, getErc20Swap, getGasAbstractionSigner } =
         useWeb3Signer();
     const { evmRescuableSwaps, rescueFile } = useRescueContext();
-    const params = useParams();
 
     const preimage = () => {
         const preimageHash = normalizeEvmId(
@@ -509,15 +508,13 @@ const ClaimState = (props: {
         }
     };
 
-    const basePath = `/rescue/external/${params.type?.toLowerCase() ?? ""}`;
-
     return (
         <Show
             when={preimage() !== undefined}
             fallback={
                 <>
                     <p>{t("claim_scan_required")}</p>
-                    <button class="btn" onClick={() => navigate(basePath)}>
+                    <button class="btn" onClick={() => navigate("/rescue")}>
                         {t("back")}
                     </button>
                 </>

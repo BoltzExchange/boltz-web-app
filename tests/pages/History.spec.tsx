@@ -6,16 +6,21 @@ import { BTC, LN } from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
 import History from "../../src/pages/History";
 import { latestStorageVersion } from "../../src/utils/migration";
+import { RescueAction } from "../../src/utils/rescue";
 import {
     GasAbstractionType,
+    type SomeSwap,
     createUniformGasAbstraction,
 } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper } from "../helper";
 
-const { downloadJsonMock, iterateStoreMock } = vi.hoisted(() => ({
-    downloadJsonMock: vi.fn(),
-    iterateStoreMock: vi.fn(),
-}));
+const { createRescueListMock, downloadJsonMock, iterateStoreMock } = vi.hoisted(
+    () => ({
+        createRescueListMock: vi.fn(),
+        downloadJsonMock: vi.fn(),
+        iterateStoreMock: vi.fn(),
+    }),
+);
 
 let storedSwaps: unknown[] = [];
 let storedRdns: { address: string; rdns: string }[] = [];
@@ -34,6 +39,14 @@ vi.mock("../../src/utils/download", async () => {
         ...actual,
         downloadJson: downloadJsonMock,
         getExportFileName: vi.fn(() => "history-export"),
+    };
+});
+
+vi.mock("../../src/utils/rescue", async () => {
+    const actual = await vi.importActual("../../src/utils/rescue");
+    return {
+        ...actual,
+        createRescueList: createRescueListMock,
     };
 });
 
@@ -91,6 +104,14 @@ describe("History", () => {
         localStorage.clear();
         storedSwaps = [];
         storedRdns = [];
+        createRescueListMock.mockImplementation((swaps: SomeSwap[]) =>
+            Promise.resolve(
+                swaps.map((swap) => ({
+                    ...swap,
+                    action: RescueAction.Pending,
+                })),
+            ),
+        );
         iterateStoreMock.mockImplementation(
             (
                 name: string | undefined,
@@ -138,6 +159,95 @@ describe("History", () => {
                 name: dict.en.history_export,
             }),
         ).toBeInTheDocument();
+    });
+
+    test("should show rescue states, prioritize actions, and omit the date label", async () => {
+        const actions = new Map([
+            ["completed", RescueAction.Successful],
+            ["failed", RescueAction.Failed],
+            ["pending", RescueAction.Pending],
+            ["refund", RescueAction.Refund],
+            ["claim", RescueAction.Claim],
+        ]);
+        storedSwaps = Array.from(actions.keys()).map((id, index) => ({
+            ...sampleSwap,
+            id,
+            date: index + 1,
+        }));
+        createRescueListMock.mockImplementation((swaps: SomeSwap[]) =>
+            Promise.resolve(
+                swaps.map((swap) => ({
+                    ...swap,
+                    action: actions.get(swap.id),
+                })),
+            ),
+        );
+
+        renderHistory();
+
+        for (const label of [
+            dict.en.completed,
+            dict.en.failed,
+            dict.en.in_progress,
+            dict.en.refund,
+            dict.en.claim,
+        ]) {
+            expect(await screen.findByText(label)).toBeInTheDocument();
+        }
+        expect(screen.queryByText(dict.en.view)).not.toBeInTheDocument();
+
+        const rows = document.querySelectorAll(
+            '[data-testid^="swaplist-item-"]',
+        );
+        expect(rows[0]).toHaveAttribute("data-testid", "swaplist-item-claim");
+        expect(rows[1]).toHaveAttribute("data-testid", "swaplist-item-refund");
+        expect(screen.getByTestId("swaplist-item-completed")).not.toHaveClass(
+            "disabled",
+        );
+        expect(screen.getByTestId("swaplist-item-refund")).not.toHaveClass(
+            "disabled",
+        );
+        expect(screen.getByTestId("swaplist-item-claim")).not.toHaveTextContent(
+            `${dict.en.created}:`,
+        );
+        expect(screen.getByTestId("delete-swap-completed")).toHaveClass(
+            "btn-danger",
+        );
+    });
+
+    test("should only check rescue state for swaps on the current page", async () => {
+        const user = userEvent.setup();
+        storedSwaps = Array.from({ length: 16 }, (_, index) => ({
+            ...sampleSwap,
+            id: `swap-${index + 1}`,
+            date: 16 - index,
+        }));
+
+        renderHistory();
+
+        await waitFor(() => {
+            expect(createRescueListMock).toHaveBeenCalledWith(
+                expect.arrayContaining([
+                    expect.objectContaining({ id: "swap-1" }),
+                ]),
+                true,
+            );
+            expect(createRescueListMock.mock.calls.at(-1)?.[0]).toHaveLength(
+                10,
+            );
+        });
+
+        await user.click(screen.getByTestId("next-page"));
+
+        await waitFor(() => {
+            expect(createRescueListMock.mock.calls.at(-1)?.[0]).toHaveLength(6);
+            expect(createRescueListMock.mock.calls.at(-1)?.[0]).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({ id: "swap-11" }),
+                    expect.objectContaining({ id: "swap-16" }),
+                ]),
+            );
+        });
     });
 
     test("should export swaps and rdns without mnemonic data", async () => {

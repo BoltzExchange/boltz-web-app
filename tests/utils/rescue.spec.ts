@@ -469,5 +469,21 @@ describe("rescue", () => {
                 expect(result[0].action).toBe(action);
             },
         );
+
+        test("should return Pending action when the rescue state check throws unexpectedly", async () => {
+            const swap = createMockSubmarineSwap({ assetSend: BTC });
+            // Non-enumerable so the {...swap} fallback spread does not invoke it
+            Object.defineProperty(swap, "status", {
+                get() {
+                    throw new Error("unexpected");
+                },
+            });
+
+            mockGetSwapUTXOs.mockResolvedValue([]);
+
+            const result = await createRescueList([swap], zeroConf);
+            expect(result).toHaveLength(1);
+            expect(result[0].action).toBe(RescueAction.Pending);
+        });
     });
 });

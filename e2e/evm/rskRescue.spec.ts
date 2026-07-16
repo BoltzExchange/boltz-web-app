@@ -140,10 +140,6 @@ const clearBrowserStorage = async (page: Page) => {
 
 const navigateToRskRescue = async (page: Page) => {
     await page.goto("/rescue");
-
-    await page
-        .getByRole("button", { name: dict.en.rescue_external_swap })
-        .click();
 };
 
 const selectAndClickSwapItem = async (

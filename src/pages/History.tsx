@@ -1,18 +1,39 @@
 import { useNavigate } from "@solidjs/router";
-import { Show, createSignal, onMount } from "solid-js";
+import { Show, createResource, createSignal, onMount } from "solid-js";
 
-import Pagination, {
-    desktopItemsPerPage,
-    mobileItemsPerPage,
-} from "../components/Pagination";
-import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
+import LoadingSpinner from "../components/LoadingSpinner";
+import Pagination, { mobileItemsPerPage } from "../components/Pagination";
+import SwapList, {
+    type Swap,
+    getSwapListHeight,
+    sortSwaps,
+} from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { useGlobalContext } from "../context/Global";
+import { type tFn, useGlobalContext } from "../context/Global";
 import { downloadJson, getExportFileName } from "../utils/download";
 import { isMobile } from "../utils/helper";
 import { latestStorageVersion } from "../utils/migration";
+import { RescueAction, createRescueList } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
+
+const historyItemsPerPage = 10;
+
+export const historyListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
+    switch (swap.action) {
+        case RescueAction.Pending:
+            return t("in_progress");
+        case RescueAction.Claim:
+            return t("claim");
+        case RescueAction.Refund:
+            return t("refund");
+        case RescueAction.Failed:
+            return t("failed");
+        case RescueAction.Successful:
+        default:
+            return t("completed");
+    }
+};
 
 const History = () => {
     const navigate = useNavigate();
@@ -22,6 +43,10 @@ const History = () => {
     const [swaps, setSwaps] = createSignal<SomeSwap[]>([]);
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
+    const [historyList] = createResource(
+        currentSwaps,
+        async (pageSwaps) => await createRescueList(pageSwaps, true),
+    );
 
     const deleteLocalStorage = async () => {
         if (confirm(t("delete_storage"))) {
@@ -60,17 +85,50 @@ const History = () => {
                             </button>
                         </div>
                     }>
-                    <div style={getSwapListHeight(swaps(), isMobile())}>
-                        <SwapList
-                            swapsSignal={currentSwaps}
-                            /* eslint-disable-next-line solid/reactivity */
-                            onDelete={async () => {
-                                setSwaps(await getSwaps());
-                            }}
-                            action={() => t("view")}
-                            hideStatusOnMobile
-                        />
-                    </div>
+                    <Show
+                        when={
+                            !historyList.loading && historyList() !== undefined
+                        }
+                        fallback={
+                            <div
+                                class="center"
+                                style={getSwapListHeight(
+                                    swaps(),
+                                    isMobile(),
+                                    historyItemsPerPage,
+                                )}>
+                                <LoadingSpinner />
+                            </div>
+                        }>
+                        <div
+                            style={getSwapListHeight(
+                                swaps(),
+                                isMobile(),
+                                historyItemsPerPage,
+                            )}>
+                            <SwapList
+                                swapsSignal={() => historyList() ?? []}
+                                /* eslint-disable-next-line solid/reactivity */
+                                onDelete={async () => {
+                                    setSwaps(await getSwaps());
+                                }}
+                                action={(swap) =>
+                                    historyListAction({ t, swap })
+                                }
+                                onClick={(swap) => {
+                                    navigate(`/swap/${swap.id}`, {
+                                        state: {
+                                            timedOutRefundable: swap.timedOut,
+                                            waitForSwapTimeout:
+                                                swap.waitForSwapTimeout,
+                                        },
+                                    });
+                                }}
+                                hideDateLabel
+                                disableNoAction={false}
+                            />
+                        </div>
+                    </Show>
                     <Pagination
                         items={swaps}
                         setDisplayedItems={(swaps) => setCurrentSwaps(swaps)}
@@ -81,7 +139,7 @@ const History = () => {
                         itemsPerPage={
                             isMobile()
                                 ? mobileItemsPerPage
-                                : desktopItemsPerPage
+                                : historyItemsPerPage
                         }
                     />
                     <button

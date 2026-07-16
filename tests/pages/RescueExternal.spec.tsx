@@ -11,13 +11,14 @@ import { vi } from "vitest";
 
 import { LN, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
-import RescueExternal from "../../src/pages/external-rescue/RescueExternal";
+import Rescue from "../../src/pages/Rescue";
 import { Results } from "../../src/pages/external-rescue/Results";
 import { mapRestorableSwaps } from "../../src/pages/external-rescue/scan";
 import {
     BtcSearchState,
     RescueResultSource,
 } from "../../src/pages/external-rescue/types";
+import { ChatwootNotReadyError } from "../../src/utils/chatwoot";
 import { RescueAction } from "../../src/utils/rescue";
 import {
     type SomeSwap,
@@ -76,9 +77,22 @@ vi.mock("../../src/utils/rescue", async () => {
     };
 });
 
+const { postLogsToChatwootMock } = vi.hoisted(() => ({
+    postLogsToChatwootMock: vi.fn(),
+}));
+
+vi.mock("../../src/utils/chatwoot", async () => {
+    const actual = await vi.importActual("../../src/utils/chatwoot");
+    return {
+        ...actual,
+        isChatwootConfigured: () => true,
+        postLogsToChatwoot: postLogsToChatwootMock,
+    };
+});
+
 const mockGetRestorableSwaps = vi.mocked(getRestorableSwaps);
 
-describe("RescueExternal", () => {
+describe("Rescue", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockGetRestorableSwaps.mockReset();
@@ -89,7 +103,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -107,7 +121,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -116,7 +130,7 @@ describe("RescueExternal", () => {
         );
 
         expect(
-            await screen.findByText(i18n.en.rescue_external_swap),
+            await screen.findByText(i18n.en.rescue_swaps),
         ).toBeInTheDocument();
         expect(screen.queryByText("Bitcoin / Liquid")).not.toBeInTheDocument();
         expect(screen.queryByText("EVM")).not.toBeInTheDocument();
@@ -125,6 +139,84 @@ describe("RescueExternal", () => {
             name: i18n.en.rescue_external_select_method,
         });
         expect(searchButton).toBeDisabled();
+
+        const coverageAssets = document.querySelectorAll(
+            ".rescue-external-chip .asset",
+        );
+        expect(coverageAssets.length).toBeGreaterThan(0);
+        coverageAssets.forEach((asset) => {
+            expect(asset).not.toHaveAttribute("data-network");
+        });
+    });
+
+    test("should share logs via an accessible button with loading feedback", async () => {
+        const user = userEvent.setup();
+        let resolvePost!: () => void;
+        postLogsToChatwootMock.mockImplementation(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolvePost = resolve;
+                }),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Rescue />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const shareButton = await screen.findByTestId("rescue-share-logs");
+        expect(shareButton.tagName).toBe("BUTTON");
+
+        await user.click(shareButton);
+
+        await waitFor(() => {
+            expect(shareButton).toHaveAttribute("data-loading", "true");
+            expect(
+                within(shareButton).getByTestId("loading-spinner"),
+            ).toBeInTheDocument();
+        });
+
+        resolvePost();
+
+        await waitFor(() => {
+            expect(shareButton).not.toHaveAttribute("data-loading");
+        });
+        expect(
+            within(shareButton).queryByTestId("loading-spinner"),
+        ).not.toBeInTheDocument();
+        expect(postLogsToChatwootMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("should show a translated error when the support chat is not ready", async () => {
+        const user = userEvent.setup();
+        postLogsToChatwootMock.mockRejectedValue(new ChatwootNotReadyError());
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Rescue />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        await user.click(await screen.findByTestId("rescue-share-logs"));
+
+        await waitFor(() => {
+            expect(globalSignals.notification()).toBe(
+                i18n.en.chatwoot_not_ready,
+            );
+        });
     });
 
     test("should enable search after rescue key upload without auto-searching", async () => {
@@ -134,7 +226,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -169,7 +261,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -278,7 +370,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -315,7 +407,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -359,7 +451,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -385,7 +477,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -448,7 +540,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {
@@ -551,7 +643,7 @@ describe("RescueExternal", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RescueExternal />
+                    <Rescue />
                 </>
             ),
             {

@@ -113,14 +113,10 @@ const dict = {
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
         no_rescuable_swaps: "No rescuable swaps found in your browser history",
-        cant_find_swap: "Can't find your swap?",
-        rescue_external_explainer:
-            "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_scanning_evm:
             "Scanning for rescuable swaps across EVM chains...",
         connected_wallet_no_swaps:
             "The connected wallet does not contain any rescuable swaps.",
-        rescue_external_swap: "Rescue External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter a {{ asset }} address to receive your refund on:",
@@ -217,6 +213,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging",
         share_with_support: "Share with support",
+        chatwoot_not_ready:
+            "Support chat is opening — please try sharing your logs again once it has loaded.",
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
@@ -368,6 +366,7 @@ const dict = {
         claim: "Claim",
         claimed: "Swap has been claimed successfully!",
         rescue: "Rescue",
+        rescue_swaps: "Rescue swaps",
         rescue_swap: "Rescue Swap",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Could not get swap {{ id }}",
@@ -525,7 +524,12 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
         rescue_external_select_method: "Select at least one rescue method",
         rescue_external_subtitle:
-            "Choose one or both rescue methods to rescue a swap that is not available in this browser's swap history.",
+            "Use this page to rescue swaps that are not available in the history tab.",
+        rescue_external_report_issue_start:
+            "If you think your swap failed due to an issue on our side, please ",
+        rescue_external_report_issue_link: "click here",
+        rescue_external_report_issue_end:
+            " to share logs and give us some details about your swap.",
         rescue_external_coverage: "Rescuable with the provided rescue methods",
         rescue_external_requires_rescue_key: "Requires rescue key",
         rescue_external_requires_wallet: "Requires wallet",
@@ -665,14 +669,10 @@ const dict = {
             "Swaps, die in deinem Browser gespeichert wurden",
         no_rescuable_swaps:
             "Keine wiederherstellbaren Swaps im Browserverlauf gefunden",
-        cant_find_swap: "Swap nicht gefunden?",
-        rescue_external_explainer:
-            "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden wiederherszustellen.",
         refund_external_scanning_evm:
             "Scanne nach wiederherstellbaren Swaps auf EVM-Chains...",
         connected_wallet_no_swaps:
             "Das verbundene Rootstock Wallet enthält keine wiederherstellbaren Swaps.",
-        rescue_external_swap: "Externen Swap Retten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -773,6 +773,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging",
         share_with_support: "Mit Support teilen",
+        chatwoot_not_ready:
+            "Der Support-Chat wird geöffnet — bitte versuche erneut, deine Logs zu teilen, sobald er geladen ist.",
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
@@ -933,6 +935,7 @@ const dict = {
         claim: "Claimen",
         claimed: "Swap wurde erfolgreich geclaimt!",
         rescue: "Retten",
+        rescue_swaps: "Swaps retten",
         rescue_swap: "Swap retten",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Swap {{ id }} konnte nicht abgerufen werden",
@@ -1092,7 +1095,12 @@ const dict = {
         rescue_external_select_method:
             "Mindestens eine Rettungsmethode auswählen",
         rescue_external_subtitle:
-            "Wähle eine oder beide Rettungsmethoden, um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.",
+            "Nutze diese Seite, um Swaps zu retten, die nicht im Historie-Tab verfügbar sind.",
+        rescue_external_report_issue_start:
+            "Wenn du denkst, dass dein Swap aufgrund eines Fehlers auf unserer Seite fehlgeschlagen ist, klicke bitte ",
+        rescue_external_report_issue_link: "hier",
+        rescue_external_report_issue_end:
+            ", um Logs zu teilen und uns einige Details zu deinem Swap mitzuteilen.",
         rescue_external_coverage:
             "Rettbar mit den bereitgestellten Rettungsmethoden",
         rescue_external_requires_rescue_key: "Benötigt Rettungsschlüssel",
@@ -1232,14 +1240,10 @@ const dict = {
             "Intercambios que se guardaron en el almacenamiento del navegador",
         no_rescuable_swaps:
             "No se han encontrado intercambios rescatables en el historial de tu navegador",
-        cant_find_swap: "¿No encuentras tu intercambio?",
-        rescue_external_explainer:
-            "Intenta rescatar un intercambio externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_scanning_evm:
             "Escaneando en busca de intercambios rescatables en cadenas EVM...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectado no contiene ningún intercambio rescatable.",
-        rescue_external_swap: "Rescatar Intercambio Externo",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduce la dirección de tu monedero {{ asset }} para reembolsar",
@@ -1341,6 +1345,8 @@ const dict = {
         logs_tooltip:
             "Registros de la aplicación web como herramienta de depuración",
         share_with_support: "Compartir con soporte",
+        chatwoot_not_ready:
+            "El chat de soporte se está abriendo — por favor, intenta compartir tus logs de nuevo cuando haya cargado.",
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
@@ -1497,6 +1503,7 @@ const dict = {
         claim: "Reclamar",
         claimed: "¡El intercambio ha sido reclamado exitosamente!",
         rescue: "Rescatar",
+        rescue_swaps: "Rescatar intercambios",
         rescue_swap: "Rescatar Intercambio",
         claim_swap: "Reclamar: {{ id }}",
         failed_get_swap: "No se pudo obtener el intercambio {{ id }}",
@@ -1657,7 +1664,12 @@ const dict = {
         rescue_external_select_method:
             "Selecciona al menos un método de rescate",
         rescue_external_subtitle:
-            "Elige uno o ambos métodos de rescate para rescatar un intercambio que no está disponible en el historial de este navegador.",
+            "Usa esta página para rescatar intercambios que no están disponibles en la pestaña de historia.",
+        rescue_external_report_issue_start:
+            "Si crees que tu intercambio falló debido a un problema de nuestra parte, por favor ",
+        rescue_external_report_issue_link: "haz clic aquí",
+        rescue_external_report_issue_end:
+            " para compartir los logs y darnos algunos detalles sobre tu intercambio.",
         rescue_external_coverage:
             "Rescatable con los métodos de rescate proporcionados",
         rescue_external_requires_rescue_key: "Requiere clave de rescate",
@@ -1797,14 +1809,10 @@ const dict = {
             "Trocas que foram salvas no armazenamento do seu navegador",
         no_rescuable_swaps:
             "Nenhuma troca resgatável encontrada no histórico do navegador",
-        cant_find_swap: "Não consegue encontrar sua troca?",
-        rescue_external_explainer:
-            "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_scanning_evm:
             "Procurando trocas resgatáveis em redes EVM...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém nenhuma troca resgatável.",
-        rescue_external_swap: "Resgatar troca externa",
         history_no_swaps: "Parece que ainda não foram feitas trocas.",
         refund_address_header:
             "Informe um endereço {{ asset }} para receber seu reembolso:",
@@ -1902,6 +1910,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
         share_with_support: "Compartilhar com o suporte",
+        chatwoot_not_ready:
+            "O chat de suporte está abrindo — por favor, tente compartilhar seus logs novamente assim que ele carregar.",
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
@@ -2057,6 +2067,7 @@ const dict = {
         claim: "Reivindicar",
         claimed: "Troca reivindicada com sucesso!",
         rescue: "Resgatar",
+        rescue_swaps: "Resgatar trocas",
         rescue_swap: "Resgatar Troca",
         claim_swap: "Reivindicar: {{ id }}",
         failed_get_swap: "Não foi possível obter a troca {{ id }}",
@@ -2217,7 +2228,12 @@ const dict = {
         rescue_external_select_method:
             "Selecione pelo menos um método de resgate",
         rescue_external_subtitle:
-            "Escolha um ou ambos os métodos de resgate para resgatar uma troca que não está disponível no histórico deste navegador.",
+            "Use esta página para resgatar trocas que não estão disponíveis na aba de histórico.",
+        rescue_external_report_issue_start:
+            "Se você acha que sua troca falhou devido a um problema do nosso lado, por favor ",
+        rescue_external_report_issue_link: "clique aqui",
+        rescue_external_report_issue_end:
+            " para compartilhar os logs e nos dar alguns detalhes sobre sua troca.",
         rescue_external_coverage:
             "Resgatável com os métodos de resgate fornecidos",
         rescue_external_requires_rescue_key: "Requer chave de resgate",
@@ -2345,13 +2361,9 @@ const dict = {
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_rescuable_swaps: "在您的浏览器历史记录中未找到可恢复的交换记录。",
-        cant_find_swap: "找不到您的交换？",
-        rescue_external_explainer:
-            "尝试通过救援密钥和其他紧急方法恢复外部交换分区。",
         refund_external_scanning_evm: "正在扫描 EVM 链上的可恢复交换...",
         connected_wallet_no_swaps:
             "已连接的Rootstock钱包中不包含任何可恢复的交换。",
-        rescue_external_swap: "救援外部交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
@@ -2438,6 +2450,8 @@ const dict = {
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试",
         share_with_support: "分享给客服",
+        chatwoot_not_ready:
+            "客服聊天窗口正在打开——加载完成后请重新尝试分享日志。",
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
@@ -2577,6 +2591,7 @@ const dict = {
         claim: "索赔",
         claimed: "交换已成功索赔！",
         rescue: "救援",
+        rescue_swaps: "救援交换",
         rescue_swap: "救援交换",
         claim_swap: "索赔：{{ id }}",
         failed_get_swap: "无法获取交换 {{ id }}",
@@ -2723,8 +2738,12 @@ const dict = {
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
         rescue_external_select_method: "至少选择一种救援方式",
-        rescue_external_subtitle:
-            "选择一种或两种救援方式，来救援未显示在此浏览器交换历史中的交换。",
+        rescue_external_subtitle: "使用此页面救援历史标签页中不可用的交换。",
+        rescue_external_report_issue_start:
+            "如果您认为您的交换因我们方面的问题而失败，请",
+        rescue_external_report_issue_link: "点击此处",
+        rescue_external_report_issue_end:
+            "分享日志并向我们提供有关您交换的一些详细信息。",
         rescue_external_coverage: "可使用已提供的救援方式救援",
         rescue_external_requires_rescue_key: "需要救援密钥",
         rescue_external_requires_wallet: "需要钱包",
@@ -2858,14 +2877,10 @@ const dict = {
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         no_rescuable_swaps:
             "ブラウザの履歴に復元可能なスワップが見つかりませんでした。",
-        cant_find_swap: "スワップが見つからない？",
-        rescue_external_explainer:
-            "外部スワップをレスキューキーやその他の緊急手段を使用して復旧を試みてください。",
         refund_external_scanning_evm:
             "EVM チェーン上の復旧可能なスワップを検索中です...",
         connected_wallet_no_swaps:
             "接続されたRootstockウォレットには、復元可能なスワップは含まれていません。",
-        rescue_external_swap: "外部スワップの復旧",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
@@ -2964,6 +2979,8 @@ const dict = {
         logs: "ログ",
         logs_tooltip: "ウェブアプリのログ。デバグに便利です",
         share_with_support: "サポートに共有する",
+        chatwoot_not_ready:
+            "サポートチャットを開いています。読み込みが完了したら、もう一度ログの共有をお試しください。",
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
@@ -3118,6 +3135,7 @@ const dict = {
         claim: "クレーム",
         claimed: "スワップが正常にクレームされました！",
         rescue: "救済",
+        rescue_swaps: "スワップを救済",
         rescue_swap: "スワップを救済",
         claim_swap: "クレーム：{{ id }}",
         failed_get_swap: "スワップ {{ id }} を取得できませんでした",
@@ -3275,7 +3293,12 @@ const dict = {
         rescue_external_select_method:
             "少なくとも1つの復旧方法を選択してください",
         rescue_external_subtitle:
-            "このブラウザのスワップ履歴にないスワップを復旧するため、1つまたは両方の復旧方法を選択してください。",
+            "履歴タブにないスワップを復旧するには、このページを使用してください。",
+        rescue_external_report_issue_start:
+            "当方側の問題によりスワップが失敗したと思われる場合は、",
+        rescue_external_report_issue_link: "こちらをクリック",
+        rescue_external_report_issue_end:
+            "してログを共有し、スワップの詳細をお知らせください。",
         rescue_external_coverage: "提供された復旧方法で復旧可能",
         rescue_external_requires_rescue_key: "レスキューキーが必要です",
         rescue_external_requires_wallet: "ウォレットが必要です",

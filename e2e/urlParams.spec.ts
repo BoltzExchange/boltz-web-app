@@ -149,22 +149,20 @@ test.describe("URL params", () => {
 
         await page.goto("/");
         await page.getByRole("link", { name: "Rescue" }).click();
-        await page
-            .getByRole("button", { name: "Rescue external swap" })
-            .click();
 
         await toggleRescueModeOnClick(page);
 
         await page.goto("/refund/external?mode=rescue-key");
+        await expect(page).toHaveURL(/\/rescue\?mode=rescue-key$/);
         await assertMnemonicVisible();
 
         await page.goto("/rescue/external/btc?mode=rescue-key");
+        await expect(page).toHaveURL(/\/rescue\?mode=rescue-key$/);
         await assertMnemonicVisible();
 
         await page.goto("/rescue/external/rsk?mode=rescue-key");
+        await expect(page).toHaveURL(/\/rescue\?mode=rescue-key$/);
         await assertMnemonicVisible();
-        await expect(page.getByText("EVM")).not.toBeVisible();
-        await expect(page.getByText(/connect wallet/i)).toBeVisible();
     });
 
     const addressField = "onchainAddress";
