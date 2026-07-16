@@ -46,6 +46,8 @@ export const oftAbi = parseAbi([
     "function send((uint32 dstEid,bytes32 to,uint256 amountLD,uint256 minAmountLD,bytes extraOptions,bytes composeMsg,bytes oftCmd) sendParam, (uint256 nativeFee,uint256 lzTokenFee) msgFee, address refundAddress) payable returns ((bytes32 guid,uint64 nonce,(uint256 amountSentLD,uint256 amountReceivedLD) receipt), (uint256 nativeFee,uint256 lzTokenFee))",
     "event OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)",
     "event OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)",
+    // Thrown by the USDT0 legacy mesh when the destination pathway lacks capacity
+    "error InsufficientCredits(uint32 eid, uint256 credits, uint256 amountToSend)",
 ]);
 
 export const tempoOftWrapperAbi = parseAbi([

@@ -232,6 +232,7 @@ const dict = {
         bridge_messaging_fee: "Bridge Messaging Fee",
         bridge_transfer_fee: "Bridge Transfer Fee",
         retry: "Retry",
+        error_bridge_capacity: "Amount exceeds bridge capacity",
         error_no_quote:
             "A quote could not be obtained. Please check your connection and try again.",
         error_zero_quote: "Increase send amount",
@@ -792,6 +793,7 @@ const dict = {
         bridge_messaging_fee: "Bridge-Messaging-Gebühr",
         bridge_transfer_fee: "Bridge-Transfer-Gebühr",
         retry: "Erneut versuchen",
+        error_bridge_capacity: "Betrag übersteigt die Bridge-Kapazität",
         error_no_quote:
             "Ein Angebot konnte nicht abgerufen werden. Bitte prüfe deine Verbindung und versuche es erneut.",
         error_zero_quote: "Sendebetrag erhöhen",
@@ -1364,6 +1366,7 @@ const dict = {
         bridge_messaging_fee: "Tarifa de Mensajería del Puente",
         bridge_transfer_fee: "Tarifa de Transferencia del Puente",
         retry: "Reintentar",
+        error_bridge_capacity: "La cantidad excede la capacidad del puente",
         error_no_quote:
             "No se pudo obtener una cotización. Por favor, verifique su conexión e inténtelo de nuevo.",
         error_zero_quote: "Aumenta la cantidad a enviar",
@@ -1929,6 +1932,7 @@ const dict = {
         bridge_messaging_fee: "Taxa de Mensagem da Ponte",
         bridge_transfer_fee: "Taxa de Transferência da Ponte",
         retry: "Tentar novamente",
+        error_bridge_capacity: "O valor excede a capacidade da ponte",
         error_no_quote:
             "Não foi possível obter uma cotação. Por favor, verifique sua conexão e tente novamente.",
         error_zero_quote: "Aumente o valor a enviar",
@@ -2468,6 +2472,7 @@ const dict = {
         bridge_messaging_fee: "桥接消息费用",
         bridge_transfer_fee: "桥接转账费用",
         retry: "重试",
+        error_bridge_capacity: "金额超过桥接容量",
         error_no_quote: "无法获取报价。请检查您的网络连接并重试。",
         error_zero_quote: "提高发送金额",
         oft_eta: "预计约{{ time }}后到达",
@@ -2998,6 +3003,7 @@ const dict = {
         bridge_messaging_fee: "ブリッジメッセージ手数料",
         bridge_transfer_fee: "ブリッジ転送手数料",
         retry: "再試行",
+        error_bridge_capacity: "金額がブリッジ容量を超えています",
         error_no_quote:
             "見積もりを取得できませんでした。接続を確認してもう一度お試しください。",
         error_zero_quote: "送信額を増やす",

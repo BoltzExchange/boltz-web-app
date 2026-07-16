@@ -1,6 +1,7 @@
 import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { getRpcUrls } from "boltz-swaps/config";
+import { isBridgeCapacityError } from "boltz-swaps/errors";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
@@ -119,6 +120,8 @@ const Create = () => {
         onchainAddress,
         quoteLoading,
         setQuoteLoading,
+        quoteError,
+        setQuoteError,
         destinationLocked,
     } = useCreateContext();
     const { connectedWallet, signer } = useWeb3Signer();
@@ -299,12 +302,35 @@ const Create = () => {
     };
 
     const loadingGuard = (fn: (isCurrent: () => boolean) => Promise<void>) => {
+        const runQuote = async (isCurrent: () => boolean) => {
+            setQuoteError(undefined);
+            try {
+                await fn(isCurrent);
+            } catch (error) {
+                log.error("Amount quote failed", error);
+                if (!isCurrent()) {
+                    return;
+                }
+                setQuoteError(
+                    isBridgeCapacityError(error)
+                        ? "error_bridge_capacity"
+                        : "error_no_quote",
+                );
+                if (amountChanged() === Side.Receive) {
+                    setSendAmount(BigNumber(0));
+                } else {
+                    setReceiveAmount(BigNumber(0));
+                }
+                validateAmount();
+            }
+        };
+
         if (!pair().needsNetworkForQuote) {
             ++quoteRequestId;
             clearQuoteDebounce();
             setQuoteLoading(false);
             const id = quoteRequestId;
-            void fn(() => id === quoteRequestId);
+            void runQuote(() => id === quoteRequestId);
             return;
         }
 
@@ -316,7 +342,7 @@ const Create = () => {
             quoteDebounceTimeout = undefined;
             void (async () => {
                 try {
-                    await fn(() => requestId === quoteRequestId);
+                    await runQuote(() => requestId === quoteRequestId);
                 } finally {
                     if (requestId === quoteRequestId) {
                         setQuoteLoading(false);
@@ -524,6 +550,16 @@ const Create = () => {
         };
 
         setCustomValidity("", false);
+
+        const quoteErrorKey = quoteError();
+        if (
+            quoteErrorKey !== undefined &&
+            (sendAmount().isGreaterThan(0) || receiveAmount().isGreaterThan(0))
+        ) {
+            setCustomValidity(t(quoteErrorKey), false);
+            setAmountValid(false);
+            return;
+        }
 
         const amount = Number(sendAmount());
         if (pair().canZeroAmount && amount === 0) {

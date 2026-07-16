@@ -317,6 +317,8 @@ export type CreateContextType = {
     setBolt12Loading: Setter<boolean>;
     quoteLoading: Accessor<boolean>;
     setQuoteLoading: Setter<boolean>;
+    quoteError: Accessor<DictKey | undefined>;
+    setQuoteError: Setter<DictKey | undefined>;
     destinationLocked: Accessor<boolean>;
     setDestinationLocked: Setter<boolean>;
 };
@@ -369,6 +371,9 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     );
     const [bolt12Loading, setBolt12Loading] = createSignal(false);
     const [quoteLoading, setQuoteLoading] = createSignal(false);
+    const [quoteError, setQuoteError] = createSignal<DictKey | undefined>(
+        undefined,
+    );
     const [destinationLocked, setDestinationLocked] = createSignal(false);
 
     const resetDestinationState = () => {
@@ -469,6 +474,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         setSendAmountFormatted("");
         setReceiveAmountFormatted("");
         setAmountValid(false);
+        setQuoteError(undefined);
     };
 
     const [amountChanged, setAmountChanged] = createSignal(Side.Send);
@@ -551,6 +557,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setBolt12Loading,
                 quoteLoading,
                 setQuoteLoading,
+                quoteError,
+                setQuoteError,
                 destinationLocked,
                 setDestinationLocked,
             }}>

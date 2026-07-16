@@ -9,6 +9,7 @@ import {
 import { BigNumber } from "bignumber.js";
 import { type BridgeDriver, bridgeRegistry } from "boltz-swaps/bridge";
 import type { Pairs } from "boltz-swaps/client";
+import { BridgeCapacityError } from "boltz-swaps/errors";
 import {
     BridgeKind,
     NetworkTransport,
@@ -837,6 +838,216 @@ describe("Create", () => {
                 expect(button.disabled).toBe(true);
                 expect(button.textContent).toBe(i18n.en.error_zero_quote);
             });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test.each([
+        {
+            kind: "generic",
+            error: new Error("quote failed"),
+            expectedMessage: i18n.en.error_no_quote,
+        },
+        {
+            kind: "bridge capacity",
+            error: new BridgeCapacityError(50n, 100n),
+            expectedMessage: i18n.en.error_bridge_capacity,
+        },
+    ])(
+        "should block creation with a $kind error when a routed quote rejects",
+        async ({ error, expectedMessage }) => {
+            vi.useFakeTimers();
+
+            try {
+                render(
+                    () => (
+                        <>
+                            <TestComponent />
+                            <Create />
+                        </>
+                    ),
+                    {
+                        wrapper: contextWrapper,
+                    },
+                );
+
+                globalSignals.setOnline(true);
+                globalSignals.setPairs(pairs);
+                setPairAssets("USDT0-SOL", BTC);
+
+                const currentPair = signals.pair();
+                Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                    configurable: true,
+                    get: () => true,
+                });
+                currentPair.calculateReceiveAmount = vi
+                    .fn(() => Promise.reject(error))
+                    .mockName("calculateReceiveAmount");
+
+                signals.setAddressValid(true);
+                signals.setOnchainAddress(
+                    "bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3",
+                );
+
+                fireEvent.input(await screen.findByTestId("sendAmount"), {
+                    target: { value: "100000" },
+                });
+
+                await flushQuoteDebounce();
+
+                await waitFor(() => {
+                    expect(
+                        currentPair.calculateReceiveAmount,
+                    ).toHaveBeenCalled();
+                });
+
+                const button = (await screen.findByTestId(
+                    "create-swap-button",
+                )) as HTMLButtonElement;
+
+                vi.useRealTimers();
+
+                await waitFor(() => {
+                    expect(signals.amountValid()).toBe(false);
+                    expect(button.disabled).toBe(true);
+                    expect(button.textContent).toBe(expectedMessage);
+                });
+
+                fireEvent.input(await screen.findByTestId("sendAmount"), {
+                    target: { value: "" },
+                });
+
+                await waitFor(() => {
+                    expect(button.textContent).not.toBe(expectedMessage);
+                });
+            } finally {
+                vi.useRealTimers();
+            }
+        },
+    );
+
+    test("should reset the send amount when a receive-side quote rejects", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            globalSignals.setOnline(true);
+            globalSignals.setPairs(pairs);
+            setPairAssets(LN, BTC);
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateSendAmount = vi
+                .fn(() => Promise.reject(new Error("bridge capacity exceeded")))
+                .mockName("calculateSendAmount");
+
+            fireEvent.input(await screen.findByTestId("receiveAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(currentPair.calculateSendAmount).toHaveBeenCalled();
+            });
+
+            const button = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            vi.useRealTimers();
+
+            await waitFor(() => {
+                expect(signals.sendAmount().toString()).toBe("0");
+                expect(signals.amountValid()).toBe(false);
+                expect(button.textContent).toBe(i18n.en.error_no_quote);
+            });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("should ignore a stale quote rejection after a newer quote resolves", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            globalSignals.setOnline(true);
+            globalSignals.setPairs(pairs);
+            setPairAssets(LN, BTC);
+
+            const currentPair = signals.pair();
+            let rejectFirstQuote: ((reason: Error) => void) | undefined;
+            const firstQuote = new Promise<BigNumber>((_, reject) => {
+                rejectFirstQuote = reject;
+            });
+
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn()
+                .mockImplementationOnce(() => firstQuote)
+                .mockImplementation(() => Promise.resolve(BigNumber(90_000)))
+                .mockName("calculateReceiveAmount");
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(1);
+            });
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "200000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(2);
+                expect(signals.receiveAmount().toString()).toBe("90000");
+            });
+
+            rejectFirstQuote?.(new Error("bridge capacity exceeded"));
+            await flushQuoteDebounce();
+
+            expect(signals.receiveAmount().toString()).toBe("90000");
+            expect(signals.amountValid()).toBe(true);
         } finally {
             vi.useRealTimers();
         }
