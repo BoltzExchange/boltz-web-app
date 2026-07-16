@@ -3,6 +3,7 @@ import { BigNumber } from "bignumber.js";
 import { getRpcUrls } from "boltz-swaps/config";
 import { AssetKind, NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
+import { IoClose } from "solid-icons/io";
 import {
     Show,
     createEffect,
@@ -989,8 +990,9 @@ const Create = () => {
                                 type="button"
                                 class="btn-small invoice-slot-action"
                                 data-testid="committed-invoice-clear"
+                                aria-label={t("clear_amount")}
                                 onClick={clearCommittedAmounts}>
-                                {t("clear_amount")}
+                                <IoClose size={16} />
                             </button>
                         </div>
                     </Show>

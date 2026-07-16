@@ -1489,7 +1489,7 @@ describe("Create", () => {
             ).toBeInTheDocument();
             expect(
                 screen.getByTestId("committed-invoice-clear"),
-            ).toHaveTextContent(i18n.en.clear_amount);
+            ).toHaveAccessibleName(i18n.en.clear_amount);
 
             fireEvent.click(screen.getByTestId("committed-invoice-clear"));
 
