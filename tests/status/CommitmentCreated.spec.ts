@@ -1,6 +1,7 @@
 import { BigNumber } from "bignumber.js";
 import type { Hash, PublicClient, TransactionReceipt } from "viem";
 
+import { InvoiceValidation } from "../../src/consts/Enums";
 import {
     type CommitmentAmounts,
     calculateCommittedSubmarineAmounts,
@@ -107,13 +108,25 @@ describe("CommitmentCreated", () => {
         expect(validateInvoice).not.toHaveBeenCalled();
     });
 
-    test("rejects invoices with the wrong amount", () => {
-        expect(() =>
+    test("rejects invoices with the wrong amount and reports the expected amount", () => {
+        const expectedSats = validateInvoice(invoice) + 1;
+
+        let thrown: unknown;
+        try {
             validateCommitmentInvoice(`lightning:${invoice}`, {
                 ...commitmentAmountsForInvoice(invoice),
-                receiveAmount: BigNumber(validateInvoice(invoice) + 1),
-            }),
-        ).toThrow("invalid_invoice");
+                receiveAmount: BigNumber(expectedSats),
+            });
+        } catch (error) {
+            thrown = error;
+        }
+
+        expect(thrown).toBeInstanceOf(Error);
+        expect((thrown as Error).message).toEqual(
+            InvoiceValidation.ExactAmount,
+        );
+        // The expected amount is carried on the cause so the UI can render it
+        expect((thrown as Error).cause).toEqual(expectedSats);
     });
 
     test("retries commitment lockup receipt lookup after transient failures", async () => {

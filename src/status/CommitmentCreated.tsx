@@ -28,7 +28,7 @@ import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LockupEvm from "../components/LockupEvm";
 import RefundButton from "../components/RefundButton";
-import { Denomination } from "../consts/Enums";
+import { Denomination, InvoiceValidation } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -131,8 +131,9 @@ export const validateCommitmentInvoice = (
 ): InvoiceData => {
     const invoice = extractInvoice(value) ?? "";
     const sats = validateInvoice(invoice);
-    if (sats !== getInvoiceSats(amounts)) {
-        throw new Error("invalid_invoice");
+    const expectedSats = getInvoiceSats(amounts);
+    if (sats !== expectedSats) {
+        throw new Error(InvoiceValidation.ExactAmount, { cause: expectedSats });
     }
 
     return { invoice, sats };
