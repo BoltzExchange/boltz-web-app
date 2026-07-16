@@ -1,16 +1,24 @@
+import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import { SwapPosition } from "boltz-swaps/types";
 import type { Hash, PublicClient, TransactionReceipt } from "viem";
 
+import { config } from "../../src/config";
+import { USDT0 } from "../../src/consts/Assets";
 import { InvoiceValidation } from "../../src/consts/Enums";
+import dict from "../../src/i18n/i18n";
 import {
     type CommitmentAmounts,
+    CommitmentLockupTransaction,
     calculateCommittedSubmarineAmounts,
     validateCommitmentInvoice,
     validateCommitmentInvoiceInput,
     waitForCommitmentLockupReceipt,
 } from "../../src/status/CommitmentCreated";
 import type Pair from "../../src/utils/Pair";
+import type { BridgeDetail } from "../../src/utils/swapCreator";
 import { validateInvoice } from "../../src/utils/validation";
+import { contextWrapper } from "../helper";
 
 const invoice = "lnbcrt1mock";
 const invoiceSats = 40_720;
@@ -162,5 +170,67 @@ describe("CommitmentCreated", () => {
             waitForCommitmentLockupReceipt(provider, hash, 1, 0, 2),
         ).rejects.toThrow("rpc timeout");
         expect(provider.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
+    });
+
+    describe("CommitmentLockupTransaction", () => {
+        const txHash = "0xdeadbeef";
+        const lockupTransactionLabel = dict.en.blockexplorer.replace(
+            "{{ typeLabel }}",
+            dict.en.blockexplorer_lockup_tx,
+        );
+        const preBridge = {
+            kind: "oft",
+            sourceAsset: "USDT0-ETH",
+            destinationAsset: USDT0,
+            position: SwapPosition.Pre,
+        } as unknown as BridgeDetail;
+
+        const explorerTxHref = () =>
+            `${config.assets![USDT0].blockExplorerUrl!.normal}/tx/${txHash}`;
+
+        test("labels the link as bridge status for bridged commitments", async () => {
+            render(
+                () => (
+                    <CommitmentLockupTransaction
+                        asset={USDT0}
+                        txHash={txHash}
+                        bridge={preBridge}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const link = (
+                await screen.findByText(dict.en.check_bridge_status)
+            ).closest("a")!;
+
+            expect(screen.queryByText(lockupTransactionLabel)).toBeNull();
+            expect(link.getAttribute("aria-label")).toEqual(
+                dict.en.check_bridge_status,
+            );
+            expect(link.href).toEqual(explorerTxHref());
+        });
+
+        test("keeps the lockup transaction label for non-bridged commitments", async () => {
+            render(
+                () => (
+                    <CommitmentLockupTransaction
+                        asset={USDT0}
+                        txHash={txHash}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const link = (
+                await screen.findByText(lockupTransactionLabel)
+            ).closest("a")!;
+
+            expect(screen.queryByText(dict.en.check_bridge_status)).toBeNull();
+            expect(link.getAttribute("aria-label")).toEqual(
+                lockupTransactionLabel,
+            );
+            expect(link.href).toEqual(explorerTxHref());
+        });
     });
 });

@@ -947,7 +947,7 @@ const dict = {
         max_amount_destination:
             "Höchstbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
         exact_amount_destination:
-            "Rechnungsbetrag muss genau {{ amount }} {{ denomination }} betragen",
+            "Betrag muss genau {{ amount }} {{ denomination }} sein",
         destination: "Zieladresse",
         destination_address: "{{ address }}",
 
