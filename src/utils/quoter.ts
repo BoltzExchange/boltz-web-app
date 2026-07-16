@@ -144,6 +144,12 @@ export const fetchDexQuote = async (
     getGasToken?: boolean,
     gasTokenAmount?: bigint,
 ): Promise<ClaimQuote> => {
+    if (amountIn <= 0n) {
+        throw new Error(
+            `cannot fetch DEX quote with non-positive amount (${amountIn.toString()})`,
+        );
+    }
+
     if (getGasToken) {
         if (gasTokenAmount === undefined) {
             throw new Error("missing gas token amount");

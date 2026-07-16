@@ -165,6 +165,15 @@ const renderPay = (backupDone: boolean = true) => {
 describe("Pay", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        Object.defineProperty(navigator, "locks", {
+            configurable: true,
+            value: {
+                request: vi.fn(
+                    async (_name: string, callback: () => Promise<unknown>) =>
+                        await callback(),
+                ),
+            },
+        });
         window.history.replaceState({}, "", "/");
         mockUseParams.mockReturnValue({
             id: "123",
@@ -521,6 +530,7 @@ describe("Pay", () => {
             type: SwapType.Chain,
             assetReceive: BTC,
             assetSend: LBTC,
+            receiveAmount: 100_000,
             version: OutputType.Taproot,
             claimTx: undefined,
             lockupDetails: {},
@@ -566,6 +576,7 @@ describe("Pay", () => {
             type: SwapType.Chain,
             assetReceive: BTC,
             assetSend: LBTC,
+            receiveAmount: 100_000,
             version: OutputType.Taproot,
             claimTx: undefined,
             lockupDetails: {},
@@ -608,6 +619,7 @@ describe("Pay", () => {
             type: SwapType.Chain,
             assetReceive: BTC,
             assetSend: LBTC,
+            receiveAmount: 100_000,
             version: OutputType.Taproot,
             claimTx: undefined,
             lockupDetails: {},
@@ -655,6 +667,7 @@ describe("Pay", () => {
             type: SwapType.Chain,
             assetReceive: BTC,
             assetSend: LBTC,
+            receiveAmount: 100_000,
             version: OutputType.Taproot,
             claimTx: undefined,
             lockupDetails: {},
@@ -688,6 +701,7 @@ describe("Pay", () => {
             type: SwapType.Chain,
             assetReceive: BTC,
             assetSend: LBTC,
+            receiveAmount: 100_000,
             version: OutputType.Taproot,
             claimTx: undefined,
             lockupDetails: {},

@@ -1,11 +1,12 @@
 import {
+    type ChainPairTypeTaproot,
     type LockupTransaction,
     getChainSwapTransactions,
     getReverseTransaction,
     postChainSwapDetails,
 } from "boltz-swaps/client";
 import { SwapType } from "boltz-swaps/types";
-import { getTransaction } from "boltz-swaps/utxo";
+import { getOutputAmount, getTransaction } from "boltz-swaps/utxo";
 import log from "loglevel";
 import {
     type Accessor,
@@ -24,13 +25,18 @@ import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import { createSwapModifier } from "../hooks/useModifySwap";
 import { getTransactionOutSpend } from "../utils/blockchain";
 import {
+    isPositivePersistedAmount,
+    withChainSwapQuoteLock,
+} from "../utils/chainSwapQuote";
+import {
     claim,
     createSubmarineSignature,
     createTheirPartialChainSwapSignature,
     findSwapOutputVout,
 } from "../utils/claim";
+import { decodeAddress, findOutputByScript } from "../utils/compat";
 import { formatError } from "../utils/errors";
-import { getPair } from "../utils/helper";
+import { getPair, parseBlindingKey } from "../utils/helper";
 import { isSwapClaimable } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -86,6 +92,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
         getSwap,
         privacyMode,
         notify,
+        fetchPairs,
         pairs,
         modifySwapStorage,
         zeroConf,
@@ -165,6 +172,64 @@ const PayProvider = (props: { children: JSX.Element }) => {
             pendingServerClaimHelp.delete(chainSwap.id);
             helpingServerClaims.delete(chainSwap.id);
         }
+    };
+
+    const recoverChainSwapAmounts = async (
+        swap: ChainSwap,
+        lockupTxHex: string,
+    ): Promise<ChainSwap> => {
+        const getClaimFee = () =>
+            getPair<ChainPairTypeTaproot>(
+                pairs(),
+                SwapType.Chain,
+                swap.assetSend,
+                swap.assetReceive,
+            )?.fees.minerFees.user.claim;
+
+        let claimFee = getClaimFee();
+        if (claimFee === undefined) {
+            await fetchPairs();
+            claimFee = getClaimFee();
+        }
+        if (claimFee === undefined) {
+            throw new Error(`claim fee is unavailable for swap ${swap.id}`);
+        }
+
+        const output = findOutputByScript(
+            swap.assetReceive,
+            getTransaction(swap.assetReceive).fromHex(lockupTxHex),
+            decodeAddress(swap.assetReceive, swap.claimDetails.lockupAddress)
+                .script,
+        );
+        if (output === undefined) {
+            throw new Error(
+                `server lockup output is missing for swap ${swap.id}`,
+            );
+        }
+
+        const lockupAmount = await getOutputAmount(swap.assetReceive, {
+            ...output,
+            blindingPrivateKey: parseBlindingKey(swap, false),
+        } as never);
+        const receiveAmount = lockupAmount - (claimFee + 1);
+        if (receiveAmount <= 0) {
+            throw new Error(
+                `recovered receive amount is not positive for swap ${swap.id}`,
+            );
+        }
+
+        log.info(
+            `Recovered receive amount ${receiveAmount} for swap ${swap.id} from its server lockup`,
+        );
+        const recovered = await modifySwap<ChainSwap>(swap.id, (s) => {
+            s.receiveAmount = receiveAmount;
+            s.claimDetails.amount = lockupAmount;
+        });
+        if (recovered === null) {
+            throw new Error(`swap ${swap.id} is missing from storage`);
+        }
+
+        return recovered;
     };
 
     const [claimingSwaps, setClaimingSwaps] = createSignal(new Set<string>(), {
@@ -253,19 +318,46 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     return swaps;
                 });
 
-                const res = await claim(
-                    deriveKey,
-                    currentSwap as ReverseSwap | ChainSwap,
-                    data.transaction as { hex: string },
-                    true,
-                );
-                if (res === undefined) {
-                    return;
-                }
-                const claimedSwap = await modifySwap(res.id, (s) => {
-                    s.claimTx = res.claimTx;
+                const transaction = data.transaction as { hex: string };
+                const res = await withChainSwapQuoteLock(swapId, async () => {
+                    let claimableSwap = await getSwap<ReverseSwap | ChainSwap>(
+                        swapId,
+                    );
+                    if (
+                        claimableSwap === null ||
+                        claimableSwap.claimTx !== undefined
+                    ) {
+                        return undefined;
+                    }
+                    if (
+                        !isPositivePersistedAmount(claimableSwap.receiveAmount)
+                    ) {
+                        if (claimableSwap.type !== SwapType.Chain) {
+                            throw new Error(
+                                `swap ${swapId} has an invalid persisted receive amount`,
+                            );
+                        }
+                        claimableSwap = await recoverChainSwapAmounts(
+                            claimableSwap as ChainSwap,
+                            transaction.hex,
+                        );
+                    }
+
+                    const result = await claim(
+                        deriveKey,
+                        claimableSwap,
+                        transaction,
+                        true,
+                    );
+                    if (result === undefined) {
+                        return undefined;
+                    }
+                    const claimedSwap = await modifySwap(result.id, (s) => {
+                        s.claimTx = result.claimTx;
+                    });
+                    return claimedSwap === null ? undefined : result;
                 });
-                if (claimedSwap === null) {
+                if (res === undefined) {
                     return;
                 }
 
