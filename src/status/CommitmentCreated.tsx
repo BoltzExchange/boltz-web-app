@@ -28,7 +28,7 @@ import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LockupEvm from "../components/LockupEvm";
 import RefundButton from "../components/RefundButton";
-import { Denomination } from "../consts/Enums";
+import { Denomination, InvoiceValidation } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -48,6 +48,7 @@ import {
     isDeferredInvoiceDestination,
 } from "../utils/invoice";
 import {
+    type BridgeDetail,
     type CommitmentSwap,
     createSubmarine,
     getPreBridgeDetail,
@@ -131,8 +132,9 @@ export const validateCommitmentInvoice = (
 ): InvoiceData => {
     const invoice = extractInvoice(value) ?? "";
     const sats = validateInvoice(invoice);
-    if (sats !== getInvoiceSats(amounts)) {
-        throw new Error("invalid_invoice");
+    const expectedSats = getInvoiceSats(amounts);
+    if (sats !== expectedSats) {
+        throw new Error(InvoiceValidation.ExactAmount, { cause: expectedSats });
     }
 
     return { invoice, sats };
@@ -173,6 +175,7 @@ const CommitmentInvoiceHeader = (props: {
     invoiceAsset: string;
     lockupAsset: string;
     lockupTxHash: string;
+    bridge?: BridgeDetail;
 }) => {
     const { separator, t } = useGlobalContext();
 
@@ -203,19 +206,29 @@ const CommitmentInvoiceHeader = (props: {
                 <CommitmentLockupTransaction
                     asset={props.lockupAsset}
                     txHash={props.lockupTxHash}
+                    bridge={props.bridge}
                 />
             </div>
         </div>
     );
 };
 
-const CommitmentLockupTransaction = (props: {
+export const CommitmentLockupTransaction = (props: {
     asset: string;
     txHash: string;
+    bridge?: BridgeDetail;
 }) => {
     const { t } = useGlobalContext();
     const explorerHref = () =>
         blockExplorerLink(props.asset, true, props.txHash);
+    // On bridged commitments this tx is the bridge send, not the final
+    // lockup; that one is linked on the next step
+    const label = () =>
+        props.bridge !== undefined
+            ? t("check_bridge_status")
+            : t("blockexplorer", {
+                  typeLabel: t("blockexplorer_lockup_tx"),
+              });
 
     return (
         <Show when={explorerHref()}>
@@ -223,11 +236,9 @@ const CommitmentLockupTransaction = (props: {
                 <ExternalLink
                     class="commitment-lockup-transaction"
                     href={href()}
-                    aria-label={t("blockexplorer", {
-                        typeLabel: t("blockexplorer_lockup_tx"),
-                    })}>
+                    aria-label={label()}>
                     <BsGlobe size={14} />
-                    <span>{t("blockexplorer_lockup_tx")}</span>
+                    <span>{label()}</span>
                 </ExternalLink>
             )}
         </Show>
@@ -622,6 +633,9 @@ const CommitmentCreated = () => {
                                         lockupTxHash={
                                             commitment().commitmentLockupTxHash!
                                         }
+                                        bridge={getPreBridgeDetail(
+                                            commitment().bridge,
+                                        )}
                                     />
                                     <input
                                         required

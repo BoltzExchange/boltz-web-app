@@ -2,11 +2,14 @@ import BigNumber from "bignumber.js";
 import { getConfiguredNetwork } from "boltz-swaps/config";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { Denomination, InvoiceValidation } from "../../src/consts/Enums";
+import { formatAmount, formatDenomination } from "../../src/utils/denomination";
 import {
     extractAddress,
     extractBip21Amount,
     extractInvoice,
     getAssetByBip21Prefix,
+    invoiceAmountLabel,
     isBip21,
     isInvoice,
     isLnurl,
@@ -136,6 +139,43 @@ describe("invoice", () => {
             expect(isInvoice(undefined as never)).toBe(false);
             expect(isInvoice(null as never)).toBe(false);
             expect(isInvoice(123 as never)).toBe(false);
+        });
+    });
+
+    describe("invoiceAmountLabel", () => {
+        const options = {
+            denomination: Denomination.Sat,
+            separator: " ",
+            asset: BTC,
+        };
+
+        test("maps an exact-amount mismatch to the required-amount label", () => {
+            const requiredSats = 1529;
+            const error = new Error(InvoiceValidation.ExactAmount, {
+                cause: requiredSats,
+            });
+
+            expect(invoiceAmountLabel(error, options)).toEqual({
+                key: "exact_amount_destination",
+                params: {
+                    amount: formatAmount(
+                        BigNumber(requiredSats),
+                        options.denomination,
+                        options.separator,
+                        options.asset,
+                    ),
+                    denomination: formatDenomination(
+                        options.denomination,
+                        options.asset,
+                    ),
+                },
+            });
+        });
+
+        test("ignores errors that are not invoice validation errors", () => {
+            expect(
+                invoiceAmountLabel(new Error("invalid_invoice"), options),
+            ).toBeUndefined();
         });
     });
 });

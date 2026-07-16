@@ -62,6 +62,9 @@ export const invoiceAmountLabel = (
         case InvoiceValidation.MaxAmount:
             key = "max_amount_destination";
             break;
+        case InvoiceValidation.ExactAmount:
+            key = "exact_amount_destination";
+            break;
         default: {
             const unhandled: never = error.message as never;
             return unhandled;

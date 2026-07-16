@@ -32,6 +32,7 @@ export enum AssetSelection {
 export enum InvoiceValidation {
     MinAmount = "minAmount",
     MaxAmount = "maxAmount",
+    ExactAmount = "exactAmount",
 }
 
 export enum Currency {

@@ -381,6 +381,8 @@ const dict = {
             "Minimum amount for the destination address is {{ amount }} {{ denomination }}",
         max_amount_destination:
             "Maximum amount for the destination address is {{ amount }} {{ denomination }}",
+        exact_amount_destination:
+            "Invoice amount must be exactly {{ amount }} {{ denomination }}",
         destination: "Destination",
         destination_address: "{{ address }}",
 
@@ -944,6 +946,8 @@ const dict = {
             "Mindestbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
         max_amount_destination:
             "Höchstbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
+        exact_amount_destination:
+            "Betrag muss genau {{ amount }} {{ denomination }} sein",
         destination: "Zieladresse",
         destination_address: "{{ address }}",
 
@@ -1506,6 +1510,8 @@ const dict = {
             "La cantidad mínima para la dirección de destino es {{ amount }} {{ denomination }}",
         max_amount_destination:
             "La cantidad máxima para la dirección de destino es {{ amount }} {{ denomination }}",
+        exact_amount_destination:
+            "El importe de la factura debe ser exactamente {{ amount }} {{ denomination }}",
         destination: "Destino",
         destination_address: "{{ address }}",
 
@@ -2064,6 +2070,8 @@ const dict = {
             "O valor mínimo para o endereço de destino é {{ amount }} {{ denomination }}",
         max_amount_destination:
             "O valor máximo para o endereço de destino é {{ amount }} {{ denomination }}",
+        exact_amount_destination:
+            "O valor do invoice deve ser exatamente {{ amount }} {{ denomination }}",
         destination: "Destino",
         destination_address: "{{ address }}",
 
@@ -2581,6 +2589,8 @@ const dict = {
             "目标地址的最小金额为{{ amount }}{{ denomination }}",
         max_amount_destination:
             "目标地址的最大金额为{{ amount }}{{ denomination }}",
+        exact_amount_destination:
+            "发票金额必须正好为{{ amount }}{{ denomination }}",
         destination: "目标地址",
         destination_address: "{{ address }}",
 
@@ -3121,6 +3131,8 @@ const dict = {
             "宛先アドレスの最小金額は{{ amount }} {{ denomination }}です",
         max_amount_destination:
             "宛先アドレスの最大金額は{{ amount }} {{ denomination }}です",
+        exact_amount_destination:
+            "インボイスの金額は正確に{{ amount }} {{ denomination }}である必要があります",
         destination: "宛先アドレス",
         destination_address: "{{ address }}",
 
