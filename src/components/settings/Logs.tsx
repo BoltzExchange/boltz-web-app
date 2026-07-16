@@ -8,7 +8,11 @@ import { Show, createSignal } from "solid-js";
 
 import { copyIconTimeout } from "../../consts/CopyContent";
 import { useGlobalContext } from "../../context/Global";
-import { isChatwootConfigured, postLogsToChatwoot } from "../../utils/chatwoot";
+import {
+    ChatwootNotReadyError,
+    isChatwootConfigured,
+    postLogsToChatwoot,
+} from "../../utils/chatwoot";
 import { downloadJson } from "../../utils/download";
 import { clipboard } from "../../utils/helper";
 import LoadingSpinner from "../LoadingSpinner";
@@ -50,7 +54,11 @@ const Logs = () => {
         } catch (error) {
             notify(
                 "error",
-                error instanceof Error ? error.message : String(error),
+                error instanceof ChatwootNotReadyError
+                    ? t("chatwoot_not_ready")
+                    : error instanceof Error
+                      ? error.message
+                      : String(error),
             );
         } finally {
             setPosting(false);

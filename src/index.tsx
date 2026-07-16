@@ -4,7 +4,6 @@ import "@fontsource/noto-sans/200.css";
 import "@fontsource/noto-sans/800.css";
 import "@fontsource/noto-sans/index.css";
 import {
-    Navigate,
     Route,
     type RouteSectionProps,
     Router,
@@ -18,6 +17,7 @@ import { render } from "solid-js/web";
 import { configureBoltzSwaps } from "./boltzSwapsConfig";
 import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
+import { legacyRescueRedirects } from "./components/LegacyRescueRedirects";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
@@ -136,24 +136,6 @@ const App = (props: RouteSectionProps) => {
     );
 };
 
-const redirectLegacyRescuePaths = () => {
-    const redirect = () => (
-        <Navigate href={`/rescue${window.location.search}`} />
-    );
-
-    return (
-        <>
-            <Route path="/refund" component={redirect} />
-            <Route path="/refund/external" component={redirect} />
-            <Route path="/refund/external/:type" component={redirect} />
-            <Route path="/refund/external/:type/:mode" component={redirect} />
-            <Route path="/rescue/external" component={redirect} />
-            <Route path="/rescue/external/:type" component={redirect} />
-            <Route path="/rescue/external/:type/:mode" component={redirect} />
-        </>
-    );
-};
-
 const cleanup = render(
     () => (
         <Router root={App}>
@@ -180,7 +162,7 @@ const cleanup = render(
             <Route path="/rescue" component={Rescue} />
             <Route path="/rescue/claim/:id" component={ClaimRescue} />
             <Route path="/rescue/refund/:id" component={RefundRescue} />
-            {redirectLegacyRescuePaths()}
+            {legacyRescueRedirects()}
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />

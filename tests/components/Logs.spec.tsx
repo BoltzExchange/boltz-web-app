@@ -1,17 +1,23 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 
 import Logs from "../../src/components/settings/Logs";
-import { contextWrapper } from "../helper";
+import i18n from "../../src/i18n/i18n";
+import { ChatwootNotReadyError } from "../../src/utils/chatwoot";
+import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 const { chatwootConfiguredMock, postLogsToChatwootMock } = vi.hoisted(() => ({
     chatwootConfiguredMock: vi.fn(() => false),
     postLogsToChatwootMock: vi.fn(),
 }));
 
-vi.mock("../../src/utils/chatwoot", () => ({
-    isChatwootConfigured: chatwootConfiguredMock,
-    postLogsToChatwoot: postLogsToChatwootMock,
-}));
+vi.mock("../../src/utils/chatwoot", async () => {
+    const actual = await vi.importActual("../../src/utils/chatwoot");
+    return {
+        ...actual,
+        isChatwootConfigured: chatwootConfiguredMock,
+        postLogsToChatwoot: postLogsToChatwootMock,
+    };
+});
 
 describe("Logs", () => {
     beforeEach(() => {
@@ -49,6 +55,31 @@ describe("Logs", () => {
 
         await waitFor(() => {
             expect(postLogsToChatwootMock).toHaveBeenCalledOnce();
+        });
+    });
+
+    test("should show a translated error when the support chat is not ready", async () => {
+        chatwootConfiguredMock.mockReturnValue(true);
+        postLogsToChatwootMock.mockRejectedValue(new ChatwootNotReadyError());
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Logs />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        fireEvent.click(await screen.findByTestId("logs-chatwoot"));
+
+        await waitFor(() => {
+            expect(globalSignals.notification()).toBe(
+                i18n.en.chatwoot_not_ready,
+            );
         });
     });
 });

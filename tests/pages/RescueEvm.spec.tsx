@@ -1,5 +1,5 @@
 import type * as SolidRouter from "@solidjs/router";
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import {
     BridgeKind,
     type LogRefundData,
@@ -29,12 +29,14 @@ const preimage =
 
 const {
     mockGetLogsFromReceipt,
+    mockNavigate,
     mockQuoteDexAmountIn,
     mockResolveLockupTokenFunder,
     paramsMock,
     rescueSwaps,
 } = vi.hoisted(() => ({
     mockGetLogsFromReceipt: vi.fn(),
+    mockNavigate: vi.fn(),
     mockQuoteDexAmountIn: vi.fn(),
     mockResolveLockupTokenFunder: vi.fn(),
     paramsMock: {
@@ -59,7 +61,7 @@ vi.mock("@solidjs/router", async () => {
     const actual = await vi.importActual<typeof SolidRouter>("@solidjs/router");
     return {
         ...actual,
-        useNavigate: () => vi.fn(),
+        useNavigate: () => mockNavigate,
         useParams: () => paramsMock.current,
     };
 });
@@ -418,6 +420,19 @@ describe("RescueEvm", () => {
             screen.queryByRole("button", { name: "Connect wallet" }),
         ).toBeNull();
         expect(screen.queryByRole("button", { name: "Claim" })).toBeNull();
+    });
+
+    test("navigates back to the rescue page when a claim scan is required", async () => {
+        rescueSwaps.current = [];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        expect(
+            await screen.findByText(i18n.en.claim_scan_required),
+        ).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: i18n.en.back }));
+        expect(mockNavigate).toHaveBeenCalledWith("/rescue");
     });
 
     test("attaches routed claim metadata when the scan populates the context after load", async () => {

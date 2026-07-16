@@ -2,9 +2,14 @@ import { BsInfoCircleFill } from "solid-icons/bs";
 import { For, Show, createSignal } from "solid-js";
 
 import ConnectWallet from "../../components/ConnectWallet";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import RescueFileUpload from "../../components/RescueFileUpload";
 import { useGlobalContext } from "../../context/Global";
-import { isChatwootConfigured, postLogsToChatwoot } from "../../utils/chatwoot";
+import {
+    ChatwootNotReadyError,
+    isChatwootConfigured,
+    postLogsToChatwoot,
+} from "../../utils/chatwoot";
 import { RecoveryChip, missingMethodsTitle, recoveryOptions } from "./Recovery";
 import { RecoveryMethod } from "./types";
 import type { ExternalRescueSearch } from "./useExternalRescueSearch";
@@ -31,7 +36,11 @@ export const MethodSelection = (props: MethodSelectionProps) => {
         } catch (error) {
             notify(
                 "error",
-                error instanceof Error ? error.message : String(error),
+                error instanceof ChatwootNotReadyError
+                    ? t("chatwoot_not_ready")
+                    : error instanceof Error
+                      ? error.message
+                      : String(error),
             );
         } finally {
             setSharingLogs(false);
@@ -103,12 +112,17 @@ export const MethodSelection = (props: MethodSelectionProps) => {
                 <p class="rescue-external-report-hint">
                     <BsInfoCircleFill size={14} opacity={0.5} />
                     {t("rescue_external_report_issue_start")}
-                    <a
+                    <button
+                        type="button"
                         class="rescue-external-report-link"
+                        attr:data-loading={sharingLogs() ? "true" : undefined}
                         onClick={() => void shareLogs()}
                         data-testid="rescue-share-logs">
                         {t("rescue_external_report_issue_link")}
-                    </a>
+                        <Show when={sharingLogs()}>
+                            <LoadingSpinner />
+                        </Show>
+                    </button>
                     {t("rescue_external_report_issue_end")}
                 </p>
             </Show>

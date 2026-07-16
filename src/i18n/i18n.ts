@@ -112,9 +112,6 @@ const dict = {
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
         no_rescuable_swaps: "No rescuable swaps found in your browser history",
-        cant_find_swap: "Can't find your swap?",
-        rescue_external_explainer:
-            "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_scanning_evm:
             "Scanning for rescuable swaps across EVM chains...",
         connected_wallet_no_swaps:
@@ -215,6 +212,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging",
         share_with_support: "Share with support",
+        chatwoot_not_ready:
+            "Support chat is opening — please try sharing your logs again once it has loaded.",
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
@@ -668,9 +667,6 @@ const dict = {
             "Swaps, die in deinem Browser gespeichert wurden",
         no_rescuable_swaps:
             "Keine wiederherstellbaren Swaps im Browserverlauf gefunden",
-        cant_find_swap: "Swap nicht gefunden?",
-        rescue_external_explainer:
-            "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden wiederherszustellen.",
         refund_external_scanning_evm:
             "Scanne nach wiederherstellbaren Swaps auf EVM-Chains...",
         connected_wallet_no_swaps:
@@ -775,6 +771,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging",
         share_with_support: "Mit Support teilen",
+        chatwoot_not_ready:
+            "Der Support-Chat wird geöffnet — bitte versuche erneut, deine Logs zu teilen, sobald er geladen ist.",
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
@@ -1238,9 +1236,6 @@ const dict = {
             "Intercambios que se guardaron en el almacenamiento del navegador",
         no_rescuable_swaps:
             "No se han encontrado intercambios rescatables en el historial de tu navegador",
-        cant_find_swap: "¿No encuentras tu intercambio?",
-        rescue_external_explainer:
-            "Intenta rescatar un intercambio externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_scanning_evm:
             "Escaneando en busca de intercambios rescatables en cadenas EVM...",
         connected_wallet_no_swaps:
@@ -1346,6 +1341,8 @@ const dict = {
         logs_tooltip:
             "Registros de la aplicación web como herramienta de depuración",
         share_with_support: "Compartir con soporte",
+        chatwoot_not_ready:
+            "El chat de soporte se está abriendo — por favor, intenta compartir tus logs de nuevo cuando haya cargado.",
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
@@ -1806,9 +1803,6 @@ const dict = {
             "Trocas que foram salvas no armazenamento do seu navegador",
         no_rescuable_swaps:
             "Nenhuma troca resgatável encontrada no histórico do navegador",
-        cant_find_swap: "Não consegue encontrar sua troca?",
-        rescue_external_explainer:
-            "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_scanning_evm:
             "Procurando trocas resgatáveis em redes EVM...",
         connected_wallet_no_swaps:
@@ -1910,6 +1904,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
         share_with_support: "Compartilhar com o suporte",
+        chatwoot_not_ready:
+            "O chat de suporte está abrindo — por favor, tente compartilhar seus logs novamente assim que ele carregar.",
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
@@ -2357,9 +2353,6 @@ const dict = {
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_rescuable_swaps: "在您的浏览器历史记录中未找到可恢复的交换记录。",
-        cant_find_swap: "找不到您的交换？",
-        rescue_external_explainer:
-            "尝试通过救援密钥和其他紧急方法恢复外部交换分区。",
         refund_external_scanning_evm: "正在扫描 EVM 链上的可恢复交换...",
         connected_wallet_no_swaps:
             "已连接的Rootstock钱包中不包含任何可恢复的交换。",
@@ -2449,6 +2442,8 @@ const dict = {
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试",
         share_with_support: "分享给客服",
+        chatwoot_not_ready:
+            "客服聊天窗口正在打开——加载完成后请重新尝试分享日志。",
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
@@ -2872,9 +2867,6 @@ const dict = {
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         no_rescuable_swaps:
             "ブラウザの履歴に復元可能なスワップが見つかりませんでした。",
-        cant_find_swap: "スワップが見つからない？",
-        rescue_external_explainer:
-            "外部スワップをレスキューキーやその他の緊急手段を使用して復旧を試みてください。",
         refund_external_scanning_evm:
             "EVM チェーン上の復旧可能なスワップを検索中です...",
         connected_wallet_no_swaps:
@@ -2977,6 +2969,8 @@ const dict = {
         logs: "ログ",
         logs_tooltip: "ウェブアプリのログ。デバグに便利です",
         share_with_support: "サポートに共有する",
+        chatwoot_not_ready:
+            "サポートチャットを開いています。読み込みが完了したら、もう一度ログの共有をお試しください。",
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",

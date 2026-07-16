@@ -22,6 +22,12 @@ const getCookie = (name: string) => {
 
 export const logsFileName = "boltz-logs.json";
 
+export class ChatwootNotReadyError extends Error {
+    constructor() {
+        super("Chatwoot conversation is not ready");
+    }
+}
+
 export const formatLogsForChatwootAttachment = (
     logs: Record<string, string[]>,
 ) => new Blob([JSON.stringify(logs, null, 2)], { type: "application/json" });
@@ -36,7 +42,9 @@ export const postLogsToChatwoot = async (logs: Record<string, string[]>) => {
 
     const authToken = getCookie(chatwootAuthCookie);
     if (authToken === undefined) {
-        throw new Error("Chatwoot conversation is not ready");
+        // Open the widget so it can bootstrap a conversation for the retry
+        window.$chatwoot?.toggle("open");
+        throw new ChatwootNotReadyError();
     }
 
     const formData = new FormData();

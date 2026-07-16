@@ -477,7 +477,7 @@ export const createRescueList = async (
                     `error creating rescue list for swap ${swap.id}:`,
                     formatError(e),
                 );
-                return { ...swap, action: RescueAction.Successful };
+                return { ...swap, action: RescueAction.Pending };
             }
         }),
     );
