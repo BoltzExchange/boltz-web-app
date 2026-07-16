@@ -374,23 +374,42 @@ const ClaimState = (props: {
 
         return restoredReceiveAsset();
     };
-    const claimDestination = (useOriginalDestination: boolean) =>
-        useOriginalDestination
-            ? (props.claimData.restoredSwap?.originalDestination ??
-              signer()?.address)
+    const rescueGasSigner = () => {
+        const file = rescueFile();
+        return file === undefined
+            ? undefined
+            : getGasAbstractionSigner(routeClaimAsset(), file);
+    };
+    const hasDirectDestination = () => {
+        const gasSigner = rescueGasSigner();
+        return (
+            gasSigner !== undefined &&
+            normalizeEvmId(props.claimData.claimAddress) !==
+                normalizeEvmId(gasSigner.address)
+        );
+    };
+    const claimDestination = () => {
+        if (routedDex() !== undefined) {
+            return (
+                props.claimData.restoredSwap?.originalDestination ??
+                signer()?.address
+            );
+        }
+
+        return hasDirectDestination()
+            ? props.claimData.claimAddress
             : signer()?.address;
+    };
 
     const canClaimWithoutWallet = () =>
-        routedDex() !== undefined &&
-        props.claimData.restoredSwap?.originalDestination !== undefined &&
         getKindForAsset(routeClaimAsset()) === AssetKind.ERC20 &&
-        rescueFile() !== undefined;
+        rescueFile() !== undefined &&
+        (routedDex() !== undefined
+            ? props.claimData.restoredSwap?.originalDestination !== undefined
+            : hasDirectDestination());
 
     const signerOverride = () =>
-        signer() ??
-        (canClaimWithoutWallet()
-            ? getGasAbstractionSigner(routeClaimAsset(), rescueFile())
-            : undefined);
+        signer() ?? (canClaimWithoutWallet() ? rescueGasSigner() : undefined);
 
     const getGasAbstraction = async (
         asset: string,
@@ -429,9 +448,9 @@ const ClaimState = (props: {
 
         try {
             const gasAbstraction = await getGasAbstraction(asset);
-            const sig = signer();
+            const sig = signerOverride();
             const dex = routedDex();
-            const destination = claimDestination(dex !== undefined);
+            const destination = claimDestination();
             if (destination === undefined) {
                 throw new Error("missing claim destination");
             }
