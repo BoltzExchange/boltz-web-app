@@ -1,7 +1,9 @@
 import {
+    BridgeCapacityError,
     LnurlAmountError,
     LnurlAmountErrorKind,
     formatError,
+    isBridgeCapacityError,
     isLnurlAmountError,
     toError,
 } from "../src/errors.ts";
@@ -80,6 +82,40 @@ describe("isLnurlAmountError", () => {
         expect(isLnurlAmountError(null)).toBe(false);
         expect(isLnurlAmountError(undefined)).toBe(false);
         expect(isLnurlAmountError({})).toBe(false);
+    });
+});
+
+describe("BridgeCapacityError", () => {
+    test("exposes name, message, amounts and cause", () => {
+        const cause = new Error("execution reverted");
+        const err = new BridgeCapacityError(50n, 100n, { cause });
+        expect(err).toBeInstanceOf(Error);
+        expect(err).toBeInstanceOf(BridgeCapacityError);
+        expect(err.name).toBe("BridgeCapacityError");
+        expect(err.message).toBe(
+            "bridge capacity exceeded: requested 100, available 50",
+        );
+        expect(err.available).toBe(50n);
+        expect(err.requested).toBe(100n);
+        expect(err.cause).toBe(cause);
+    });
+
+    test("isBridgeCapacityError only matches instances", () => {
+        expect(isBridgeCapacityError(new BridgeCapacityError(1n, 2n))).toBe(
+            true,
+        );
+        expect(
+            isBridgeCapacityError(new Error("bridge capacity exceeded")),
+        ).toBe(false);
+        expect(isBridgeCapacityError(undefined)).toBe(false);
+        expect(isBridgeCapacityError({ available: 1n, requested: 2n })).toBe(
+            false,
+        );
+    });
+
+    test("toError returns the same BridgeCapacityError instance", () => {
+        const err = new BridgeCapacityError(1n, 2n);
+        expect(toError(err)).toBe(err);
     });
 });
 

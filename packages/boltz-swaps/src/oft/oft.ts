@@ -6,6 +6,7 @@ import {
     type Hex,
     type PublicClient,
     concat,
+    decodeErrorResult,
     encodeFunctionData,
     encodePacked,
     getAddress,
@@ -23,6 +24,7 @@ import {
     requireRpcUrls,
     requireTokenConfig,
 } from "../config.ts";
+import { BridgeCapacityError } from "../errors.ts";
 import { prefix0x } from "../evm/prefix0x.ts";
 import { createAssetProvider } from "../evm/provider.ts";
 import { erc20Abi } from "../generated/evm-abis.ts";
@@ -50,6 +52,7 @@ import {
     getEvmOftReceivedEvent,
     getEvmOftReceivedEventByGuid,
     getEvmOftSentEvent,
+    oftAbi,
 } from "./evm.ts";
 import {
     type OftContract,
@@ -78,6 +81,7 @@ import type {
 
 const providerCachePrefix = "oft:provider:";
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
+const insufficientCreditsSelector = "0x735f7cd7";
 const type3Option = 3;
 const executorWorkerId = 1;
 const optionTypeLzReceive = 1;
@@ -92,7 +96,11 @@ const getErrorData = (error: unknown): string | undefined => {
 
     const candidate = error as {
         data?: unknown;
+        // Raw revert data of viem's ContractFunctionRevertedError; its "data"
+        // holds the decoded error instead
+        raw?: unknown;
         error?: unknown;
+        cause?: unknown;
         info?: {
             error?: unknown;
         };
@@ -101,8 +109,15 @@ const getErrorData = (error: unknown): string | undefined => {
     if (typeof candidate.data === "string") {
         return candidate.data;
     }
+    if (typeof candidate.raw === "string") {
+        return candidate.raw;
+    }
 
-    return getErrorData(candidate.error) ?? getErrorData(candidate.info?.error);
+    return (
+        getErrorData(candidate.error) ??
+        getErrorData(candidate.cause) ??
+        getErrorData(candidate.info?.error)
+    );
 };
 
 export const isExecutorNativeAmountExceedsCapError = (
@@ -132,6 +147,39 @@ export const decodeExecutorNativeAmountExceedsCapError = (
         amount: BigInt(prefix0x(data.slice(10, 74))),
         cap: BigInt(prefix0x(data.slice(74, 138))),
     };
+};
+
+export const isInsufficientCreditsError = (error: unknown): boolean =>
+    getErrorData(error)?.startsWith(insufficientCreditsSelector) ?? false;
+
+export const decodeInsufficientCreditsError = (
+    error: unknown,
+):
+    | {
+          eid: number;
+          credits: bigint;
+          amountToSend: bigint;
+      }
+    | undefined => {
+    const data = getErrorData(error);
+    if (data === undefined || !data.startsWith(insufficientCreditsSelector)) {
+        return undefined;
+    }
+
+    try {
+        const decoded = decodeErrorResult({
+            abi: oftAbi,
+            data: data as Hex,
+        });
+        const [eid, credits, amountToSend] = decoded.args as [
+            number,
+            bigint,
+            bigint,
+        ];
+        return { eid, credits, amountToSend };
+    } catch {
+        return undefined;
+    }
 };
 
 export const clearOftDeployments = () => {
@@ -532,10 +580,29 @@ export const quoteOftSend = async (
         ),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] = await oft.quoteOFT(sendParam);
+    if (oftLimit[1] > 0n && amount > oftLimit[1]) {
+        throw new BridgeCapacityError(oftLimit[1], amount);
+    }
+
     const quotedSendParam: SendParam = [...sendParam];
     quotedSendParam[3] = oftReceipt[1];
 
-    const quotedMsgFee = await oft.quoteSend(quotedSendParam, false);
+    let quotedMsgFee: MsgFee;
+    try {
+        quotedMsgFee = await oft.quoteSend(quotedSendParam, false);
+    } catch (error) {
+        const decoded = decodeInsufficientCreditsError(error);
+        if (decoded !== undefined) {
+            throw new BridgeCapacityError(
+                decoded.credits,
+                decoded.amountToSend,
+                {
+                    cause: error,
+                },
+            );
+        }
+        throw error;
+    }
     const msgFee: MsgFee = [quotedMsgFee[0], quotedMsgFee[1]];
 
     return {

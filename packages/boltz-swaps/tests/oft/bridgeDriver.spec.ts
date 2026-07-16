@@ -1,15 +1,18 @@
 import { base58, hex } from "@scure/base";
 import { OftBridgeDriver } from "boltz-swaps/bridge";
 import { setBoltzSwapsConfig } from "boltz-swaps/config";
+import { BridgeCapacityError } from "boltz-swaps/errors";
 import {
     clearOftDeployments,
     createOftContract,
     decodeExecutorNativeAmountExceedsCapError,
+    decodeInsufficientCreditsError,
     getOftContract,
     getOftReceivedEventByGuid,
     getRequiredSolanaOftNativeBalance,
     getSolanaOftGuidFromLogs as getSolanaOftSentEventFromTransaction,
     isExecutorNativeAmountExceedsCapError,
+    isInsufficientCreditsError,
     oftAbi,
     quoteOftAmountInForAmountOut,
     quoteOftSend,
@@ -21,7 +24,12 @@ import {
     CctpTransferMode,
     NetworkTransport,
 } from "boltz-swaps/types";
-import { encodeAbiParameters, encodeEventTopics, getAbiItem } from "viem";
+import {
+    ContractFunctionRevertedError,
+    encodeAbiParameters,
+    encodeEventTopics,
+    getAbiItem,
+} from "viem";
 
 import {
     mainnetAssets,
@@ -863,6 +871,183 @@ describe("oft", () => {
             amount: 885449409847968336n,
             cap: 210000000000000000n,
         });
+
+        const viemStyle = { cause: { raw: error.data } };
+        expect(isExecutorNativeAmountExceedsCapError(viemStyle)).toBe(true);
+        expect(decodeExecutorNativeAmountExceedsCapError(viemStyle)).toEqual(
+            decodeExecutorNativeAmountExceedsCapError(error),
+        );
+    });
+
+    const insufficientCreditsRevertData = ("0x735f7cd7" +
+        encodeAbiParameters(
+            [{ type: "uint32" }, { type: "uint256" }, { type: "uint256" }],
+            [30420, 1301678000n, 3202712942n],
+        ).slice(2)) as `0x${string}`;
+
+    test("should decode InsufficientCredits reverts", () => {
+        const ethersStyle = { data: insufficientCreditsRevertData };
+        const viemStyle = { cause: { raw: insufficientCreditsRevertData } };
+        const deeplyNested = {
+            cause: { cause: { raw: insufficientCreditsRevertData } },
+        };
+        const realViemError = new Error("quoteSend reverted", {
+            cause: new ContractFunctionRevertedError({
+                abi: oftAbi,
+                data: insufficientCreditsRevertData,
+                functionName: "quoteSend",
+            }),
+        });
+
+        for (const error of [
+            ethersStyle,
+            viemStyle,
+            deeplyNested,
+            realViemError,
+        ]) {
+            expect(isInsufficientCreditsError(error)).toBe(true);
+            expect(decodeInsufficientCreditsError(error)).toEqual({
+                eid: 30420,
+                credits: 1301678000n,
+                amountToSend: 3202712942n,
+            });
+        }
+
+        expect(isInsufficientCreditsError({ data: "0x0084ce02" })).toBe(false);
+        expect(isInsufficientCreditsError(undefined)).toBe(false);
+        expect(isInsufficientCreditsError(new Error("reverted"))).toBe(false);
+        expect(
+            decodeInsufficientCreditsError({ data: "0x735f7cd7" }),
+        ).toBeUndefined();
+        expect(
+            decodeInsufficientCreditsError({ data: "0xdeadbeef" }),
+        ).toBeUndefined();
+    });
+
+    const stubUsdt0Deployments = () =>
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue(
+                createOkFetchResponse({
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Ethereum",
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                            {
+                                name: "Polygon PoS",
+                                chainId: 137,
+                                lzEid: "30109",
+                                contracts: [
+                                    {
+                                        name: "OFT",
+                                        address:
+                                            "0x1000000000000000000000000000000000000000",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [],
+                    },
+                }),
+            ),
+        );
+
+    test("should throw BridgeCapacityError when the amount exceeds the OFT limit", async () => {
+        stubUsdt0Deployments();
+
+        const oft = {
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 50n], [], [100n, 99n]]),
+            quoteSend: vi.fn(),
+        };
+
+        const promise = quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0-ETH", "USDT0-POL"),
+            "0x2000000000000000000000000000000000000000",
+            100n,
+        );
+
+        await expect(promise).rejects.toBeInstanceOf(BridgeCapacityError);
+        await expect(promise).rejects.toMatchObject({
+            available: 50n,
+            requested: 100n,
+        });
+        expect(oft.quoteSend).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        {
+            style: "ethers",
+            createError: (data: string) =>
+                Object.assign(new Error("execution reverted"), { data }),
+        },
+        {
+            style: "viem",
+            createError: (data: string) =>
+                Object.assign(new Error("execution reverted"), {
+                    cause: { raw: data },
+                }),
+        },
+    ])(
+        "should map $style-style InsufficientCredits quoteSend reverts to BridgeCapacityError",
+        async ({ createError }) => {
+            stubUsdt0Deployments();
+
+            const revertError = createError(insufficientCreditsRevertData);
+            const oft = {
+                quoteOFT: vi
+                    .fn()
+                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+                quoteSend: vi.fn().mockRejectedValue(revertError),
+            };
+
+            const promise = quoteOftSend(
+                oft as never,
+                getOftRoute("USDT0-ETH", "USDT0-POL"),
+                "0x2000000000000000000000000000000000000000",
+                100n,
+            );
+
+            await expect(promise).rejects.toBeInstanceOf(BridgeCapacityError);
+            await expect(promise).rejects.toMatchObject({
+                available: 1301678000n,
+                requested: 3202712942n,
+                cause: revertError,
+            });
+        },
+    );
+
+    test("should rethrow undecodable quoteSend errors", async () => {
+        stubUsdt0Deployments();
+
+        const revertError = Object.assign(new Error("execution reverted"), {
+            data: "0xdeadbeef",
+        });
+        const oft = {
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockRejectedValue(revertError),
+        };
+
+        await expect(
+            quoteOftSend(
+                oft as never,
+                getOftRoute("USDT0-ETH", "USDT0-POL"),
+                "0x2000000000000000000000000000000000000000",
+                100n,
+            ),
+        ).rejects.toBe(revertError);
     });
 });
 

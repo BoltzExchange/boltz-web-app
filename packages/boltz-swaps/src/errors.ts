@@ -103,6 +103,25 @@ export class LnurlAmountError extends Error {
 export const isLnurlAmountError = (value: unknown): value is LnurlAmountError =>
     value instanceof LnurlAmountError;
 
+export class BridgeCapacityError extends Error {
+    // available/requested are in the bridge token's native decimals
+    constructor(
+        public readonly available: bigint,
+        public readonly requested: bigint,
+        options?: ErrorOptions,
+    ) {
+        super(
+            `bridge capacity exceeded: requested ${requested}, available ${available}`,
+            options,
+        );
+        this.name = "BridgeCapacityError";
+    }
+}
+
+export const isBridgeCapacityError = (
+    value: unknown,
+): value is BridgeCapacityError => value instanceof BridgeCapacityError;
+
 export const formatError = (message: unknown): string => {
     if (isWalletRejectionError(message)) {
         return walletRejectionMessage;

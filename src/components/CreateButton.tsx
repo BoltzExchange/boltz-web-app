@@ -292,6 +292,7 @@ const CreateButton = () => {
         setReceiveAmount,
         bolt12Loading,
         quoteLoading,
+        quoteError,
         setAmountChanged,
     } = useCreateContext();
     const {
@@ -361,6 +362,7 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
+                quoteError,
                 amountChanged,
                 pair,
                 lnurl,
@@ -423,6 +425,16 @@ const CreateButton = () => {
                     !(sendAmount().isZero() && hasInvalidDestinationInput());
 
                 if (shouldShowAmountError()) {
+                    const quoteErrorKey = quoteError();
+                    if (
+                        quoteErrorKey !== undefined &&
+                        (sendAmount().isGreaterThan(0) ||
+                            receiveAmount().isGreaterThan(0))
+                    ) {
+                        setButtonLabel({ key: quoteErrorKey });
+                        return;
+                    }
+
                     if (
                         sendAmount().isGreaterThan(0) &&
                         receiveAmount().isZero()
