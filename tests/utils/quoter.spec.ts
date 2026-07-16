@@ -1,3 +1,4 @@
+import * as BoltzClient from "boltz-swaps/client";
 import { NetworkTransport, Usdt0Kind } from "boltz-swaps/types";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -121,14 +122,30 @@ describe("quoter gas top-up", () => {
 });
 
 describe("quoter DEX quote guard", () => {
-    test("throws when no DEX quote is available instead of a TypeError", async () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test("rejects a zero amount before requesting plain and gas-token DEX quotes", async () => {
+        const dexDetails = { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" };
+        const error = "cannot fetch DEX quote with non-positive amount (0)";
+
+        await expect(fetchDexQuote(dexDetails, 0n)).rejects.toThrow(error);
+        await expect(fetchDexQuote(dexDetails, 0n, true, 1n)).rejects.toThrow(
+            error,
+        );
+    });
+
+    test("throws a descriptive error when no DEX quote is available", async () => {
+        vi.spyOn(BoltzClient, "quoteDexAmountIn").mockResolvedValue([]);
+
         await expect(
             fetchDexQuote(
                 { chain: "ARB", tokenIn: "0xin", tokenOut: "0xout" },
-                0n,
+                1n,
             ),
         ).rejects.toThrow(
-            "no in DEX quote for 0xin -> 0xout on ARB (amount 0)",
+            "no in DEX quote for 0xin -> 0xout on ARB (amount 1)",
         );
     });
 });

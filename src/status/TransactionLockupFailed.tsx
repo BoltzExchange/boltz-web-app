@@ -27,6 +27,7 @@ import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import Pair from "../utils/Pair";
 import { calculateAmountOutMin } from "../utils/calculate";
+import { withChainSwapQuoteLock } from "../utils/chainSwapQuote";
 import {
     decodeAddress,
     findOutputByScript,
@@ -54,6 +55,20 @@ type ReplacementQuote = {
     sentAmount: number;
     quote: number;
     receiveAmount: number;
+};
+
+const applyReplacementQuote = (
+    swap: ChainSwap,
+    quoteData: ReplacementQuote,
+) => {
+    swap.receiveAmount = quoteData.receiveAmount;
+    swap.claimDetails.amount = quoteData.quote;
+    if (swap.dex !== undefined) {
+        swap.dex.quoteAmount =
+            swap.dex.position === SwapPosition.Pre
+                ? quoteData.sentAmount
+                : quoteData.receiveAmount;
+    }
 };
 
 const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
@@ -254,16 +269,11 @@ const TransactionLockupFailed = (props: {
         );
         setLoading(true);
         try {
-            await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
-            await modifySwap<ChainSwap>(currentSwap.id, (swap) => {
-                swap.receiveAmount = quoteData.receiveAmount;
-                swap.claimDetails.amount = quoteData.quote;
-                if (swap.dex !== undefined) {
-                    swap.dex.quoteAmount =
-                        swap.dex.position === SwapPosition.Pre
-                            ? quoteData.sentAmount
-                            : quoteData.receiveAmount;
-                }
+            await withChainSwapQuoteLock(currentSwap.id, async () => {
+                await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
+                await modifySwap<ChainSwap>(currentSwap.id, (swap) =>
+                    applyReplacementQuote(swap, quoteData),
+                );
             });
             setAutoAcceptedQuote(quoteData.quote);
             log.info(
