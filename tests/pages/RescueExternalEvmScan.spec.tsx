@@ -12,7 +12,7 @@ import {
 import type { JSX } from "solid-js";
 import { vi } from "vitest";
 
-import { TBTC, WBTC } from "../../src/consts/Assets";
+import { TBTC, USDT0, WBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import Rescue from "../../src/pages/Rescue";
 import type * as RescueUtils from "../../src/utils/rescue";
@@ -85,6 +85,8 @@ vi.mock("boltz-swaps/evm", () => ({
         asset === "TBTC" ? amount / 10n ** 10n : amount,
     createAssetProvider: vi.fn(() => ({})),
     createProvider: vi.fn(() => ({ getTransaction: mockGetTransaction })),
+    getGasAbstractionSweepDisplayAmount: ({ amount }: { amount: bigint }) =>
+        amount,
     getLogsFromReceipt: mockGetLogsFromReceipt,
     getTimelockBlockNumber: vi.fn(() => Promise.resolve(0)),
     isEmptyPreimageHash: (preimageHash: string | undefined) =>
@@ -367,6 +369,54 @@ describe("Rescue EVM scan", () => {
             mockScanLockupEvents.mock.calls as unknown[][]
         ).map((call) => (call[2] as { asset: string }).asset);
         expect(scannedAssets).not.toContain("RBTC");
+    });
+
+    test("finds stranded USDT balances with only the rescue key", async () => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const gasAbstractionAddress =
+            "0x0000000000000000000000000000000000000002";
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+        mockSigner.current = undefined;
+        mockGetSweepableGasAbstractionBalances.mockResolvedValue([
+            {
+                asset: USDT0,
+                amount: 1_000_000n,
+                signer: { address: gasAbstractionAddress },
+            } as never,
+        ]);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Rescue />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        expect(
+            await screen.findByTestId(
+                `swaplist-item-sweep:${USDT0}:${gasAbstractionAddress}`,
+            ),
+        ).toHaveTextContent(i18n.en.refund);
+        expect(mockGetSweepableGasAbstractionBalances).toHaveBeenCalledWith(
+            expect.objectContaining({
+                rescueFile: expect.objectContaining({ mnemonic }),
+            }),
+        );
     });
 
     test("rejects restored refunds whose refund address is not a rescue key", async () => {

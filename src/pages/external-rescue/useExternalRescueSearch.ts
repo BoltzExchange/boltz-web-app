@@ -32,7 +32,7 @@ import { useWeb3Signer } from "../../context/Web3";
 import type { DictKey } from "../../i18n/i18n";
 import { formatError } from "../../utils/errors";
 import {
-    type GasAbstractionSweep,
+    type GasAbstractionBalance,
     getSweepableGasAbstractionBalances,
 } from "../../utils/gasAbstractionSweep";
 import {
@@ -106,7 +106,7 @@ type EvmState = {
     claimProgress?: string;
     unmatchedRefundSwaps: number;
     unmatchedClaimSwaps: number;
-    sweepableBalances: GasAbstractionSweep[];
+    sweepableBalances: GasAbstractionBalance[];
     restoredSwaps: RestoredEvmSwap[];
 };
 
@@ -862,11 +862,8 @@ export const useExternalRescueSearch = () => {
         const scanProgress = createScanProgress(setProgress, setUnmatched);
 
         const sweepBalances =
-            action === RskRescueMode.Refund &&
-            currentRescueFile !== undefined &&
-            signerAddress !== undefined
+            action === RskRescueMode.Refund && currentRescueFile !== undefined
                 ? getSweepableGasAbstractionBalances({
-                      destination: signerAddress,
                       rescueFile: currentRescueFile,
                       getGasAbstractionSigner,
                   }).then((balances) => {

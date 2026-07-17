@@ -3,7 +3,7 @@ import type { SwapContract } from "boltz-swaps/evm";
 import type { LogRefundData, RskRescueMode } from "boltz-swaps/types";
 
 import type { Swap } from "../../components/SwapList";
-import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
+import type { GasAbstractionBalance } from "../../utils/gasAbstractionSweep";
 import type { RescueAction } from "../../utils/rescue";
 import type { BridgeDetail, DexDetail } from "../../utils/swapCreator";
 
@@ -99,5 +99,5 @@ export type UnifiedRescueResult =
           action: RescueAction.Refund;
           actionable: true;
           sortValue: number;
-          swap: GasAbstractionSweep;
+          swap: GasAbstractionBalance;
       };
