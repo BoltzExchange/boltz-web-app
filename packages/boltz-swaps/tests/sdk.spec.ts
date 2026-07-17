@@ -611,3 +611,21 @@ describe("createBoltzClient: swap.claim", () => {
         expect(boltz.swap.claim.isEmptyPreimageHash(undefined)).toBe(false);
     });
 });
+
+describe("createBoltzClient: deposit namespace", () => {
+    test("client.deposit delegates to the real deposit namespace", () => {
+        const boltz = makeClient();
+        expect(
+            boltz.deposit.derive({
+                mnemonic:
+                    "test test test test test test test test test test test junk",
+            }),
+        ).toEqual({
+            index: 0,
+            address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        });
+        expect(typeof boltz.deposit.quote).toBe("function");
+        expect(typeof boltz.deposit.createWatcher).toBe("function");
+        expect(typeof boltz.deposit.resumeWatcher).toBe("function");
+    });
+});

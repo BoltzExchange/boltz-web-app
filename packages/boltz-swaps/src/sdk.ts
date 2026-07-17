@@ -56,6 +56,10 @@ import {
     setBoltzSwapsConfig,
 } from "./config.ts";
 import {
+    type DepositNamespace,
+    createDepositNamespace,
+} from "./deposit/index.ts";
+import {
     buildCommitmentRefundAuthMessage,
     getCommitmentRefundSignature,
     isEmptyPreimageHash,
@@ -318,6 +322,8 @@ export interface BoltzClient<A extends string = string> {
         create(args: RouteCreateArgs<A>): Promise<RouteCreated<A>>;
         execute(args: RouteExecuteArgs<A>): Promise<RouteExecuteResult>;
     };
+    // Static reusable EVM-stablecoin (USDC/CCTP) deposit addresses.
+    readonly deposit: DepositNamespace;
 }
 
 const configKeys: ReadonlyArray<keyof BoltzSwapsConfig> = [
@@ -514,6 +520,7 @@ export const createBoltzClient = <A extends string = string>(
             create: (args) => createRoute(args),
             execute: (args) => executeRoute(args),
         },
+        deposit: createDepositNamespace(),
     };
     return client;
 };

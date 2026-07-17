@@ -74,11 +74,12 @@ diff --git a/regtest/images/boltz-backend/arbitrum.conf b/regtest/images/boltz-b
 index 82a8593..96f705d 100644
 --- a/regtest/images/boltz-backend/arbitrum.conf
 +++ b/regtest/images/boltz-backend/arbitrum.conf
-@@ -29,6 +29,26 @@ swapTypes = ["chain"]
+@@ -29,6 +29,27 @@ swapTypes = ["chain"]
    swapMaximal = 2880
    swapTaproot = 10080
  
-+# Reverse swaps (LN -> TBTC) power the reverse DEX swap e2e coverage.
++# Reverse swaps (LN -> TBTC) power the reverse DEX swap e2e coverage;
++# submarine swaps (TBTC -> LN) the deposit-engine Lightning-out e2e.
 +[[pairs]]
 +base = "TBTC"
 +quote = "BTC"
@@ -89,7 +90,7 @@ index 82a8593..96f705d 100644
 +maxSwapAmount = 1_000_000
 +minSwapAmount = 2_500
 +
-+swapTypes = ["reverse"]
++swapTypes = ["reverse", "submarine"]
 +
 +  [pairs.timeoutDelta]
 +  chain = 1440

@@ -29,6 +29,39 @@ const execInBackend = async (command: string): Promise<string> => {
 export const setBackendSignersDisabled = (disabled: boolean): Promise<string> =>
     execInBackend(`signer ${disabled ? "disable" : "enable"} --all`);
 
+export const hasCommitmentSupport = async (asset: string): Promise<boolean> => {
+    try {
+        const res = await fetch(
+            `${BOLTZ_API_URL}/v2/commitment/${asset}/details`,
+            { signal: AbortSignal.timeout(5_000) },
+        );
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+
+export const hasSubmarinePair = async (
+    from: string,
+    to: string,
+): Promise<boolean> => {
+    try {
+        const res = await fetch(`${BOLTZ_API_URL}/v2/swap/submarine`, {
+            signal: AbortSignal.timeout(5_000),
+        });
+        if (!res.ok) {
+            return false;
+        }
+        const pairs = (await res.json()) as Record<
+            string,
+            Record<string, unknown>
+        >;
+        return pairs[from]?.[to] !== undefined;
+    } catch {
+        return false;
+    }
+};
+
 export const refreshBackendBalanceCache = (symbol?: string): Promise<string> =>
     execInBackend(
         `dev refresh-balance-cache${symbol !== undefined ? ` ${symbol}` : ""}`,
@@ -49,6 +82,39 @@ export const addInvoiceLnd = async (
 
 export const cancelInvoiceLnd = (paymentHash: string): Promise<string> =>
     execInScripts(`lncli-sim 1 cancelinvoice ${paymentHash}`);
+
+export const clnCreateOffer = async (
+    label: string,
+): Promise<{ offer: string; offerId: string }> => {
+    const res = JSON.parse(
+        await execInScripts(`lightning-cli-sim 1 offer any "${label}"`),
+    ) as { bolt12: string; offer_id: string };
+    return { offer: res.bolt12, offerId: res.offer_id };
+};
+
+// Total sats received on paid invoices fetched from the given offer.
+export const clnOfferReceivedSats = async (
+    offerId: string,
+): Promise<number> => {
+    const res = JSON.parse(
+        await execInScripts("lightning-cli-sim 1 listinvoices"),
+    ) as {
+        invoices: {
+            local_offer_id?: string;
+            status: string;
+            amount_received_msat?: number | string;
+        }[];
+    };
+    const msat = res.invoices
+        .filter((i) => i.local_offer_id === offerId && i.status === "paid")
+        .reduce(
+            (sum, i) =>
+                sum +
+                Number(String(i.amount_received_msat ?? 0).replace(/\D/g, "")),
+            0,
+        );
+    return Math.floor(msat / 1000);
+};
 
 export const allowSwapRefund = (swapId: string): Promise<string> =>
     execInBackend(`swap allow-refund ${swapId}`);

@@ -180,6 +180,11 @@
             "types": "./dist/tron/index.d.ts",
             "default": "./dist/tron/index.js"
         },
+        "./deposit": {
+            "source": "./src/deposit/index.ts",
+            "types": "./dist/deposit/index.d.ts",
+            "default": "./dist/deposit/index.js"
+        },
         "./storage": {
             "source": "./src/storage/index.ts",
             "types": "./dist/storage/index.d.ts",

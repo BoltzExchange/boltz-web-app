@@ -48,6 +48,7 @@ import {
     elementsGetReceivedByAddress,
     generateLiquidBlock,
     getLiquidAddress,
+    hasCommitmentSupport,
     refreshBackendBalanceCache,
     sleep,
     waitForAddressUtxos,
@@ -59,20 +60,8 @@ const ASSET = "TBTC";
 // TBTC has 18 decimals; Boltz sats are 8.
 const satsToTokenAmount = (sats: number): bigint => BigInt(sats) * 10n ** 10n;
 
-const hasCommitmentSupport = async (): Promise<boolean> => {
-    try {
-        const res = await fetch(
-            `${BOLTZ_API_URL}/v2/commitment/${ASSET}/details`,
-            { signal: AbortSignal.timeout(5_000) },
-        );
-        return res.ok;
-    } catch {
-        return false;
-    }
-};
-
 const stackReady =
-    (await isArbitrumForkReachable()) && (await hasCommitmentSupport());
+    (await isArbitrumForkReachable()) && (await hasCommitmentSupport(ASSET));
 const describeStack = stackReady ? describe : describe.skip;
 
 describeStack("deposit on-chain actions (regtest)", () => {
