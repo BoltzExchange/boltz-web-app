@@ -95,6 +95,23 @@ describe("swapMetadata crypto", () => {
         expect(decrypted).toEqual(samplePayload);
     });
 
+    test("round-trips the bridge transaction hash", async () => {
+        const payload: SwapMetadataPayload = {
+            ...samplePayload,
+            bridge: {
+                ...samplePayload.bridge!,
+                txHash: "0xbridgetx",
+            },
+        };
+
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...payload,
+            swapId,
+        });
+        const decrypted = await decryptSwapMetadata(mnemonic, swapId, metadata);
+        expect(decrypted.bridge?.txHash).toEqual("0xbridgetx");
+    });
+
     test("decrypts the golden vector (wire format is frozen)", async () => {
         await expect(
             decryptSwapMetadata(mnemonic, swapId, goldenVector),

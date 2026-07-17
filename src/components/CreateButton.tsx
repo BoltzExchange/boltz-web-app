@@ -642,6 +642,12 @@ const CreateButton = () => {
                         }
                         const metadata =
                             await buildCreationMetadata(creationData);
+                        const refundAddress =
+                            bridge?.position === SwapPosition.Pre
+                                ? getGasAbstractionSigner(
+                                      bridge.destinationAsset,
+                                  ).address
+                                : undefined;
                         data = await createSubmarine(
                             creationData.from,
                             creationData.to,
@@ -653,6 +659,7 @@ const CreateButton = () => {
                             newKey,
                             originalDestination(),
                             metadata,
+                            refundAddress,
                         );
                     };
 

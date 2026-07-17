@@ -197,10 +197,15 @@ const RefundState = (props: {
         return undefined;
     };
 
-    // Pre-bridge refunds resolve their destination from the bridge instead
+    // Pre-bridge refunds resolve their destination from the bridge instead;
+    // legacy restores may lack the bridge transaction needed to do so
     const needsResolvedDestination = () =>
         dexDetails()?.position === SwapPosition.Pre &&
         bridgeDetails()?.position !== SwapPosition.Pre;
+    const routeResolvesDestination = () =>
+        dexDetails()?.position === SwapPosition.Pre &&
+        bridgeDetails()?.position === SwapPosition.Pre &&
+        bridgeDetails()?.txHash !== undefined;
 
     const [resolvedFunder] = createResource(
         () => {
@@ -244,8 +249,23 @@ const RefundState = (props: {
         }
     };
 
+    // Only routed and commitment lockups pay out to the gas key; plain
+    // lockups refund straight to the user's wallet
+    const refundsToGasKey = () => {
+        const gasSigner = gasAbstraction()?.signer;
+        return (
+            gasSigner !== undefined &&
+            normalizeEvmId(props.refundData.refundAddress) ===
+                normalizeEvmId(gasSigner.address)
+        );
+    };
+
+    // Without a destination, a gas-abstracted refund would strand the funds
+    // on the gas-abstraction address instead of the user's wallet
     const destinationMissing = () =>
-        needsResolvedDestination() && destination() === undefined;
+        refundsToGasKey() &&
+        !routeResolvesDestination() &&
+        destination() === undefined;
 
     return (
         <>
