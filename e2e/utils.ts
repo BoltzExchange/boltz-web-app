@@ -447,6 +447,23 @@ export const getSubmarinePairFees = async (
     return fees as { percentage: number; minerFees: number };
 };
 
+export const getReversePairFees = async (
+    from: string,
+    to: string,
+): Promise<{ percentage: number; minerFees: number }> => {
+    const res = await axios.get(`${config.apiUrl!.normal}/v2/swap/reverse`);
+    const fees = res.data?.[from]?.[to]?.fees;
+    if (fees === undefined) {
+        throw new Error(`no reverse pair fees for ${from} -> ${to}`);
+    }
+    return {
+        percentage: fees.percentage as number,
+        minerFees:
+            (fees.minerFees.claim as number) +
+            (fees.minerFees.lockup as number),
+    };
+};
+
 export const fetchBip21Invoice = async (invoice: string) => {
     const requestContext = await request.newContext();
 

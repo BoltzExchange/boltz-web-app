@@ -56,7 +56,7 @@ export const stablesFundingSource = getAddress(
     process.env.STABLES_E2E_USDT0_ETH_FUNDING_SOURCE ??
         "0xF977814e90dA44bFA03b6295A0616a897441aceC",
 );
-const arbitrumStablesFundingSource = getAddress(
+export const arbitrumStablesFundingSource = getAddress(
     process.env.STABLES_E2E_USDT0_FUNDING_SOURCE ??
         "0xF977814e90dA44bFA03b6295A0616a897441aceC",
 );
