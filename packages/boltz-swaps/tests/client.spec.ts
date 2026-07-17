@@ -244,4 +244,23 @@ describe("boltzClient swap metadata", () => {
             { method: "PATCH" },
         );
     });
+
+    test("includes the submarine refund address when provided", async () => {
+        await createSubmarineSwap(
+            "TBTC",
+            "BTC",
+            "lninvoice",
+            "pair-hash",
+            undefined,
+            undefined,
+            "0x8382Ab573C5E48270Abb1b0A76564F76eEbc24c5",
+        );
+
+        expect(fetcherMock).toHaveBeenCalledWith(
+            "/v2/swap/submarine",
+            expect.objectContaining({
+                refundAddress: "0x8382Ab573C5E48270Abb1b0A76564F76eEbc24c5",
+            }),
+        );
+    });
 });

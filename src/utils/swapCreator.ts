@@ -337,6 +337,7 @@ export const createSubmarine = async (
     newKey: newKeyFn,
     originalDestination?: string,
     metadata?: string,
+    refundAddress?: string,
 ): Promise<SubmarineSwap> => {
     const key = await newKey(assetSend as AssetType);
     const res = await createSubmarineSwap(
@@ -348,6 +349,7 @@ export const createSubmarine = async (
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
         metadata,
+        refundAddress,
     );
 
     return {

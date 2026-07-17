@@ -41,6 +41,7 @@ export const getEvmDisplayAssets = (swap: EvmRescueResult) => {
         swap.action !== RskRescueMode.Refund ||
         bridge !== undefined;
     const base = {
+        type: swap.restoredSwap?.type ?? SwapType.Chain,
         bridge,
         dex: shouldUseDex ? dex : undefined,
         assetSend:

@@ -579,6 +579,22 @@ describe("external EVM rescue scan helpers", () => {
         ).toEqual(["L-BTC", "USDT0-SOL"]);
     });
 
+    test("shows the user-facing pair for restored submarine swaps", () => {
+        expect(
+            getEvmDisplayAssets({
+                ...baseEvent,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Submarine,
+                    from: "USDT0-POL",
+                    to: "BTC",
+                    bridge: undefined,
+                    dex: undefined,
+                },
+            }),
+        ).toEqual(["USDT0-POL", "LN"]);
+    });
+
     test("maps restored post-dex claims from restore transaction metadata only", () => {
         const transactionHash =
             "0x1111111111111111111111111111111111111111111111111111111111111111";
