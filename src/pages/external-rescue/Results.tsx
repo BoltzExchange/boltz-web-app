@@ -15,7 +15,7 @@ import { hiddenInformation } from "../../components/settings/PrivacyMode";
 import { LN } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import { formatAmount, formatDenomination } from "../../utils/denomination";
-import type { GasAbstractionSweep } from "../../utils/gasAbstractionSweep";
+import type { GasAbstractionBalance } from "../../utils/gasAbstractionSweep";
 import { cropString, isMobile } from "../../utils/helper";
 import { RescueAction } from "../../utils/rescue";
 import {
@@ -104,7 +104,7 @@ const resultActionLabel = (
 };
 
 const getSweepAmount = (
-    sweep: GasAbstractionSweep,
+    sweep: GasAbstractionBalance,
     denomination: ReturnType<typeof useGlobalContext>["denomination"],
     separator: ReturnType<typeof useGlobalContext>["separator"],
 ) =>

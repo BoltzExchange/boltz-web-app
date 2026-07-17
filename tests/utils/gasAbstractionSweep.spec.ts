@@ -79,7 +79,6 @@ describe("gas abstraction sweep", () => {
 
         const balances = await getSweepableGasAbstractionBalances({
             assets: [USDT0, USDC],
-            destination: "0xdestination",
             rescueFile: { mnemonic: "test test test" },
             getGasAbstractionSigner,
             createToken,
@@ -89,7 +88,6 @@ describe("gas abstraction sweep", () => {
             {
                 asset: USDT0,
                 amount: 123n,
-                destination: "0xdestination",
                 signer: signerByAsset.get(USDT0),
             },
         ]);

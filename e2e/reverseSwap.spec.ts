@@ -1,14 +1,34 @@
 import { expect, test } from "@playwright/test";
+import BigNumber from "bignumber.js";
+import { SwapType } from "boltz-swaps/types";
 
+import { calculateSendAmount } from "../src/utils/calculate";
+import { btcToSat, satToBtc } from "../src/utils/denomination";
 import {
     expectApproxAmount,
     expectApproxBtcAmount,
     generateBitcoinBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    getReversePairFees,
     payInvoiceLnd,
     payInvoiceLndBackground,
 } from "./utils";
+
+// The miner fee component of the quote depends on the backend's current fee
+// estimate, so the expectation must be derived from the live pair data rather
+// than hardcoded.
+const expectedSendAmount = async (receiveAmount: string): Promise<string> => {
+    const fees = await getReversePairFees("BTC", "BTC");
+    return satToBtc(
+        calculateSendAmount(
+            btcToSat(BigNumber(receiveAmount)),
+            fees.percentage,
+            fees.minerFees,
+            SwapType.Reverse,
+        ),
+    ).toString();
+};
 
 test.describe("reverseSwap", () => {
     test.beforeEach(async () => {
@@ -27,7 +47,7 @@ test.describe("reverseSwap", () => {
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
         const sendAmount = await expectApproxAmount(
             inputSendAmount,
-            "0.01005080",
+            await expectedSendAmount(receiveAmount),
         );
 
         const inputOnchainAddress = page.locator(
@@ -88,7 +108,7 @@ test.describe("reverseSwap", () => {
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
         const sendAmount = await expectApproxAmount(
             inputSendAmount,
-            "0.01005080",
+            await expectedSendAmount(receiveAmount),
         );
 
         const inputOnchainAddress = page.locator(

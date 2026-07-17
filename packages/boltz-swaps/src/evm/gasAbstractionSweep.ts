@@ -32,11 +32,14 @@ const isRoutedErc20 = (asset: string): boolean => {
     );
 };
 
-export type GasAbstractionSweep = {
+export type GasAbstractionBalance = {
     asset: string;
     amount: bigint;
-    destination: Address;
     signer: Signer;
+};
+
+export type GasAbstractionSweep = GasAbstractionBalance & {
+    destination: Address;
 };
 
 export type GasAbstractionSweepSendTransaction = (
@@ -63,23 +66,21 @@ const defaultCreateToken = (
 export const getGasAbstractionSweepDisplayAmount = ({
     asset,
     amount,
-}: Pick<GasAbstractionSweep, "asset" | "amount">): bigint =>
+}: Pick<GasAbstractionBalance, "asset" | "amount">): bigint =>
     isRoutedErc20(asset) ? amount : assetAmountToSats(amount, asset);
 
 export const getSweepableGasAbstractionBalances = async ({
     assets,
-    destination,
     getSigner,
     createToken = defaultCreateToken,
 }: {
     assets: readonly string[];
-    destination: Address;
     getSigner: (asset: string) => Signer;
     createToken?: (
         asset: string,
         signer: Signer,
     ) => GasAbstractionSweepTokenContract;
-}): Promise<GasAbstractionSweep[]> => {
+}): Promise<GasAbstractionBalance[]> => {
     const balances = await Promise.all(
         assets.map(async (asset) => {
             try {
@@ -94,7 +95,6 @@ export const getSweepableGasAbstractionBalances = async ({
                 return {
                     asset,
                     amount,
-                    destination,
                     signer,
                 };
             } catch (error) {
@@ -108,7 +108,7 @@ export const getSweepableGasAbstractionBalances = async ({
     );
 
     return balances.filter(
-        (balance): balance is GasAbstractionSweep => balance !== undefined,
+        (balance): balance is GasAbstractionBalance => balance !== undefined,
     );
 };
 
