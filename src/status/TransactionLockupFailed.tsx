@@ -270,10 +270,10 @@ const TransactionLockupFailed = (props: {
         setLoading(true);
         try {
             await withChainSwapQuoteLock(currentSwap.id, async () => {
-                await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
                 await modifySwap<ChainSwap>(currentSwap.id, (swap) =>
                     applyReplacementQuote(swap, quoteData),
                 );
+                await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
             });
             setAutoAcceptedQuote(quoteData.quote);
             log.info(
