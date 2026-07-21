@@ -173,8 +173,10 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
         });
 
         expect(
+            mocks.modifySwapStorage.mock.invocationCallOrder[0],
+        ).toBeLessThan(
             mocks.acceptChainSwapNewQuote.mock.invocationCallOrder[0],
-        ).toBeLessThan(mocks.modifySwapStorage.mock.invocationCallOrder[0]);
+        );
         expect(mocks.swap).toEqual(
             expect.objectContaining({
                 receiveAmount: 990,
