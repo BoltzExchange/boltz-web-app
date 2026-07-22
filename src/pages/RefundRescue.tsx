@@ -23,14 +23,19 @@ import BlockExplorer, {
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
+import SwapHeader from "../components/SwapHeader";
+import { getSwapIconAssets } from "../components/SwapIcons";
+import SettingsMenu from "../components/settings/SettingsMenu";
 import type {
     AssetType,
     RefundableAssetType,
     blockChainsAssets,
 } from "../consts/Assets";
+import { swapStatusFailed } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
+import type { DictKey } from "../i18n/i18n";
 import { ECPair } from "../utils/ecpair";
 import {
     getCurrentBlockHeight,
@@ -121,6 +126,10 @@ const RefundRescue = () => {
     const {
         swap,
         setSwap,
+        failureReason,
+        swapStatus,
+        swapStatusTransaction,
+        refundableUTXOs,
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
@@ -133,23 +142,46 @@ const RefundRescue = () => {
         location.state?.waitForSwapTimeout ?? false,
     );
 
-    const rescuableSwap = () =>
-        mapSwap(rescuableSwaps().find((swap) => swap.id === params.id));
+    const restoredSwap = () =>
+        rescuableSwaps()?.find((swap) => swap.id === params.id);
+    const rescuableSwap = () => mapSwap(restoredSwap());
 
     const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
     const [timeoutBlockHeight, setTimeoutBlockHeight] = createSignal<number>(0);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
-    const [loading, setLoading] = createSignal<boolean>(false);
+    const [loading, setLoading] = createSignal<boolean>(true);
+
+    const refundableLockupTransactionId = () =>
+        refundableUTXOs().find(({ id }) => id !== undefined)?.id;
+
+    const lockupTransactionId = () =>
+        swap()?.lockupTx ??
+        restoredSwap()?.refundDetails?.transaction?.id ??
+        swapStatusTransaction()?.id ??
+        refundableLockupTransactionId();
+
+    const failureTitle = (): DictKey | undefined => {
+        switch (swapStatus()) {
+            case swapStatusFailed.InvoiceFailedToPay:
+                return "invoice_payment_failure";
+            case swapStatusFailed.TransactionFailed:
+            case swapStatusFailed.TransactionLockupFailed:
+                return "lockup_failed";
+            default:
+                return undefined;
+        }
+    };
 
     createResource(async () => {
         try {
             const mapped = rescuableSwap();
-            const restorable = rescuableSwaps().find((s) => s.id === params.id);
+            const restorable = restoredSwap();
             if (mapped !== undefined && restorable !== undefined) {
                 const mappedSwap = mapped as SomeSwap;
                 setLoading(true);
                 try {
                     setSwap(mappedSwap);
+                    setSwapStatus(restorable.status);
                     log.debug("selecting swap", mappedSwap);
                     const res = await getSwapStatus(mappedSwap.id);
                     setSwapStatus(res.status);
@@ -227,21 +259,46 @@ const RefundRescue = () => {
 
     onCleanup(() => {
         log.debug("cleanup RefundRescue");
+        setSwap(null);
+        setSwapStatus("");
+        setFailureReason("");
         setRefundableUTXOs([]);
         setShouldIgnoreBackendStatus(false);
     });
 
     return (
-        <div class="frame">
+        <div class="frame" data-status={swapStatus()}>
             <Show
                 when={rescuableSwap() !== undefined}
                 fallback={<h2>{t("pay_swap_404")}</h2>}>
                 <Show when={!loading()} fallback={<LoadingSpinner />}>
-                    <h2>{t("refund_swap")}</h2>
+                    <SwapHeader
+                        id={params.id}
+                        status={swapStatus()}
+                        assets={
+                            swap() !== null
+                                ? getSwapIconAssets(swap()!)
+                                : undefined
+                        }
+                    />
+                    <Show
+                        when={
+                            failureTitle() !== undefined ||
+                            failureReason() !== ""
+                        }>
+                        <Show when={failureTitle()}>
+                            {(title) => <h2>{t(title())}</h2>}
+                        </Show>
+                        <Show when={failureReason() !== ""}>
+                            <p>
+                                {t("failure_reason")}: {failureReason()}
+                            </p>
+                        </Show>
+                        <hr />
+                    </Show>
 
                     <Switch>
                         <Match when={waitForSwapTimeout()}>
-                            <hr />
                             <RefundEta
                                 timeoutEta={timeoutEta}
                                 timeoutBlockHeight={timeoutBlockHeight}
@@ -249,6 +306,11 @@ const RefundRescue = () => {
                             />
                             <BlockExplorer
                                 asset={swap()!.assetSend}
+                                typeLabel={
+                                    swap()!.lockupTx !== undefined
+                                        ? "lockup_tx"
+                                        : "lockup_address"
+                                }
                                 kind={
                                     swap()!.lockupTx !== undefined
                                         ? BlockExplorerTargetKind.Tx
@@ -274,7 +336,6 @@ const RefundRescue = () => {
                         </Match>
                         <Match when={!waitForSwapTimeout()}>
                             <Show when={refundTxId() === ""}>
-                                <hr />
                                 <RefundButton
                                     swap={
                                         swap as Accessor<
@@ -304,9 +365,21 @@ const RefundRescue = () => {
                                         );
                                     }}
                                 />
+                                <Show
+                                    when={
+                                        swap() !== null && lockupTransactionId()
+                                    }>
+                                    {(id) => (
+                                        <BlockExplorer
+                                            typeLabel={"lockup_tx"}
+                                            asset={swap()!.assetSend}
+                                            kind={BlockExplorerTargetKind.Tx}
+                                            id={id()}
+                                        />
+                                    )}
+                                </Show>
                             </Show>
                             <Show when={refundTxId() !== ""}>
-                                <hr />
                                 <p>{t("refunded")}</p>
                                 <hr />
                                 <BlockExplorer
@@ -320,6 +393,7 @@ const RefundRescue = () => {
                     </Switch>
                 </Show>
             </Show>
+            <SettingsMenu />
         </div>
     );
 };

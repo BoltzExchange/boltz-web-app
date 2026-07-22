@@ -104,7 +104,6 @@ const dict = {
         copy_address: "Address",
         copy_amount: "Amount",
         copy_bip21: "BIP21",
-        refund_swap: "Refund Swap",
         rescue_a_swap_subline:
             "If you sent BTC or LBTC into a Boltz swap, upload or enter your rescue key to rescue a swap that is not available in this browser’s swap history.",
         rescue_a_swap_mnemonic:
@@ -369,7 +368,6 @@ const dict = {
         rescue: "Rescue",
         rescue_swaps: "Rescue swaps",
         rescue_swap: "Rescue Swap",
-        claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Could not get swap {{ id }}",
         failed_get_swap_subline:
             "Please re-insert the rescue key and try again.",
@@ -660,7 +658,6 @@ const dict = {
         copy_address: "Adresse",
         copy_amount: "Betrag",
         copy_bip21: "BIP21",
-        refund_swap: "Swap Rückerstatten",
         rescue_a_swap_subline:
             "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um einen Swap zu retten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
         rescue_a_swap_mnemonic:
@@ -939,7 +936,6 @@ const dict = {
         rescue: "Retten",
         rescue_swaps: "Swaps retten",
         rescue_swap: "Swap retten",
-        claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Swap {{ id }} konnte nicht abgerufen werden",
         failed_get_swap_subline:
             "Bitte gebe den Rettungsschlüssel erneut ein und versuche es noch einmal.",
@@ -1232,7 +1228,6 @@ const dict = {
         copy_address: "Dirección",
         copy_amount: "Importe",
         copy_bip21: "BIP21",
-        refund_swap: "Reembolsar Intercambio",
         rescue_a_swap_subline:
             "Si enviaste BTC o LBTC a un intercambio Boltz, carga o introduce tu clave de rescate para rescatar un swap que no esté disponible en el historial de swaps de este navegador",
         rescue_a_swap_mnemonic:
@@ -1508,7 +1503,6 @@ const dict = {
         rescue: "Rescatar",
         rescue_swaps: "Rescatar intercambios",
         rescue_swap: "Rescatar Intercambio",
-        claim_swap: "Reclamar: {{ id }}",
         failed_get_swap: "No se pudo obtener el intercambio {{ id }}",
         failed_get_swap_subline:
             "Por favor, vuelve a introducir la clave de rescate e inténtalo de nuevo.",
@@ -1802,7 +1796,6 @@ const dict = {
         copy_address: "Endereço",
         copy_amount: "Quantia",
         copy_bip21: "BIP21",
-        refund_swap: "Reembolsar troca",
         rescue_a_swap_subline:
             "Se enviou BTC ou LBTC para uma troca Boltz, faça upload ou insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
         rescue_a_swap_mnemonic:
@@ -2073,7 +2066,6 @@ const dict = {
         rescue: "Resgatar",
         rescue_swaps: "Resgatar trocas",
         rescue_swap: "Resgatar Troca",
-        claim_swap: "Reivindicar: {{ id }}",
         failed_get_swap: "Não foi possível obter a troca {{ id }}",
         failed_get_swap_subline:
             "Por favor, re-insira a chave de resgate e tente novamente.",
@@ -2357,7 +2349,6 @@ const dict = {
         copy_address: "地址",
         copy_amount: "金额",
         copy_bip21: "BIP21",
-        refund_swap: "退还交换",
         rescue_a_swap_subline:
             "如果您向 Boltz 交换发送了 BTC 或 LBTC，请上传或输入您的救援密钥，以恢复在该浏览器的交换历史记录中不可用的交换。",
         rescue_a_swap_mnemonic:
@@ -2597,7 +2588,6 @@ const dict = {
         rescue: "救援",
         rescue_swaps: "救援交换",
         rescue_swap: "救援交换",
-        claim_swap: "索赔：{{ id }}",
         failed_get_swap: "无法获取交换 {{ id }}",
         failed_get_swap_subline: "请重新插入救援钥匙并再次尝试。",
         in_progress: "进行中",
@@ -2872,7 +2862,6 @@ const dict = {
         copy_address: "アドレスをコピー",
         copy_amount: "金額をコピー",
         copy_bip21: "BIP21をコピー",
-        refund_swap: "スワップを返金する",
         rescue_a_swap_subline:
             "BTCまたはLBTCをBoltzスワップに送金した場合、このブラウザのスワップ履歴に表示されないスワップを復旧するには、復旧キーをアップロードまたは入力してください。",
         rescue_a_swap_mnemonic:
@@ -3142,7 +3131,6 @@ const dict = {
         rescue: "救済",
         rescue_swaps: "スワップを救済",
         rescue_swap: "スワップを救済",
-        claim_swap: "クレーム：{{ id }}",
         failed_get_swap: "スワップ {{ id }} を取得できませんでした",
         failed_get_swap_subline:
             "レスキューキーを再挿入し、もう一度お試しください。",

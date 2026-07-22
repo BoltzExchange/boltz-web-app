@@ -3,6 +3,7 @@ import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
+    type SwapAssetRoute,
     type SwapBase,
     createLocalSwapId,
     getFinalAssetReceive,
@@ -121,6 +122,25 @@ describe("getFinalAssetSend", () => {
         const swap = makeSwap({ assetSend: LBTC });
         expect(getFinalAssetSend(swap)).toBe(LBTC);
     });
+
+    test("returns sourceAsset for commitment swaps", () => {
+        const route: SwapAssetRoute = {
+            type: SwapType.Commitment,
+            assetSend: USDT0,
+            assetReceive: BTC,
+            sourceAsset: "USDT0-ETH",
+        };
+        expect(getFinalAssetSend(route)).toBe("USDT0-ETH");
+    });
+
+    test("falls back to assetSend for commitment routes without sourceAsset", () => {
+        const route: SwapAssetRoute = {
+            type: SwapType.Commitment,
+            assetSend: USDT0,
+            assetReceive: BTC,
+        };
+        expect(getFinalAssetSend(route)).toBe(USDT0);
+    });
 });
 
 describe("getFinalAssetReceive", () => {
@@ -169,5 +189,24 @@ describe("getFinalAssetReceive", () => {
     test("falls back to swap.assetReceive when there's no bridge or post-DEX", () => {
         const swap = makeSwap({ assetReceive: LBTC });
         expect(getFinalAssetReceive(swap)).toBe(LBTC);
+    });
+
+    test("returns initialReceiveAsset for commitment swaps", () => {
+        const route: SwapAssetRoute = {
+            type: SwapType.Commitment,
+            assetSend: USDT0,
+            assetReceive: BTC,
+            initialReceiveAsset: LBTC,
+        };
+        expect(getFinalAssetReceive(route)).toBe(LBTC);
+    });
+
+    test("falls back to assetReceive for commitment routes without initialReceiveAsset", () => {
+        const route: SwapAssetRoute = {
+            type: SwapType.Commitment,
+            assetSend: USDT0,
+            assetReceive: BTC,
+        };
+        expect(getFinalAssetReceive(route)).toBe(BTC);
     });
 });

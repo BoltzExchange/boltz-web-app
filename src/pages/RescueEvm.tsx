@@ -33,7 +33,8 @@ import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import SettingsCog from "../components/settings/SettingsCog";
+import SwapHeader from "../components/SwapHeader";
+import { getRestoredSwapIconAssets } from "../components/SwapIcons";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import {
     type AssetType,
@@ -644,25 +645,23 @@ const RescueEvm = () => {
     const canRefund = () =>
         isRefundAction() && (timelockExpired() || isCommitmentLockup());
 
-    const pageTitle = () => {
-        if (isRefundAction()) {
-            return t("refund");
-        }
-        return t("claim");
-    };
+    const headerSwap = () => contextData()?.restoredSwap;
+    const headerId = () => headerSwap()?.id ?? cropString(params.txHash, 15, 5);
+    const headerStatus = () => headerSwap()?.status;
 
     return (
-        <div class="frame">
+        <div class="frame" data-status={headerStatus()}>
             <Switch>
                 <Match when={chainData.state === "ready"}>
-                    <SettingsCog />
-                    <SettingsMenu />
-                    <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
-                        {pageTitle()}{" "}
-                        {contextData()?.restoredSwap?.id ??
-                            cropString(params.txHash, 15, 5)}
-                    </h2>
-                    <hr />
+                    <SwapHeader
+                        id={headerId()}
+                        status={headerStatus()}
+                        assets={
+                            headerSwap() !== undefined
+                                ? getRestoredSwapIconAssets(headerSwap()!)
+                                : undefined
+                        }
+                    />
                     <Switch>
                         <Match when={canRefund()}>
                             <Show
@@ -732,7 +731,15 @@ const RescueEvm = () => {
                     </Switch>
                 </Match>
                 <Match when={chainData.state === "pending"}>
-                    <h2>{pageTitle()}</h2>
+                    <SwapHeader
+                        id={headerId()}
+                        status={headerStatus()}
+                        assets={
+                            headerSwap() !== undefined
+                                ? getRestoredSwapIconAssets(headerSwap()!)
+                                : undefined
+                        }
+                    />
                     <LoadingSpinner />
                 </Match>
                 <Match when={chainData.state === "errored"}>
@@ -740,6 +747,7 @@ const RescueEvm = () => {
                     <h3>{formatError(chainData.error)}</h3>
                 </Match>
             </Switch>
+            <SettingsMenu />
         </div>
     );
 };

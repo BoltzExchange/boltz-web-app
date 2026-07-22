@@ -211,6 +211,21 @@ const executeRefund = async (
     await expect(swapItem).toBeVisible();
     await swapItem.click();
 
+    await expect(page.locator(".frame-header")).toContainText(
+        `Swap: ${swapId}`,
+    );
+    await expect(page.locator(".swap-status")).toContainText("Status:");
+    await expect(
+        page.locator(".frame-header .swaplist-asset .asset"),
+    ).toHaveCount(2);
+    if (isExternalRescue) {
+        await expect(
+            page.getByRole("link", {
+                name: "Open Lockup Transaction",
+            }),
+        ).toBeVisible();
+    }
+
     const refundInput = page.locator("input[data-testid='refundAddress']");
     await expect(refundInput).toBeVisible();
     await refundInput.fill(

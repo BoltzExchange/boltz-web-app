@@ -196,9 +196,7 @@ describe("History", () => {
         }
         expect(screen.queryByText(dict.en.view)).not.toBeInTheDocument();
 
-        const rows = document.querySelectorAll(
-            '[data-testid^="swaplist-item-"]',
-        );
+        const rows = screen.getAllByTestId(/^swaplist-item-/);
         expect(rows[0]).toHaveAttribute("data-testid", "swaplist-item-claim");
         expect(rows[1]).toHaveAttribute("data-testid", "swaplist-item-refund");
         expect(screen.getByTestId("swaplist-item-completed")).not.toHaveClass(

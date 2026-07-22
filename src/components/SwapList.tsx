@@ -1,5 +1,4 @@
 import { A } from "@solidjs/router";
-import type { RestorableSwap } from "boltz-swaps/client";
 import { BiRegularTrash } from "solid-icons/bi";
 import { type Accessor, For, Show, createEffect, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -9,22 +8,16 @@ import "../style/swaplist.scss";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { desktopItemsPerPage, mobileItemsPerPage } from "./Pagination";
-import { SwapIcons } from "./SwapIcons";
+import { SwapIcons, getSwapIconAssets } from "./SwapIcons";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
-export type Swap = (SomeSwap | RestorableSwap) & {
+export type Swap = SomeSwap & {
     action?: RescueAction;
     timedOut?: boolean;
     waitForSwapTimeout?: boolean;
 };
 
-const getSwapDate = <T extends Swap>(swap: T) => {
-    if ("date" in swap) {
-        return swap.date;
-    }
-
-    return swap.createdAt * 1_000;
-};
+const getSwapDate = <T extends Swap>(swap: T) => swap.date;
 
 export const sortSwaps = <T extends Swap>(swaps: T[]) => {
     const actionPriority: Record<RescueAction, number> = {
@@ -121,7 +114,7 @@ const SwapListItem = (props: {
                 class={`btn-small swaplist-action ${props.hideStatusOnMobile ? "hidden-mobile" : ""}`}>
                 {props.action(props.swap)}
             </span>
-            <SwapIcons swap={props.swap} />
+            <SwapIcons assets={getSwapIconAssets(props.swap)} />
             <span class="swaplist-asset-id">
                 {t("id")}:&nbsp;
                 <Show when={!privacyMode()} fallback={hiddenInformation}>
