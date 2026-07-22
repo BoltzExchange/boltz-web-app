@@ -8,13 +8,17 @@ import {
     createPublicClient,
     createWalletClient,
     defineChain,
+    encodePacked,
     getAddress,
     http,
     isAddressEqual,
+    padHex,
     parseAbi,
     parseEther,
     parseEventLogs,
     parseUnits,
+    slice,
+    zeroAddress,
 } from "viem";
 
 import { config } from "../../src/config";
@@ -691,6 +695,119 @@ export const expectOftSendTx = async (
     expect(isAddressEqual(sent.args.fromAddress, walletAddress)).toBe(true);
     expect(sent.args.amountSentLD).toBeGreaterThan(0n);
     expect(sent.args.amountReceivedLD).toBeGreaterThan(0n);
+};
+
+const oAppAbi = parseAbi([
+    "function endpoint() view returns (address)",
+    "function peers(uint32 eid) view returns (bytes32)",
+    "function lzReceive((uint32 srcEid,bytes32 sender,uint64 nonce) origin,bytes32 guid,bytes message,address executor,bytes extraData) payable",
+]);
+const endpointAbi = parseAbi(["function eid() view returns (uint32)"]);
+
+export const deliverOft = async (
+    sourceClient: PublicClient,
+    destinationClient: PublicClient,
+    sourceTxHash: Hex,
+    recipient: Address,
+    destinationRpcUrl: string,
+) => {
+    const receipt = await sourceClient.waitForTransactionReceipt({
+        hash: sourceTxHash,
+        timeout: actionTimeout,
+    });
+    const [sent] = parseEventLogs({
+        abi: oftAbi,
+        eventName: "OFTSent",
+        logs: receipt.logs,
+    });
+    if (sent === undefined) {
+        throw new Error("missing OFTSent event");
+    }
+
+    const sourceContract = getAddress(sent.address);
+    const sourceEndpoint = await sourceClient.readContract({
+        address: sourceContract,
+        abi: oAppAbi,
+        functionName: "endpoint",
+    });
+    const [sourceEid, destinationPeer] = await Promise.all([
+        sourceClient.readContract({
+            address: sourceEndpoint,
+            abi: endpointAbi,
+            functionName: "eid",
+        }),
+        sourceClient.readContract({
+            address: sourceContract,
+            abi: oAppAbi,
+            functionName: "peers",
+            args: [sent.args.dstEid],
+        }),
+    ]);
+    const destinationContract = getAddress(slice(destinationPeer, 12));
+    const destinationEndpoint = await destinationClient.readContract({
+        address: destinationContract,
+        abi: oAppAbi,
+        functionName: "endpoint",
+    });
+
+    await destinationClient.request({
+        method: "anvil_setBalance" as never,
+        params: [
+            destinationEndpoint,
+            `0x${parseEther("10").toString(16)}`,
+        ] as never,
+    });
+    await destinationClient.request({
+        method: "anvil_impersonateAccount" as never,
+        params: [destinationEndpoint] as never,
+    });
+
+    try {
+        const endpointWallet = createWalletClient({
+            account: destinationEndpoint,
+            chain: arbitrumE2eChain,
+            transport: http(destinationRpcUrl, { timeout: actionTimeout }),
+        });
+        const hash = await endpointWallet.writeContract({
+            address: destinationContract,
+            abi: oAppAbi,
+            functionName: "lzReceive",
+            args: [
+                {
+                    srcEid: sourceEid,
+                    sender: padHex(sourceContract, { size: 32 }),
+                    nonce: 1n,
+                },
+                sent.args.guid,
+                encodePacked(
+                    ["bytes32", "uint64"],
+                    [
+                        padHex(recipient, { size: 32 }),
+                        sent.args.amountReceivedLD,
+                    ],
+                ),
+                zeroAddress,
+                "0x",
+            ],
+        });
+        const destinationReceipt =
+            await destinationClient.waitForTransactionReceipt({
+                hash,
+                timeout: actionTimeout,
+            });
+        const [received] = parseEventLogs({
+            abi: oftAbi,
+            eventName: "OFTReceived",
+            logs: destinationReceipt.logs,
+        });
+        expect(received).toBeDefined();
+        expect(isAddressEqual(received.args.toAddress, recipient)).toBe(true);
+    } finally {
+        await destinationClient.request({
+            method: "anvil_stopImpersonatingAccount" as never,
+            params: [destinationEndpoint] as never,
+        });
+    }
 };
 
 export const getArbitrumWalletAddress = async (
