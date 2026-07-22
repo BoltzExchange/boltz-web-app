@@ -24,6 +24,7 @@ import {
     BtcSearchState,
     RescueResultSource,
 } from "../../src/pages/external-rescue/types";
+import { useExternalRescueSearch } from "../../src/pages/external-rescue/useExternalRescueSearch";
 import { ChatwootNotReadyError } from "../../src/utils/chatwoot";
 import { RescueAction } from "../../src/utils/rescue";
 import {
@@ -867,5 +868,92 @@ describe("Rescue", () => {
 
         fireEvent.click(scannedRow);
         expect(openResult).toHaveBeenCalledWith(scanned);
+    });
+
+    test("should keep result rows clickable while a running scan pushes fresh result arrays", () => {
+        const firstTxHash = `0x${"c".repeat(64)}`;
+        const secondTxHash = `0x${"d".repeat(64)}`;
+        const makeResult = (transactionHash: string, blockNumber: number) => ({
+            source: RescueResultSource.Evm,
+            key: `evm:refund:TBTC:${transactionHash}`,
+            action: RescueAction.Refund,
+            evmAction: RskRescueMode.Refund,
+            actionable: true,
+            sortValue: blockNumber,
+            swap: {
+                action: RskRescueMode.Refund,
+                asset: "TBTC",
+                blockNumber,
+                transactionHash,
+            },
+        });
+
+        const open = vi.fn();
+        let setCurrent!: (results: any[]) => void;
+
+        const Harness = () => {
+            const { results } = useExternalRescueSearch();
+            setCurrent = results.setCurrent;
+            return (
+                <Results
+                    state={
+                        {
+                            btc: {
+                                loadedSwaps: 0,
+                                searchState: BtcSearchState.Ready,
+                                listLoading: false,
+                            },
+                            evm: {
+                                unmatchedRefundSwaps: 0,
+                                unmatchedClaimSwaps: 0,
+                            },
+                            search: {
+                                hasSearched: true,
+                                isSearching: true,
+                            },
+                        } as any
+                    }
+                    results={
+                        {
+                            ...results,
+                            all: () => [makeResult(firstTxHash, 1)],
+                            open,
+                        } as any
+                    }
+                />
+            );
+        };
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Harness />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const row = screen.getByTestId(
+            `swaplist-item-evm:refund:TBTC:${firstTxHash}`,
+        );
+
+        // a scan event pushes a fresh slice of equivalent objects
+        setCurrent([makeResult(firstTxHash, 1), makeResult(secondTxHash, 2)]);
+
+        expect(
+            screen.getByTestId(`swaplist-item-evm:refund:TBTC:${secondTxHash}`),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByTestId(`swaplist-item-evm:refund:TBTC:${firstTxHash}`),
+        ).toBe(row);
+
+        fireEvent.click(row);
+        expect(open).toHaveBeenCalledTimes(1);
+        expect(open.mock.calls[0][0].key).toBe(
+            `evm:refund:TBTC:${firstTxHash}`,
+        );
     });
 });
