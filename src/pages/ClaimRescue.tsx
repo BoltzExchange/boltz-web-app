@@ -340,7 +340,13 @@ const ClaimRescue = () => {
 
     return (
         <>
-            <div class="frame" data-status={claimableSwap()?.status}>
+            <div
+                class="frame"
+                data-status={
+                    claimableSwap.state === "ready"
+                        ? claimableSwap()?.status
+                        : undefined
+                }>
                 <Switch>
                     <Match
                         when={

@@ -365,7 +365,10 @@ const RefundRescue = () => {
                                         );
                                     }}
                                 />
-                                <Show when={lockupTransactionId()}>
+                                <Show
+                                    when={
+                                        swap() !== null && lockupTransactionId()
+                                    }>
                                     {(id) => (
                                         <BlockExplorer
                                             typeLabel={"lockup_tx"}
