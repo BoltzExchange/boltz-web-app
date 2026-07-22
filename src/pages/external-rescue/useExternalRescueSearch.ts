@@ -17,7 +17,7 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, reconcile } from "solid-js/store";
 import type { Address } from "viem";
 
 import type {
@@ -272,9 +272,12 @@ export const useExternalRescueSearch = () => {
         }));
     };
     const [currentResultPage, setCurrentResultPage] = createSignal(1);
-    const [currentResults, setCurrentResults] = createSignal<
+    const [currentResults, setCurrentResultsStore] = createStore<
         UnifiedRescueResult[]
     >([]);
+    const setCurrentResults = (results: UnifiedRescueResult[]) => {
+        setCurrentResultsStore(reconcile(results, { key: "key" }));
+    };
 
     let scanAbort: AbortController | undefined = undefined;
 
@@ -980,6 +983,8 @@ export const useExternalRescueSearch = () => {
             return;
         }
 
+        stopSearch();
+
         if (result.source === RescueResultSource.Evm) {
             navigate(
                 `/swap/rescue/evm/${result.swap.asset}/${result.swap.transactionHash}/${result.evmAction}`,
@@ -1021,7 +1026,7 @@ export const useExternalRescueSearch = () => {
         },
         results: {
             all: unifiedResults,
-            current: currentResults,
+            current: () => currentResults,
             currentEvmProgress,
             currentPage: currentResultPage,
             displaySlotCount: resultDisplaySlotCount,
