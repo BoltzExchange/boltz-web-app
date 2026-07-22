@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@solidjs/testing-library";
+import {
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+    within,
+} from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 import { type RestorableSwap, getRestorableSwaps } from "boltz-swaps/client";
 import {
@@ -801,6 +807,7 @@ describe("Rescue", () => {
             },
         };
         const results = [enriched, scanned];
+        const openResult = vi.fn();
 
         render(
             () => (
@@ -832,7 +839,7 @@ describe("Rescue", () => {
                                 currentPage: () => 1,
                                 displaySlotCount: () => results.length,
                                 hasAny: () => true,
-                                open: vi.fn(),
+                                open: openResult,
                                 setCurrent: vi.fn(),
                                 setCurrentPage: vi.fn(),
                             } as any
@@ -850,9 +857,15 @@ describe("Rescue", () => {
             within(enrichedRow).getByText("restored-evm-swap"),
         ).toBeInTheDocument();
 
+        fireEvent.click(enrichedRow);
+        expect(openResult).toHaveBeenCalledWith(enriched);
+
         const scannedRow = screen.getByTestId(`swaplist-item-${scanned.key}`);
         expect(
             within(scannedRow).getByText("0xbbb...bbbbb"),
         ).toBeInTheDocument();
+
+        fireEvent.click(scannedRow);
+        expect(openResult).toHaveBeenCalledWith(scanned);
     });
 });
