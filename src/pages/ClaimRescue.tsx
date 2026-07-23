@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
@@ -34,7 +35,7 @@ import SwapHeader from "../components/SwapHeader";
 import { getSwapIconAssets } from "../components/SwapIcons";
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { type AssetType, LN } from "../consts/Assets";
+import { type AssetType, LN, isEvmAsset } from "../consts/Assets";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
@@ -46,7 +47,23 @@ import { extractAddress } from "../utils/invoice";
 import { derivePreimageFromRescueKey, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, ReverseSwap, SomeSwap } from "../utils/swapCreator";
 
-const mapClaimableSwap = ({
+export const verifyClaimPreimage = (
+    preimage: Uint8Array,
+    expectedHash?: string,
+) => {
+    if (expectedHash === undefined) {
+        return;
+    }
+
+    const normalizedExpectedHash = expectedHash
+        .replace(/^0x/i, "")
+        .toLowerCase();
+    if (hex.encode(sha256(preimage)) !== normalizedExpectedHash) {
+        throw new Error("derived claim preimage does not match restored swap");
+    }
+};
+
+export const mapClaimableSwap = ({
     swap,
     pair,
 }: {
@@ -76,7 +93,7 @@ const mapClaimableSwap = ({
 
     if (swap.type === SwapType.Chain) {
         const refund = swap.refundDetails;
-        if (refund === undefined) {
+        if (refund === undefined && !isEvmAsset(swap.from)) {
             return undefined;
         }
         return {
@@ -90,16 +107,20 @@ const mapClaimableSwap = ({
                     unconfidentialExtraFee),
             version: OutputType.Taproot,
             claimPrivateKeyIndex: claim.keyIndex,
-            refundPrivateKeyIndex: refund.keyIndex,
-            refundPrivateKey: refund.serverPublicKey,
             claimDetails: {
                 ...claim,
                 swapTree: claim.tree,
             } as ChainSwapDetails,
-            lockupDetails: {
-                ...refund,
-                swapTree: refund.tree,
-            } as ChainSwapDetails,
+            ...(refund === undefined
+                ? {}
+                : {
+                      refundPrivateKeyIndex: refund.keyIndex,
+                      refundPrivateKey: refund.serverPublicKey,
+                      lockupDetails: {
+                          ...refund,
+                          swapTree: refund.tree,
+                      } as ChainSwapDetails,
+                  }),
         };
     } else if (swap.type === SwapType.Reverse) {
         return {
@@ -213,13 +234,16 @@ const ClaimRescue = () => {
                     throw Error(`failed to find a chain pair for ${params.id}`);
                 }
 
-                const derivedKey = hex.encode(
-                    derivePreimageFromRescueKey(
-                        rescue,
-                        claimDetails.keyIndex,
-                        restorableSwap.to as AssetType,
-                    ),
+                const derivedPreimage = derivePreimageFromRescueKey(
+                    rescue,
+                    claimDetails.keyIndex,
+                    restorableSwap.to as AssetType,
                 );
+                verifyClaimPreimage(
+                    derivedPreimage,
+                    restorableSwap.preimageHash,
+                );
+                const derivedKey = hex.encode(derivedPreimage);
 
                 return mapClaimableSwap({
                     swap: {

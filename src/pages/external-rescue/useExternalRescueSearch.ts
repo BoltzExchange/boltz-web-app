@@ -147,6 +147,11 @@ type RestoreSwapAssets = {
     to?: string;
 };
 
+type RestoreRescueResult = Extract<
+    UnifiedRescueResult,
+    { source: RescueResultSource.Restore }
+>;
+
 export const getRestorePreimageHash = (swap: { preimageHash?: string }) =>
     normalizeEvmId(swap.preimageHash);
 
@@ -302,9 +307,24 @@ export const useExternalRescueSearch = () => {
         ...enrichedEvmRefundSwaps(),
         ...enrichedEvmClaimSwaps(),
     ]);
-    const shouldDeferEvmResult = (swap: EvmRescueResult) =>
-        state.btc.searchState === BtcSearchState.Loading &&
-        swap.restoredSwap === undefined;
+    // The id of the original swap a commitment lockup refund belongs to,
+    // when the rescue scan restored that swap; undefined otherwise
+    const restoredOriginalSwapId = (swap: EvmRescueResult) =>
+        swap.action === RskRescueMode.Refund &&
+        isEmptyPreimageHash(swap.preimageHash)
+            ? swap.restoredSwap?.id
+            : undefined;
+    const shouldDeferEvmResult = (swap: EvmRescueResult) => {
+        const restoreLoading =
+            state.btc.searchState === BtcSearchState.Loading ||
+            btcRescueList.loading;
+
+        if (restoredOriginalSwapId(swap) !== undefined) {
+            return restoreLoading;
+        }
+
+        return restoreLoading && swap.restoredSwap === undefined;
+    };
     const visibleEvmSwaps = createMemo(() =>
         allEvmSwaps().filter((swap) => !shouldDeferEvmResult(swap)),
     );
@@ -372,12 +392,9 @@ export const useExternalRescueSearch = () => {
         () =>
             new Set(
                 visibleEvmSwaps()
-                    .flatMap((swap) => [
-                        swap.preimageHash,
-                        swap.restoredSwap?.preimageHash,
-                    ])
+                    .map((swap) => swap.preimageHash)
                     .filter(
-                        (preimageHash): preimageHash is string =>
+                        (preimageHash) =>
                             normalizeEvmId(preimageHash) !== "" &&
                             !isEmptyPreimageHash(preimageHash),
                     )
@@ -388,9 +405,9 @@ export const useExternalRescueSearch = () => {
         shouldShowEvmRestoreResult(swap, evmRescuePreimageHashes());
 
     const unifiedResults = createMemo(() => {
-        const btcResults: UnifiedRescueResult[] = (btcRescueList() ?? [])
+        const restoreResults: RestoreRescueResult[] = (btcRescueList() ?? [])
             .filter(shouldShowRestoreResult)
-            .map((swap): UnifiedRescueResult => {
+            .map((swap): RestoreRescueResult => {
                 const action = swap.action ?? RescueAction.Pending;
                 return {
                     source: RescueResultSource.Restore,
@@ -401,8 +418,30 @@ export const useExternalRescueSearch = () => {
                     swap,
                 };
             });
-        const evmResults: UnifiedRescueResult[] = visibleEvmSwaps().map(
-            (swap) => {
+        const linkedEvmRefundRestoreIds = new Set(
+            visibleEvmSwaps()
+                .map(restoredOriginalSwapId)
+                .filter((id) => id !== undefined),
+        );
+        const btcResults = restoreResults.filter(
+            (result) =>
+                result.action === RescueAction.Claim ||
+                !linkedEvmRefundRestoreIds.has(result.swap.id),
+        );
+        const claimableRestoreIds = new Set(
+            restoreResults
+                .filter((result) => result.action === RescueAction.Claim)
+                .map((result) => result.swap.id),
+        );
+        const evmResults: UnifiedRescueResult[] = visibleEvmSwaps()
+            .filter((swap) => {
+                const restoreId = restoredOriginalSwapId(swap);
+                return (
+                    restoreId === undefined ||
+                    !claimableRestoreIds.has(restoreId)
+                );
+            })
+            .map((swap) => {
                 const action = getEvmRescueAction(swap);
                 return {
                     source: RescueResultSource.Evm,
@@ -413,8 +452,7 @@ export const useExternalRescueSearch = () => {
                     sortValue: swap.blockNumber,
                     swap,
                 };
-            },
-        );
+            });
         const sweepResults: UnifiedRescueResult[] =
             state.evm.sweepableBalances.map((swap) => ({
                 source: RescueResultSource.Sweep,

@@ -16,6 +16,7 @@ import { getAddress } from "viem";
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
+import ConnectWallet from "../components/ConnectWallet";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -126,15 +127,15 @@ const GasAbstractionSweepRescue = () => {
 
     return (
         <div class="frame">
+            <SettingsCog />
+            <SettingsMenu />
+            <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
+                {t("refund")} {cropString(params.address, 15, 5)}
+            </h2>
+            <hr />
             <Show
                 when={signer() !== undefined}
-                fallback={<h2>{t("no_wallet")}</h2>}>
-                <SettingsCog />
-                <SettingsMenu />
-                <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
-                    {t("refund")} {cropString(params.address, 15, 5)}
-                </h2>
-                <hr />
+                fallback={<ConnectWallet asset={params.asset} />}>
                 <Switch>
                     <Match when={rescueFile() === undefined}>
                         <h3>{t("refund_scan_required")}</h3>

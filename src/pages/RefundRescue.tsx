@@ -26,10 +26,11 @@ import RefundEta from "../components/RefundEta";
 import SwapHeader from "../components/SwapHeader";
 import { getSwapIconAssets } from "../components/SwapIcons";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import type {
-    AssetType,
-    RefundableAssetType,
-    blockChainsAssets,
+import {
+    type AssetType,
+    type RefundableAssetType,
+    type blockChainsAssets,
+    isEvmAsset,
 } from "../consts/Assets";
 import { swapStatusFailed } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -74,7 +75,7 @@ export const mapSwap = (
         }
         case SwapType.Chain: {
             const refund = swap.refundDetails;
-            if (refund === undefined) {
+            if (refund === undefined && !isEvmAsset(swap.from)) {
                 return undefined;
             }
             const { claimDetails, refundDetails, ...rest } = swap;
@@ -84,13 +85,16 @@ export const mapSwap = (
                 assetSend: swap.from,
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
-                refundPrivateKeyIndex: refund.keyIndex,
-
                 claimPrivateKeyIndex: claimDetails?.keyIndex,
-                lockupDetails: {
-                    ...refundDetails,
-                    swapTree: refund.tree,
-                } as ChainSwapDetails,
+                ...(refund === undefined
+                    ? {}
+                    : {
+                          refundPrivateKeyIndex: refund.keyIndex,
+                          lockupDetails: {
+                              ...refundDetails,
+                              swapTree: refund.tree,
+                          } as ChainSwapDetails,
+                      }),
             };
         }
         case SwapType.Reverse: {
@@ -159,6 +163,21 @@ const RefundRescue = () => {
         restoredSwap()?.refundDetails?.transaction?.id ??
         swapStatusTransaction()?.id ??
         refundableLockupTransactionId();
+
+    const lockupExplorerId = () => {
+        const currentSwap = swap();
+        if (currentSwap === null) {
+            return undefined;
+        }
+        if (currentSwap.lockupTx !== undefined) {
+            return currentSwap.lockupTx;
+        }
+        return currentSwap.type === SwapType.Submarine
+            ? currentSwap.address
+            : currentSwap.type === SwapType.Chain
+              ? currentSwap.lockupDetails?.lockupAddress
+              : undefined;
+    };
 
     const failureTitle = (): DictKey | undefined => {
         switch (swapStatus()) {
@@ -304,27 +323,24 @@ const RefundRescue = () => {
                                 timeoutBlockHeight={timeoutBlockHeight}
                                 asset={swap()!.assetSend}
                             />
-                            <BlockExplorer
-                                asset={swap()!.assetSend}
-                                typeLabel={
-                                    swap()!.lockupTx !== undefined
-                                        ? "lockup_tx"
-                                        : "lockup_address"
-                                }
-                                kind={
-                                    swap()!.lockupTx !== undefined
-                                        ? BlockExplorerTargetKind.Tx
-                                        : BlockExplorerTargetKind.Address
-                                }
-                                id={
-                                    swap()!.lockupTx !== undefined
-                                        ? swap()!.lockupTx!
-                                        : swap()!.type === SwapType.Submarine
-                                          ? (swap() as SubmarineSwap).address
-                                          : (swap() as ChainSwap).lockupDetails
-                                                .lockupAddress
-                                }
-                            />
+                            <Show when={lockupExplorerId()}>
+                                {(id) => (
+                                    <BlockExplorer
+                                        asset={swap()!.assetSend}
+                                        typeLabel={
+                                            swap()!.lockupTx !== undefined
+                                                ? "lockup_tx"
+                                                : "lockup_address"
+                                        }
+                                        kind={
+                                            swap()!.lockupTx !== undefined
+                                                ? BlockExplorerTargetKind.Tx
+                                                : BlockExplorerTargetKind.Address
+                                        }
+                                        id={id()}
+                                    />
+                                )}
+                            </Show>
                             <button
                                 class="btn btn-light"
                                 data-testid="backBtn"
