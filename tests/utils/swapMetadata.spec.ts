@@ -362,6 +362,21 @@ describe("patchEncryptedSwapMetadata", () => {
         });
     });
 
+    test("does not patch commitment metadata with the temporary frontend id", async () => {
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Commitment,
+                id: "temporary-frontend-id",
+                commitmentLockupTxHash: "0xcommitment",
+                dex: samplePayload.dex,
+                bridge: samplePayload.bridge,
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).not.toHaveBeenCalled();
+    });
+
     test("does not patch tx identity without route metadata", async () => {
         await patchEncryptedSwapMetadata(
             {

@@ -143,11 +143,43 @@ describeArbitrumE2e("Arbitrum commitment swap e2e", () => {
         await expect(invoiceSubmitButton).toBeEnabled({
             timeout: actionTimeout,
         });
+        const backendSwapId = page
+            .waitForResponse(
+                (response) => {
+                    const pathname = new URL(response.url()).pathname;
+                    return (
+                        response.request().method() === "POST" &&
+                        pathname === "/v2/swap/submarine"
+                    );
+                },
+                { timeout: actionTimeout },
+            )
+            .then(async (response) => {
+                const body = (await response.json()) as { id: string };
+                return body.id;
+            });
+        const metadataPatch = page.waitForResponse(
+            async (response) => {
+                const pathname = new URL(response.url()).pathname;
+                return (
+                    response.request().method() === "PATCH" &&
+                    pathname === `/v2/swap/${await backendSwapId}/metadata`
+                );
+            },
+            { timeout: actionTimeout },
+        );
         await invoiceSubmitButton.click();
 
+        const swapId = await backendSwapId;
+        expect(swapId).not.toBe(commitmentId);
         await expect
             .poll(() => getCurrentSwapId(page), { timeout: actionTimeout })
-            .not.toBe(commitmentId);
+            .toBe(swapId);
+        const metadataResponse = await metadataPatch;
+        expect(new URL(metadataResponse.url()).pathname).toEqual(
+            `/v2/swap/${swapId}/metadata`,
+        );
+        expect(metadataResponse.ok()).toBe(true);
         const downloadButton = page.getByRole("button", {
             name: dict.en.download_new_key,
         });

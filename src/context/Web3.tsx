@@ -151,6 +151,7 @@ const Web3SignerContext = createContext<{
 
     switchNetwork: (asset: string) => Promise<void>;
 
+    contractsLoading: Accessor<boolean>;
     getContractsForAsset: (asset: string) => Contracts | undefined;
     getEtherSwap: (asset: string) => EtherSwapContract;
     getErc20Swap: (asset: string) => Erc20SwapContract;
@@ -774,6 +775,7 @@ const Web3SignerProvider = (props: {
                 walletConnected,
                 setWalletConnected,
                 connectProviderForAddress,
+                contractsLoading: () => allContracts.loading,
                 getContractsForAsset,
                 getGasAbstractionSigner,
                 clearSigner: () => {

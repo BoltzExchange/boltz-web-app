@@ -6,11 +6,12 @@ import log from "loglevel";
 import type { EncodedHop } from "./Pair";
 import { formatError } from "./errors";
 import type { RescueFile } from "./rescueFile";
-import type {
-    BridgeDetail,
-    DexDetail,
-    SomeSwap,
-    SwapBase,
+import {
+    type BridgeDetail,
+    type DexDetail,
+    type SomeSwap,
+    type SwapBase,
+    isCommitmentSwap,
 } from "./swapCreator";
 
 type SwapMetadataBridge = Pick<
@@ -360,6 +361,10 @@ export const patchEncryptedSwapMetadata = async (
     swap: SomeSwap,
     rescueFile: RescueFile | null | undefined,
 ) => {
+    if (isCommitmentSwap(swap)) {
+        return;
+    }
+
     const payload = buildSwapMetadataPayloadFromSwap(swap);
     if (
         payload === undefined ||

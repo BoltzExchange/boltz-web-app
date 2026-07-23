@@ -1,13 +1,17 @@
-import { render, screen } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
-import { SwapPosition } from "boltz-swaps/types";
+import type { Pairs } from "boltz-swaps/client";
+import { SwapPosition, SwapType } from "boltz-swaps/types";
 import type { Hash, PublicClient, TransactionReceipt } from "viem";
 
+import type * as BoltzClientModule from "../../packages/boltz-swaps/src/client";
 import { config } from "../../src/config";
-import { USDT0 } from "../../src/consts/Assets";
+import { TBTC, USDT0 } from "../../src/consts/Assets";
 import { InvoiceValidation } from "../../src/consts/Enums";
+import { useGlobalContext } from "../../src/context/Global";
+import { usePayContext } from "../../src/context/Pay";
 import dict from "../../src/i18n/i18n";
-import {
+import CommitmentCreated, {
     type CommitmentAmounts,
     CommitmentLockupTransaction,
     calculateCommittedSubmarineAmounts,
@@ -16,12 +20,37 @@ import {
     waitForCommitmentLockupReceipt,
 } from "../../src/status/CommitmentCreated";
 import type Pair from "../../src/utils/Pair";
-import type { BridgeDetail } from "../../src/utils/swapCreator";
+import type { BridgeDetail, CommitmentSwap } from "../../src/utils/swapCreator";
 import { validateInvoice } from "../../src/utils/validation";
-import { contextWrapper } from "../helper";
+import { contextWrapper, fetchingContextWrapper } from "../helper";
 
 const invoice = "lnbcrt1mock";
 const invoiceSats = 40_720;
+const commitmentReceiptWait = vi.hoisted(() => vi.fn());
+const mockGetContracts = vi.hoisted(() =>
+    vi.fn<typeof BoltzClientModule.getContracts>(),
+);
+
+vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
+    const actual = await vi.importActual<typeof BoltzClientModule>(
+        "../../packages/boltz-swaps/src/client.ts",
+    );
+    return { ...actual, getContracts: mockGetContracts };
+});
+
+vi.mock("boltz-swaps/evm", async () => {
+    const actual = await vi.importActual("boltz-swaps/evm");
+    return {
+        ...actual,
+        createAssetProvider: () => ({
+            waitForTransactionReceipt: commitmentReceiptWait,
+        }),
+    };
+});
+
+vi.mock("../../src/components/RefundButton", () => ({
+    default: () => null,
+}));
 
 vi.mock("../../src/utils/validation", async () => {
     const actual = await vi.importActual("../../src/utils/validation");
@@ -43,6 +72,8 @@ describe("CommitmentCreated", () => {
         "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
 
     afterEach(() => {
+        commitmentReceiptWait.mockReset();
+        mockGetContracts.mockReset();
         vi.restoreAllMocks();
     });
 
@@ -170,6 +201,87 @@ describe("CommitmentCreated", () => {
             waitForCommitmentLockupReceipt(provider, hash, 1, 0, 2),
         ).rejects.toThrow("rpc timeout");
         expect(provider.waitForTransactionReceipt).toHaveBeenCalledTimes(2);
+    });
+
+    const lockedCommitment = {
+        id: "commitment-id",
+        type: SwapType.Commitment,
+        assetSend: TBTC,
+        assetReceive: "LN",
+        initialReceiveAsset: "LN",
+        sourceAsset: "USDT0-POL",
+        sourceAmount: "1000000",
+        commitmentLockupTxHash: `0x${"1".repeat(64)}`,
+        gasAbstraction: { lockup: "signer", claim: "none" },
+    } as CommitmentSwap;
+
+    const contractRegistry = (erc20SwapAddress?: string) =>
+        ({
+            arbitrum: {
+                network: {
+                    chainId: config.assets?.[TBTC]?.network?.chainId,
+                    name: "Arbitrum",
+                },
+                swapContracts:
+                    erc20SwapAddress === undefined
+                        ? {}
+                        : { ERC20Swap: erc20SwapAddress },
+                supportedContracts: {},
+                tokens: {},
+            },
+        }) as never;
+
+    const CommitmentHarness = () => {
+        const global = useGlobalContext();
+        const pay = usePayContext();
+        global.setPairs({} as Pairs);
+        global.setRegularPairs({} as Pairs);
+        pay.setSwap(lockedCommitment);
+        return <CommitmentCreated />;
+    };
+
+    test("waits for the ERC20Swap registry, then reads the commitment lockup", async () => {
+        let resolveContracts: (contracts: never) => void = () => undefined;
+        mockGetContracts.mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    resolveContracts = resolve;
+                }),
+        );
+        commitmentReceiptWait.mockImplementation(
+            () => new Promise(() => undefined),
+        );
+
+        render(() => <CommitmentHarness />, {
+            wrapper: fetchingContextWrapper,
+        });
+
+        expect(
+            await screen.findByTestId("loading-spinner"),
+        ).toBeInTheDocument();
+        expect(mockGetContracts).toHaveBeenCalledOnce();
+        expect(commitmentReceiptWait).not.toHaveBeenCalled();
+
+        resolveContracts(
+            contractRegistry("0x6398B76DF91C5eBe9f488e3656658E79284dDc0F"),
+        );
+
+        await waitFor(() =>
+            expect(commitmentReceiptWait).toHaveBeenCalledOnce(),
+        );
+    });
+
+    test("reports a loaded registry that is missing the ERC20Swap contract", async () => {
+        mockGetContracts.mockResolvedValueOnce(contractRegistry());
+
+        render(() => <CommitmentHarness />, {
+            wrapper: fetchingContextWrapper,
+        });
+
+        expect(
+            await screen.findByText("missing ERC20Swap contract for TBTC"),
+        ).toBeInTheDocument();
+        expect(commitmentReceiptWait).not.toHaveBeenCalled();
     });
 
     describe("CommitmentLockupTransaction", () => {

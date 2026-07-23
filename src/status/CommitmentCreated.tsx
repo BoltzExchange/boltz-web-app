@@ -53,6 +53,7 @@ import {
     createSubmarine,
     getPreBridgeDetail,
 } from "../utils/swapCreator";
+import { patchEncryptedSwapMetadata } from "../utils/swapMetadata";
 import { validateInvoice, validateResponse } from "../utils/validation";
 
 export type CommitmentAmounts = {
@@ -285,12 +286,18 @@ const CommitmentCreated = () => {
         notify,
         pairs,
         regularPairs,
+        rescueFile,
         separator,
         setSwapStorage,
         t,
     } = useGlobalContext();
     const { swap } = usePayContext();
-    const { getEtherSwap, getErc20Swap } = useWeb3Signer();
+    const {
+        contractsLoading,
+        getContractsForAsset,
+        getEtherSwap,
+        getErc20Swap,
+    } = useWeb3Signer();
     const commitment = createMemo(() => swap() as CommitmentSwap);
     const [invoice, setInvoice] = createSignal(
         untrack(() => commitment().originalDestination ?? ""),
@@ -340,13 +347,34 @@ const CommitmentCreated = () => {
         });
     });
 
+    const erc20SwapAddress = createMemo(
+        () =>
+            getContractsForAsset(commitment().assetSend)?.swapContracts
+                .ERC20Swap,
+    );
+    const missingErc20SwapError = createMemo(() => {
+        const current = commitment();
+        if (
+            current.commitmentLockupTxHash === undefined ||
+            pairs() === undefined ||
+            contractsLoading() ||
+            erc20SwapAddress() !== undefined
+        ) {
+            return undefined;
+        }
+        return `missing ERC20Swap contract for ${current.assetSend}`;
+    });
+
     const committedAmountsSource = createMemo(
         () => {
             const current = commitment();
             const currentPairs = pairs();
+            const currentErc20SwapAddress = erc20SwapAddress();
             if (
                 current.commitmentLockupTxHash === undefined ||
-                currentPairs === undefined
+                currentPairs === undefined ||
+                contractsLoading() ||
+                currentErc20SwapAddress === undefined
             ) {
                 return undefined;
             }
@@ -354,6 +382,7 @@ const CommitmentCreated = () => {
             return {
                 assetSend: current.assetSend,
                 commitmentLockupTxHash: current.commitmentLockupTxHash,
+                erc20SwapAddress: currentErc20SwapAddress,
                 initialReceiveAsset: current.initialReceiveAsset,
                 pairs: currentPairs,
                 regularPairs: regularPairs(),
@@ -365,6 +394,7 @@ const CommitmentCreated = () => {
                 previous?.assetSend === next?.assetSend &&
                 previous?.commitmentLockupTxHash ===
                     next?.commitmentLockupTxHash &&
+                previous?.erc20SwapAddress === next?.erc20SwapAddress &&
                 previous?.initialReceiveAsset === next?.initialReceiveAsset &&
                 previous?.pairs === next?.pairs &&
                 previous?.regularPairs === next?.regularPairs,
@@ -408,6 +438,7 @@ const CommitmentCreated = () => {
 
     const committedAmountsError = () =>
         loadError() ??
+        missingErc20SwapError() ??
         (committedAmounts.error === undefined
             ? undefined
             : formatError(committedAmounts.error));
@@ -514,7 +545,7 @@ const CommitmentCreated = () => {
                 getErc20Swap,
             );
 
-            await setSwapStorage({
+            const completedSwap = {
                 ...submarine,
                 getGasToken: current.getGasToken,
                 commitmentLockupTxHash: current.commitmentLockupTxHash,
@@ -522,7 +553,9 @@ const CommitmentCreated = () => {
                 signer: current.signer,
                 dex: current.dex,
                 bridge: current.bridge,
-            });
+            };
+            await setSwapStorage(completedSwap);
+            await patchEncryptedSwapMetadata(completedSwap, rescueFile());
             await deleteSwap(current.id);
             navigate(`/swap/${submarine.id}`);
         } catch (error) {
