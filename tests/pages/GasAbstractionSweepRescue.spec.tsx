@@ -6,7 +6,7 @@ import { type Accessor, createEffect, createSignal } from "solid-js";
 import { describe, expect, test, vi } from "vitest";
 
 import type * as ContractsModule from "../../packages/boltz-swaps/src/evm/contracts.ts";
-import { TBTC, USDC, USDT0 } from "../../src/consts/Assets";
+import { TBTC, USDC, USDT0, requireChainId } from "../../src/consts/Assets";
 import type * as RescueContextModule from "../../src/context/Rescue";
 import type * as Web3Module from "../../src/context/Web3";
 import type { Signer } from "../../src/context/Web3";
@@ -92,6 +92,7 @@ const lastContractTxProps: { current: ContractTxProps | undefined } = {
 };
 type ContractTxProps = {
     asset: string;
+    disabled?: boolean;
     signerOverride?: Accessor<Signer>;
     onClick: () => Promise<unknown>;
     buttonText: string;
@@ -102,6 +103,7 @@ vi.mock("../../src/components/ContractTransaction", () => ({
         createEffect(() => {
             lastContractTxProps.current = {
                 asset: props.asset,
+                disabled: props.disabled,
                 signerOverride: props.signerOverride,
                 onClick: props.onClick,
                 buttonText: props.buttonText,
@@ -119,6 +121,17 @@ vi.mock("../../src/components/ContractTransaction", () => ({
             </div>
         );
     },
+}));
+
+vi.mock("../../src/components/ConnectWallet", () => ({
+    default: (props: { asset?: string }) => (
+        <button data-testid="connect-wallet">
+            {signer()?.address ??
+                (props.asset === undefined
+                    ? "Connect wallet"
+                    : `Connect ${props.asset}`)}
+        </button>
+    ),
 }));
 
 vi.mock("../../src/components/BlockExplorer", () => ({
@@ -142,10 +155,14 @@ const i18n = (await import("../../src/i18n/i18n")).default;
 
 const validAddress = "0x0000000000000000000000000000000000000001";
 const otherAddress = "0x0000000000000000000000000000000000000002";
+const switchedAddress = "0x0000000000000000000000000000000000000003";
 
-const makeSigner = (address: string) =>
+const makeSigner = (address: string, chainId = requireChainId(USDT0)) =>
     ({
         address,
+        provider: {
+            getChainId: vi.fn().mockResolvedValue(chainId),
+        },
     }) as unknown as Signer;
 
 const renderPage = () =>
@@ -166,13 +183,33 @@ const resetState = () => {
 };
 
 describe("GasAbstractionSweepRescue", () => {
-    test("shows the no-wallet fallback when the signer is undefined", async () => {
+    test("prompts to connect a wallet when the signer is undefined", async () => {
         resetState();
+        getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
+        balanceOf.mockResolvedValue(1n);
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
 
-        expect(await screen.findByText(i18n.en.no_wallet)).toBeInTheDocument();
+        expect(await screen.findByTestId("connect-wallet")).toHaveTextContent(
+            `Connect ${USDT0}`,
+        );
+        expect(
+            screen.getByText(
+                "Enter an address on Arbitrum One to receive your USDT refund:",
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("refundAddress")).toHaveAttribute(
+            "placeholder",
+            "Enter an address on Arbitrum One",
+        );
+        expect(screen.getByText(i18n.en.or)).toBeInTheDocument();
+        expect(
+            screen
+                .getByTestId("refund-amount")
+                .compareDocumentPosition(screen.getByTestId("refundAddress")) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
     });
 
     test("prompts to scan with the rescue file when none is loaded", async () => {
@@ -186,30 +223,57 @@ describe("GasAbstractionSweepRescue", () => {
         ).toBeInTheDocument();
     });
 
-    test("re-runs the resource when the signer arrives after mount", async () => {
+    test("switches between manual and connected-wallet destinations", async () => {
         resetState();
         setRescueFile({ mnemonic: "test" } as RescueFile);
         getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
-        balanceOf.mockResolvedValue(0n);
+        balanceOf.mockResolvedValue(1n);
 
         renderPage();
 
-        // initial render: signer undefined → no_wallet fallback
-        expect(await screen.findByText(i18n.en.no_wallet)).toBeInTheDocument();
-        expect(getGasAbstractionSigner).not.toHaveBeenCalled();
+        expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
+        expect(screen.getByTestId("refundAddress")).toHaveValue("");
+        expect(screen.getByText(i18n.en.or)).toBeInTheDocument();
 
         setSigner(makeSigner(validAddress));
 
-        // resource fetches once the source signal becomes truthy
-        await waitFor(() =>
-            expect(getGasAbstractionSigner).toHaveBeenCalledWith(
-                USDT0,
-                expect.objectContaining({ mnemonic: "test" }),
-            ),
-        );
+        await waitFor(() => {
+            expect(screen.queryByTestId("refundAddress")).toBeNull();
+            expect(screen.getByTestId("connect-wallet")).toBeInTheDocument();
+            expect(screen.queryByText(i18n.en.or)).toBeNull();
+            expect(lastContractTxProps.current?.disabled).toBe(false);
+        });
+        expect(sweepGasAbstractionToken).not.toHaveBeenCalled();
+
+        setSigner(undefined);
+
+        expect(await screen.findByTestId("refundAddress")).toBeInTheDocument();
+        expect(screen.getByTestId("connect-wallet")).toBeInTheDocument();
+        expect(screen.getByText(i18n.en.or)).toBeInTheDocument();
+    });
+
+    test("requires the connected wallet to use the refund network", async () => {
+        resetState();
+        setRescueFile({ mnemonic: "test" } as RescueFile);
+        getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
+        balanceOf.mockResolvedValue(1n);
+        setSigner(makeSigner(otherAddress, 1));
+
+        renderPage();
+
         expect(
-            await screen.findByText(i18n.en.connected_wallet_no_swaps),
+            await screen.findByTestId("refund-destination"),
+        ).toHaveTextContent("Arbitrum One");
+        expect(screen.queryByTestId("contract-transaction")).toBeNull();
+
+        setSigner(makeSigner(switchedAddress));
+
+        expect(
+            await screen.findByTestId("contract-transaction"),
         ).toBeInTheDocument();
+        expect(screen.getByTestId("connect-wallet")).toHaveTextContent(
+            switchedAddress,
+        );
     });
 
     test("errors when the URL asset is not sweepable", async () => {
@@ -264,7 +328,7 @@ describe("GasAbstractionSweepRescue", () => {
         renderPage();
 
         expect(
-            await screen.findByText(i18n.en.connected_wallet_no_swaps),
+            await screen.findByText(i18n.en.no_rescuable_swaps),
         ).toBeInTheDocument();
         expect(screen.queryByTestId("contract-transaction")).toBeNull();
     });
@@ -298,7 +362,7 @@ describe("GasAbstractionSweepRescue", () => {
 
             renderPage();
 
-            const prompt = await screen.findByTestId("prompt-text");
+            const prompt = await screen.findByTestId("refund-amount");
             // Prompt starts with the localized "Refund" verb and embeds the
             // formatted balance.
             expect(prompt.textContent).toMatch(
@@ -308,8 +372,34 @@ describe("GasAbstractionSweepRescue", () => {
                 gasSigner,
             );
             expect(lastContractTxProps.current?.asset).toBe(asset);
+            expect(lastContractTxProps.current?.disabled).toBe(false);
         },
     );
+
+    test("refunds to a manually entered address without a connected wallet", async () => {
+        resetState();
+        const user = userEvent.setup();
+        const gasSigner = makeSigner(validAddress);
+        getGasAbstractionSigner.mockReturnValue(gasSigner);
+        balanceOf.mockResolvedValue(2_500_000n);
+        sweepGasAbstractionToken.mockResolvedValue("0xmanual");
+        setRescueFile({ mnemonic: "test" } as RescueFile);
+
+        renderPage();
+
+        const input = await screen.findByTestId("refundAddress");
+        await user.type(input, `  ${otherAddress}  `);
+        await user.click(screen.getByTestId("contract-tx-button"));
+
+        await waitFor(() => {
+            expect(sweepGasAbstractionToken).toHaveBeenCalledWith({
+                asset: USDT0,
+                amount: 2_500_000n,
+                destination: otherAddress,
+                signer: gasSigner,
+            });
+        });
+    });
 
     test("clicking refund sweeps to the connected wallet and shows the explorer link", async () => {
         resetState();
@@ -325,6 +415,15 @@ describe("GasAbstractionSweepRescue", () => {
         renderPage();
 
         const button = await screen.findByTestId("contract-tx-button");
+        expect(screen.getByTestId("refund-destination")).toHaveTextContent(
+            /Funds will be refunded as USDT on Arbitrum One to your connected EVM wallet/,
+        );
+        expect(screen.getByTestId("refund-destination")).not.toHaveTextContent(
+            otherAddress,
+        );
+        expect(screen.getByTestId("connect-wallet")).toHaveTextContent(
+            otherAddress,
+        );
         await user.click(button);
 
         await waitFor(() => {

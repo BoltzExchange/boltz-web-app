@@ -1,20 +1,15 @@
 import { NetworkTransport } from "boltz-swaps/types";
 import log from "loglevel";
-import {
-    type Accessor,
-    type JSX,
-    Show,
-    createEffect,
-    createSignal,
-} from "solid-js";
+import { type Accessor, type JSX, Show, createSignal } from "solid-js";
 
-import { config } from "../config";
 import { getNetworkTransport } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
+import { createSignerNetworkCheck } from "../utils/signerNetwork";
 import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
+import SignerNetworkGuard from "./SignerNetworkGuard";
 
 const ContractTransaction = (props: {
     asset: string;
@@ -44,19 +39,7 @@ const ContractTransaction = (props: {
             : connectedWallet()?.transport;
     const expectedTransport = () => getNetworkTransport(props.asset);
 
-    const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
-        undefined,
-    );
-
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        const provider = signer()?.provider;
-        setSignerNetwork(
-            provider === undefined
-                ? undefined
-                : Number(await provider.getChainId()),
-        );
-    });
+    const signerNetwork = createSignerNetworkCheck(signer, () => props.asset);
 
     const allowAnyAddress = () =>
         props.address === undefined || props.address.address === undefined;
@@ -85,61 +68,58 @@ const ContractTransaction = (props: {
                     />
                 </Show>
             }>
-            <Show
-                when={
-                    config.assets?.[props.asset]?.network?.chainId ===
-                        undefined ||
-                    config.assets?.[props.asset]?.network?.chainId ===
-                        signerNetwork()
-                }
-                fallback={<SwitchNetwork asset={props.asset} />}>
+            <SignerNetworkGuard network={signerNetwork}>
                 <Show
-                    when={!txSent()}
-                    fallback={
-                        <>
-                            <Show when={props.waitingText}>
-                                <p>{props.waitingText}</p>
-                            </Show>
-                            <LoadingSpinner />
-                        </>
-                    }>
-                    <Show when={props.promptText}>
-                        <p>{props.promptText}</p>
-                    </Show>
-                    <Show when={props.children !== undefined}>
-                        {props.children}
-                    </Show>
-                    <button
-                        class="btn"
-                        disabled={props.disabled || clicked()}
-                        onClick={async () => {
-                            setClicked(true);
-                            try {
-                                await props.onClick();
-                                setTxSent(true);
-                            } catch (e) {
-                                log.error(`Transaction failed`, e);
-                                notify(
-                                    "error",
-                                    t("transaction_failed", {
-                                        error: formatError(e, i18n()),
-                                    }),
-                                );
-                            } finally {
-                                setClicked(false);
-                            }
-                        }}>
-                        {clicked() ? (
-                            <LoadingSpinner class="inner-spinner" />
-                        ) : (
-                            props.buttonText
-                        )}
-                    </button>
-                    <Show when={props.showHr}>
-                        <hr />
+                    when={signerNetwork.valid()}
+                    fallback={<SwitchNetwork asset={props.asset} />}>
+                    <Show
+                        when={!txSent()}
+                        fallback={
+                            <>
+                                <Show when={props.waitingText}>
+                                    <p>{props.waitingText}</p>
+                                </Show>
+                                <LoadingSpinner />
+                            </>
+                        }>
+                        <Show when={props.promptText}>
+                            <p>{props.promptText}</p>
+                        </Show>
+                        <Show when={props.children !== undefined}>
+                            {props.children}
+                        </Show>
+                        <button
+                            class="btn"
+                            disabled={props.disabled || clicked()}
+                            onClick={async () => {
+                                setClicked(true);
+                                try {
+                                    await props.onClick();
+                                    setTxSent(true);
+                                } catch (e) {
+                                    log.error(`Transaction failed`, e);
+                                    notify(
+                                        "error",
+                                        t("transaction_failed", {
+                                            error: formatError(e, i18n()),
+                                        }),
+                                    );
+                                } finally {
+                                    setClicked(false);
+                                }
+                            }}>
+                            {clicked() ? (
+                                <LoadingSpinner class="inner-spinner" />
+                            ) : (
+                                props.buttonText
+                            )}
+                        </button>
+                        <Show when={props.showHr}>
+                            <hr />
+                        </Show>
                     </Show>
                 </Show>
-            </Show>
+            </SignerNetworkGuard>
         </Show>
     );
 };

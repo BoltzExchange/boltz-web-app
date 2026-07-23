@@ -11,20 +11,18 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
-import { getAddress } from "viem";
+import { getAddress, isAddress } from "viem";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
+import EvmRefundDestination from "../components/EvmRefundDestination";
 import LoadingSpinner from "../components/LoadingSpinner";
+import SignerNetworkGuard from "../components/SignerNetworkGuard";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import {
-    type AssetType,
-    getAssetDisplaySymbol,
-    getAssetNetwork,
-} from "../consts/Assets";
+import type { AssetType } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { type Signer, useWeb3Signer } from "../context/Web3";
@@ -35,6 +33,7 @@ import {
     sweepGasAbstractionToken,
 } from "../utils/gasAbstractionSweep";
 import { cropString } from "../utils/helper";
+import { createSignerNetworkCheck } from "../utils/signerNetwork";
 
 type SweepData = {
     asset: AssetType;
@@ -55,11 +54,16 @@ const GasAbstractionSweepRescue = () => {
     const { rescueFile } = useRescueContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
     const [refundTxId, setRefundTxId] = createSignal<string>();
+    const [manualDestination, setManualDestination] = createSignal("");
+    const destinationAddress = () =>
+        signer()?.address ?? manualDestination().trim();
+    const walletNetwork = createSignerNetworkCheck(signer, () => params.asset);
+    const walletOnRefundNetwork = () =>
+        signer() === undefined || walletNetwork.valid() === true;
 
     const sweepSource = createMemo(() => {
-        const currentSigner = signer();
         const currentRescueFile = rescueFile();
-        if (currentSigner === undefined || currentRescueFile === undefined) {
+        if (currentRescueFile === undefined) {
             return false;
         }
         return { rescueFile: currentRescueFile };
@@ -103,13 +107,14 @@ const GasAbstractionSweepRescue = () => {
         );
 
     const sweep = async () => {
-        const currentSigner = signer();
         const currentSweepData = sweepData();
+        const destination = destinationAddress();
 
         if (
-            currentSigner === undefined ||
             currentSweepData === undefined ||
-            !isSweepableAsset(params.asset)
+            !isAddress(destination) ||
+            !isSweepableAsset(params.asset) ||
+            !walletOnRefundNetwork()
         ) {
             return;
         }
@@ -118,7 +123,7 @@ const GasAbstractionSweepRescue = () => {
             await sweepGasAbstractionToken({
                 asset: params.asset,
                 amount: currentSweepData.amount,
-                destination: currentSigner.address,
+                destination: getAddress(destination),
                 signer: currentSweepData.signer,
             }),
         );
@@ -126,76 +131,79 @@ const GasAbstractionSweepRescue = () => {
 
     return (
         <div class="frame">
-            <Show
-                when={signer() !== undefined}
-                fallback={<h2>{t("no_wallet")}</h2>}>
-                <SettingsCog />
-                <SettingsMenu />
-                <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
-                    {t("refund")} {cropString(params.address, 15, 5)}
-                </h2>
-                <hr />
-                <Switch>
-                    <Match when={rescueFile() === undefined}>
-                        <h3>{t("refund_scan_required")}</h3>
-                    </Match>
-                    <Match when={sweepData.state === "pending"}>
-                        <LoadingSpinner />
-                    </Match>
-                    <Match when={sweepData.state === "errored"}>
-                        <h2>{t("error")}</h2>
-                        <h3>{formatError(sweepData.error)}</h3>
-                    </Match>
-                    <Match when={sweepData.state === "ready"}>
-                        <Show
-                            when={sweepData()}
-                            keyed
-                            fallback={<LoadingSpinner />}>
-                            {(data) => (
-                                <Switch>
-                                    <Match when={data.amount === 0n}>
-                                        <h3>
-                                            {t("connected_wallet_no_swaps")}
-                                        </h3>
-                                    </Match>
-                                    <Match when={refundTxId() === undefined}>
-                                        <ContractTransaction
-                                            asset={params.asset}
-                                            signerOverride={() => data.signer}
-                                            onClick={sweep}
-                                            buttonText={t("refund")}
-                                            promptText={`${t("refund")} ${amount(data)} ${formatDenomination(
-                                                denomination(),
-                                                data.asset,
-                                            )}`}>
-                                            <p>
-                                                {t("refund_destination_hint", {
-                                                    symbol: getAssetDisplaySymbol(
-                                                        data.asset,
-                                                    ),
-                                                    network: getAssetNetwork(
-                                                        data.asset,
-                                                    ),
-                                                })}
-                                            </p>
-                                        </ContractTransaction>
-                                    </Match>
-                                    <Match when={refundTxId() !== undefined}>
-                                        <p>{t("refunded")}</p>
-                                        <hr />
-                                        <BlockExplorer
-                                            typeLabel={"refund_tx"}
-                                            asset={params.asset}
-                                            kind={BlockExplorerTargetKind.Tx}
-                                            id={refundTxId()!}
-                                        />
-                                    </Match>
-                                </Switch>
-                            )}
-                        </Show>
-                    </Match>
-                </Switch>
-            </Show>
+            <SettingsCog />
+            <SettingsMenu />
+            <h2 class="frame-title" style={{ "margin-bottom": "6px" }}>
+                {t("refund")} {cropString(params.address, 15, 5)}
+            </h2>
+            <hr />
+            <Switch>
+                <Match when={rescueFile() === undefined}>
+                    <h3>{t("refund_scan_required")}</h3>
+                </Match>
+                <Match when={sweepData.state === "pending"}>
+                    <LoadingSpinner />
+                </Match>
+                <Match when={sweepData.state === "errored"}>
+                    <h2>{t("error")}</h2>
+                    <h3>{formatError(sweepData.error)}</h3>
+                </Match>
+                <Match when={sweepData.state === "ready"}>
+                    <Show
+                        when={sweepData()}
+                        keyed
+                        fallback={<LoadingSpinner />}>
+                        {(data) => (
+                            <Switch>
+                                <Match when={data.amount === 0n}>
+                                    <h3>{t("no_rescuable_swaps")}</h3>
+                                </Match>
+                                <Match when={refundTxId() === undefined}>
+                                    <p data-testid="refund-amount">
+                                        {t("refund")} {amount(data)}{" "}
+                                        {formatDenomination(
+                                            denomination(),
+                                            data.asset,
+                                        )}
+                                    </p>
+                                    <EvmRefundDestination
+                                        asset={params.asset}
+                                        value={manualDestination()}
+                                        setValue={setManualDestination}
+                                    />
+                                    <SignerNetworkGuard network={walletNetwork}>
+                                        <Show when={walletOnRefundNetwork()}>
+                                            <ContractTransaction
+                                                asset={params.asset}
+                                                disabled={
+                                                    !isAddress(
+                                                        destinationAddress(),
+                                                    )
+                                                }
+                                                signerOverride={() =>
+                                                    data.signer
+                                                }
+                                                onClick={sweep}
+                                                buttonText={t("refund")}
+                                            />
+                                        </Show>
+                                    </SignerNetworkGuard>
+                                </Match>
+                                <Match when={refundTxId() !== undefined}>
+                                    <p>{t("refunded")}</p>
+                                    <hr />
+                                    <BlockExplorer
+                                        typeLabel={"refund_tx"}
+                                        asset={params.asset}
+                                        kind={BlockExplorerTargetKind.Tx}
+                                        id={refundTxId()!}
+                                    />
+                                </Match>
+                            </Switch>
+                        )}
+                    </Show>
+                </Match>
+            </Switch>
         </div>
     );
 };

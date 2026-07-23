@@ -1,6 +1,8 @@
 import { Route, Router } from "@solidjs/router";
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
-import { type JSX, createMemo } from "solid-js";
+import { type JSX, createMemo, createSignal } from "solid-js";
+
+import type { Signer } from "../../src/context/Web3";
 
 vi.mock("../../packages/boltz-swaps/src/client.ts", async () => {
     const { config } = await import("../../src/config");
@@ -220,5 +222,77 @@ describe("ContractTransaction", () => {
                 screen.getByRole("button", { name: "Send" }),
             ).toBeInTheDocument();
         });
+    });
+
+    test("shows a loader instead of switch network while checking the signer network", async () => {
+        let resolveChainId!: (chainId: number) => void;
+        const chainId = new Promise<number>((resolve) => {
+            resolveChainId = resolve;
+        });
+        const [signerOverride] = createSignal({
+            address: "0xabcdef0000000000000000000000000000000001",
+            provider: {
+                getChainId: () => chainId,
+            },
+        } as unknown as Signer);
+
+        render(
+            () => (
+                <ContractTransaction
+                    asset={RBTC}
+                    signerOverride={signerOverride}
+                    buttonText="Send"
+                    onClick={() => Promise.resolve()}
+                />
+            ),
+            { wrapper },
+        );
+
+        expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /switch network/i }),
+        ).toBeNull();
+
+        resolveChainId(config.assets!.RBTC.network!.chainId!);
+
+        expect(
+            await screen.findByRole("button", { name: "Send" }),
+        ).toBeInTheDocument();
+    });
+
+    test("shows a retry action instead of switch network when the network check fails", async () => {
+        const getChainId = vi
+            .fn()
+            .mockRejectedValueOnce(new Error("could not read chain ID"))
+            .mockResolvedValue(config.assets!.RBTC.network!.chainId!);
+        const [signerOverride] = createSignal({
+            address: "0xabcdef0000000000000000000000000000000001",
+            provider: { getChainId },
+        } as unknown as Signer);
+
+        render(
+            () => (
+                <ContractTransaction
+                    asset={RBTC}
+                    signerOverride={signerOverride}
+                    buttonText="Send"
+                    onClick={() => Promise.resolve()}
+                />
+            ),
+            { wrapper },
+        );
+
+        expect(
+            await screen.findByText("could not read chain ID"),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", { name: /switch network/i }),
+        ).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+        expect(
+            await screen.findByRole("button", { name: "Send" }),
+        ).toBeInTheDocument();
     });
 });
