@@ -26,6 +26,7 @@ import {
     LBTC,
     type RefundableAssetType,
     type blockChainsAssets,
+    isEvmAsset,
     refundableAssets,
 } from "../consts/Assets";
 import {
@@ -410,7 +411,12 @@ export const createRescueList = async (
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
-                const utxos = isRefundableSwapType(swap)
+                // EVM-source chain swaps are claimed on their UTXO destination,
+                // but their source refund is handled by the EVM rescue flow.
+                // They do not have UTXO refund details to inspect here.
+                const isUtxoRefundable =
+                    isRefundableSwapType(swap) && !isEvmAsset(swap.assetSend);
+                const utxos = isUtxoRefundable
                     ? await getRescuableUTXOs(swap)
                     : [];
 
@@ -429,7 +435,7 @@ export const createRescueList = async (
 
                 // Prioritize refunding for expired swaps with UTXOs
                 if (
-                    isRefundableSwapType(swap) &&
+                    isUtxoRefundable &&
                     blockHeight !== undefined &&
                     hasSwapTimedOut(swap, blockHeight) &&
                     utxos.length > 0
@@ -459,7 +465,7 @@ export const createRescueList = async (
                         status !== swapStatusPending.TransactionClaimPending,
                 );
                 if (
-                    isRefundableSwapType(swap) &&
+                    isUtxoRefundable &&
                     !pendingFromUserPerspective.includes(status) &&
                     utxos.length > 0
                 ) {
