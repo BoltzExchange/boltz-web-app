@@ -61,7 +61,6 @@ import {
 } from "viem";
 
 import RefundEta from "../components/RefundEta";
-import { config } from "../config";
 import { type AssetType, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { type deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -72,6 +71,7 @@ import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { sendPopulatedTransaction } from "../utils/evmTransaction";
 import { RefundType, refund } from "../utils/rescue";
+import { createSignerNetworkCheck } from "../utils/signerNetwork";
 import {
     type BridgeDetail,
     type ChainSwap,
@@ -569,32 +569,10 @@ export const RefundEvm = (props: {
         );
     });
 
-    const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
-        undefined,
+    const signerNetwork = createSignerNetworkCheck(
+        () => transactionSigner(),
+        () => props.asset,
     );
-
-    createEffect(() => {
-        const ts = transactionSigner();
-        if (ts === undefined) {
-            setSignerNetwork(undefined);
-            return;
-        }
-        void ts.provider
-            .getChainId()
-            .then((chainId) => setSignerNetwork(Number(chainId)))
-            .catch(() => setSignerNetwork(undefined));
-    });
-
-    const networkValid = (): boolean | undefined => {
-        const expected = config.assets?.[props.asset]?.network?.chainId;
-        if (expected === undefined) {
-            return true;
-        }
-        if (signerNetwork() === undefined) {
-            return undefined;
-        }
-        return expected === signerNetwork();
-    };
 
     const contractKind = createMemo(() => getKindForAsset(props.asset));
     const refundDataTrigger = createMemo<
@@ -612,7 +590,7 @@ export const RefundEvm = (props: {
             return undefined;
         }
 
-        if (!networkValid()) {
+        if (!signerNetwork.valid()) {
             return undefined;
         }
 
@@ -710,6 +688,28 @@ export const RefundEvm = (props: {
 
     return (
         <Switch>
+            <Match
+                when={
+                    transactionSigner() !== undefined &&
+                    signerNetwork.valid() === undefined &&
+                    signerNetwork.chainId.loading
+                }>
+                <LoadingSpinner />
+            </Match>
+            <Match
+                when={
+                    transactionSigner() !== undefined &&
+                    signerNetwork.valid() === undefined &&
+                    signerNetwork.chainId.state === "errored"
+                }>
+                <h2>{t("error")}</h2>
+                <h3>{formatError(signerNetwork.chainId.error)}</h3>
+                <button
+                    class="btn"
+                    onClick={() => void signerNetwork.refetch()}>
+                    {t("retry")}
+                </button>
+            </Match>
             <Match when={refundDataTrigger() === undefined}>
                 <ConnectWallet
                     asset={props.asset}

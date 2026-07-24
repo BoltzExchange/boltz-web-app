@@ -23,16 +23,18 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
-import { getAddress } from "viem";
+import { getAddress, isAddress } from "viem";
 
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import ContractTransaction from "../components/ContractTransaction";
+import EvmRefundDestination from "../components/EvmRefundDestination";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
+import SignerNetworkGuard from "../components/SignerNetworkGuard";
 import SwapHeader from "../components/SwapHeader";
 import { getRestoredSwapIconAssets } from "../components/SwapIcons";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -59,6 +61,7 @@ import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
+import { createSignerNetworkCheck } from "../utils/signerNetwork";
 import { GasAbstractionType } from "../utils/swapCreator";
 import { getEvmDisplayAssets } from "./external-rescue/Results";
 import { normalizeEvmId } from "./external-rescue/scan";
@@ -170,6 +173,7 @@ const RefundState = (props: {
     const { t, denomination, separator } = useGlobalContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
     const { rescueFile } = useRescueContext();
+    const [manualDestination, setManualDestination] = createSignal("");
 
     const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
     const dexDetails = () => getEvmRefundDexDetails(props.refundData);
@@ -187,20 +191,33 @@ const RefundState = (props: {
         quotedDisplayAmount() ??
         getEvmRefundDisplayAmount(props.refundData, props.asset);
 
-    const gasAbstraction = () => {
-        if (isErc20() && rescueFile()) {
-            return {
-                type: GasAbstractionType.Signer,
-                signer: getGasAbstractionSigner(props.asset, rescueFile()),
-            };
-        }
-        return undefined;
-    };
+    const canSelectDestination = () => isErc20() && rescueFile() !== undefined;
+    const gasAbstraction = () =>
+        canSelectDestination()
+            ? {
+                  type: GasAbstractionType.Signer,
+                  signer: getGasAbstractionSigner(props.asset, rescueFile()),
+              }
+            : undefined;
 
     // Pre-bridge refunds resolve their destination from the bridge instead
     const needsResolvedDestination = () =>
         dexDetails()?.position === SwapPosition.Pre &&
         bridgeDetails()?.position !== SwapPosition.Pre;
+    const routeResolvesDestination = () =>
+        dexDetails()?.position === SwapPosition.Pre &&
+        bridgeDetails()?.position === SwapPosition.Pre;
+    // When the connected wallet is the refund destination, it has to be on
+    // the network the funds are refunded to
+    const walletNetwork = createSignerNetworkCheck(
+        () =>
+            canSelectDestination() && !routeResolvesDestination()
+                ? signer()
+                : undefined,
+        () => props.asset,
+    );
+    const connectedWalletOnRefundNetwork = () =>
+        walletNetwork.signer() === undefined || walletNetwork.valid() === true;
 
     const [resolvedFunder] = createResource(
         () => {
@@ -233,8 +250,12 @@ const RefundState = (props: {
             return undefined;
         }
         try {
+            const enteredDestination = manualDestination().trim();
             return (
                 signer()?.address ??
+                (isAddress(enteredDestination)
+                    ? enteredDestination
+                    : undefined) ??
                 (resolvedFunder.state === "ready"
                     ? resolvedFunder()
                     : undefined)
@@ -245,7 +266,11 @@ const RefundState = (props: {
     };
 
     const destinationMissing = () =>
-        needsResolvedDestination() && destination() === undefined;
+        canSelectDestination() &&
+        !routeResolvesDestination() &&
+        destination() === undefined;
+    const hasResolvedRouteDestination = () =>
+        resolvedFunder.state === "ready" && resolvedFunder() !== undefined;
 
     return (
         <>
@@ -271,30 +296,37 @@ const RefundState = (props: {
                 </Show>
             </div>
 
-            <Show
-                when={
-                    signer() === undefined &&
-                    gasAbstraction()?.signer !== undefined &&
-                    destinationMissing() &&
-                    !resolvedFunder.loading
-                }>
-                <ConnectWallet asset={props.asset} />
+            <Show when={canSelectDestination() && !routeResolvesDestination()}>
+                <EvmRefundDestination
+                    asset={props.asset}
+                    hideInput={
+                        gasAbstraction()?.signer === undefined ||
+                        hasResolvedRouteDestination() ||
+                        resolvedFunder.loading
+                    }
+                    value={manualDestination()}
+                    setValue={setManualDestination}
+                />
             </Show>
-            <RefundButton
-                asset={props.asset}
-                swapId={props.refundData.restoredSwap?.id}
-                dexDetails={dexDetails()}
-                bridge={bridgeDetails()}
-                disabled={destinationMissing()}
-                setRefundTxId={
-                    props.setRefundTxId as Setter<string | undefined>
-                }
-                signerAddress={props.refundData.refundAddress}
-                lockupTxHash={props.lockupTxHash}
-                gasAbstraction={gasAbstraction()?.type}
-                transactionSigner={gasAbstraction()?.signer}
-                destination={destination()}
-            />
+            <SignerNetworkGuard network={walletNetwork}>
+                <Show when={connectedWalletOnRefundNetwork()}>
+                    <RefundButton
+                        asset={props.asset}
+                        swapId={props.refundData.restoredSwap?.id}
+                        dexDetails={dexDetails()}
+                        bridge={bridgeDetails()}
+                        disabled={destinationMissing()}
+                        setRefundTxId={
+                            props.setRefundTxId as Setter<string | undefined>
+                        }
+                        signerAddress={props.refundData.refundAddress}
+                        lockupTxHash={props.lockupTxHash}
+                        gasAbstraction={gasAbstraction()?.type}
+                        transactionSigner={gasAbstraction()?.signer}
+                        destination={destination()}
+                    />
+                </Show>
+            </SignerNetworkGuard>
             <Show
                 when={
                     signer() === undefined &&

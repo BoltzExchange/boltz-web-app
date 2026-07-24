@@ -7,12 +7,13 @@ import {
     SwapPosition,
     SwapType,
 } from "boltz-swaps/types";
-import type { JSX } from "solid-js";
+import { type JSX, createEffect } from "solid-js";
 import { vi } from "vitest";
 
 import { config } from "../../src/config";
 import { TBTC } from "../../src/consts/Assets";
 import type * as RescueContextModule from "../../src/context/Rescue";
+import type { Signer } from "../../src/context/Web3";
 import type * as Web3Module from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import type { EvmRescueResult } from "../../src/pages/external-rescue/types";
@@ -27,15 +28,23 @@ const preimageHash =
 const preimage =
     "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
 
+type RefundButtonProps = {
+    disabled?: boolean;
+    destination?: string;
+};
+
 const {
+    connectedSigner,
     mockGetLogsFromReceipt,
     mockNavigate,
     mockClaimAsset,
     mockQuoteDexAmountIn,
     mockResolveLockupTokenFunder,
     paramsMock,
+    refundButtonProps,
     rescueSwaps,
 } = vi.hoisted(() => ({
+    connectedSigner: { current: undefined as Signer | undefined },
     mockGetLogsFromReceipt: vi.fn(),
     mockNavigate: vi.fn(),
     mockClaimAsset: vi.fn(),
@@ -47,6 +56,9 @@ const {
             txHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             action: "claim",
         },
+    },
+    refundButtonProps: {
+        current: undefined as RefundButtonProps | undefined,
     },
     rescueSwaps: { current: [] as EvmRescueResult[] },
 }));
@@ -109,6 +121,14 @@ vi.mock("../../src/context/Web3", async () => {
     const actual = await vi.importActual<typeof Web3Module>(
         "../../src/context/Web3",
     );
+    const { createSignal } = await import("solid-js");
+    const [signer, setSigner] = createSignal<Signer | undefined>(
+        connectedSigner.current,
+    );
+    Object.defineProperty(connectedSigner, "current", {
+        get: () => signer(),
+        set: setSigner,
+    });
     return {
         ...actual,
         Web3SignerProvider: (props: { children: JSX.Element }) => (
@@ -119,7 +139,7 @@ vi.mock("../../src/context/Web3", async () => {
             getErc20Swap: vi.fn(() => ({})),
             getEtherSwap: vi.fn(() => ({})),
             getGasAbstractionSigner: vi.fn(() => gasSigner),
-            signer: () => undefined,
+            signer,
         }),
     };
 });
@@ -157,11 +177,19 @@ vi.mock("../../src/components/ConnectWallet", () => ({
 }));
 
 vi.mock("../../src/components/RefundButton", () => ({
-    RefundEvm: (props: { disabled?: boolean }) => (
-        <button type="button" disabled={props.disabled}>
-            Refund
-        </button>
-    ),
+    RefundEvm: (props: RefundButtonProps) => {
+        createEffect(() => {
+            refundButtonProps.current = {
+                disabled: props.disabled,
+                destination: props.destination,
+            };
+        });
+        return (
+            <button type="button" disabled={props.disabled}>
+                Refund
+            </button>
+        );
+    },
 }));
 
 const { default: RescueEvm, fetchEvmRefundDisplayQuote } =
@@ -234,6 +262,8 @@ const postDex: DexDetail = {
 describe("RescueEvm", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        connectedSigner.current = undefined;
+        refundButtonProps.current = undefined;
         paramsMock.current = {
             asset: TBTC,
             txHash: transactionHash,
@@ -297,7 +327,7 @@ describe("RescueEvm", () => {
         expect(screen.getByRole("button", { name: "Claim" })).toBeDisabled();
     });
 
-    test("enables a plain restored refund without a connected wallet", async () => {
+    test("requires a destination for a plain restored refund without a connected wallet", async () => {
         paramsMock.current.action = RskRescueMode.Refund;
         rescueSwaps.current = [
             {
@@ -315,14 +345,119 @@ describe("RescueEvm", () => {
 
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
+        const refund = await screen.findByRole("button", { name: "Refund" });
+        const destination = screen.getByTestId("refundAddress");
+
+        expect(refund).toBeDisabled();
+        expect(
+            screen.getByRole("button", { name: "Connect wallet" }),
+        ).toBeInTheDocument();
+        expect(destination).toHaveValue("");
+        expect(
+            screen.getByText(
+                "Enter an address on Arbitrum One to receive your TBTC refund:",
+            ),
+        ).toBeInTheDocument();
+        expect(destination).toHaveAttribute(
+            "placeholder",
+            "Enter an address on Arbitrum One",
+        );
+
+        fireEvent.input(destination, { target: { value: "invalid" } });
+        expect(destination).toHaveClass("invalid");
+        expect(refund).toBeDisabled();
+
+        fireEvent.input(destination, {
+            target: { value: originalDestination },
+        });
+        await waitFor(() => expect(refund).not.toBeDisabled());
+        expect(destination).not.toHaveClass("invalid");
+        expect(refundButtonProps.current?.destination).toBe(
+            originalDestination,
+        );
+        expect(mockResolveLockupTokenFunder).not.toHaveBeenCalled();
+        expect(mockGetLogsFromReceipt).toHaveBeenCalled();
+    });
+
+    test("uses the connected wallet as the plain refund destination", async () => {
+        paramsMock.current.action = RskRescueMode.Refund;
+        connectedSigner.current = {
+            address: originalDestination,
+            provider: {
+                getChainId: vi
+                    .fn()
+                    .mockResolvedValue(
+                        config.assets?.TBTC?.network?.chainId ?? 1,
+                    ),
+            },
+        } as unknown as Signer;
+        rescueSwaps.current = [
+            {
+                ...logData,
+                action: RskRescueMode.Refund,
+                currentHeight: 1_000n,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Chain,
+                    from: TBTC,
+                    to: "L-BTC",
+                },
+            },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        expect(
+            await screen.findByTestId("refund-destination"),
+        ).toHaveTextContent(
+            "Funds will be refunded as TBTC on Arbitrum One to your connected EVM wallet.",
+        );
+        expect(screen.queryByTestId("refundAddress")).toBeNull();
         expect(
             await screen.findByRole("button", { name: "Refund" }),
         ).not.toBeDisabled();
+        expect(refundButtonProps.current?.destination).toBe(
+            originalDestination,
+        );
+    });
+
+    test("does not offer a refund while the connected wallet is on the wrong network", async () => {
+        paramsMock.current.action = RskRescueMode.Refund;
+        const refundChainId = config.assets?.TBTC?.network?.chainId ?? 1;
+        connectedSigner.current = {
+            address: originalDestination,
+            provider: {
+                getChainId: vi
+                    .fn()
+                    .mockResolvedValue(refundChainId === 1 ? 137 : 1),
+            },
+        } as unknown as Signer;
+        rescueSwaps.current = [
+            {
+                ...logData,
+                action: RskRescueMode.Refund,
+                currentHeight: 1_000n,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Chain,
+                    from: TBTC,
+                    to: "L-BTC",
+                },
+            },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
         expect(
-            screen.queryByRole("button", { name: "Connect wallet" }),
-        ).toBeNull();
-        expect(mockResolveLockupTokenFunder).not.toHaveBeenCalled();
-        expect(mockGetLogsFromReceipt).toHaveBeenCalled();
+            await screen.findByTestId("refund-destination"),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole("button", { name: "Connect wallet" }),
+        ).toBeInTheDocument();
+        await waitFor(() =>
+            expect(screen.queryByRole("button", { name: "Refund" })).toBeNull(),
+        );
+        expect(refundButtonProps.current).toBeUndefined();
     });
 
     test("resolves the original funder for a pre-DEX refund without a wallet", async () => {

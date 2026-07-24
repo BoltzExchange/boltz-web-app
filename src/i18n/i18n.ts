@@ -114,13 +114,14 @@ const dict = {
         no_rescuable_swaps: "No rescuable swaps found in your browser history",
         refund_external_scanning_evm:
             "Scanning for rescuable swaps across EVM chains...",
-        connected_wallet_no_swaps:
-            "The connected wallet does not contain any rescuable swaps.",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter a {{ asset }} address to receive your refund on:",
         refund_address_header_no_asset:
             "Enter an address to receive your refund on:",
+        evm_refund_address_header:
+            "Enter an address on {{ network }} to receive your {{ symbol }} refund:",
+        evm_address_placeholder: "Enter an address on {{ network }}",
         history_export: "Export",
         refund_clear: "Delete storage",
         delete_storage:
@@ -669,12 +670,13 @@ const dict = {
             "Keine wiederherstellbaren Swaps im Browserverlauf gefunden",
         refund_external_scanning_evm:
             "Scanne nach wiederherstellbaren Swaps auf EVM-Chains...",
-        connected_wallet_no_swaps:
-            "Das verbundene Rootstock Wallet enthält keine wiederherstellbaren Swaps.",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
         refund_address_header_no_asset: "Adresse deines Wallets eingeben",
+        evm_refund_address_header:
+            "Gib eine Adresse im Netzwerk {{ network }} ein, um deine Rückerstattung in {{ symbol }} zu erhalten:",
+        evm_address_placeholder: "Adresse im Netzwerk {{ network }} eingeben",
         history_export: "Exportieren",
         refund_clear: "Speicher löschen",
         delete_storage:
@@ -1239,13 +1241,14 @@ const dict = {
             "No se han encontrado intercambios rescatables en el historial de tu navegador",
         refund_external_scanning_evm:
             "Escaneando en busca de intercambios rescatables en cadenas EVM...",
-        connected_wallet_no_swaps:
-            "El monedero Rootstock conectado no contiene ningún intercambio rescatable.",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduce la dirección de tu monedero {{ asset }} para reembolsar",
         refund_address_header_no_asset:
             "Introduce la dirección de tu monedero para reembolsar",
+        evm_refund_address_header:
+            "Introduce una dirección en {{ network }} para recibir tu reembolso en {{ symbol }}:",
+        evm_address_placeholder: "Introduce una dirección en {{ network }}",
         history_export: "Exportar",
         refund_clear: "Borrar almacenamiento",
         delete_storage:
@@ -1807,13 +1810,14 @@ const dict = {
             "Nenhuma troca resgatável encontrada no histórico do navegador",
         refund_external_scanning_evm:
             "Procurando trocas resgatáveis em redes EVM...",
-        connected_wallet_no_swaps:
-            "A carteira Rootstock conectada não contém nenhuma troca resgatável.",
         history_no_swaps: "Parece que ainda não foram feitas trocas.",
         refund_address_header:
             "Informe um endereço {{ asset }} para receber seu reembolso:",
         refund_address_header_no_asset:
             "Informe um endereço para receber seu reembolso:",
+        evm_refund_address_header:
+            "Introduza um endereço na rede {{ network }} para receber o reembolso em {{ symbol }}:",
+        evm_address_placeholder: "Introduza um endereço na rede {{ network }}",
         history_export: "Exportar",
         refund_clear: "Apagar armazenamento",
         delete_storage:
@@ -2357,11 +2361,12 @@ const dict = {
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_rescuable_swaps: "在您的浏览器历史记录中未找到可恢复的交换记录。",
         refund_external_scanning_evm: "正在扫描 EVM 链上的可恢复交换...",
-        connected_wallet_no_swaps:
-            "已连接的Rootstock钱包中不包含任何可恢复的交换。",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
+        evm_refund_address_header:
+            "输入 {{ network }} 上的地址以接收 {{ symbol }} 退款：",
+        evm_address_placeholder: "输入 {{ network }} 上的地址",
         history_export: "导出",
         refund_clear: "删除本地存储",
         delete_storage:
@@ -2872,12 +2877,13 @@ const dict = {
             "ブラウザの履歴に復元可能なスワップが見つかりませんでした。",
         refund_external_scanning_evm:
             "EVM チェーン上の復旧可能なスワップを検索中です...",
-        connected_wallet_no_swaps:
-            "接続されたRootstockウォレットには、復元可能なスワップは含まれていません。",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
         refund_address_header_no_asset: "返金用のウォレットのアドレスを入力",
+        evm_refund_address_header:
+            "{{ symbol }} の返金を受け取るには、{{ network }} のアドレスを入力してください：",
+        evm_address_placeholder: "{{ network }} のアドレスを入力してください",
         history_export: "エクスポート",
         refund_clear: "ローカルストレージを削除",
         delete_storage:
