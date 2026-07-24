@@ -43,31 +43,35 @@ export const TestComponent = () => {
     return "";
 };
 
-export const contextWrapper = (props: { children: JSX.Element }) => {
-    const App = () => (
-        <GlobalProvider>
-            <FiatProvider>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        <PayProvider>
-                            <RescueProvider>
-                                <Router>
-                                    <Route
-                                        path="/"
-                                        component={() => props.children}
-                                    />
-                                </Router>
-                            </RescueProvider>
-                        </PayProvider>
-                    </CreateProvider>
-                </Web3SignerProvider>
-            </FiatProvider>
-        </GlobalProvider>
-    );
+const createContextWrapper =
+    (noFetch: boolean) => (props: { children: JSX.Element }) => {
+        const App = () => (
+            <GlobalProvider>
+                <FiatProvider>
+                    <Web3SignerProvider noFetch={noFetch}>
+                        <CreateProvider>
+                            <PayProvider>
+                                <RescueProvider>
+                                    <Router>
+                                        <Route
+                                            path="/"
+                                            component={() => props.children}
+                                        />
+                                    </Router>
+                                </RescueProvider>
+                            </PayProvider>
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </FiatProvider>
+            </GlobalProvider>
+        );
 
-    return (
-        <Router root={App}>
-            <Route path="/" component={() => props.children} />
-        </Router>
-    );
-};
+        return (
+            <Router root={App}>
+                <Route path="/" component={() => props.children} />
+            </Router>
+        );
+    };
+
+export const contextWrapper = createContextWrapper(true);
+export const fetchingContextWrapper = createContextWrapper(false);
