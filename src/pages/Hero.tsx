@@ -271,12 +271,6 @@ export const Hero = () => {
                     </div>
                     <div>
                         <ExternalLink
-                            href="https://stashpay.me"
-                            class="stashPay"
-                        />
-                    </div>
-                    <div>
-                        <ExternalLink
                             href="https://thebitcoincompany.com/"
                             class="theBitcoinCompany"
                         />
