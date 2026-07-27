@@ -16,7 +16,12 @@ import {
 
 type SwapMetadataBridge = Pick<
     BridgeDetail,
-    "sourceAsset" | "destinationAsset" | "kind" | "position" | "refundAddress"
+    | "sourceAsset"
+    | "destinationAsset"
+    | "kind"
+    | "position"
+    // Lets restored pre-bridge refunds resolve the original sender
+    | "txHash"
 >;
 type SwapMetadataDex = Pick<DexDetail, "hops" | "position" | "quoteAmount">;
 type SwapMetadataTxIdentity = Pick<
@@ -179,7 +184,7 @@ const parseSwapMetadataPlaintext = parseObject<SwapMetadataPlaintext>({
             destinationAsset: parseString,
             kind: parseEnum(BridgeKind),
             position: parseEnum(SwapPosition),
-            refundAddress: parseOptional(parseString),
+            txHash: parseOptional(parseString),
         }),
     ),
     lockupTx: parseOptional(parseString),
@@ -327,7 +332,7 @@ export const buildSwapMetadataPayload = (
             destinationAsset: fields.bridge.destinationAsset,
             kind: fields.bridge.kind,
             position: fields.bridge.position,
-            refundAddress: fields.bridge.refundAddress,
+            txHash: fields.bridge.txHash,
         };
     }
 
