@@ -297,7 +297,7 @@ describe("RescueEvm", () => {
         expect(screen.getByRole("button", { name: "Claim" })).toBeDisabled();
     });
 
-    test("enables a plain restored refund without a connected wallet", async () => {
+    test("refunds a plain restored lockup without a connected wallet", async () => {
         paramsMock.current.action = RskRescueMode.Refund;
         rescueSwaps.current = [
             {
@@ -315,6 +315,8 @@ describe("RescueEvm", () => {
 
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
+        // The lockup pays out to its own refund address, the user's wallet,
+        // so no destination is needed
         expect(
             await screen.findByRole("button", { name: "Refund" }),
         ).not.toBeDisabled();
@@ -325,11 +327,51 @@ describe("RescueEvm", () => {
         expect(mockGetLogsFromReceipt).toHaveBeenCalled();
     });
 
-    test("resolves the original funder for a pre-DEX refund without a wallet", async () => {
+    test("disables a commitment refund until a destination is known", async () => {
         paramsMock.current.action = RskRescueMode.Refund;
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            refundAddress: gasSigner.address,
+        });
         rescueSwaps.current = [
             {
                 ...logData,
+                refundAddress: gasSigner.address,
+                action: RskRescueMode.Refund,
+                currentHeight: 1_000n,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Chain,
+                    from: TBTC,
+                    to: "L-BTC",
+                },
+            },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        // The lockup pays out to the gas key and there is no route info to
+        // resolve the original sender from, so the refund must not run: it
+        // would strand funds on the gas-abstraction address
+        expect(
+            await screen.findByRole("button", { name: "Refund" }),
+        ).toBeDisabled();
+        expect(
+            screen.getByRole("button", { name: "Connect wallet" }),
+        ).toBeInTheDocument();
+        expect(mockResolveLockupTokenFunder).not.toHaveBeenCalled();
+    });
+
+    test("resolves the original funder for a pre-DEX refund without a wallet", async () => {
+        paramsMock.current.action = RskRescueMode.Refund;
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            refundAddress: gasSigner.address,
+        });
+        rescueSwaps.current = [
+            {
+                ...logData,
+                refundAddress: gasSigner.address,
                 action: RskRescueMode.Refund,
                 currentHeight: 1_000n,
                 restoredSwap: {
@@ -358,9 +400,54 @@ describe("RescueEvm", () => {
 
     test("does not resolve a funder for pre-bridge refunds", async () => {
         paramsMock.current.action = RskRescueMode.Refund;
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            refundAddress: gasSigner.address,
+        });
         rescueSwaps.current = [
             {
                 ...logData,
+                refundAddress: gasSigner.address,
+                action: RskRescueMode.Refund,
+                currentHeight: 1_000n,
+                restoredSwap: {
+                    ...restoredSwap,
+                    type: SwapType.Chain,
+                    from: TBTC,
+                    to: "L-BTC",
+                    dex: preDex,
+                    bridge: {
+                        kind: BridgeKind.Oft,
+                        position: SwapPosition.Pre,
+                        sourceAsset: "USDT0-ETH",
+                        destinationAsset: "USDT0",
+                        txHash: transactionHash,
+                    },
+                },
+            },
+        ];
+
+        render(() => <RescueEvm />, { wrapper: contextWrapper });
+
+        expect(
+            await screen.findByRole("button", { name: "Refund" }),
+        ).not.toBeDisabled();
+        expect(
+            screen.queryByRole("button", { name: "Connect wallet" }),
+        ).toBeNull();
+        expect(mockResolveLockupTokenFunder).not.toHaveBeenCalled();
+    });
+
+    test("asks for a wallet when a pre-bridge restore lacks the bridge transaction", async () => {
+        paramsMock.current.action = RskRescueMode.Refund;
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            refundAddress: gasSigner.address,
+        });
+        rescueSwaps.current = [
+            {
+                ...logData,
+                refundAddress: gasSigner.address,
                 action: RskRescueMode.Refund,
                 currentHeight: 1_000n,
                 restoredSwap: {
@@ -381,21 +468,26 @@ describe("RescueEvm", () => {
 
         render(() => <RescueEvm />, { wrapper: contextWrapper });
 
+        // The original sender cannot be resolved without the bridge tx, so
+        // an explicit destination is required
         expect(
-            await screen.findByRole("button", { name: "Refund" }),
-        ).not.toBeDisabled();
-        expect(
-            screen.queryByRole("button", { name: "Connect wallet" }),
-        ).toBeNull();
+            await screen.findByRole("button", { name: "Connect wallet" }),
+        ).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Refund" })).toBeDisabled();
         expect(mockResolveLockupTokenFunder).not.toHaveBeenCalled();
     });
 
     test("asks for a wallet when the pre-DEX refund destination cannot be resolved", async () => {
         paramsMock.current.action = RskRescueMode.Refund;
         mockResolveLockupTokenFunder.mockResolvedValue(undefined);
+        mockGetLogsFromReceipt.mockResolvedValue({
+            ...logData,
+            refundAddress: gasSigner.address,
+        });
         rescueSwaps.current = [
             {
                 ...logData,
+                refundAddress: gasSigner.address,
                 action: RskRescueMode.Refund,
                 currentHeight: 1_000n,
                 restoredSwap: {
