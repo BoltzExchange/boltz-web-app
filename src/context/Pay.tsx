@@ -343,6 +343,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
                         );
                     }
 
+                    return;
                     const result = await claim(
                         deriveKey,
                         claimableSwap,
