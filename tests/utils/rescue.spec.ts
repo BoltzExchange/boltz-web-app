@@ -1,7 +1,7 @@
 import { SwapType } from "boltz-swaps/types";
 import { type Mock, beforeEach, vi } from "vitest";
 
-import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, RBTC, TBTC } from "../../src/consts/Assets";
 import {
     swapStatusFailed,
     swapStatusFinal,
@@ -15,6 +15,7 @@ import {
     isSwapClaimable,
 } from "../../src/utils/rescue";
 import type {
+    ChainSwap,
     ReverseSwap,
     SomeSwap,
     SubmarineSwap,
@@ -283,9 +284,33 @@ describe("rescue", () => {
                 ...overrides,
             }) as SubmarineSwap;
 
+        const createMockChainSwap = (
+            overrides: Partial<ChainSwap> = {},
+        ): ChainSwap =>
+            ({
+                type: SwapType.Chain,
+                ...overrides,
+            }) as ChainSwap;
+
         test("should return empty array for empty swaps array", async () => {
             const result = await createRescueList([], zeroConf);
             expect(result).toEqual([]);
+        });
+
+        test("claims an EVM-source chain swap without UTXO refund details", async () => {
+            const swap = createMockChainSwap({
+                id: "evm-source-chain-swap",
+                assetSend: TBTC,
+                assetReceive: LBTC,
+                status: swapStatusPending.TransactionServerConfirmed,
+            });
+
+            const result = await createRescueList([swap], zeroConf);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].action).toBe(RescueAction.Claim);
+            expect(mockGetSwapUTXOs).not.toHaveBeenCalled();
+            expect(mockGetLockupTransaction).not.toHaveBeenCalled();
         });
 
         test("should return Successful action for final status swaps without UTXOs", async () => {

@@ -6,23 +6,28 @@ import { SwapType } from "boltz-swaps/types";
 import type { JSX } from "solid-js";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, RBTC, TBTC } from "../../src/consts/Assets";
 import type * as RescueContextModule from "../../src/context/Rescue";
 import dict from "../../src/i18n/i18n";
 import RefundRescue, { mapSwap } from "../../src/pages/RefundRescue";
 import type { RescueFile } from "../../src/utils/rescueFile";
-import { TestComponent, contextWrapper } from "../helper";
+import type { ChainSwap } from "../../src/utils/swapCreator";
+import { TestComponent, contextWrapper, payContext } from "../helper";
 
 const {
+    mockGetCurrentBlockHeight,
     mockGetSwapStatus,
     mockGetRescuableUTXOs,
     restorableSwaps,
+    waitForSwapTimeoutState,
     pageSwapId,
     lockupTxId,
 } = vi.hoisted(() => ({
+    mockGetCurrentBlockHeight: vi.fn(),
     mockGetSwapStatus: vi.fn(),
     mockGetRescuableUTXOs: vi.fn(),
     restorableSwaps: { current: [] as RestorableSwap[] },
+    waitForSwapTimeoutState: { current: false },
     pageSwapId: "refundRescuePage",
     lockupTxId:
         "813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d",
@@ -33,6 +38,11 @@ vi.mock("@solidjs/router", async () => {
     return {
         ...actual,
         useParams: () => ({ id: pageSwapId }),
+        useLocation: () => ({
+            state: waitForSwapTimeoutState.current
+                ? { waitForSwapTimeout: true }
+                : undefined,
+        }),
     };
 });
 
@@ -48,6 +58,7 @@ vi.mock("../../src/utils/rescue", async () => {
     const actual = await vi.importActual("../../src/utils/rescue");
     return {
         ...actual,
+        getCurrentBlockHeight: mockGetCurrentBlockHeight,
         getRescuableUTXOs: mockGetRescuableUTXOs,
     };
 });
@@ -112,6 +123,10 @@ const failedRestorable: RestorableSwap = {
 const openLockupTxLabel = dict.en.blockexplorer.replace(
     "{{ typeLabel }}",
     dict.en.blockexplorer_lockup_tx,
+);
+const openLockupAddressLabel = dict.en.blockexplorer.replace(
+    "{{ typeLabel }}",
+    dict.en.blockexplorer_lockup_address,
 );
 
 describe("mapSwap", () => {
@@ -221,6 +236,27 @@ describe("mapSwap", () => {
         expect(mapped).not.toHaveProperty("claimDetails");
         expect(mapped).not.toHaveProperty("refundDetails");
     });
+
+    test("maps an EVM-source chain swap without UTXO refund details", () => {
+        const swap: RestorableSwap = {
+            ...baseSwap,
+            type: SwapType.Chain,
+            from: TBTC,
+            to: LBTC,
+            claimDetails: { ...baseDetails, keyIndex: 11 },
+        };
+
+        const mapped = mapSwap(swap);
+        expect(mapped).toMatchObject({
+            type: SwapType.Chain,
+            assetSend: TBTC,
+            assetReceive: LBTC,
+            version: OutputType.Taproot,
+            claimPrivateKeyIndex: 11,
+        });
+        expect(mapped).not.toHaveProperty("lockupDetails");
+        expect(mapped).not.toHaveProperty("refundPrivateKeyIndex");
+    });
 });
 
 describe("RefundRescue", () => {
@@ -238,6 +274,7 @@ describe("RefundRescue", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         restorableSwaps.current = [];
+        waitForSwapTimeoutState.current = false;
         mockGetSwapStatus.mockResolvedValue({
             status: failedRestorable.status,
             failureReason: "invoice expired",
@@ -299,5 +336,42 @@ describe("RefundRescue", () => {
         expect(
             screen.queryByRole("link", { name: openLockupTxLabel }),
         ).not.toBeInTheDocument();
+    });
+
+    test("hides the lockup address link if a waiting chain swap loses its lockup details", async () => {
+        waitForSwapTimeoutState.current = true;
+        restorableSwaps.current = [
+            {
+                ...baseSwap,
+                id: pageSwapId,
+                type: SwapType.Chain,
+                from: BTC,
+                to: LBTC,
+                refundDetails: { ...baseDetails },
+            },
+        ];
+        mockGetCurrentBlockHeight.mockResolvedValue({ [BTC]: 100 });
+
+        renderPage();
+
+        expect(
+            await screen.findByRole("link", {
+                name: openLockupAddressLabel,
+            }),
+        ).toBeInTheDocument();
+
+        payContext.setSwap({
+            ...payContext.swap()!,
+            lockupDetails: undefined,
+        } as unknown as ChainSwap);
+
+        await waitFor(() => {
+            expect(
+                screen.queryByRole("link", {
+                    name: openLockupAddressLabel,
+                }),
+            ).not.toBeInTheDocument();
+        });
+        expect(screen.getByTestId("backBtn")).toBeInTheDocument();
     });
 });

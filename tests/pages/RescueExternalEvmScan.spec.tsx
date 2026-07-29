@@ -1066,6 +1066,165 @@ describe("Rescue EVM scan", () => {
         });
     });
 
+    test.each([
+        {
+            name: "prioritizes a restored L-BTC claim over its linked EVM refund",
+            rescueAction: "claim",
+        },
+        {
+            name: "prioritizes a linked EVM refund over its pending restore",
+            rescueAction: "pending",
+        },
+    ])("$name", async ({ rescueAction }) => {
+        const user = userEvent.setup();
+        const mnemonic =
+            "awake father sword slab matrix myth cargo lock river thumb inspire speed";
+        const swapId = "Gr4Xq54A4Sse";
+        const commitmentTxHash =
+            "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+        vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");
+
+        const restoredSwap: RestorableSwap = {
+            id: swapId,
+            type: SwapType.Chain,
+            status: "transaction.server.mempool",
+            createdAt: 1782787562,
+            from: TBTC,
+            to: "L-BTC",
+            preimageHash:
+                "c75a1b92ece410e13823372edceb1fc148c37d36586c2ccd8b2c78dac1556a8e",
+            claimDetails: {
+                amount: 13_341,
+                blindingKey:
+                    "c43345f5cbf63cd5be4044c0eb7b0991cc2465599fcf2e8d6127ec3847943dc4",
+                keyIndex: 71,
+                lockupAddress: "claim-lockup",
+                serverPublicKey:
+                    "03bb779740ad43c9337bf89a23062a8564b2cf5a75fd7e317a352965ee1b4a51b2",
+                timeoutBlockHeight: 3953207,
+                transaction: {
+                    id: "6ba69b919aaf28f5ec746f97cde06da136c77390082de0b52674954b58a51aa1",
+                    vout: 1,
+                },
+                tree: {
+                    claimLeaf: { version: 196, output: "51" },
+                    refundLeaf: { version: 196, output: "51" },
+                },
+            },
+            metadata: await encryptSwapMetadata(mnemonic, {
+                swapId,
+                commitmentLockupTxHash: commitmentTxHash,
+                dex: {
+                    hops: [
+                        {
+                            type: SwapType.Dex,
+                            from: USDT0,
+                            to: TBTC,
+                        },
+                    ],
+                    position: SwapPosition.Pre,
+                    quoteAmount: 13_334,
+                },
+                bridge: {
+                    sourceAsset: "USDT0-POL",
+                    destinationAsset: USDT0,
+                    kind: BridgeKind.Oft,
+                    position: SwapPosition.Pre,
+                },
+            }),
+        };
+        mockGetRestorableSwaps.mockResolvedValueOnce([restoredSwap]);
+        mockCreateRescueList.mockImplementation(
+            (swaps: Record<string, unknown>[]) =>
+                Promise.resolve(
+                    swaps.map((swap) => ({ ...swap, action: rescueAction })),
+                ),
+        );
+        mockScanLockupEvents.mockImplementation(async function* (
+            ...args: unknown[]
+        ) {
+            await Promise.resolve();
+            const config = args[2] as {
+                action?: RskRescueMode;
+                asset?: string;
+            };
+            const events =
+                config.action === RskRescueMode.Refund && config.asset === TBTC
+                    ? [
+                          {
+                              asset: TBTC,
+                              blockNumber: 100,
+                              transactionHash: commitmentTxHash,
+                              preimageHash: `0x${"00".repeat(32)}`,
+                              amount: 13_500_000_000_000n,
+                              claimAddress:
+                                  "0x0000000000000000000000000000000000000001",
+                              refundAddress:
+                                  "0x0000000000000000000000000000000000000002",
+                              timelock: 123n,
+                          },
+                      ]
+                    : [];
+            yield {
+                derivedKeys: undefined,
+                events,
+                progress: 1,
+                unmatchedSwaps: 0,
+            };
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Rescue />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const uploadInput = await screen.findByTestId("refundUpload");
+        const rescueFile = new File(["{}"], "rescue.json", {
+            type: "application/json",
+        });
+        (rescueFile as File & { text: () => Promise<string> }).text = () =>
+            Promise.resolve(JSON.stringify({ mnemonic }));
+
+        await user.upload(uploadInput, rescueFile);
+        await user.click(screen.getByRole("button", { name: i18n.en.rescue }));
+
+        const restoreRowId = `swaplist-item-${swapId}`;
+        const refundRowId =
+            `swaplist-item-evm:${RskRescueMode.Refund}:` +
+            `${TBTC}:${commitmentTxHash}`;
+
+        if (rescueAction === "claim") {
+            const claimRow = await screen.findByTestId(
+                restoreRowId,
+                undefined,
+                { timeout: 5_000 },
+            );
+            expect(claimRow).not.toHaveClass("disabled");
+            expect(claimRow).toHaveTextContent(i18n.en.claim);
+            expect(screen.queryByTestId(refundRowId)).toBeNull();
+        } else {
+            const refundRow = await screen.findByTestId(
+                refundRowId,
+                undefined,
+                { timeout: 5_000 },
+            );
+            expect(refundRow).not.toHaveClass("disabled");
+            expect(refundRow).toHaveTextContent(i18n.en.refund);
+            expect(screen.queryByTestId(restoreRowId)).toBeNull();
+        }
+
+        expect(
+            document.querySelectorAll(
+                ".rescue-external-results .swaplist-item",
+            ),
+        ).toHaveLength(1);
+    });
+
     test("scans WBTC and TBTC on Arbitrum", async () => {
         const user = userEvent.setup();
         vi.stubEnv("VITE_ARBITRUM_LOG_SCAN_ENDPOINT", "http://localhost:8547");

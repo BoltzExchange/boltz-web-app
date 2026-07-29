@@ -120,6 +120,16 @@ vi.mock("../../src/components/ContractTransaction", () => ({
         );
     },
 }));
+vi.mock("../../src/components/ConnectWallet", () => ({
+    default: (props: { asset: string }) => (
+        <button
+            data-asset={props.asset}
+            data-testid="connect-wallet"
+            onClick={() => setSigner(makeSigner(otherAddress))}>
+            Connect wallet
+        </button>
+    ),
+}));
 
 vi.mock("../../src/components/BlockExplorer", () => ({
     BlockExplorerTargetKind: { Tx: "tx", Address: "address" },
@@ -166,13 +176,16 @@ const resetState = () => {
 };
 
 describe("GasAbstractionSweepRescue", () => {
-    test("shows the no-wallet fallback when the signer is undefined", async () => {
+    test("shows the wallet connection control when the signer is undefined", async () => {
         resetState();
         setRescueFile({ mnemonic: "test" } as RescueFile);
 
         renderPage();
 
-        expect(await screen.findByText(i18n.en.no_wallet)).toBeInTheDocument();
+        const connectWallet = await screen.findByTestId("connect-wallet");
+        expect(connectWallet).toHaveAttribute("data-asset", USDT0);
+        expect(screen.queryByText(i18n.en.no_wallet)).toBeNull();
+        expect(screen.queryByTestId("contract-transaction")).toBeNull();
     });
 
     test("prompts to scan with the rescue file when none is loaded", async () => {
@@ -186,21 +199,20 @@ describe("GasAbstractionSweepRescue", () => {
         ).toBeInTheDocument();
     });
 
-    test("re-runs the resource when the signer arrives after mount", async () => {
+    test("shows the refund flow after connecting a wallet", async () => {
         resetState();
+        const user = userEvent.setup();
         setRescueFile({ mnemonic: "test" } as RescueFile);
         getGasAbstractionSigner.mockReturnValue(makeSigner(validAddress));
-        balanceOf.mockResolvedValue(0n);
+        balanceOf.mockResolvedValue(1_000_000n);
 
         renderPage();
 
-        // initial render: signer undefined → no_wallet fallback
-        expect(await screen.findByText(i18n.en.no_wallet)).toBeInTheDocument();
+        const connectWallet = await screen.findByTestId("connect-wallet");
         expect(getGasAbstractionSigner).not.toHaveBeenCalled();
 
-        setSigner(makeSigner(validAddress));
+        await user.click(connectWallet);
 
-        // resource fetches once the source signal becomes truthy
         await waitFor(() =>
             expect(getGasAbstractionSigner).toHaveBeenCalledWith(
                 USDT0,
@@ -208,8 +220,9 @@ describe("GasAbstractionSweepRescue", () => {
             ),
         );
         expect(
-            await screen.findByText(i18n.en.connected_wallet_no_swaps),
-        ).toBeInTheDocument();
+            await screen.findByTestId("contract-tx-button"),
+        ).toHaveTextContent(i18n.en.refund);
+        expect(screen.queryByTestId("connect-wallet")).toBeNull();
     });
 
     test("errors when the URL asset is not sweepable", async () => {
