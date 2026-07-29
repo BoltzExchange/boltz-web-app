@@ -286,6 +286,15 @@ export const getPostBridgeDetail = (
 ): BridgeDetail | undefined =>
     bridge?.position === SwapPosition.Post ? bridge : undefined;
 
+export const getRefundBridgeDetail = (route: {
+    dex?: DexDetail;
+    bridge?: BridgeDetail;
+}): BridgeDetail | undefined =>
+    route.dex?.position === SwapPosition.Pre &&
+    route.bridge?.txHash !== undefined
+        ? getPreBridgeDetail(route.bridge)
+        : undefined;
+
 const generatePreimage = ({
     asset,
     keyIndex,

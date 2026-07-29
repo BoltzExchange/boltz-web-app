@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import { quoteDexAmountIn } from "boltz-swaps/client";
 import {
     assetAmountToSats,
@@ -59,7 +60,10 @@ import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
-import { GasAbstractionType } from "../utils/swapCreator";
+import {
+    GasAbstractionType,
+    getRefundBridgeDetail,
+} from "../utils/swapCreator";
 import { getEvmDisplayAssets } from "./external-rescue/Results";
 import { normalizeEvmId } from "./external-rescue/scan";
 import type { EvmRescueResult } from "./external-rescue/types";
@@ -83,6 +87,12 @@ const getEvmRefundDexDetails = (refundData: EvmRescueResult) =>
 
 const getEvmRefundBridgeDetails = (refundData: EvmRescueResult) =>
     refundData.bridge ?? refundData.restoredSwap?.bridge;
+
+const getEvmRefundBridge = (refundData: EvmRescueResult) =>
+    getRefundBridgeDetail({
+        dex: getEvmRefundDexDetails(refundData),
+        bridge: getEvmRefundBridgeDetails(refundData),
+    });
 
 export const getEvmRefundDisplayAmount = (
     refundData: EvmRescueResult,
@@ -203,9 +213,7 @@ const RefundState = (props: {
         dexDetails()?.position === SwapPosition.Pre &&
         bridgeDetails()?.position !== SwapPosition.Pre;
     const routeResolvesDestination = () =>
-        dexDetails()?.position === SwapPosition.Pre &&
-        bridgeDetails()?.position === SwapPosition.Pre &&
-        bridgeDetails()?.txHash !== undefined;
+        getEvmRefundBridge(props.refundData) !== undefined;
 
     const [resolvedFunder] = createResource(
         () => {
@@ -695,6 +703,11 @@ const RescueEvm = () => {
                                             asset={params.asset}
                                             kind={BlockExplorerTargetKind.Tx}
                                             id={refundTxId()!}
+                                            explorer={bridgeRegistry.getExplorerKind(
+                                                getEvmRefundBridge(
+                                                    rescueData()!,
+                                                ),
+                                            )}
                                         />
                                     </>
                                 }>
