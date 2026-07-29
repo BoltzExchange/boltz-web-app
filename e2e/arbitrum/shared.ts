@@ -619,7 +619,8 @@ export const mineArbitrumBlocks = async (
 
 export const connectWallet = async (page: Page, walletAddress: Address) => {
     const connect = page.getByRole("button", {
-        name: new RegExp(dict.en.connect_wallet, "i"),
+        name: dict.en.connect_wallet,
+        exact: true,
     });
     const connectedAddress = page.locator(`text=${walletAddress.slice(0, 8)}`);
 

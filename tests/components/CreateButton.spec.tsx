@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import type { Pairs } from "boltz-swaps/client";
 import type * as InvoiceModule from "boltz-swaps/invoice";
-import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { NetworkTransport, SwapPosition, SwapType } from "boltz-swaps/types";
 
 import CreateButton, {
     getClaimAddress,
@@ -22,6 +22,7 @@ import {
 import { Side } from "../../src/consts/Enums";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
+import * as web3Context from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
@@ -135,6 +136,10 @@ vi.mock("../../src/config", async () => {
                         address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
                     },
                 },
+                "USDT0-TRON": {
+                    ...structuredClone(mainnetConfig.assets!["USDT0-TRON"]),
+                    canSend: true,
+                },
             },
         },
     };
@@ -166,6 +171,16 @@ const usdt0Pairs: Pairs = {
     chain: {},
 };
 
+const evmToUsdt0Pairs: Pairs = {
+    submarine: {},
+    reverse: {},
+    chain: {
+        [RBTC]: {
+            [USDT0]: testPairs.chain.RBTC.BTC,
+        },
+    },
+};
+
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
@@ -189,6 +204,20 @@ const renderCreateButton = () =>
         { wrapper: contextWrapper },
     );
 
+const mockConnectedEvmWallet = () =>
+    vi.spyOn(web3Context, "useWeb3Signer").mockReturnValue({
+        signer: () => undefined,
+        connectedWallet: () => ({
+            address: "0x1000000000000000000000000000000000000000",
+            rdns: "wallet-connect",
+            transport: NetworkTransport.Evm,
+        }),
+        providers: () => ({}),
+        getEtherSwap: vi.fn(),
+        getErc20Swap: vi.fn(),
+        getGasAbstractionSigner: vi.fn(),
+    } as unknown as ReturnType<typeof web3Context.useWeb3Signer>);
+
 const mockPreDexCommitmentCreation = () => {
     signals.pair().creationData = vi.fn().mockResolvedValue({
         type: SwapType.Submarine,
@@ -209,6 +238,7 @@ const mockPreDexCommitmentCreation = () => {
 };
 
 const setupPreDexCommitmentButton = async (destination = "") => {
+    mockConnectedEvmWallet();
     renderCreateButton();
 
     await globalSignals.clearSwaps();
@@ -854,6 +884,7 @@ describe("CreateButton", () => {
     });
 
     test("should be enabled for sendable USDT0 variants", async () => {
+        mockConnectedEvmWallet();
         render(
             () => (
                 <>
@@ -877,6 +908,143 @@ describe("CreateButton", () => {
 
         await waitFor(() => {
             expect(signals.valid()).toBe(true);
+            expect(btn.disabled).toBe(false);
+            expect(btn.textContent).toBe(i18n.en.create_swap);
+        });
+    });
+
+    test("should require a connected wallet for EVM send assets", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(true);
+            expect(btn.disabled).toBe(true);
+            expect(btn.textContent).toBe(i18n.en.connect_wallet_to_continue);
+        });
+        expect(btn.classList.contains("btn-error")).toBe(false);
+    });
+
+    test("should require a wallet on the transport of the EVM send asset", async () => {
+        vi.spyOn(web3Context, "useWeb3Signer").mockReturnValue({
+            signer: () => undefined,
+            connectedWallet: () => ({
+                address: "EzTybRqGouGB4vKin67HFYgLsVkzE6A1YUq26uKyTvPN",
+                rdns: "wallet-connect",
+                transport: NetworkTransport.Solana,
+            }),
+            providers: () => ({}),
+            getEtherSwap: vi.fn(),
+            getErc20Swap: vi.fn(),
+            getGasAbstractionSigner: vi.fn(),
+        } as unknown as ReturnType<typeof web3Context.useWeb3Signer>);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(btn.disabled).toBe(true);
+            expect(btn.textContent).toBe(i18n.en.connect_wallet_to_continue);
+        });
+    });
+
+    test.each([
+        { assetReceive: "USDT0-SOL", network: "Solana" },
+        { assetReceive: "USDT0-TRON", network: "Tron" },
+    ])(
+        "should require an EVM wallet for EVM-to-$network routes",
+        async ({ assetReceive }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <CreateButton />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            globalSignals.setOnline(true);
+            signals.setSendAmount(BigNumber(100_000));
+            signals.setAmountValid(true);
+            signals.setAddressValid(true);
+            signals.setOnchainAddress("destination-address");
+            signals.setGetGasToken(false);
+            setPairAssetsWithPairs(evmToUsdt0Pairs, RBTC, assetReceive);
+
+            const btn = (await screen.findByTestId(
+                "create-swap-button",
+            )) as HTMLButtonElement;
+
+            await waitFor(() => {
+                expect(signals.valid()).toBe(true);
+                expect(btn.disabled).toBe(true);
+                expect(btn.textContent).toBe(
+                    i18n.en.connect_wallet_to_continue,
+                );
+            });
+        },
+    );
+
+    test("should not require a connected wallet for non EVM send assets", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssets(BTC, LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
             expect(btn.disabled).toBe(false);
             expect(btn.textContent).toBe(i18n.en.create_swap);
         });
