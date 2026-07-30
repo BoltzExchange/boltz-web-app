@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import type { Pairs } from "boltz-swaps/client";
+import { calculateAmountOutMin } from "boltz-swaps/helper";
 import type * as InvoiceModule from "boltz-swaps/invoice";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
 
 import CreateButton, {
+    buildDexDetail,
     getClaimAddress,
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
@@ -25,10 +27,12 @@ import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
+import type * as SwapCreatorModule from "../../src/utils/swapCreator";
 import {
     GasAbstractionType,
     createUniformGasAbstraction,
 } from "../../src/utils/swapCreator";
+import type * as ValidationModule from "../../src/utils/validation";
 import {
     TestComponent,
     contextWrapper,
@@ -36,6 +40,35 @@ import {
     signals,
 } from "../helper";
 import { pairs as testPairs } from "../pairs";
+
+const { createSubmarineMock, validateResponseMock, actualModules } = vi.hoisted(
+    () => ({
+        createSubmarineMock: vi.fn(),
+        validateResponseMock: vi.fn(),
+        actualModules: {} as {
+            createSubmarine?: typeof SwapCreatorModule.createSubmarine;
+            validateResponse?: typeof ValidationModule.validateResponse;
+        },
+    }),
+);
+
+vi.mock("../../src/utils/validation", async (importActual) => {
+    const actual = await importActual<typeof ValidationModule>();
+    actualModules.validateResponse = actual.validateResponse;
+    return {
+        ...actual,
+        validateResponse: validateResponseMock,
+    };
+});
+
+vi.mock("../../src/utils/swapCreator", async (importActual) => {
+    const actual = await importActual<typeof SwapCreatorModule>();
+    actualModules.createSubmarine = actual.createSubmarine;
+    return {
+        ...actual,
+        createSubmarine: createSubmarineMock,
+    };
+});
 
 vi.mock("boltz-swaps/invoice", async (importActual) => {
     const actual = await importActual<typeof InvoiceModule>();
@@ -237,6 +270,15 @@ const setupPreDexCommitmentButton = async (destination = "") => {
 
 describe("CreateButton", () => {
     beforeEach(() => {
+        // Delegate to the real implementations unless a test overrides them
+        createSubmarineMock.mockImplementation(
+            (...args: Parameters<typeof SwapCreatorModule.createSubmarine>) =>
+                actualModules.createSubmarine!(...args),
+        );
+        validateResponseMock.mockImplementation(
+            (...args: Parameters<typeof ValidationModule.validateResponse>) =>
+                actualModules.validateResponse!(...args),
+        );
         window.history.pushState({}, "", "/");
         Object.defineProperty(window.navigator, "locks", {
             configurable: true,
@@ -817,6 +859,72 @@ describe("CreateButton", () => {
         });
     });
 
+    test("persists the full route amounts in the created swap metadata", async () => {
+        renderCreateButton();
+
+        await globalSignals.clearSwaps();
+        globalSignals.setOnline(true);
+        // Full route: the user sends 100_000 USDC and receives 99_000 sats
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setReceiveAmount(BigNumber(99_000));
+        signals.setAmountChanged(Side.Send);
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, USDC, LN);
+        // The Boltz leg alone runs on the intermediate asset
+        signals.pair().creationData = vi.fn().mockResolvedValue({
+            type: SwapType.Submarine,
+            from: TBTC,
+            to: BTC,
+            sendAmount: BigNumber(80_000),
+            receiveAmount: BigNumber(79_000),
+            pairHash: "tbtc-ln-pair-hash",
+            hops: [
+                {
+                    type: SwapType.Dex,
+                    from: USDC,
+                    to: TBTC,
+                },
+            ],
+            hopsPosition: SwapPosition.Pre,
+        });
+        validateResponseMock.mockResolvedValue(undefined);
+        createSubmarineMock.mockResolvedValue({
+            id: "routed-submarine",
+            type: SwapType.Submarine,
+            assetSend: TBTC,
+            assetReceive: BTC,
+            sendAmount: 80_000,
+            expectedAmount: 80_000,
+            receiveAmount: 79_000,
+            date: 0,
+        });
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+        await waitFor(() => {
+            expect(btn.disabled).toBe(false);
+        });
+        fireEvent.click(btn);
+
+        await waitFor(() => {
+            expect(createSubmarineMock).toHaveBeenCalled();
+        });
+        await waitFor(async () => {
+            const [swap] = await globalSignals.getSwaps();
+            expect(swap).toMatchObject({
+                id: "routed-submarine",
+                dex: {
+                    position: SwapPosition.Pre,
+                    quoteAmount: 100_000,
+                    sourceAmount: "100000",
+                },
+            });
+        });
+    });
+
     test("should defer invoice fetching for send-side pre-dex commitments", async () => {
         const btn = await setupPreDexCommitmentButton(bolt12Offer);
         fireEvent.click(btn);
@@ -1265,5 +1373,121 @@ describe("CreateButton", () => {
         await waitFor(() => expect(signals.invoiceValid()).toBe(false));
         expect(signals.lnurl()).toBe("test@example.com");
         await waitFor(() => expect(btn.disabled).toBeFalsy());
+    });
+});
+
+describe("buildDexDetail", () => {
+    const preHops = [
+        {
+            type: SwapType.Dex,
+            from: USDC,
+            to: TBTC,
+        },
+    ] as never;
+    const postHops = [
+        {
+            type: SwapType.Dex,
+            from: TBTC,
+            to: USDT0,
+        },
+    ] as never;
+
+    // Full route amounts: the user sends 0.01 BTC and receives 1000 USDT0.
+    // The Boltz leg alone would be ~1e6 sats of TBTC, a different asset and
+    // a different unit, so it must never reach quoteAmount.
+    const fullRouteSend = BigNumber(1_000_000);
+    const fullRouteReceive = BigNumber(1_000_000_000);
+
+    test("returns undefined without a hop position", () => {
+        expect(
+            buildDexDetail(
+                postHops,
+                undefined,
+                fullRouteSend,
+                fullRouteReceive,
+            ),
+        ).toBeUndefined();
+    });
+
+    test("persists the final receive amount for post hops", () => {
+        expect(
+            buildDexDetail(
+                postHops,
+                SwapPosition.Post,
+                fullRouteSend,
+                fullRouteReceive,
+            ),
+        ).toEqual({
+            hops: postHops,
+            position: SwapPosition.Post,
+            quoteAmount: 1_000_000_000,
+        });
+    });
+
+    test("ignores the source amount for post hops", () => {
+        expect(
+            buildDexDetail(
+                postHops,
+                SwapPosition.Post,
+                fullRouteSend,
+                fullRouteReceive,
+                fullRouteSend,
+            ),
+        ).not.toHaveProperty("sourceAmount");
+    });
+
+    test("persists the source send amount for pre hops", () => {
+        expect(
+            buildDexDetail(
+                preHops,
+                SwapPosition.Pre,
+                BigNumber(100_000),
+                BigNumber(99_000),
+                BigNumber(100_000),
+            ),
+        ).toEqual({
+            hops: preHops,
+            position: SwapPosition.Pre,
+            quoteAmount: 100_000,
+            sourceAmount: "100000",
+        });
+    });
+
+    test("omits the source amount for pre hops when it is unknown", () => {
+        const dex = buildDexDetail(
+            preHops,
+            SwapPosition.Pre,
+            BigNumber(100_000),
+            BigNumber(99_000),
+        );
+
+        expect(dex).toEqual({
+            hops: preHops,
+            position: SwapPosition.Pre,
+            quoteAmount: 100_000,
+        });
+        expect(dex).not.toHaveProperty("sourceAmount");
+    });
+
+    test("never persists the intermediate Boltz leg amount", () => {
+        const boltzLegReceive = BigNumber(998_000);
+        const dex = buildDexDetail(
+            postHops,
+            SwapPosition.Post,
+            fullRouteSend,
+            fullRouteReceive,
+        );
+
+        expect(dex!.quoteAmount).not.toBe(boltzLegReceive.toNumber());
+        // Claim time compares a fresh DEX quote against this baseline, so a
+        // halved fill has to fall below it
+        const halvedFill = BigInt(dex!.quoteAmount) / 2n;
+        const threshold = calculateAmountOutMin(BigInt(dex!.quoteAmount), 0.01);
+        expect(halvedFill < threshold).toBe(true);
+        // The intermediate amount would make that check unreachable
+        expect(
+            halvedFill <
+                calculateAmountOutMin(BigInt(boltzLegReceive.toNumber()), 0.01),
+        ).toBe(false);
     });
 });

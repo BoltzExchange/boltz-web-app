@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 import type * as BoltzClientModule from "boltz-swaps/client";
 import type { Pairs, QuoteData } from "boltz-swaps/client";
-import { CctpReceiveMode, SwapType } from "boltz-swaps/types";
+import { CctpReceiveMode, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
@@ -1129,5 +1129,43 @@ describe("Pair", () => {
                 recipient,
             ),
         ).rejects.toBe(error);
+    });
+
+    test("quotes the Boltz leg and the full route in different assets", async () => {
+        // Force BTC -> USDT0 to route as chain BTC->TBTC plus a post DEX hop
+        const pairsWithoutDirectChain: Pairs = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                BTC: {
+                    [TBTC]: pairs.chain.BTC[TBTC],
+                },
+            },
+        };
+
+        // 1_000_000 TBTC sats swap out to 1_000 USDT0 (1e9 in base units)
+        fetchDexQuoteMock.mockResolvedValue({
+            trade: {
+                amountIn: BigInt(tbtcAssetAmount(1_000_000)),
+                amountOut: 1_000_000_000n,
+                data: { route: "exact-in" },
+            },
+        } as never);
+
+        const pair = new Pair(pairsWithoutDirectChain, BTC, USDT0);
+        const sendAmount = BigNumber(1_000_000);
+
+        const fullRouteReceive = await pair.calculateReceiveAmount(
+            sendAmount,
+            0,
+        );
+        const creationData = await pair.creationData(sendAmount, 0);
+
+        expect(creationData?.hopsPosition).toBe(SwapPosition.Post);
+        // What the user actually receives: USDT0 base units
+        expect(fullRouteReceive.toNumber()).toBe(1_000_000_000);
+        // The Boltz leg alone settles in TBTC sats, so creation amounts must
+        // never be persisted as the route quote (see buildDexDetail)
+        expect(creationData!.receiveAmount.toNumber()).toBe(1_000_000);
     });
 });

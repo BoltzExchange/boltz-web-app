@@ -127,7 +127,7 @@ const buildBridgeDetail = (
     };
 };
 
-const buildDexDetail = (
+export const buildDexDetail = (
     hops: EncodedHop[],
     position: SwapPosition | undefined,
     sendAmount: BigNumber,
@@ -587,10 +587,7 @@ const CreateButton = () => {
             let dex: SwapMetadataSource["dex"];
             let bridge: SwapMetadataSource["bridge"];
             const buildCreationMetadata = async (
-                creationData?: Pick<
-                    CreationData,
-                    "hops" | "hopsPosition" | "sendAmount" | "receiveAmount"
-                >,
+                creationData?: Pick<CreationData, "hops" | "hopsPosition">,
             ): Promise<string | undefined> => {
                 const sourceAmount =
                     amountChanged() === Side.Send ? sendAmount() : undefined;
@@ -606,8 +603,13 @@ const CreateButton = () => {
                         ? buildDexDetail(
                               creationData.hops,
                               creationData.hopsPosition,
-                              creationData.sendAmount,
-                              creationData.receiveAmount,
+                              // Full route amounts: creationData holds the Boltz
+                              // leg only, which is the intermediate asset for a
+                              // routed swap. Consumers of quoteAmount compare it
+                              // against the final DEX output (post) or display it
+                              // as the amount the user sent (pre).
+                              sendAmount(),
+                              receiveAmount(),
                               // If the bridge is involved, the source amount is already
                               // persisted on the bridge and isn't involved in the DEX quote.
                               bridge === undefined ? sourceAmount : undefined,
