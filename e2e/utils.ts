@@ -79,6 +79,13 @@ export const getBitcoinAddress = (): Promise<string> =>
 export const getLiquidAddress = (): Promise<string> =>
     execCommand("elements-cli-sim-client getnewaddress");
 
+export const getLiquidUnconfidentialAddress = async (): Promise<string> => {
+    const info = await execCommand(
+        `elements-cli-sim-client getaddressinfo ${await getLiquidAddress()}`,
+    );
+    return (JSON.parse(info) as { unconfidential: string }).unconfidential;
+};
+
 export const bitcoinSendToAddress = (
     address: string,
     amount: string,
@@ -123,6 +130,12 @@ type DecodedTransaction = {
         vout: number;
         txinwitness?: string[];
     }[];
+    // Elements only; blinded outputs carry no `value`
+    vout: {
+        value?: number;
+        scriptPubKey: { type: string; address?: string };
+    }[];
+    discountvsize?: number;
 };
 
 type Unspent = {
@@ -480,6 +493,18 @@ export const getCurrentSwapId = (page: Page): string => {
     const url = new URL(page.url());
     return url.pathname.split("/").pop() ?? "";
 };
+
+// Esplora indexes by script, so this also resolves the unconfidential form of
+// a wallet address; `value` is absent for blinded outputs
+export const getAddressUtxos = async (
+    asset: AssetType,
+    address: string,
+): Promise<{ txid: string; vout: number; value?: number }[]> =>
+    (
+        await axios.get<{ txid: string; vout: number; value?: number }[]>(
+            `${config.assets![asset].blockExplorerApis![0].normal}/address/${address}/utxo`,
+        )
+    ).data;
 
 export const waitForUTXOs = async (
     asset: AssetType,

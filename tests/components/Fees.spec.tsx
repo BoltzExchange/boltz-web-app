@@ -3,6 +3,7 @@ import { BigNumber } from "bignumber.js";
 import { getPairs } from "boltz-swaps/client";
 import { weiToSatoshi } from "boltz-swaps/evm";
 import { SwapType } from "boltz-swaps/types";
+import { liquidUnconfidentialClaimExtra } from "boltz-swaps/utxo";
 
 import Fees from "../../src/components/Fees";
 import { config as runtimeConfig } from "../../src/config";
@@ -222,7 +223,7 @@ describe("Fees component", () => {
         });
     });
 
-    test("should increase the miner fee for reverse swaps by 1 when sending to an unconfidential Liquid address", () => {
+    test("should increase the miner fee for reverse swaps when sending to an unconfidential Liquid address", () => {
         render(
             () => (
                 <>
@@ -241,11 +242,13 @@ describe("Fees component", () => {
 
         const fees = pairs.reverse[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
-            fees.minerFees.lockup + fees.minerFees.claim + 5,
+            fees.minerFees.lockup +
+                fees.minerFees.claim +
+                liquidUnconfidentialClaimExtra,
         );
     });
 
-    test("should increase the miner fee for chain swaps by 1 when sending to an unconfidential Liquid address", () => {
+    test("should increase the miner fee for chain swaps when sending to an unconfidential Liquid address", () => {
         render(
             () => (
                 <>
@@ -265,8 +268,33 @@ describe("Fees component", () => {
 
         const fees = pairs.chain[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
-            fees.minerFees.server + fees.minerFees.user.claim + 5,
+            fees.minerFees.server +
+                fees.minerFees.user.claim +
+                liquidUnconfidentialClaimExtra,
         );
+    });
+
+    // The surcharge is added to the quoted miner fee here and subtracted from
+    // the persisted amount at the display sites, with no compile-time link
+    test("quotes exactly the surcharge less than the persisted amount", () => {
+        const fees = pairs.reverse[BTC][LBTC].fees;
+        const minerFees = fees.minerFees.lockup + fees.minerFees.claim;
+        const sendAmount = BigNumber(1_000_000);
+
+        const persisted = calculateReceiveAmount(
+            sendAmount,
+            fees.percentage,
+            minerFees,
+            SwapType.Reverse,
+        );
+        const quoted = calculateReceiveAmount(
+            sendAmount,
+            fees.percentage,
+            minerFees + liquidUnconfidentialClaimExtra,
+            SwapType.Reverse,
+        );
+
+        expect(quoted).toEqual(persisted.minus(liquidUnconfidentialClaimExtra));
     });
 
     test("should apply minimalBatched limit for liquid submarine swaps", async () => {

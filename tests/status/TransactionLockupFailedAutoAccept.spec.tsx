@@ -1,5 +1,7 @@
-import { render, waitFor } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { liquidUnconfidentialClaimExtra } from "boltz-swaps/utxo";
+import { Buffer } from "buffer";
 
 const mocks = vi.hoisted(() => ({
     swap: undefined as unknown,
@@ -48,6 +50,7 @@ vi.mock("../../src/pages/NotFound", () => ({
 
 vi.mock("../../src/consts/Assets", () => ({
     isEvmAsset: () => true,
+    LBTC: "L-BTC",
 }));
 
 vi.mock("../../src/context/Global", () => ({
@@ -59,6 +62,15 @@ vi.mock("../../src/context/Global", () => ({
             chain: {
                 FINAL: {
                     BTC: {
+                        fees: {
+                            minerFees: {
+                                user: {
+                                    claim: 0,
+                                },
+                            },
+                        },
+                    },
+                    "L-BTC": {
                         fees: {
                             minerFees: {
                                 user: {
@@ -113,6 +125,9 @@ vi.mock("../../src/utils/helper", () => ({
 vi.mock("../../src/utils/rescue", () => ({
     isRefundableSwapType: () => false,
 }));
+
+const { LBTC } = await import("../../src/consts/Assets");
+const { parseBlindingKey } = await import("../../src/utils/helper");
 
 const { default: TransactionLockupFailed } =
     await import("../../src/status/TransactionLockupFailed");
@@ -179,7 +194,7 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
         );
         expect(mocks.swap).toEqual(
             expect.objectContaining({
-                receiveAmount: 990,
+                receiveAmount: 991,
                 claimDetails: expect.objectContaining({
                     amount: 991,
                 }),
@@ -191,7 +206,7 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
     });
 
     test("does not auto-accept a pre-bridge replacement quote outside slippage", async () => {
-        mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 990 });
+        mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 989 });
 
         render(() => (
             <TransactionLockupFailed
@@ -207,5 +222,77 @@ describe("TransactionLockupFailed pre-bridge auto-accept", () => {
 
         expect(mocks.acceptChainSwapNewQuote).not.toHaveBeenCalled();
         expect(mocks.modifySwapStorage).not.toHaveBeenCalled();
+    });
+
+    describe("unconfidential Liquid destination", () => {
+        beforeEach(() => {
+            vi.mocked(parseBlindingKey).mockReturnValue(Buffer.alloc(32));
+            mocks.swap = {
+                ...makeSwap(),
+                assetReceive: LBTC,
+                claimAddress: "ert1q0k9g02evldg5eylnd8lrch0awd05u89p9len8l",
+            };
+        });
+
+        test("offers the amount the claim will deliver", async () => {
+            mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 900 });
+
+            render(() => (
+                <TransactionLockupFailed
+                    setStatusOverride={mocks.setStatusOverride}
+                />
+            ));
+
+            await waitFor(() => {
+                expect(
+                    screen.getByText(
+                        String(900 - liquidUnconfidentialClaimExtra),
+                    ),
+                ).toBeDefined();
+            });
+        });
+
+        // The rendered amount is the DEX output in another asset, not the
+        // Boltz claim output the surcharge comes out of
+        test("leaves a post-position DEX output untouched", async () => {
+            mocks.swap = {
+                ...(mocks.swap as object),
+                dex: {
+                    position: SwapPosition.Post,
+                    quoteAmount: "100",
+                    hops: [{ to: "FINAL" }],
+                },
+            };
+            mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 900 });
+
+            render(() => (
+                <TransactionLockupFailed
+                    setStatusOverride={mocks.setStatusOverride}
+                />
+            ));
+
+            await waitFor(() => {
+                expect(screen.getByText("900")).toBeDefined();
+            });
+        });
+
+        // The claim layer reserves the surcharge itself, so persisting the
+        // landed amount would subtract it twice
+        test("persists the amount the claim requests", async () => {
+            mocks.getChainSwapNewQuote.mockResolvedValue({ amount: 991 });
+
+            render(() => (
+                <TransactionLockupFailed
+                    setStatusOverride={mocks.setStatusOverride}
+                />
+            ));
+
+            await waitFor(() => {
+                expect(mocks.modifySwapStorage).toHaveBeenCalled();
+            });
+            expect(
+                (mocks.swap as { receiveAmount: number }).receiveAmount,
+            ).toBe(991);
+        });
     });
 });

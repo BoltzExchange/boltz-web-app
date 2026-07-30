@@ -64,6 +64,15 @@ export const getBitcoinAddress = (): Promise<string> =>
 export const getLiquidAddress = (): Promise<string> =>
     execInScripts("elements-cli-sim-client getnewaddress");
 
+export const getLiquidUnconfidentialAddress = async (): Promise<string> => {
+    const address = await getLiquidAddress();
+    const info = await execInScripts(
+        `elements-cli-sim-client getaddressinfo ${address}`,
+    );
+    const { unconfidential } = JSON.parse(info) as { unconfidential: string };
+    return unconfidential;
+};
+
 export const bitcoinSendToAddress = (
     address: string,
     coins: string,
@@ -142,6 +151,29 @@ export const waitForTxConfirmed = async (
         }
         await sleep(300);
     }
+};
+
+type EsploraVout = {
+    scriptpubkey_type: string;
+    scriptpubkey_address?: string;
+    value?: number;
+};
+
+export type EsploraTransaction = {
+    txid: string;
+    fee: number;
+    vout: EsploraVout[];
+};
+
+export const getEsploraTransaction = async (
+    asset: string,
+    txid: string,
+): Promise<EsploraTransaction> => {
+    const res = await fetch(`${ESPLORA_API[asset]}/tx/${txid}`);
+    if (!res.ok) {
+        throw new Error(`could not fetch ${asset} tx ${txid}: ${res.status}`);
+    }
+    return (await res.json()) as EsploraTransaction;
 };
 
 export const waitForAddressUtxos = async (

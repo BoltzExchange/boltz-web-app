@@ -5,12 +5,15 @@ import { createBoltzClient, getPairs } from "boltz-swaps";
 import { SwapStatus, isFailureStatus, isFinalStatus } from "boltz-swaps/status";
 import { SwapType } from "boltz-swaps/types";
 
+import { liquidUnconfidentialClaimExtra } from "../src/utxo/claim.ts";
 import {
     BOLTZ_API_URL,
     generateBitcoinBlock,
     generateLiquidBlock,
     getBitcoinAddress,
+    getEsploraTransaction,
     getLiquidAddress,
+    getLiquidUnconfidentialAddress,
     payInvoiceInBackground,
     setBackendSignersDisabled,
     sleep,
@@ -144,6 +147,91 @@ describe("reverse swap integration (regtest)", () => {
     test("LN -> L-BTC: cooperative reverse claim", async () => {
         await runReverseSwap({ to: "L-BTC" });
     }, 120_000);
+
+    describe("LN -> L-BTC: claim to an unconfidential address", () => {
+        const setUpClaim = async () => {
+            const claimKeys = makeKeys();
+            const preimage = crypto.getRandomValues(new Uint8Array(32));
+            const claimAddress = await getLiquidUnconfidentialAddress();
+            expect(claimAddress.startsWith("ert1")).toBe(true);
+
+            const pair = await reversePair("L-BTC");
+            const created = await boltz.swap.reverse.create({
+                from: "BTC",
+                to: "L-BTC",
+                invoiceAmount: 100_000,
+                preimageHash: hex.encode(sha256(preimage)),
+                pairHash: pair.hash,
+                claimPublicKey: hex.encode(claimKeys.publicKey),
+                claimAddress,
+            });
+
+            payInvoiceInBackground(created.invoice);
+            await waitUntilClaimable(created.id, "L-BTC", 90_000);
+
+            return {
+                claimKeys,
+                claimAddress,
+                created,
+                claimFee: pair.fees.minerFees.claim,
+                execute: (receiveAmount: number) =>
+                    boltz.swap.reverse.execute({
+                        createdSwap: created,
+                        to: "L-BTC",
+                        preimage: hex.encode(preimage),
+                        receiveAmount,
+                        claimAddress,
+                        claimKeys,
+                    }),
+            };
+        };
+
+        test("is accepted by Elements and pays the surcharge out of the claim output", async () => {
+            const { created, claimAddress, claimFee, execute } =
+                await setUpClaim();
+            const receiveAmount = created.onchainAmount - claimFee;
+
+            const result = await execute(receiveAmount);
+            expect(result.claimTransactionId).toMatch(/^[0-9a-f]{64}$/);
+
+            await generateLiquidBlock();
+            await waitForTxConfirmed("L-BTC", result.claimTransactionId);
+
+            const utxos = await waitForAddressUtxos("L-BTC", claimAddress);
+            const claimed = utxos.find(
+                (utxo) => utxo.txid === result.claimTransactionId,
+            );
+            expect(claimed).toBeDefined();
+            expect(claimed!.value).toBe(
+                receiveAmount - liquidUnconfidentialClaimExtra,
+            );
+            expect(result.receiveAmount).toBe(BigInt(claimed!.value));
+
+            const tx = await getEsploraTransaction(
+                "L-BTC",
+                result.claimTransactionId,
+            );
+            expect(tx.vout).toHaveLength(3);
+            expect(
+                tx.vout.filter((out) => out.scriptpubkey_type === "op_return"),
+            ).toHaveLength(1);
+            expect(tx.fee).toBe(claimFee + liquidUnconfidentialClaimExtra - 1);
+        }, 120_000);
+
+        // Shrinking the budget by the surcharge cancels it out, reproducing the
+        // pre-fix fee. Guards the test above against passing for free.
+        test("would be rejected without the surcharge", async () => {
+            const { created, claimFee, execute } = await setUpClaim();
+            const receiveAmount =
+                created.onchainAmount -
+                claimFee +
+                liquidUnconfidentialClaimExtra;
+
+            await expect(execute(receiveAmount)).rejects.toThrow(
+                /min relay fee not met/i,
+            );
+        }, 120_000);
+    });
 
     test("LN -> BTC: uncooperative reverse claim when the server refuses to co-sign", async () => {
         try {

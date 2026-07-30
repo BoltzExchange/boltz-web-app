@@ -51,6 +51,68 @@ describe("TransactionClaimed", () => {
         ).resolves.not.toBeUndefined();
     });
 
+    // The sat denomination groups digits with spaces
+    const claimedAmountText = async () =>
+        (await screen.findByText(/You successfully received/u))
+            .textContent!.match(/received ([\d ]+)/u)![1]
+            .replaceAll(" ", "");
+
+    const liquidRegtest = {
+        unconfidential: "ert1q0k9g02evldg5eylnd8lrch0awd05u89p9len8l",
+        confidential:
+            "el1qqgept38a77emd94r554av0ptj4eelxnx5z9wekxmynd2qe4wvunhylv2s74je763fjflx60783wl6u6lfcw2zjc5pm5n3gq32",
+    };
+
+    // `receiveAmount` is what the claim requests; an unconfidential Liquid
+    // destination reserves the surcharge out of it
+    test.each`
+        name                        | swap                                                                                                                                                                 | shown
+        ${"unconfidential L-BTC"}   | ${{ type: SwapType.Reverse, assetReceive: LBTC, claimTx: "txid", claimAddress: liquidRegtest.unconfidential, blindingKey: "00".repeat(32), receiveAmount: 100_000 }} | ${"99994"}
+        ${"confidential L-BTC"}     | ${{ type: SwapType.Reverse, assetReceive: LBTC, claimTx: "txid", claimAddress: liquidRegtest.confidential, blindingKey: "00".repeat(32), receiveAmount: 100_000 }}   | ${"100000"}
+        ${"L-BTC without blinding"} | ${{ type: SwapType.Reverse, assetReceive: LBTC, claimTx: "txid", claimAddress: liquidRegtest.unconfidential, receiveAmount: 100_000 }}                               | ${"100000"}
+        ${"BTC"}                    | ${{ type: SwapType.Reverse, assetReceive: BTC, claimTx: "txid", claimAddress: "bcrt1qxyz", receiveAmount: 100_000 }}                                                 | ${"100000"}
+    `("shows the landed amount for $name", async ({ swap, shown }) => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <TransactionClaimed />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        payContext.setSwap(swap as SomeSwap);
+
+        expect(await claimedAmountText()).toBe(shown);
+    });
+
+    test("leaves a post-position DEX output untouched", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <TransactionClaimed />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        payContext.setSwap({
+            type: SwapType.Reverse,
+            assetReceive: LBTC,
+            claimTx: "txid",
+            claimAddress: liquidRegtest.unconfidential,
+            blindingKey: "00".repeat(32),
+            receiveAmount: 100_000,
+            dex: {
+                position: SwapPosition.Post,
+                quoteAmount: 42_000,
+                hops: [{ to: BTC }],
+            },
+        } as unknown as SomeSwap);
+
+        expect(await claimedAmountText()).toBe("42000");
+    });
+
     test("explains post-bridge delivery is still in progress", async () => {
         render(
             () => (

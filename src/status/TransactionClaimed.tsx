@@ -28,6 +28,7 @@ import {
     getFinalAssetReceive,
     getPostBridgeDetail,
 } from "../utils/swapCreator";
+import { claimSurchargeForSwap } from "../utils/unconfidential";
 import Broadcasting from "./Broadcasting";
 
 const paymentValidationUrl = (invoice: string, preimage: string): string => {
@@ -93,12 +94,16 @@ const TransactionClaimed = (props: { bridgeStatusLink?: JSX.Element }) => {
 
     const receiveAmount = () => {
         const current = swap() as ChainSwap | ReverseSwap | SubmarineSwap;
+
+        // A post-position DEX output is denominated in the DEX asset, while the
+        // surcharge only ever comes out of the Boltz claim output
+        const amount =
+            current.dex?.position === SwapPosition.Post
+                ? (current.dex.quoteAmount ?? 0)
+                : (current.receiveAmount ?? 0) - claimSurchargeForSwap(current);
+
         return formatAmount(
-            BigNumber(
-                (current.dex?.position === SwapPosition.Post
-                    ? current.dex.quoteAmount
-                    : current.receiveAmount) ?? 0,
-            ),
+            BigNumber(amount),
             denomination(),
             separator(),
             getFinalAssetReceive(current),

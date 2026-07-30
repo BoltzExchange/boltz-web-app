@@ -45,12 +45,15 @@ import {
     getFinalAssetReceive,
     getFinalAssetSend,
 } from "../utils/swapCreator";
+import { claimSurchargeForSwap } from "../utils/unconfidential";
 import SwapRefunded from "./SwapRefunded";
 
 type ReplacementQuote = {
     sentAmount: number;
     quote: number;
     receiveAmount: number;
+    // What the claim will deliver; `receiveAmount` is what it requests
+    landedReceiveAmount: number;
 };
 
 const applyReplacementQuote = (
@@ -146,7 +149,7 @@ const TransactionLockupFailed = (props: {
             const claimFee =
                 currentPairs[SwapType.Chain][chainSwap.assetSend][
                     chainSwap.assetReceive
-                ].fees.minerFees.user.claim + 1;
+                ].fees.minerFees.user.claim;
 
             const lockupTxHex = transactions.userLock.transaction.hex;
             let sentAmountSource = "swap.sendAmount";
@@ -194,6 +197,14 @@ const TransactionLockupFailed = (props: {
                   )
                 : boltzReceiveAmount;
 
+            // The surcharge comes out of the Boltz claim output; when a
+            // post-position DEX or bridge follows, the amount above is its
+            // output in a different asset
+            const surcharge =
+                getFinalAssetReceive(chainSwap) === chainSwap.assetReceive
+                    ? claimSurchargeForSwap(chainSwap)
+                    : 0;
+
             log.info(
                 `Prepared replacement quote for chain swap ${chainSwap.id}`,
                 {
@@ -205,6 +216,7 @@ const TransactionLockupFailed = (props: {
                         claimFee,
                         chainSwap.assetReceive,
                     ),
+                    surcharge,
                     boltzReceiveAmount: formatSwapAmountForLog(
                         boltzReceiveAmount,
                         chainSwap.assetReceive,
@@ -227,6 +239,7 @@ const TransactionLockupFailed = (props: {
                 quote: quote.amount,
                 sentAmount: outputAmount,
                 receiveAmount: receiveAmount.toNumber(),
+                landedReceiveAmount: receiveAmount.minus(surcharge).toNumber(),
             };
         } catch (e) {
             log.warn(
@@ -401,7 +414,7 @@ const TransactionLockupFailed = (props: {
                         <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                         <Amount
                             label={"will_receive"}
-                            amount={newQuote()!.receiveAmount}
+                            amount={newQuote()!.landedReceiveAmount}
                             asset={getFinalAssetReceive(swap() as ChainSwap)}
                         />
                     </div>

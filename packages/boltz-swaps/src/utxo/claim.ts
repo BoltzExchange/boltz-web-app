@@ -73,6 +73,8 @@ export type ChainSwapUtxoClaimParams = {
 export type ChainSwapUtxoClaimResult = {
     transactionHex: string;
     transactionId: string;
+    // Value of the claim output, which is `receiveAmount` less any surcharge
+    claimedAmount: number;
 };
 
 export type ReverseUtxoClaimParams = {
@@ -182,7 +184,7 @@ const buildAdjustedTaprootClaim = async (params: {
     ] as unknown as (ClaimDetails & { blindingPrivateKey?: Uint8Array })[];
 
     const decoded = decodeAddress(asset, params.claimAddress, network);
-    const claimTx = await createAdjustedClaim(
+    const { claimTx, claimedAmount } = await createAdjustedClaim(
         asset,
         params.receiveAmount,
         details,
@@ -193,7 +195,7 @@ const buildAdjustedTaprootClaim = async (params: {
         decoded.blindingKey,
     );
 
-    return { claimTx, details, tweaked, boltzPublicKey };
+    return { claimTx, claimedAmount, details, tweaked, boltzPublicKey };
 };
 
 type ClaimBuild = Awaited<ReturnType<typeof buildAdjustedTaprootClaim>>;
@@ -214,13 +216,14 @@ const claimCooperativeUtxo = async (
     const cooperative = params.cooperative ?? true;
     const { asset, network } = params;
 
-    const { claimTx, details, tweaked, boltzPublicKey } =
+    const { claimTx, claimedAmount, details, tweaked, boltzPublicKey } =
         await buildAdjustedTaprootClaim({ ...params, cooperative });
 
     if (!cooperative) {
         return {
             transactionHex: txToHex(claimTx),
             transactionId: txToId(claimTx),
+            claimedAmount,
         };
     }
 
@@ -244,6 +247,7 @@ const claimCooperativeUtxo = async (
         return {
             transactionHex: txToHex(claimTx),
             transactionId: txToId(claimTx),
+            claimedAmount,
         };
     } catch (e) {
         getLogger().warn(warnLabel, e);
@@ -321,6 +325,45 @@ export const claimReverseUtxo = (
         "Uncooperative reverse Taproot claim because",
     );
 
+// Spending blinded inputs into an unconfidential destination leaves no blinded
+// output, so boltz-core injects a blinded 1 sat OP_RETURN and funds it by
+// paying `fee - 1`. That sat, plus what the extra output costs at Liquid's
+// 0.1 sat/vbyte floor: it adds 45 discounted vbytes, and because the floor
+// truncates, `floor((v + 45) / 10) - floor(v / 10)` is 4 or 5 depending on
+// `v % 10`. 6 is the minimum that covers every alignment, not a padded value.
+export const liquidUnconfidentialClaimExtra = 6;
+
+// The surcharge comes out of the claim output, so the amount that lands is
+// `receiveAmount` minus this. Returns 0 for an address that cannot be decoded:
+// the claim would throw before reaching the surcharge anyway.
+export const unconfidentialClaimSurcharge = (
+    asset: string,
+    claimAddress: string,
+    network: UtxoNetwork,
+): number => {
+    if (asset !== LBTC) {
+        return 0;
+    }
+
+    try {
+        return decodeAddress(asset, claimAddress, network).blindingKey ===
+            undefined
+            ? liquidUnconfidentialClaimExtra
+            : 0;
+    } catch {
+        return 0;
+    }
+};
+
+const needsBlindedOpReturn = (
+    asset: string,
+    claimDetails: { blindingPrivateKey?: Uint8Array }[],
+    blindingKey?: Buffer,
+) =>
+    asset === LBTC &&
+    blindingKey === undefined &&
+    claimDetails.some((details) => details.blindingPrivateKey !== undefined);
+
 const createAdjustedClaim = async (
     asset: string,
     receiveAmount: number,
@@ -343,20 +386,39 @@ const createAdjustedClaim = async (
         inputSum += await getOutputAmount(asset, details as never);
     }
 
-    const feeBudget = Math.floor(inputSum - receiveAmount);
-    if (feeBudget < 0) {
+    // Comes out of the claim output: boltz-core sizes it as `inputSum - fee`
+    const extra = needsBlindedOpReturn(asset, claimDetails, blindingKey)
+        ? liquidUnconfidentialClaimExtra
+        : 0;
+
+    const feeBudget = Math.floor(inputSum - receiveAmount) + extra;
+    if (feeBudget < extra) {
         throw new Error(
             `cannot construct claim transaction: receiveAmount ${receiveAmount} exceeds available input sum ${inputSum}`,
         );
     }
+    if (extra > 0) {
+        if (inputSum - feeBudget <= 0) {
+            throw new Error(
+                `cannot construct claim transaction: receiveAmount ${receiveAmount} does not cover the ${extra} sat surcharge of an unconfidential destination`,
+            );
+        }
+
+        getLogger().debug(
+            `Reserved ${extra} sat for the blinded OP_RETURN of an unconfidential ${asset} claim`,
+        );
+    }
     const constructClaimTransaction = getConstructClaimTransaction(asset);
 
-    return constructClaimTransaction(
-        claimDetails,
-        destination,
-        feeBudget,
-        true,
-        liquidNetwork,
-        blindingKey,
-    );
+    return {
+        claimTx: constructClaimTransaction(
+            claimDetails,
+            destination,
+            feeBudget,
+            true,
+            liquidNetwork,
+            blindingKey,
+        ),
+        claimedAmount: receiveAmount - extra,
+    };
 };

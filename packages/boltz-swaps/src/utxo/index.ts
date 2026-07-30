@@ -15,6 +15,8 @@ export {
     claimChainSwapUtxo,
     claimReverseUtxo,
     createCooperativeSourceClaimSignature,
+    liquidUnconfidentialClaimExtra,
+    unconfidentialClaimSurcharge,
 } from "./claim.ts";
 export {
     type RefundLockup,

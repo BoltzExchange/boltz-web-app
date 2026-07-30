@@ -10,21 +10,16 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LBTC } from "../consts/Assets";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { isConfidentialAddress } from "../utils/compat";
 import { GasAbstractionType } from "../utils/swapCreator";
+import { claimSurchargeForAddress } from "../utils/unconfidential";
 import { getClaimAddress } from "./CreateButton";
 import FeesCollapse from "./FeesCollapse";
 import Denomination from "./settings/Denomination";
 
 const ppmFactor = 10_000;
-
-// When sending to an unconfidential address, we need to add an extra
-// confidential OP_RETURN output with 1 sat inside
-export const unconfidentialExtra = 5;
 
 const gasAbstractionExtraGasCost = 157_000n;
 
@@ -47,7 +42,8 @@ export const getFeeHighlightClass = (
     return "";
 };
 
-export const isToUnconfidentialLiquid = ({
+// Mirrored in the quote so the amount shown is the amount that lands
+export const quoteClaimSurcharge = ({
     assetReceive,
     addressValid,
     onchainAddress,
@@ -55,10 +51,10 @@ export const isToUnconfidentialLiquid = ({
     assetReceive: Accessor<string>;
     addressValid: Accessor<boolean>;
     onchainAddress: Accessor<string>;
-}) =>
-    assetReceive() === LBTC &&
-    addressValid() &&
-    !isConfidentialAddress(onchainAddress());
+}): number =>
+    addressValid()
+        ? claimSurchargeForAddress(assetReceive(), onchainAddress())
+        : 0;
 
 export const RoutingFee = () => {
     const { t } = useGlobalContext();
@@ -166,16 +162,13 @@ const Fees = () => {
 
             case SwapType.Reverse:
             case SwapType.Chain: {
-                let fee = pair().minerFees;
-                if (
-                    isToUnconfidentialLiquid({
+                const fee =
+                    pair().minerFees +
+                    quoteClaimSurcharge({
                         assetReceive,
                         addressValid,
                         onchainAddress,
-                    })
-                ) {
-                    fee += unconfidentialExtra;
-                }
+                    });
 
                 updateMinerFee(fee);
                 break;

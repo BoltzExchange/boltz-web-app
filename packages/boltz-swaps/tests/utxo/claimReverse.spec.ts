@@ -197,6 +197,7 @@ describe("claimReverseUtxo cooperative happy path", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });
@@ -215,6 +216,7 @@ describe("claimReverseUtxo uncooperative fallback", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });
@@ -230,6 +232,7 @@ describe("claimReverseUtxo non-cooperative branch", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });

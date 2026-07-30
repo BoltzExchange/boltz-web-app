@@ -26,10 +26,6 @@ import {
 import BlockExplorer, {
     BlockExplorerTargetKind,
 } from "../components/BlockExplorer";
-import {
-    isToUnconfidentialLiquid,
-    unconfidentialExtra,
-} from "../components/Fees";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SwapHeader from "../components/SwapHeader";
 import { getSwapIconAssets } from "../components/SwapIcons";
@@ -83,14 +79,6 @@ export const mapClaimableSwap = ({
         return undefined;
     }
 
-    const unconfidentialExtraFee = isToUnconfidentialLiquid({
-        assetReceive: () => swap.to,
-        addressValid: () => true,
-        onchainAddress: () => claim.lockupAddress,
-    })
-        ? unconfidentialExtra
-        : 0;
-
     if (swap.type === SwapType.Chain) {
         const refund = swap.refundDetails;
         if (refund === undefined && !isEvmAsset(swap.from)) {
@@ -103,8 +91,7 @@ export const mapClaimableSwap = ({
             assetReceive: swap.to,
             receiveAmount:
                 claim.amount -
-                ((pair as ChainPairTypeTaproot).fees.minerFees.user.claim +
-                    unconfidentialExtraFee),
+                (pair as ChainPairTypeTaproot).fees.minerFees.user.claim,
             version: OutputType.Taproot,
             claimPrivateKeyIndex: claim.keyIndex,
             claimDetails: {
@@ -135,8 +122,7 @@ export const mapClaimableSwap = ({
             swapTree: claim.tree,
             receiveAmount:
                 claim.amount -
-                ((pair as ReversePairTypeTaproot).fees.minerFees.claim +
-                    unconfidentialExtraFee),
+                (pair as ReversePairTypeTaproot).fees.minerFees.claim,
         };
     }
 

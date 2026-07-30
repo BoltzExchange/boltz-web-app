@@ -70,6 +70,9 @@ beforeEach(() => {
     claimUtxoMock.mockResolvedValue({
         transactionHex: "rawtxhex",
         transactionId: "claim-txid",
+        // Deliberately not the requested amount: the result must report what
+        // the claim output actually carries
+        claimedAmount: 49_794,
     });
     setBoltzSwapsConfig({ network: "regtest" });
 });
@@ -80,7 +83,7 @@ describe("executeChainSwap: UTXO destination", () => {
 
         expect(result).toEqual({
             claimTransactionId: "claim-txid",
-            receiveAmount: 49_800n,
+            receiveAmount: 49_794n,
         });
         expect(claimUtxoMock).toHaveBeenCalledTimes(1);
         expect(claimUtxoMock).toHaveBeenCalledWith(

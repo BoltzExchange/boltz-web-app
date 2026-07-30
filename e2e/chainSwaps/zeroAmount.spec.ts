@@ -60,7 +60,7 @@ test.describe("Chain Swap 0-amount", () => {
         const txInfo = JSON.parse(await getElementsWalletTx(txId!));
         expectApproxBtcAmount(
             txInfo.amount.bitcoin.toString(),
-            "0.00997297",
+            "0.00997298",
             amountBufferSats,
         );
     });
