@@ -1,5 +1,7 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { type RestorableSwap, patchSwapMetadata } from "boltz-swaps/client";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 
@@ -48,12 +50,16 @@ export type SwapMetadataLocalFields = Pick<
     | "originalDestination"
 >;
 
-// The payload plus the id of the swap it belongs to, sealed in so that
-// the backend cannot serve one swap's metadata for another. Optional only
-// because the creation flow encrypts before the backend assigns an id;
-// payloads carrying a lockup transaction must always be bound
+// Sealed in so the backend cannot serve one swap's metadata for another. Either
+// alone suffices; creation binds the hash before an id exists.
 type SwapMetadataPlaintext = SwapMetadataPayload & {
     swapId?: string;
+    preimageHash?: string;
+};
+
+export type SwapMetadataBinding = {
+    swapId: string;
+    preimageHash?: string;
 };
 
 const IV_LENGTH = 12;
@@ -191,11 +197,28 @@ const parseSwapMetadataPlaintext = parseObject<SwapMetadataPlaintext>({
     commitmentLockupTxHash: parseOptional(parseString),
     originalDestination: parseOptional(parseString),
     swapId: parseOptional(parseString),
+    preimageHash: parseOptional(parseString),
 });
 
-const hasMetadataTxIdentity = (payload: SwapMetadataPayload): boolean =>
-    payload.lockupTx !== undefined ||
-    payload.commitmentLockupTxHash !== undefined;
+const normalizeBinding = (value: string): string =>
+    value.replace(/^0x/i, "").toLowerCase();
+
+// Returns whether the binding was actually checked, not whether it matched
+const verifyBinding = (
+    bound: string | undefined,
+    expected: string | undefined,
+    name: string,
+): boolean => {
+    if (bound === undefined || expected === undefined) {
+        return false;
+    }
+
+    if (normalizeBinding(bound) !== normalizeBinding(expected)) {
+        throw new Error(`swap metadata is bound to a different ${name}`);
+    }
+
+    return true;
+};
 
 const hasRouteMetadata = (payload: SwapMetadataPayload): boolean =>
     payload.dex !== undefined || payload.bridge !== undefined;
@@ -240,10 +263,8 @@ export const encryptSwapMetadata = async (
     mnemonic: string,
     payload: SwapMetadataPlaintext,
 ): Promise<string> => {
-    if (payload.swapId === undefined && hasMetadataTxIdentity(payload)) {
-        throw new Error(
-            "swap metadata with a lockup transaction must be bound to a swap",
-        );
+    if (payload.swapId === undefined && payload.preimageHash === undefined) {
+        throw new Error("swap metadata must be bound to a swap");
     }
 
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
@@ -273,7 +294,7 @@ export const encryptSwapMetadata = async (
 
 export const decryptSwapMetadata = async (
     mnemonic: string,
-    swapId: string,
+    binding: SwapMetadataBinding,
     metadata: string,
 ): Promise<SwapMetadataPayload> => {
     const envelope = hex.decode(metadata);
@@ -295,19 +316,21 @@ export const decryptSwapMetadata = async (
     const parsed: unknown = JSON.parse(textDecoder.decode(plaintext));
     assertSupportedVersion(parsed);
 
-    const { swapId: boundSwapId, ...payload } = parseSwapMetadataPlaintext(
-        parsed,
-        "swap metadata",
-    );
+    const {
+        swapId: boundSwapId,
+        preimageHash: boundPreimageHash,
+        ...payload
+    } = parseSwapMetadataPlaintext(parsed, "swap metadata");
 
-    if (boundSwapId !== undefined && boundSwapId !== swapId) {
-        throw new Error("swap metadata is bound to a different swap");
-    }
+    const verified = [
+        verifyBinding(boundSwapId, binding.swapId, "swap"),
+        verifyBinding(boundPreimageHash, binding.preimageHash, "preimage hash"),
+    ].some(Boolean);
 
-    if (boundSwapId === undefined && hasMetadataTxIdentity(payload)) {
-        throw new Error(
-            "swap metadata with a lockup transaction must be bound to a swap",
-        );
+    // Anything the reader cannot tie to this swap is a replay candidate,
+    // including blobs written before the binding existed
+    if (!verified) {
+        throw new Error("swap metadata must be bound to a swap");
     }
 
     return payload;
@@ -362,6 +385,28 @@ export const buildSwapMetadataPayloadFromSwap = (
         originalDestination: swap.originalDestination,
     });
 
+export const getSwapPreimageHash = (swap: SomeSwap): string | undefined => {
+    try {
+        switch (swap.type) {
+            case SwapType.Submarine:
+                return decodeInvoice(swap.invoice).preimageHash;
+
+            case SwapType.Reverse:
+            case SwapType.Chain:
+                return hex.encode(sha256(hex.decode(swap.preimage)));
+
+            default:
+                return undefined;
+        }
+    } catch (error) {
+        log.warn("Cannot derive swap preimage hash", {
+            swapId: swap.id,
+            error,
+        });
+        return undefined;
+    }
+};
+
 export const patchEncryptedSwapMetadata = async (
     swap: SomeSwap,
     rescueFile: RescueFile | null | undefined,
@@ -389,6 +434,7 @@ export const patchEncryptedSwapMetadata = async (
             await encryptSwapMetadata(mnemonic, {
                 ...payload,
                 swapId: swap.id,
+                preimageHash: getSwapPreimageHash(swap),
             }),
         );
     } catch (error) {
@@ -439,7 +485,14 @@ export const hydrateRestorableSwapMetadata = async <T extends RestorableSwap>(
         return {
             ...swap,
             ...swapMetadataToLocalFields(
-                await decryptSwapMetadata(mnemonic, swap.id, swap.metadata),
+                await decryptSwapMetadata(
+                    mnemonic,
+                    {
+                        swapId: swap.id,
+                        preimageHash: swap.preimageHash,
+                    },
+                    swap.metadata,
+                ),
             ),
         };
     } catch (e) {

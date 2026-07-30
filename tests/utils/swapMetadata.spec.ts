@@ -1,4 +1,6 @@
+import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
+import type * as InvoiceModule from "boltz-swaps/invoice";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { beforeEach, vi } from "vitest";
 
@@ -7,15 +9,23 @@ import {
     buildSwapMetadataPayloadFromSwap,
     decryptSwapMetadata,
     encryptSwapMetadata,
+    getSwapPreimageHash,
+    hydrateRestorableSwapMetadata,
     patchEncryptedSwapMetadata,
 } from "../../src/utils/swapMetadata";
 
 const mocks = vi.hoisted(() => ({
     patchSwapMetadata: vi.fn(),
+    decodeInvoice: vi.fn(),
 }));
 
 vi.mock("boltz-swaps/client", () => ({
     patchSwapMetadata: mocks.patchSwapMetadata,
+}));
+
+vi.mock("boltz-swaps/invoice", async (importActual) => ({
+    ...(await importActual<typeof InvoiceModule>()),
+    decodeInvoice: mocks.decodeInvoice,
 }));
 
 const mnemonic =
@@ -28,6 +38,8 @@ const backendMetadataRegex = /^(?:[0-9a-fA-F]{2})+$/;
 const rescueFile = { mnemonic } as never;
 
 const swapId = "swap-id";
+const preimageHash =
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 const samplePayload: SwapMetadataPayload = {
     dex: {
@@ -91,7 +103,11 @@ describe("swapMetadata crypto", () => {
         const metadata = await encryptSwapMetadata(mnemonic, boundPayload);
         expect(typeof metadata).toBe("string");
 
-        const decrypted = await decryptSwapMetadata(mnemonic, swapId, metadata);
+        const decrypted = await decryptSwapMetadata(
+            mnemonic,
+            { swapId },
+            metadata,
+        );
         expect(decrypted).toEqual(samplePayload);
     });
 
@@ -108,13 +124,17 @@ describe("swapMetadata crypto", () => {
             ...payload,
             swapId,
         });
-        const decrypted = await decryptSwapMetadata(mnemonic, swapId, metadata);
+        const decrypted = await decryptSwapMetadata(
+            mnemonic,
+            { swapId },
+            metadata,
+        );
         expect(decrypted.bridge?.txHash).toEqual("0xbridgetx");
     });
 
     test("decrypts the golden vector (wire format is frozen)", async () => {
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, goldenVector),
+            decryptSwapMetadata(mnemonic, { swapId }, goldenVector),
         ).resolves.toEqual(legacyGoldenPayload);
     });
 
@@ -127,13 +147,13 @@ describe("swapMetadata crypto", () => {
             "c886e3cec1a5301423";
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, unsupportedVersionVector),
+            decryptSwapMetadata(mnemonic, { swapId }, unsupportedVersionVector),
         ).rejects.toThrow(/unsupported swap metadata version/);
     });
 
     test("rejects a legacy version-less metadata blob", async () => {
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, legacyVersionlessVector),
+            decryptSwapMetadata(mnemonic, { swapId }, legacyVersionlessVector),
         ).rejects.toThrow(/unsupported swap metadata version/);
     });
 
@@ -152,20 +172,102 @@ describe("swapMetadata crypto", () => {
     test("fails to decrypt with the wrong mnemonic", async () => {
         const metadata = await encryptSwapMetadata(mnemonic, boundPayload);
         await expect(
-            decryptSwapMetadata(otherMnemonic, swapId, metadata),
+            decryptSwapMetadata(otherMnemonic, { swapId }, metadata),
         ).rejects.toBeDefined();
     });
 
     test("rejects metadata bound to a different swap", async () => {
         const metadata = await encryptSwapMetadata(mnemonic, boundPayload);
         await expect(
-            decryptSwapMetadata(mnemonic, "other-swap", metadata),
+            decryptSwapMetadata(mnemonic, { swapId: "other-swap" }, metadata),
         ).rejects.toThrow(/bound to a different swap/);
     });
 
-    test("refuses to encrypt a lockup transaction without a swap binding", async () => {
+    test("refuses to encrypt anything without a binding", async () => {
         await expect(
             encryptSwapMetadata(mnemonic, samplePayload),
+        ).rejects.toThrow(/must be bound to a swap/);
+
+        await expect(
+            encryptSwapMetadata(mnemonic, { dex: samplePayload.dex }),
+        ).rejects.toThrow(/must be bound to a swap/);
+    });
+
+    test("rejects metadata bound to a different preimage hash", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...samplePayload,
+            preimageHash,
+        });
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId, preimageHash: preimageHash.replace("a", "b") },
+                metadata,
+            ),
+        ).rejects.toThrow(/bound to a different preimage hash/);
+    });
+
+    test("rejects a blob bound to both when either identifier differs", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...boundPayload,
+            preimageHash,
+        });
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "other-swap", preimageHash },
+                metadata,
+            ),
+        ).rejects.toThrow(/bound to a different swap/);
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId, preimageHash: preimageHash.replace("a", "b") },
+                metadata,
+            ),
+        ).rejects.toThrow(/bound to a different preimage hash/);
+    });
+
+    test("compares bindings ignoring hex case and 0x prefix", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...samplePayload,
+            preimageHash,
+        });
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId, preimageHash: `0x${preimageHash.toUpperCase()}` },
+                metadata,
+            ),
+        ).resolves.toEqual(samplePayload);
+    });
+
+    test("rejects a blob predating the binding", async () => {
+        // Route-only with no binding; forged, as encryptSwapMetadata refuses it
+        const preBindingVector =
+            "0000000000000000000000006278def9a95878147415e3cc9c173444873e6286" +
+            "e046250e28f554f5569f841981e56a9d58e8bae3c8713481175890e02b707241" +
+            "dfc7ac5a0ddfa1c18ffc70188415c795d619dc38abc9c6db23e37cf657de1bc7" +
+            "1caf5831361d2b905d22ae1e62971724b423c97a954483ba4ce6a45ac1d87450" +
+            "0cb55b42f664721d6b";
+
+        await expect(
+            decryptSwapMetadata(mnemonic, { swapId }, preBindingVector),
+        ).rejects.toThrow(/must be bound to a swap/);
+    });
+
+    test("rejects a bound blob the reader cannot check", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            dex: samplePayload.dex,
+            preimageHash,
+        });
+
+        await expect(
+            decryptSwapMetadata(mnemonic, { swapId }, metadata),
         ).rejects.toThrow(/must be bound to a swap/);
     });
 
@@ -179,14 +281,14 @@ describe("swapMetadata crypto", () => {
             "b2d4a8ea0e670b993c7c919324df496f43efdc11cac4c53915c74ad61f5bb9";
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, unboundLockupVector),
+            decryptSwapMetadata(mnemonic, { swapId }, unboundLockupVector),
         ).rejects.toThrow(/must be bound to a swap/);
     });
 
     test("rejects an envelope that is too short", async () => {
         const tooShort = hex.encode(new Uint8Array(12));
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, tooShort),
+            decryptSwapMetadata(mnemonic, { swapId }, tooShort),
         ).rejects.toThrow(/too short/);
     });
 
@@ -197,12 +299,13 @@ describe("swapMetadata crypto", () => {
         } as never);
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, metadata),
+            decryptSwapMetadata(mnemonic, { swapId }, metadata),
         ).resolves.toEqual(samplePayload);
     });
 
     test("rejects malformed DEX metadata", async () => {
         const metadata = await encryptSwapMetadata(mnemonic, {
+            swapId,
             dex: {
                 hops: [],
                 position: SwapPosition.Post,
@@ -210,12 +313,13 @@ describe("swapMetadata crypto", () => {
         } as never);
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, metadata),
+            decryptSwapMetadata(mnemonic, { swapId }, metadata),
         ).rejects.toThrow(/quoteAmount/);
     });
 
     test("ignores unexpected DEX hop fields (forward-compatible additive)", async () => {
         const metadata = await encryptSwapMetadata(mnemonic, {
+            swapId,
             dex: {
                 hops: [
                     {
@@ -231,7 +335,7 @@ describe("swapMetadata crypto", () => {
         } as never);
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, metadata),
+            decryptSwapMetadata(mnemonic, { swapId }, metadata),
         ).resolves.toEqual({
             dex: {
                 hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDT0" }],
@@ -243,6 +347,7 @@ describe("swapMetadata crypto", () => {
 
     test("rejects malformed DEX hop details", async () => {
         const metadata = await encryptSwapMetadata(mnemonic, {
+            swapId,
             dex: {
                 hops: [
                     {
@@ -262,7 +367,7 @@ describe("swapMetadata crypto", () => {
         } as never);
 
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, metadata),
+            decryptSwapMetadata(mnemonic, { swapId }, metadata),
         ).rejects.toThrow(/dexDetails\.tokenIn must be a string/);
     });
 });
@@ -278,7 +383,7 @@ describe("buildSwapMetadataPayloadFromSwap", () => {
         ).toEqual({ lockupTx: "0xtx" });
     });
 
-    test("route metadata can be encrypted before lockup tx identity exists", async () => {
+    test("route metadata binds the preimage hash before a swap id exists", async () => {
         const payload = buildSwapMetadataPayloadFromSwap({
             type: SwapType.Submarine,
             id: "swap-id",
@@ -294,9 +399,12 @@ describe("buildSwapMetadataPayloadFromSwap", () => {
             bridge: samplePayload.bridge,
         });
 
-        const metadata = await encryptSwapMetadata(mnemonic, payload!);
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...payload!,
+            preimageHash,
+        });
         await expect(
-            decryptSwapMetadata(mnemonic, swapId, metadata),
+            decryptSwapMetadata(mnemonic, { swapId, preimageHash }, metadata),
         ).resolves.toEqual({
             dex: samplePayload.dex,
             bridge: samplePayload.bridge,
@@ -342,7 +450,7 @@ describe("patchEncryptedSwapMetadata", () => {
         const [patchedSwapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
         expect(patchedSwapId).toBe("swap-id");
         await expect(
-            decryptSwapMetadata(mnemonic, "swap-id", metadata),
+            decryptSwapMetadata(mnemonic, { swapId: "swap-id" }, metadata),
         ).resolves.toEqual({
             lockupTx: "0xtx",
             dex: samplePayload.dex,
@@ -351,7 +459,7 @@ describe("patchEncryptedSwapMetadata", () => {
 
         // The blob must not decrypt for any other swap.
         await expect(
-            decryptSwapMetadata(mnemonic, "other-swap", metadata),
+            decryptSwapMetadata(mnemonic, { swapId: "other-swap" }, metadata),
         ).rejects.toThrow(/bound to a different swap/);
     });
 
@@ -371,7 +479,11 @@ describe("patchEncryptedSwapMetadata", () => {
         const [patchedSwapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
         expect(patchedSwapId).toBe("backend-swap-id");
         await expect(
-            decryptSwapMetadata(mnemonic, "backend-swap-id", metadata),
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "backend-swap-id" },
+                metadata,
+            ),
         ).resolves.toEqual({
             commitmentLockupTxHash: "0xcommitment",
             dex: samplePayload.dex,
@@ -421,7 +533,199 @@ describe("patchEncryptedSwapMetadata", () => {
         const [swapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
         expect(swapId).toBe("swap-id");
         await expect(
-            decryptSwapMetadata(mnemonic, "another-swap-id", metadata),
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "another-swap-id" },
+                metadata,
+            ),
         ).rejects.toThrow("swap metadata is bound to a different swap");
+    });
+
+    test("keeps the preimage hash the creation blob was bound to", async () => {
+        const preimage = "11".repeat(32);
+        const swapPreimageHash = hex.encode(sha256(hex.decode(preimage)));
+
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Reverse,
+                id: "reverse-swap-id",
+                preimage,
+                lockupTx: "0xtx",
+                dex: samplePayload.dex,
+            } as never,
+            rescueFile,
+        );
+
+        expect(mocks.patchSwapMetadata).toHaveBeenCalledTimes(1);
+        const [, metadata] = mocks.patchSwapMetadata.mock.calls[0];
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "reverse-swap-id", preimageHash: swapPreimageHash },
+                metadata,
+            ),
+        ).resolves.toEqual({ lockupTx: "0xtx", dex: samplePayload.dex });
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "reverse-swap-id", preimageHash },
+                metadata,
+            ),
+        ).rejects.toThrow(/bound to a different preimage hash/);
+    });
+
+    test("binds a submarine patch to the invoice preimage hash", async () => {
+        mocks.decodeInvoice.mockReturnValue({ preimageHash });
+
+        await patchEncryptedSwapMetadata(
+            {
+                type: SwapType.Submarine,
+                id: "submarine-swap-id",
+                invoice: "lnbc1",
+                lockupTx: "0xtx",
+                dex: samplePayload.dex,
+            } as never,
+            rescueFile,
+        );
+
+        const [, metadata] = mocks.patchSwapMetadata.mock.calls[0];
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: "submarine-swap-id", preimageHash },
+                metadata,
+            ),
+        ).resolves.toEqual({ lockupTx: "0xtx", dex: samplePayload.dex });
+    });
+});
+
+describe("getSwapPreimageHash", () => {
+    const preimage = "11".repeat(32);
+    const preimageHashOfPreimage = hex.encode(sha256(hex.decode(preimage)));
+
+    beforeEach(() => {
+        mocks.decodeInvoice.mockReset();
+    });
+
+    test("decodes the invoice for submarine swaps", () => {
+        mocks.decodeInvoice.mockReturnValue({ preimageHash });
+
+        expect(
+            getSwapPreimageHash({
+                type: SwapType.Submarine,
+                invoice: "lnbc1",
+            } as never),
+        ).toBe(preimageHash);
+    });
+
+    test.each([SwapType.Reverse, SwapType.Chain])(
+        "hashes the preimage for %s swaps",
+        (type) => {
+            expect(getSwapPreimageHash({ type, preimage } as never)).toBe(
+                preimageHashOfPreimage,
+            );
+        },
+    );
+
+    test("returns undefined for commitment swaps", () => {
+        expect(
+            getSwapPreimageHash({ type: SwapType.Commitment } as never),
+        ).toBeUndefined();
+    });
+
+    test("returns undefined instead of throwing on an undecodable invoice", () => {
+        mocks.decodeInvoice.mockImplementation(() => {
+            throw new Error("invalid invoice");
+        });
+
+        expect(
+            getSwapPreimageHash({
+                type: SwapType.Submarine,
+                id: "swap-id",
+                invoice: "not-an-invoice",
+            } as never),
+        ).toBeUndefined();
+    });
+});
+
+describe("hydrateRestorableSwapMetadata", () => {
+    const restorable = {
+        id: swapId,
+        type: SwapType.Chain,
+        status: "created",
+        from: "L-BTC",
+        to: "TBTC",
+        createdAt: 1,
+    };
+
+    test("returns the swap untouched without metadata", async () => {
+        await expect(
+            hydrateRestorableSwapMetadata(restorable as never, mnemonic),
+        ).resolves.toEqual(restorable);
+    });
+
+    test("merges the decrypted route onto the swap", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            swapId,
+            dex: samplePayload.dex,
+            originalDestination: "0xdestination",
+        });
+
+        await expect(
+            hydrateRestorableSwapMetadata(
+                { ...restorable, metadata } as never,
+                mnemonic,
+            ),
+        ).resolves.toMatchObject({
+            dex: samplePayload.dex,
+            originalDestination: "0xdestination",
+        });
+    });
+
+    test("drops a route replayed from another swap", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            swapId: "other-swap",
+            dex: samplePayload.dex,
+            originalDestination: "0xdestination",
+        });
+
+        const hydrated = await hydrateRestorableSwapMetadata(
+            { ...restorable, metadata } as never,
+            mnemonic,
+        );
+
+        expect(hydrated).not.toHaveProperty("dex");
+        expect(hydrated).not.toHaveProperty("originalDestination");
+    });
+
+    test("drops a hash-bound route when the backend withholds the hash", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            preimageHash,
+            dex: samplePayload.dex,
+            originalDestination: "0xdestination",
+        });
+
+        const hydrated = await hydrateRestorableSwapMetadata(
+            { ...restorable, metadata } as never,
+            mnemonic,
+        );
+
+        expect(hydrated).not.toHaveProperty("originalDestination");
+    });
+
+    test("keeps a hash-bound route the backend does report", async () => {
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            preimageHash,
+            dex: samplePayload.dex,
+            originalDestination: "0xdestination",
+        });
+
+        await expect(
+            hydrateRestorableSwapMetadata(
+                { ...restorable, preimageHash, metadata } as never,
+                mnemonic,
+            ),
+        ).resolves.toMatchObject({ originalDestination: "0xdestination" });
     });
 });

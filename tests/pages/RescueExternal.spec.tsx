@@ -618,6 +618,7 @@ describe("Rescue", () => {
             claimDetails,
             refundDetails: claimDetails,
             metadata: await encryptSwapMetadata(mnemonic, {
+                swapId: "metadata-swap",
                 dex: {
                     hops: [{ type: SwapType.Dex, from: "TBTC", to: "USDT0" }],
                     position: SwapPosition.Post,

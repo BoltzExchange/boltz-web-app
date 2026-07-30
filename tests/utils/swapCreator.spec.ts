@@ -1,12 +1,20 @@
+import { BigNumber } from "bignumber.js";
+import type * as ClientModule from "boltz-swaps/client";
+import type * as InvoiceModule from "boltz-swaps/invoice";
 import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
+import { vi } from "vitest";
 
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
+import type { RescueFile } from "../../src/utils/rescueFile";
 import {
     type BridgeDetail,
     type DexDetail,
     type SwapAssetRoute,
     type SwapBase,
+    createChain,
     createLocalSwapId,
+    createReverse,
+    createSubmarine,
     getFinalAssetReceive,
     getFinalAssetSend,
     getPostBridgeDetail,
@@ -14,6 +22,31 @@ import {
     getRefundBridgeDetail,
     noGasAbstraction,
 } from "../../src/utils/swapCreator";
+
+const mocks = vi.hoisted(() => ({
+    createSubmarineSwap: vi.fn(),
+    createReverseSwap: vi.fn(),
+    createChainSwap: vi.fn(),
+}));
+
+vi.mock("boltz-swaps/client", async (importActual) => ({
+    ...(await importActual<typeof ClientModule>()),
+    ...mocks,
+}));
+
+const invoicePreimageHash = "cc".repeat(32);
+
+vi.mock("boltz-swaps/invoice", async (importActual) => {
+    const actual = await importActual<typeof InvoiceModule>();
+    return {
+        ...actual,
+        decodeInvoice: () => ({
+            type: actual.InvoiceType.Bolt11,
+            satoshis: 10_000,
+            preimageHash: invoicePreimageHash,
+        }),
+    };
+});
 
 const makeBridge = (
     sourceAsset: string,
@@ -270,5 +303,115 @@ describe("getFinalAssetReceive", () => {
             assetReceive: BTC,
         };
         expect(getFinalAssetReceive(route)).toBe(BTC);
+    });
+});
+
+describe("swap metadata factory", () => {
+    const rescueFile: RescueFile = {
+        mnemonic:
+            "invite smile evidence shield frost source truly ball odor unfold example nuclear",
+    };
+
+    const newKey = () =>
+        Promise.resolve({
+            index: 0,
+            key: { publicKey: new Uint8Array(33) } as never,
+        });
+
+    const buildMetadata = () =>
+        vi.fn((preimageHash: string) =>
+            Promise.resolve(`encrypted:${preimageHash}`),
+        );
+
+    beforeEach(() => {
+        mocks.createSubmarineSwap.mockReset().mockResolvedValue({});
+        mocks.createReverseSwap.mockReset().mockResolvedValue({});
+        mocks.createChainSwap.mockReset().mockResolvedValue({});
+    });
+
+    test("binds submarine metadata to the invoice preimage hash", async () => {
+        const metadata = buildMetadata();
+
+        await createSubmarine(
+            BTC,
+            LN,
+            BigNumber(10_000),
+            BigNumber(9_900),
+            "lnbc1",
+            "pair-hash",
+            noGasAbstraction(),
+            newKey,
+            undefined,
+            metadata,
+        );
+
+        expect(metadata).toHaveBeenCalledWith(invoicePreimageHash);
+        expect(mocks.createSubmarineSwap.mock.calls[0][5]).toBe(
+            `encrypted:${invoicePreimageHash}`,
+        );
+    });
+
+    test("binds reverse metadata to the hash sent to the backend", async () => {
+        const metadata = buildMetadata();
+
+        await createReverse(
+            LN,
+            BTC,
+            BigNumber(10_000),
+            BigNumber(9_900),
+            "claim-address",
+            "pair-hash",
+            noGasAbstraction(),
+            rescueFile,
+            newKey,
+            undefined,
+            metadata,
+        );
+
+        const [preimageHash] = metadata.mock.calls[0];
+        expect(preimageHash).toMatch(/^[0-9a-f]{64}$/);
+        expect(mocks.createReverseSwap.mock.calls[0][3]).toBe(preimageHash);
+        expect(mocks.createReverseSwap.mock.calls[0][7]).toBe(
+            `encrypted:${preimageHash}`,
+        );
+    });
+
+    test("binds chain metadata to the hash sent to the backend", async () => {
+        const metadata = buildMetadata();
+
+        await createChain(
+            LBTC,
+            BTC,
+            BigNumber(10_000),
+            BigNumber(9_900),
+            "claim-address",
+            "pair-hash",
+            noGasAbstraction(),
+            rescueFile,
+            newKey,
+            undefined,
+            metadata,
+        );
+
+        const [preimageHash] = metadata.mock.calls[0];
+        expect(mocks.createChainSwap.mock.calls[0][3]).toBe(preimageHash);
+        expect(mocks.createChainSwap.mock.calls[0][8]).toBe(
+            `encrypted:${preimageHash}`,
+        );
+    });
+
+    test("creates without metadata when none is built", async () => {
+        await createSubmarine(
+            BTC,
+            LN,
+            BigNumber(10_000),
+            BigNumber(9_900),
+            "lnbc1",
+            "pair-hash",
+            noGasAbstraction(),
+            newKey,
+        );
+
+        expect(mocks.createSubmarineSwap.mock.calls[0][5]).toBeUndefined();
     });
 });

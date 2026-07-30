@@ -17,6 +17,7 @@ import {
     createSubmarineSwap,
 } from "boltz-swaps/client";
 import type { AlchemyCall } from "boltz-swaps/evm";
+import { decodeInvoice } from "boltz-swaps/invoice";
 import {
     type BridgeKind,
     GasAbstractionType,
@@ -131,6 +132,11 @@ export type SwapBaseData = {
     // Bridge routes for bridging before lockup or after claim.
     bridge?: BridgeDetail;
 };
+
+// A factory because the preimage it binds to is derived inside the create call
+export type SwapMetadataFactory = (
+    preimageHash: string,
+) => Promise<string | undefined>;
 
 export type SwapBase = SwapBaseData & {
     sendAmount: number;
@@ -350,7 +356,7 @@ export const createSubmarine = async (
     gasAbstraction: GasAbstraction,
     newKey: newKeyFn,
     originalDestination?: string,
-    metadata?: string,
+    metadata?: SwapMetadataFactory,
     refundAddress?: string,
 ): Promise<SubmarineSwap> => {
     const key = await newKey(assetSend as AssetType);
@@ -362,7 +368,7 @@ export const createSubmarine = async (
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
-        metadata,
+        await metadata?.(decodeInvoice(invoice).preimageHash),
         refundAddress,
     );
 
@@ -393,7 +399,7 @@ export const createReverse = async (
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
-    metadata?: string,
+    metadata?: SwapMetadataFactory,
 ): Promise<ReverseSwap> => {
     const key = await newKey(assetReceive as AssetType);
     const preimage = generatePreimage({
@@ -401,18 +407,19 @@ export const createReverse = async (
         keyIndex: key?.index,
         rescueFile,
     });
+    const preimageHash = hex.encode(sha256(preimage));
 
     const res = await createReverseSwap(
         assetSend,
         assetReceive,
         Number(sendAmount),
-        hex.encode(sha256(preimage)),
+        preimageHash,
         pairHash,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
         claimAddress,
-        metadata,
+        await metadata?.(preimageHash),
     );
 
     return {
@@ -443,7 +450,7 @@ export const createChain = async (
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
-    metadata?: string,
+    metadata?: SwapMetadataFactory,
 ): Promise<ChainSwap> => {
     const claimKey = await newKey(assetReceive as AssetType);
     const refundKey = await newKey(assetSend as AssetType);
@@ -452,13 +459,14 @@ export const createChain = async (
         keyIndex: claimKey?.index,
         rescueFile,
     });
+    const preimageHash = hex.encode(sha256(preimage));
     const res = await createChainSwap(
         assetSend,
         assetReceive,
         sendAmount.isZero() || sendAmount.isNaN()
             ? undefined
             : Number(sendAmount),
-        hex.encode(sha256(preimage)),
+        preimageHash,
         claimKey !== undefined
             ? Buffer.from(claimKey.key.publicKey).toString("hex")
             : undefined,
@@ -467,7 +475,7 @@ export const createChain = async (
             : undefined,
         claimAddress,
         pairHash,
-        metadata,
+        await metadata?.(preimageHash),
     );
 
     return {
