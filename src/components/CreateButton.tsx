@@ -81,6 +81,7 @@ import {
     type SwapMetadataSource,
     buildSwapMetadataPayload,
     encryptSwapMetadata,
+    patchEncryptedSwapMetadata,
 } from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
@@ -907,7 +908,7 @@ const CreateButton = () => {
                 ),
             });
 
-            await setSwapStorage({
+            const storedSwap = {
                 ...data,
                 getGasToken: getGasToken(),
                 dex,
@@ -926,7 +927,10 @@ const CreateButton = () => {
                                   .provider as unknown as HardwareSigner
                           ).getDerivationPath()
                         : undefined,
-            });
+            };
+
+            await setSwapStorage(storedSwap);
+            await patchEncryptedSwapMetadata(storedSwap, rescueFile());
 
             setInvoice("");
             setInvoiceValid(false);

@@ -371,11 +371,7 @@ export const patchEncryptedSwapMetadata = async (
     }
 
     const payload = buildSwapMetadataPayloadFromSwap(swap);
-    if (
-        payload === undefined ||
-        !hasRouteMetadata(payload) ||
-        !hasMetadataTxIdentity(payload)
-    ) {
+    if (payload === undefined || !hasRouteMetadata(payload)) {
         return;
     }
 

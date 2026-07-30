@@ -407,7 +407,7 @@ describe("patchEncryptedSwapMetadata", () => {
         expect(mocks.patchSwapMetadata).not.toHaveBeenCalled();
     });
 
-    test("does not patch route metadata without tx identity", async () => {
+    test("binds route metadata without tx identity to the swap id", async () => {
         await patchEncryptedSwapMetadata(
             {
                 type: SwapType.Submarine,
@@ -417,6 +417,11 @@ describe("patchEncryptedSwapMetadata", () => {
             rescueFile,
         );
 
-        expect(mocks.patchSwapMetadata).not.toHaveBeenCalled();
+        expect(mocks.patchSwapMetadata).toHaveBeenCalledTimes(1);
+        const [swapId, metadata] = mocks.patchSwapMetadata.mock.calls[0];
+        expect(swapId).toBe("swap-id");
+        await expect(
+            decryptSwapMetadata(mnemonic, "another-swap-id", metadata),
+        ).rejects.toThrow("swap metadata is bound to a different swap");
     });
 });
