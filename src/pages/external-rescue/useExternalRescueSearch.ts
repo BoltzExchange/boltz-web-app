@@ -152,7 +152,7 @@ type RestoreRescueResult = Extract<
     { source: RescueResultSource.Restore }
 >;
 
-export const getRestorePreimageHash = (swap: { preimageHash?: string }) =>
+export const getRestorePreimageHash = (swap: RestoreSwapAssets) =>
     normalizeEvmId(swap.preimageHash);
 
 export const isEvmRestoreCandidate = (swap: RestoreSwapAssets) =>
@@ -166,7 +166,13 @@ export const isEvmRestoreCandidate = (swap: RestoreSwapAssets) =>
 export const shouldShowEvmRestoreResult = (
     swap: RestoreSwapAssets,
     evmRescuePreimageHashes: Set<string>,
+    action?: RescueAction,
 ) => {
+    // Only the restore row can claim; the EVM lockup row refunds or waits
+    if (action === RescueAction.Claim) {
+        return true;
+    }
+
     if (!isEvmRestoreCandidate(swap)) {
         return true;
     }
@@ -401,12 +407,13 @@ export const useExternalRescueSearch = () => {
                     .map(normalizeEvmId),
             ),
     );
-    const shouldShowRestoreResult = (swap: RestoreSwapAssets) =>
-        shouldShowEvmRestoreResult(swap, evmRescuePreimageHashes());
+    const shouldShowRestoreResult = (
+        swap: RestoreSwapAssets,
+        action?: RescueAction,
+    ) => shouldShowEvmRestoreResult(swap, evmRescuePreimageHashes(), action);
 
     const unifiedResults = createMemo(() => {
         const restoreResults: RestoreRescueResult[] = (btcRescueList() ?? [])
-            .filter(shouldShowRestoreResult)
             .map((swap): RestoreRescueResult => {
                 const action = swap.action ?? RescueAction.Pending;
                 return {
@@ -417,7 +424,10 @@ export const useExternalRescueSearch = () => {
                     sortValue: getSwapDate(swap),
                     swap,
                 };
-            });
+            })
+            .filter((result) =>
+                shouldShowRestoreResult(result.swap, result.action),
+            );
         const linkedEvmRefundRestoreIds = new Set(
             visibleEvmSwaps()
                 .map(restoredOriginalSwapId)
@@ -428,17 +438,35 @@ export const useExternalRescueSearch = () => {
                 result.action === RescueAction.Claim ||
                 !linkedEvmRefundRestoreIds.has(result.swap.id),
         );
+        const claimableRestores = restoreResults.filter(
+            (result) => result.action === RescueAction.Claim,
+        );
         const claimableRestoreIds = new Set(
-            restoreResults
-                .filter((result) => result.action === RescueAction.Claim)
-                .map((result) => result.swap.id),
+            claimableRestores.map((result) => result.swap.id),
+        );
+        // The EVM lockup row of a claimable swap is the duplicate now: dropping
+        // it keeps a single row per swap that opens the claim flow
+        const claimableRestorePreimageHashes = new Set(
+            claimableRestores
+                .map((result) => getRestorePreimageHash(result.swap))
+                .filter(
+                    (preimageHash) =>
+                        preimageHash !== "" &&
+                        !isEmptyPreimageHash(preimageHash),
+                ),
         );
         const evmResults: UnifiedRescueResult[] = visibleEvmSwaps()
             .filter((swap) => {
                 const restoreId = restoredOriginalSwapId(swap);
-                return (
-                    restoreId === undefined ||
-                    !claimableRestoreIds.has(restoreId)
+                if (
+                    restoreId !== undefined &&
+                    claimableRestoreIds.has(restoreId)
+                ) {
+                    return false;
+                }
+
+                return !claimableRestorePreimageHashes.has(
+                    normalizeEvmId(swap.preimageHash),
                 );
             })
             .map((swap) => {
