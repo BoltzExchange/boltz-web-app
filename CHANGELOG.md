@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [2.2.1](https://github.com/BoltzExchange/boltz-web-app/compare/v2.2.0..v2.2.1) - 2026-07-30
+
+### Bug Fixes
+
+- claim EVM swap via rescue (#1591) - ([eb361fc](https://github.com/BoltzExchange/boltz-web-app/commit/eb361fc840a8251a4ab87f56ef429860219f96ce))
+- persist full route amounts as dex.quoteAmount (#1592) - ([ef84026](https://github.com/BoltzExchange/boltz-web-app/commit/ef840262c3d30978551ef1d60eab7e7eeaa0158a))
+- bind swap metadata to the swap id at creation (#1593) - ([e483773](https://github.com/BoltzExchange/boltz-web-app/commit/e483773134f3f0726c41c4287d8dd08ebf65ad0e))
+
+---
 ## [2.2.0](https://github.com/BoltzExchange/boltz-web-app/compare/v2.1.4..v2.2.0) - 2026-07-30
 
 ### Bug Fixes
