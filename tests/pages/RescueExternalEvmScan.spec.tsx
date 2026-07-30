@@ -966,6 +966,7 @@ describe("Rescue EVM scan", () => {
                 },
             },
             metadata: await encryptSwapMetadata(mnemonic, {
+                swapId: "QzNPe7rckJCp",
                 dex: {
                     hops: [
                         {

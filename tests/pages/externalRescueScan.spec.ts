@@ -471,6 +471,7 @@ describe("external EVM rescue scan helpers", () => {
                             "c75a1b92ece410e13823372edceb1fc148c37d36586c2ccd8b2c78dac1556a8e",
                     },
                     metadata: await encryptSwapMetadata(mnemonic, {
+                        swapId: "QzNPe7rckJCp",
                         dex: {
                             hops: [
                                 {

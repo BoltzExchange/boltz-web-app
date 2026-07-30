@@ -72,6 +72,7 @@ import {
     GasAbstractionType,
     type ReverseSwap,
     type SubmarineSwap,
+    type SwapMetadataFactory,
     createChain,
     createCommitmentSwap,
     createReverse,
@@ -81,6 +82,7 @@ import {
     type SwapMetadataSource,
     buildSwapMetadataPayload,
     encryptSwapMetadata,
+    patchEncryptedSwapMetadata,
 } from "../utils/swapMetadata";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
@@ -586,9 +588,9 @@ const CreateButton = () => {
             let data!: SubmarineSwap | ReverseSwap | ChainSwap;
             let dex: SwapMetadataSource["dex"];
             let bridge: SwapMetadataSource["bridge"];
-            const buildCreationMetadata = async (
+            const buildRouteDetails = (
                 creationData?: Pick<CreationData, "hops" | "hopsPosition">,
-            ): Promise<string | undefined> => {
+            ) => {
                 const sourceAmount =
                     amountChanged() === Side.Send ? sendAmount() : undefined;
                 bridge =
@@ -615,7 +617,11 @@ const CreateButton = () => {
                               bridge === undefined ? sourceAmount : undefined,
                           )
                         : undefined;
+            };
 
+            const buildCreationMetadata: SwapMetadataFactory = async (
+                preimageHash,
+            ) => {
                 const payload = buildSwapMetadataPayload({
                     dex,
                     bridge,
@@ -629,7 +635,10 @@ const CreateButton = () => {
                     return undefined;
                 }
 
-                return await encryptSwapMetadata(mnemonic, payload);
+                return await encryptSwapMetadata(mnemonic, {
+                    ...payload,
+                    preimageHash,
+                });
             };
 
             switch (swapType()) {
@@ -642,8 +651,7 @@ const CreateButton = () => {
                         if (creationData === undefined) {
                             throw new Error("missing swap creation data");
                         }
-                        const metadata =
-                            await buildCreationMetadata(creationData);
+                        buildRouteDetails(creationData);
                         const refundAddress =
                             bridge?.position === SwapPosition.Pre
                                 ? getGasAbstractionSigner(
@@ -660,7 +668,7 @@ const CreateButton = () => {
                             gasAbstraction,
                             newKey,
                             originalDestination(),
-                            metadata,
+                            buildCreationMetadata,
                             refundAddress,
                         );
                     };
@@ -784,7 +792,7 @@ const CreateButton = () => {
                         if (mrhRescue === null) {
                             throw new Error("missing rescue file");
                         }
-                        const metadata = await buildCreationMetadata();
+                        buildRouteDetails();
                         const chainSwap = await createChain(
                             assetSend(),
                             bip21Asset,
@@ -796,7 +804,7 @@ const CreateButton = () => {
                             mrhRescue,
                             newKey,
                             originalDestination(),
-                            metadata,
+                            buildCreationMetadata,
                         );
 
                         data = {
@@ -835,7 +843,7 @@ const CreateButton = () => {
                     if (rescue === null) {
                         throw new Error("missing rescue file");
                     }
-                    const metadata = await buildCreationMetadata(creationData);
+                    buildRouteDetails(creationData);
                     data = await createReverse(
                         creationData.from,
                         creationData.to,
@@ -847,7 +855,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
-                        metadata,
+                        buildCreationMetadata,
                     );
                     break;
                 }
@@ -864,7 +872,7 @@ const CreateButton = () => {
                     if (rescue === null) {
                         throw new Error("missing rescue file");
                     }
-                    const metadata = await buildCreationMetadata(creationData);
+                    buildRouteDetails(creationData);
                     data = await createChain(
                         creationData.from,
                         creationData.to,
@@ -876,7 +884,7 @@ const CreateButton = () => {
                         rescue,
                         newKey,
                         getOriginalDestination(),
-                        metadata,
+                        buildCreationMetadata,
                     );
                     break;
                 }
@@ -907,7 +915,7 @@ const CreateButton = () => {
                 ),
             });
 
-            await setSwapStorage({
+            const storedSwap = {
                 ...data,
                 getGasToken: getGasToken(),
                 dex,
@@ -926,7 +934,10 @@ const CreateButton = () => {
                                   .provider as unknown as HardwareSigner
                           ).getDerivationPath()
                         : undefined,
-            });
+            };
+
+            await setSwapStorage(storedSwap);
+            await patchEncryptedSwapMetadata(storedSwap, rescueFile());
 
             setInvoice("");
             setInvoiceValid(false);
