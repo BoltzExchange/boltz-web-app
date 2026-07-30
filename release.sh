@@ -2,7 +2,7 @@
 
 # This script is used to release a new version of the bolt-web-app
 # It will:
-# - create a new branch with the tag name and update the version in package.json
+# - create a new release branch and update the version in package.json
 # - generate a changelog and release notes
 # - create a branch, commit the changes and push them to the remote repository
 # - create a pull request with the changes
@@ -34,15 +34,16 @@ fi
 
 # Extract version without 'v' prefix
 version=${tag#v}
+branch_name="${tag}-branch"
 
-git checkout -b $tag
+git checkout -b "$branch_name"
 
 # Bump version in package.json
 bun pm version "$version" --no-git-tag-version
 bun ci
 
 # Generate changelog after we updated the version
-bunx git-cliff -o CHANGELOG.md -t $tag
+bunx git-cliff --unreleased --tag "$tag" --prepend CHANGELOG.md
 
 git add package.json bun.lock LICENSE CHANGELOG.md
 
@@ -51,8 +52,8 @@ commit_message="chore: bump version to $tag"
 
 git commit -m "$commit_message"
 
-git push origin $tag
-gh pr create --title "$commit_message" --base main --head $tag --body "$commit_message"
+git push origin "$branch_name"
+gh pr create --title "$commit_message" --base main --head "$branch_name" --body "$commit_message"
 
 echo "1. Review the release notes"
 echo "2. Merge the pull request"
