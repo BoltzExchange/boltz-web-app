@@ -316,6 +316,7 @@ export const createSubmarineSwap = (
     pairHash: string,
     refundPublicKey?: string,
     metadata?: string,
+    refundAddress?: string,
 ): Promise<SubmarineCreatedResponse> =>
     fetcher("/v2/swap/submarine", {
         from,
@@ -325,6 +326,7 @@ export const createSubmarineSwap = (
         pairHash,
         referralId: getReferralId(),
         metadata,
+        refundAddress,
     });
 
 export const createReverseSwap = (

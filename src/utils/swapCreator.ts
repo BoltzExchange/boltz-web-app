@@ -70,7 +70,6 @@ export type BridgeDetail = BridgeRoute & {
     details?: BridgeDetails;
     pendingSend?: PendingBridgeSend;
     evmSendCandidate?: PendingEvmBridgeSend;
-    refundAddress?: string;
 
     // Recovery state when a pre-bridge DEX quote falls short and the bridged
     // funds must be retried or refunded back to the original sender.
@@ -287,6 +286,15 @@ export const getPostBridgeDetail = (
 ): BridgeDetail | undefined =>
     bridge?.position === SwapPosition.Post ? bridge : undefined;
 
+export const getRefundBridgeDetail = (route: {
+    dex?: DexDetail;
+    bridge?: BridgeDetail;
+}): BridgeDetail | undefined =>
+    route.dex?.position === SwapPosition.Pre &&
+    route.bridge?.txHash !== undefined
+        ? getPreBridgeDetail(route.bridge)
+        : undefined;
+
 const generatePreimage = ({
     asset,
     keyIndex,
@@ -343,6 +351,7 @@ export const createSubmarine = async (
     newKey: newKeyFn,
     originalDestination?: string,
     metadata?: string,
+    refundAddress?: string,
 ): Promise<SubmarineSwap> => {
     const key = await newKey(assetSend as AssetType);
     const res = await createSubmarineSwap(
@@ -354,6 +363,7 @@ export const createSubmarine = async (
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
         metadata,
+        refundAddress,
     );
 
     return {

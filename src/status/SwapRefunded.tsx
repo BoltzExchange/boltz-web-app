@@ -1,6 +1,5 @@
 import { useNavigate } from "@solidjs/router";
 import { bridgeRegistry } from "boltz-swaps/bridge";
-import { SwapPosition } from "boltz-swaps/types";
 import { Show } from "solid-js";
 
 import BlockExplorer, {
@@ -10,19 +9,17 @@ import { getAssetNetwork } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { formatDenomination } from "../utils/denomination";
+import { getRefundBridgeDetail } from "../utils/swapCreator";
 
 const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
     const { t, denomination } = useGlobalContext();
-    const preBridge = () =>
-        swap()?.bridge?.position === SwapPosition.Pre
-            ? swap()!.bridge
-            : undefined;
+    const refundBridge = () => getRefundBridgeDetail(swap() ?? {});
 
     return (
         <div>
-            <Show when={preBridge()} fallback={<p>{t("refunded")}</p>}>
+            <Show when={refundBridge()} fallback={<p>{t("refunded")}</p>}>
                 {(bridge) => (
                     <p>
                         {t("refunded_bridge_pending", {
@@ -38,13 +35,19 @@ const SwapRefunded = (props: { refundTxId: string }) => {
                 )}
             </Show>
             <hr />
-            <BlockExplorer
-                asset={preBridge()?.sourceAsset ?? swap()!.assetSend}
-                kind={BlockExplorerTargetKind.Tx}
-                id={props.refundTxId}
-                explorer={bridgeRegistry.getExplorerKind(preBridge())}
-                typeLabel="refund_tx"
-            />
+            <Show when={swap()}>
+                {(currentSwap) => (
+                    <BlockExplorer
+                        asset={currentSwap().assetSend}
+                        kind={BlockExplorerTargetKind.Tx}
+                        id={props.refundTxId}
+                        explorer={bridgeRegistry.getExplorerKind(
+                            refundBridge(),
+                        )}
+                        typeLabel="refund_tx"
+                    />
+                )}
+            </Show>
             <hr />
             <span class="btn" onClick={() => navigate("/swap")}>
                 {t("new_swap")}

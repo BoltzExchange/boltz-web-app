@@ -5,6 +5,9 @@ import { type Config, baseConfig, chooseUrl } from "src/configs/base";
 const mainnetPreset = buildMainnetConfig({
     filterAssets: (asset) =>
         asset === "TBTC" || asset === "USDT0" || asset === "USDT0-ETH",
+    canSend: {
+        "USDT0-ETH": true,
+    },
     rpcUrls: {
         ARB: [`http://127.0.0.1:${process.env.ARBITRUM_E2E_PORT ?? "18545"}`],
         ETH: [`http://127.0.0.1:${process.env.ETHEREUM_E2E_PORT ?? "18546"}`],

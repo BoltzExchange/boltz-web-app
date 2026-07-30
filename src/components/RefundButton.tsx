@@ -332,6 +332,10 @@ const buildRefundFollowUpCalls = async (
 ) => {
     let resolvedDestination = destination;
     const isPreBridge = bridge?.position === SwapPosition.Pre;
+    // Without the bridge transaction (legacy restores), the original sender
+    // cannot be resolved; deliver to the destination locally instead of
+    // bridging back
+    const bridgeBack = isPreBridge && bridge?.txHash !== undefined;
 
     if (isPreBridge) {
         if (
@@ -343,8 +347,9 @@ const buildRefundFollowUpCalls = async (
             );
         }
 
-        resolvedDestination =
-            bridge.refundAddress ?? (await resolveBridgeSender(bridge));
+        if (bridgeBack) {
+            resolvedDestination = await resolveBridgeSender(bridge);
+        }
     }
 
     if (dexDetails === undefined || dexDetails.position !== SwapPosition.Pre) {
@@ -365,7 +370,7 @@ const buildRefundFollowUpCalls = async (
         throw new Error("missing token address for refund");
     }
 
-    if (!isPreBridge) {
+    if (!bridgeBack) {
         const [quote] = await quoteDexAmountIn(
             quoteChain,
             refundData.tokenAddress,
@@ -409,7 +414,7 @@ const buildRefundFollowUpCalls = async (
     });
 };
 
-const buildErc20RefundTransaction = async ({
+export const buildErc20RefundTransaction = async ({
     gasAbstraction,
     transactionSigner,
     contract,

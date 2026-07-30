@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { bridgeRegistry } from "boltz-swaps/bridge";
 import { quoteDexAmountIn } from "boltz-swaps/client";
 import {
     assetAmountToSats,
@@ -59,7 +60,10 @@ import { cropString } from "../utils/helper";
 import { estimateFeesPerGas } from "../utils/provider";
 import { fetchDexQuote } from "../utils/quoter";
 import { getTimeoutEta } from "../utils/rescue";
-import { GasAbstractionType } from "../utils/swapCreator";
+import {
+    GasAbstractionType,
+    getRefundBridgeDetail,
+} from "../utils/swapCreator";
 import { getEvmDisplayAssets } from "./external-rescue/Results";
 import { normalizeEvmId } from "./external-rescue/scan";
 import type { EvmRescueResult } from "./external-rescue/types";
@@ -83,6 +87,12 @@ const getEvmRefundDexDetails = (refundData: EvmRescueResult) =>
 
 const getEvmRefundBridgeDetails = (refundData: EvmRescueResult) =>
     refundData.bridge ?? refundData.restoredSwap?.bridge;
+
+const getEvmRefundBridge = (refundData: EvmRescueResult) =>
+    getRefundBridgeDetail({
+        dex: getEvmRefundDexDetails(refundData),
+        bridge: getEvmRefundBridgeDetails(refundData),
+    });
 
 export const getEvmRefundDisplayAmount = (
     refundData: EvmRescueResult,
@@ -197,10 +207,13 @@ const RefundState = (props: {
         return undefined;
     };
 
-    // Pre-bridge refunds resolve their destination from the bridge instead
+    // Pre-bridge refunds resolve their destination from the bridge instead;
+    // legacy restores may lack the bridge transaction needed to do so
     const needsResolvedDestination = () =>
         dexDetails()?.position === SwapPosition.Pre &&
         bridgeDetails()?.position !== SwapPosition.Pre;
+    const routeResolvesDestination = () =>
+        getEvmRefundBridge(props.refundData) !== undefined;
 
     const [resolvedFunder] = createResource(
         () => {
@@ -244,8 +257,23 @@ const RefundState = (props: {
         }
     };
 
+    // Only routed and commitment lockups pay out to the gas key; plain
+    // lockups refund straight to the user's wallet
+    const refundsToGasKey = () => {
+        const gasSigner = gasAbstraction()?.signer;
+        return (
+            gasSigner !== undefined &&
+            normalizeEvmId(props.refundData.refundAddress) ===
+                normalizeEvmId(gasSigner.address)
+        );
+    };
+
+    // Without a destination, a gas-abstracted refund would strand the funds
+    // on the gas-abstraction address instead of the user's wallet
     const destinationMissing = () =>
-        needsResolvedDestination() && destination() === undefined;
+        refundsToGasKey() &&
+        !routeResolvesDestination() &&
+        destination() === undefined;
 
     return (
         <>
@@ -675,6 +703,11 @@ const RescueEvm = () => {
                                             asset={params.asset}
                                             kind={BlockExplorerTargetKind.Tx}
                                             id={refundTxId()!}
+                                            explorer={bridgeRegistry.getExplorerKind(
+                                                getEvmRefundBridge(
+                                                    rescueData()!,
+                                                ),
+                                            )}
                                         />
                                     </>
                                 }>

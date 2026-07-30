@@ -3,6 +3,7 @@ import { BridgeKind, SwapPosition, SwapType } from "boltz-swaps/types";
 import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import {
     type BridgeDetail,
+    type DexDetail,
     type SwapAssetRoute,
     type SwapBase,
     createLocalSwapId,
@@ -10,6 +11,7 @@ import {
     getFinalAssetSend,
     getPostBridgeDetail,
     getPreBridgeDetail,
+    getRefundBridgeDetail,
     noGasAbstraction,
 } from "../../src/utils/swapCreator";
 
@@ -72,6 +74,66 @@ describe("getPostBridgeDetail", () => {
 
     test("returns undefined when no bridge is provided", () => {
         expect(getPostBridgeDetail(undefined)).toBeUndefined();
+    });
+});
+
+describe("getRefundBridgeDetail", () => {
+    const makeDex = (position: SwapPosition): DexDetail => ({
+        hops: [],
+        position,
+        quoteAmount: 0,
+    });
+
+    const preDex = makeDex(SwapPosition.Pre);
+    const preBridgeWithTx = {
+        ...makeBridge("USDT0-POL", USDT0, SwapPosition.Pre),
+        txHash: "0xdead",
+    };
+
+    test("returns the pre-bridge when the forward bridge transaction is known", () => {
+        expect(
+            getRefundBridgeDetail({
+                dex: preDex,
+                bridge: preBridgeWithTx,
+            }),
+        ).toBe(preBridgeWithTx);
+    });
+
+    test("returns undefined without the forward bridge transaction", () => {
+        expect(
+            getRefundBridgeDetail({
+                dex: preDex,
+                bridge: makeBridge("USDT0-POL", USDT0, SwapPosition.Pre),
+            }),
+        ).toBeUndefined();
+    });
+
+    test("returns undefined without a pre-swap DEX route", () => {
+        expect(
+            getRefundBridgeDetail({ bridge: preBridgeWithTx }),
+        ).toBeUndefined();
+        expect(
+            getRefundBridgeDetail({
+                dex: makeDex(SwapPosition.Post),
+                bridge: preBridgeWithTx,
+            }),
+        ).toBeUndefined();
+    });
+
+    test("returns undefined for post-bridges", () => {
+        expect(
+            getRefundBridgeDetail({
+                dex: preDex,
+                bridge: {
+                    ...makeBridge(USDT0, "USDT0-POL", SwapPosition.Post),
+                    txHash: "0xdead",
+                },
+            }),
+        ).toBeUndefined();
+    });
+
+    test("returns undefined when no bridge is attached", () => {
+        expect(getRefundBridgeDetail({ dex: preDex })).toBeUndefined();
     });
 });
 
