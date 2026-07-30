@@ -36,6 +36,7 @@ import {
     isEvmRestoreCandidate,
     shouldShowEvmRestoreResult,
 } from "../../src/pages/external-rescue/useExternalRescueSearch";
+import { RescueAction } from "../../src/utils/rescue";
 import {
     type RescueFile,
     derivePreimageFromRescueKey,
@@ -533,6 +534,37 @@ describe("external EVM rescue scan helpers", () => {
         expect(shouldShowEvmRestoreResult(restoreRow, evmPreimageHashes)).toBe(
             false,
         );
+        expect(
+            shouldShowEvmRestoreResult(
+                restoreRow,
+                evmPreimageHashes,
+                RescueAction.Pending,
+            ),
+        ).toBe(false);
+    });
+
+    test("keeps a claimable restore row when the EVM lockup row exists", () => {
+        const restoreRow = {
+            id: "QzNPe7rckJCp",
+            type: SwapType.Chain,
+            status: "transaction.server.confirmed",
+            createdAt: 1782787562,
+            from: "TBTC",
+            to: "L-BTC",
+            preimageHash:
+                "c75a1b92ece410e13823372edceb1fc148c37d36586c2ccd8b2c78dac1556a8e",
+        };
+        const evmPreimageHashes = new Set([
+            "c75a1b92ece410e13823372edceb1fc148c37d36586c2ccd8b2c78dac1556a8e",
+        ]);
+
+        expect(
+            shouldShowEvmRestoreResult(
+                restoreRow,
+                evmPreimageHashes,
+                RescueAction.Claim,
+            ),
+        ).toBe(true);
     });
 
     test("shows unmatched EVM restore rows while the chain scan is still running", () => {
