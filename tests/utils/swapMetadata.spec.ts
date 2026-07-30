@@ -246,6 +246,26 @@ describe("swapMetadata crypto", () => {
         ).resolves.toEqual(samplePayload);
     });
 
+    test("compares swap ids exactly", async () => {
+        // Swap ids are case sensitive, so a differently cased id is another swap
+        const casedSwapId = "QzNPe7rckJCp";
+        const metadata = await encryptSwapMetadata(mnemonic, {
+            ...samplePayload,
+            swapId: casedSwapId,
+        });
+
+        await expect(
+            decryptSwapMetadata(
+                mnemonic,
+                { swapId: casedSwapId.toLowerCase() },
+                metadata,
+            ),
+        ).rejects.toThrow("swap metadata is bound to a different swap");
+        await expect(
+            decryptSwapMetadata(mnemonic, { swapId: casedSwapId }, metadata),
+        ).resolves.toEqual(samplePayload);
+    });
+
     test("rejects a blob predating the binding", async () => {
         // Route-only with no binding; forged, as encryptSwapMetadata refuses it
         const preBindingVector =

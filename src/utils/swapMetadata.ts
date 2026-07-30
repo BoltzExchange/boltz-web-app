@@ -200,7 +200,7 @@ const parseSwapMetadataPlaintext = parseObject<SwapMetadataPlaintext>({
     preimageHash: parseOptional(parseString),
 });
 
-const normalizeBinding = (value: string): string =>
+const normalizeHexBinding = (value: string): string =>
     value.replace(/^0x/i, "").toLowerCase();
 
 // Returns whether the binding was actually checked, not whether it matched
@@ -208,12 +208,13 @@ const verifyBinding = (
     bound: string | undefined,
     expected: string | undefined,
     name: string,
+    normalize: (value: string) => string = (value) => value,
 ): boolean => {
     if (bound === undefined || expected === undefined) {
         return false;
     }
 
-    if (normalizeBinding(bound) !== normalizeBinding(expected)) {
+    if (normalize(bound) !== normalize(expected)) {
         throw new Error(`swap metadata is bound to a different ${name}`);
     }
 
@@ -324,7 +325,12 @@ export const decryptSwapMetadata = async (
 
     const verified = [
         verifyBinding(boundSwapId, binding.swapId, "swap"),
-        verifyBinding(boundPreimageHash, binding.preimageHash, "preimage hash"),
+        verifyBinding(
+            boundPreimageHash,
+            binding.preimageHash,
+            "preimage hash",
+            normalizeHexBinding,
+        ),
     ].some(Boolean);
 
     // Anything the reader cannot tie to this swap is a replay candidate,
