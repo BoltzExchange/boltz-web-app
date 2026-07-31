@@ -23,6 +23,7 @@ const modifySwap = vi.fn();
 const getErc20Swap = vi.fn();
 const getGasAbstractionSigner = vi.fn();
 const fetchDexQuote = vi.fn<(...args: unknown[]) => Promise<ClaimQuote>>();
+const gasTopUpSupported = vi.fn<(asset: string) => boolean>(() => false);
 const sendPopulatedTransaction =
     vi.fn<(...args: unknown[]) => Promise<string>>();
 const claimAsset =
@@ -62,7 +63,7 @@ vi.mock("../../src/hooks/useModifySwap", () => ({
 
 vi.mock("../../src/utils/quoter", () => ({
     fetchDexQuote,
-    gasTopUpSupported: () => false,
+    gasTopUpSupported: (asset: string) => gasTopUpSupported(asset),
     getGasTopUpNativeAmount: vi.fn(),
     fetchGasTokenQuote: vi.fn(),
 }));
@@ -297,6 +298,7 @@ describe("ClaimEvm", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         setSigner(makeSigner(signerAddress));
+        getGasAbstractionSigner.mockReturnValue(makeSigner(signerAddress));
         claimAsset.mockResolvedValue({
             transactionHash: "0xclaimtx",
             receiveAmount: 991n,
@@ -315,6 +317,57 @@ describe("ClaimEvm", () => {
         await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
         expect(getSwap).toHaveBeenCalledWith("swap-1");
         expect(claimAsset.mock.calls[0][0].amount).toBe(777);
+    });
+
+    // L-BTC -> TBTC chain swap created with a pasted destination and gas
+    // top-up left off: the claim is sponsored by the rescue key derived
+    // signer, so it must not require a connected wallet
+    test("claims an ERC20 chain swap to a pasted destination without a connected wallet", async () => {
+        const destination = "0x0B99060995946051af5ac29148C2b33808b734e9";
+        const gasSigner = makeSigner(
+            "0xa90D48e66F145851f4E047f1bc14ebe33c7a156d",
+        );
+        setSigner(undefined);
+        getGasAbstractionSigner.mockReturnValue(gasSigner);
+        gasTopUpSupported.mockReturnValue(true);
+        getSwap.mockResolvedValue({
+            id: "swap-1",
+            type: SwapType.Chain,
+            claimDetails: { amount: 99_723 },
+        } as SomeSwap);
+
+        render(() => (
+            <ClaimEvm
+                swapId="swap-1"
+                gasAbstraction={GasAbstractionType.Signer}
+                preimage="0xpreimage"
+                assetSend="L-BTC"
+                assetReceive="TBTC"
+                signerAddress={destination}
+                claimAddress={destination}
+                refundAddress={signerAddress}
+                timeoutBlockHeight={100}
+                finalReceive="TBTC"
+                getGasToken={false}
+                autoClaimEnabled={true}
+            />
+        ));
+
+        await waitFor(() => expect(claimAsset).toHaveBeenCalledTimes(1));
+        expect(screen.queryByText(/missing signer/)).toBeNull();
+
+        const args = claimAsset.mock.calls[0][0] as unknown as {
+            amount: number;
+            claimAddress: string;
+            destination: string;
+            signer: () => Signer;
+        };
+        expect(args.signer()).toBe(gasSigner);
+        // Funds stay bound to the address the user pasted, so no forwarding
+        // transfer is appended on top of the claim
+        expect(args.claimAddress).toBe(destination);
+        expect(args.destination).toBe(destination);
+        expect(args.amount).toBe(99_723);
     });
 
     test("does not submit another claim when one is already persisted", async () => {
