@@ -13,6 +13,10 @@ export type Config = {
 } & typeof defaults;
 
 const defaults = {
+    // Replaces the landing page and the swap box with the suspension notice
+    // Refunds, rescues and pending swaps stay reachable
+    swapsSuspended: false,
+
     // Disables API endpoints that create cooperative signatures for claim
     // and refund transactions
     // **Should only be enabled for testing purposes**

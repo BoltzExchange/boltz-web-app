@@ -34,6 +34,7 @@ import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import GasAbstractionSweepRescue from "./pages/GasAbstractionSweepRescue";
+import Hero from "./pages/Hero";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
@@ -139,8 +140,14 @@ const App = (props: RouteSectionProps) => {
 const cleanup = render(
     () => (
         <Router root={App}>
-            <Route path="/" component={Suspension} />
-            <Route path="/swap" component={Suspension} />
+            <Route
+                path="/"
+                component={config.swapsSuspended ? Suspension : Hero}
+            />
+            <Route
+                path="/swap"
+                component={config.swapsSuspended ? Suspension : Create}
+            />
             <Route path="/products" component={Products} />
             <Route path="/products/btcpay" component={Btcpay} />
             <Route path="/products/client" component={Client} />
