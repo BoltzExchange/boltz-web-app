@@ -34,7 +34,6 @@ import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import GasAbstractionSweepRescue from "./pages/GasAbstractionSweepRescue";
-import Hero from "./pages/Hero";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
@@ -42,6 +41,7 @@ import Privacy from "./pages/Privacy";
 import RefundRescue from "./pages/RefundRescue";
 import Rescue from "./pages/Rescue";
 import RescueEvm from "./pages/RescueEvm";
+import Suspension from "./pages/Suspension";
 import Terms from "./pages/Terms";
 import Btcpay from "./pages/products/Btcpay";
 import Client from "./pages/products/Client";
@@ -139,8 +139,8 @@ const App = (props: RouteSectionProps) => {
 const cleanup = render(
     () => (
         <Router root={App}>
-            <Route path="/" component={Hero} />
-            <Route path="/swap" component={Create} />
+            <Route path="/" component={Suspension} />
+            <Route path="/swap" component={Suspension} />
             <Route path="/products" component={Products} />
             <Route path="/products/btcpay" component={Btcpay} />
             <Route path="/products/client" component={Client} />
