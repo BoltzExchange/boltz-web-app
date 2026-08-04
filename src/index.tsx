@@ -42,6 +42,7 @@ import Privacy from "./pages/Privacy";
 import RefundRescue from "./pages/RefundRescue";
 import Rescue from "./pages/Rescue";
 import RescueEvm from "./pages/RescueEvm";
+import Suspension from "./pages/Suspension";
 import Terms from "./pages/Terms";
 import Btcpay from "./pages/products/Btcpay";
 import Client from "./pages/products/Client";
@@ -139,8 +140,14 @@ const App = (props: RouteSectionProps) => {
 const cleanup = render(
     () => (
         <Router root={App}>
-            <Route path="/" component={Hero} />
-            <Route path="/swap" component={Create} />
+            <Route
+                path="/"
+                component={config.swapsSuspended ? Suspension : Hero}
+            />
+            <Route
+                path="/swap"
+                component={config.swapsSuspended ? Suspension : Create}
+            />
             <Route path="/products" component={Products} />
             <Route path="/products/btcpay" component={Btcpay} />
             <Route path="/products/client" component={Client} />

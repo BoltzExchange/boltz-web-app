@@ -15,6 +15,7 @@ const mainnetPreset = buildMainnetConfig({
 
 const config = {
     ...baseConfig,
+    swapsSuspended: true,
     torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
     network: "mainnet",
     loglevel: "debug",

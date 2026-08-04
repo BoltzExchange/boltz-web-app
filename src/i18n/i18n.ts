@@ -552,6 +552,21 @@ const dict = {
         approve_allowance_reset_line:
             "Some {{ tokenStandard }} tokens require resetting the allowance to 0 before setting a new amount. You may need to approve twice.",
         upload_rescue_key: "Select Rescue Key",
+
+        suspension_status: "Swap Services Disabled",
+        suspension_p1: "Update: Boltz will stay disabled until further notice.",
+        suspension_p2:
+            "Our API remains available to process refunds cooperatively. In any case, unilateral refunds will work, as they do not depend on our infrastructure.",
+        suspension_p3: "Our support team stays reachable.",
+        suspension_p4:
+            "To be clear: this is not a response to a single incident. Over the past months we have seen a steady rise in automated, AI-assisted probing of our infrastructure, and we have dealt with several exploits. Each was contained, but the pattern is clear: attackers now iterate faster than a team our size can find and patch. In the past few days alone we saw a drastic acceleration, and we do not believe this asymmetry will reverse. After reviewing the results of our own recent security scans, we cannot responsibly re-enable Boltz swaps, especially as we are being actively targeted by what appear to be multiple resourceful groups while we race to deploy fixes.",
+        suspension_p5:
+            "What we are seeing is a major paradigm shift for Bitcoin services operating on an open source stack, and it needs careful analysis. Do not expect swap services to resume shortly.",
+        suspension_p6:
+            "To be explicit: no user funds were ever at risk. Boltz is non-custodial by design. And as a fully bootstrapped company, the losses were ours alone.",
+        suspension_p7:
+            "We don't know yet how things will continue from here, but we'll keep you posted as soon as we have had the time to catch our breath and make a decision 🙏",
+        suspension_date: "3 August 2026 · View on X",
     },
     de: {
         language: "Deutsch",
@@ -1122,6 +1137,21 @@ const dict = {
         approve_allowance_reset_line:
             "Einige {{ tokenStandard }}-Token verlangen, dass die Freigabe zuerst auf 0 gesetzt wird, bevor ein neuer Betrag gesetzt werden kann. Möglicherweise musst du zweimal freigeben.",
         upload_rescue_key: "Rettungsschlüssel auswählen",
+
+        suspension_status: "Swap-Dienste deaktiviert",
+        suspension_p1: "Update: Boltz bleibt bis auf Weiteres deaktiviert.",
+        suspension_p2:
+            "Unsere API bleibt verfügbar, um Erstattungen kooperativ abzuwickeln. In jedem Fall funktionieren einseitige Erstattungen, da sie nicht von unserer Infrastruktur abhängen.",
+        suspension_p3: "Unser Support-Team bleibt erreichbar.",
+        suspension_p4:
+            "Um es klar zu sagen: Dies ist keine Reaktion auf einen einzelnen Vorfall. In den vergangenen Monaten haben wir einen stetigen Anstieg automatisierter, KI-gestützter Angriffsversuche auf unsere Infrastruktur beobachtet und mehrere Exploits bewältigt. Jeder davon wurde eingedämmt, aber das Muster ist eindeutig: Angreifer iterieren inzwischen schneller, als ein Team unserer Größe Lücken finden und schließen kann. Allein in den letzten Tagen haben wir eine drastische Beschleunigung gesehen, und wir glauben nicht, dass sich diese Asymmetrie umkehren wird. Nach Auswertung unserer eigenen jüngsten Sicherheitsscans können wir Boltz-Swaps nicht verantwortungsvoll wieder aktivieren, zumal wir aktiv von offenbar mehreren gut ausgestatteten Gruppen ins Visier genommen werden, während wir mit Hochdruck an Fixes arbeiten.",
+        suspension_p5:
+            "Was wir hier sehen, ist ein grundlegender Paradigmenwechsel für Bitcoin-Dienste, die auf einem Open-Source-Stack laufen, und er erfordert eine sorgfältige Analyse. Erwarte nicht, dass die Swap-Dienste in Kürze zurückkehren.",
+        suspension_p6:
+            "Um es deutlich zu sagen: Nutzergelder waren zu keinem Zeitpunkt in Gefahr. Boltz ist von Grund auf non-custodial. Und da wir ein vollständig eigenfinanziertes Unternehmen sind, waren die Verluste allein unsere.",
+        suspension_p7:
+            "Wir wissen noch nicht, wie es von hier aus weitergeht, aber wir halten dich auf dem Laufenden, sobald wir Zeit hatten durchzuatmen und eine Entscheidung zu treffen 🙏",
+        suspension_date: "3. August 2026 · Auf X ansehen",
     },
     es: {
         language: "Español",
@@ -1690,6 +1720,22 @@ const dict = {
         approve_allowance_reset_line:
             "Algunos tokens {{ tokenStandard }} requieren restablecer la asignación a 0 antes de establecer una nueva cantidad. Es posible que debas aprobar dos veces.",
         upload_rescue_key: "Seleccionar clave de rescate",
+
+        suspension_status: "Servicios de swap deshabilitados",
+        suspension_p1:
+            "Actualización: Boltz seguirá deshabilitado hasta nuevo aviso.",
+        suspension_p2:
+            "Nuestra API sigue disponible para procesar reembolsos de forma cooperativa. En cualquier caso, los reembolsos unilaterales funcionarán, ya que no dependen de nuestra infraestructura.",
+        suspension_p3: "Nuestro equipo de soporte sigue disponible.",
+        suspension_p4:
+            "Para que quede claro: esto no es una respuesta a un único incidente. Durante los últimos meses hemos visto un aumento constante de sondeos automatizados y asistidos por IA contra nuestra infraestructura, y hemos lidiado con varios exploits. Cada uno fue contenido, pero el patrón es claro: los atacantes ahora iteran más rápido de lo que un equipo de nuestro tamaño puede detectar y parchear. Solo en los últimos días hemos visto una aceleración drástica, y no creemos que esta asimetría vaya a revertirse. Tras revisar los resultados de nuestros propios análisis de seguridad recientes, no podemos reactivar los swaps de Boltz de forma responsable, especialmente mientras somos objetivo activo de lo que parecen ser varios grupos con muchos recursos, y mientras corremos para desplegar correcciones.",
+        suspension_p5:
+            "Lo que estamos viendo es un cambio de paradigma importante para los servicios de Bitcoin que operan sobre un stack de código abierto, y requiere un análisis cuidadoso. No esperes que los servicios de swap se reanuden pronto.",
+        suspension_p6:
+            "Para ser explícitos: los fondos de los usuarios nunca estuvieron en riesgo. Boltz es non-custodial por diseño. Y como empresa totalmente autofinanciada, las pérdidas fueron solo nuestras.",
+        suspension_p7:
+            "Todavía no sabemos cómo continuará todo a partir de aquí, pero te mantendremos informado en cuanto hayamos tenido tiempo de tomar aire y decidir 🙏",
+        suspension_date: "3 de agosto de 2026 · Ver en X",
     },
     pt: {
         language: "Português",
@@ -2253,6 +2299,22 @@ const dict = {
         approve_allowance_reset_line:
             "Alguns tokens {{ tokenStandard }} exigem redefinir a permissão para 0 antes de definir um novo valor. Talvez você precise aprovar duas vezes.",
         upload_rescue_key: "Selecionar chave de resgate",
+
+        suspension_status: "Serviços de swap desativados",
+        suspension_p1:
+            "Atualização: a Boltz permanecerá desativada até novo aviso.",
+        suspension_p2:
+            "Nossa API continua disponível para processar reembolsos de forma cooperativa. De qualquer forma, os reembolsos unilaterais funcionarão, pois não dependem da nossa infraestrutura.",
+        suspension_p3: "Nossa equipe de suporte continua acessível.",
+        suspension_p4:
+            "Para deixar claro: esta não é uma resposta a um único incidente. Nos últimos meses vimos um aumento constante de sondagens automatizadas e assistidas por IA na nossa infraestrutura, e lidamos com vários exploits. Cada um foi contido, mas o padrão é claro: os atacantes agora iteram mais rápido do que uma equipe do nosso tamanho consegue encontrar e corrigir. Só nos últimos dias vimos uma aceleração drástica, e não acreditamos que essa assimetria vá se reverter. Depois de revisar os resultados das nossas próprias verificações de segurança recentes, não podemos reativar os swaps da Boltz de forma responsável, especialmente enquanto somos alvo ativo do que parecem ser vários grupos com muitos recursos, e enquanto corremos para implantar correções.",
+        suspension_p5:
+            "O que estamos vendo é uma grande mudança de paradigma para serviços de Bitcoin que operam sobre uma stack de código aberto, e isso exige uma análise cuidadosa. Não espere que os serviços de swap voltem em breve.",
+        suspension_p6:
+            "Para ser explícito: os fundos dos usuários nunca estiveram em risco. A Boltz é non-custodial por design. E, como empresa totalmente autofinanciada, os prejuízos foram só nossos.",
+        suspension_p7:
+            "Ainda não sabemos como as coisas seguirão a partir daqui, mas manteremos você informado assim que tivermos tido tempo de respirar e tomar uma decisão 🙏",
+        suspension_date: "3 de agosto de 2026 · Ver no X",
     },
     zh: {
         language: "中文",
@@ -2758,6 +2820,21 @@ const dict = {
         approve_allowance_reset_line:
             "某些 {{ tokenStandard }} 代币要求先将授权额度重置为 0，然后才能设置新的额度。你可能需要授权两次。",
         upload_rescue_key: "选择救援密钥",
+
+        suspension_status: "兑换服务已停用",
+        suspension_p1: "更新：Boltz 将持续停用，直至另行通知。",
+        suspension_p2:
+            "我们的 API 仍可用于协作处理退款。无论如何，单方面退款都能正常进行，因为它们不依赖我们的基础设施。",
+        suspension_p3: "我们的支持团队仍可联系。",
+        suspension_p4:
+            "需要说明的是：这并非针对单一事件的回应。过去几个月，我们看到针对基础设施的自动化、AI 辅助探测持续增加，并处理了多起漏洞利用。每一起都已被控制，但模式已经很清楚：攻击者的迭代速度已超过我们这种规模的团队发现和修补的速度。仅在最近几天，我们就看到了急剧的加速，我们并不认为这种不对称会逆转。在审视了我们自己近期安全扫描的结果后，我们无法负责任地重新启用 Boltz 兑换，尤其是在我们正被看似多个资源充足的团伙主动锁定、而我们仍在争分夺秒部署修复的情况下。",
+        suspension_p5:
+            "我们所看到的，是基于开源技术栈运行的比特币服务所面临的一次重大范式转变，这需要审慎分析。请不要期待兑换服务会很快恢复。",
+        suspension_p6:
+            "明确地说：用户资金从未面临风险。Boltz 在设计上就是非托管的。作为一家完全自筹资金的公司，损失全部由我们自己承担。",
+        suspension_p7:
+            "我们尚不清楚接下来会如何发展，但一旦我们有时间喘口气并做出决定，就会及时告知大家 🙏",
+        suspension_date: "2026年8月3日 · 在 X 上查看",
     },
     ja: {
         language: "日本語",
@@ -3314,6 +3391,22 @@ const dict = {
         approve_allowance_reset_line:
             "一部の{{ tokenStandard }}トークンでは、新しい金額を設定する前に許可額を0にリセットする必要があります。2回承認が必要になる場合があります。",
         upload_rescue_key: "レスキューキーを選択",
+
+        suspension_status: "スワップサービス停止中",
+        suspension_p1:
+            "お知らせ：Boltz は追って通知があるまで停止したままとなります。",
+        suspension_p2:
+            "当社の API は、協調的な返金処理のために引き続き利用可能です。いずれにせよ、一方的な返金は当社のインフラに依存しないため機能します。",
+        suspension_p3: "サポートチームには引き続きご連絡いただけます。",
+        suspension_p4:
+            "明確にしておきますが、これは単一のインシデントへの対応ではありません。ここ数か月、当社のインフラに対する自動化された AI 支援型の探索が着実に増加しており、複数のエクスプロイトに対処してきました。いずれも封じ込めましたが、傾向は明らかです。攻撃者は、当社の規模のチームが発見して修正できるよりも速く反復するようになりました。ここ数日だけでも急激な加速が見られ、この非対称性が逆転するとは考えていません。当社自身による最近のセキュリティスキャンの結果を検討した上で、Boltz のスワップを責任を持って再開することはできません。とりわけ、修正の展開を急ぐ一方で、潤沢なリソースを持つと見られる複数のグループから積極的に狙われている状況ではなおさらです。",
+        suspension_p5:
+            "私たちが目にしているのは、オープンソースのスタック上で運用されるビットコインサービスにとっての大きなパラダイムシフトであり、慎重な分析が必要です。スワップサービスがすぐに再開するとは考えないでください。",
+        suspension_p6:
+            "はっきりと申し上げます。ユーザーの資金が危険にさらされたことは一度もありません。Boltz は設計上ノンカストディアルです。そして完全に自己資金で運営する企業として、損失はすべて当社が負いました。",
+        suspension_p7:
+            "ここから先どうなるかはまだわかりませんが、一息ついて判断できる時間が取れ次第、あらためてお知らせします 🙏",
+        suspension_date: "2026年8月3日 · X で見る",
     },
 };
 
