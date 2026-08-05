@@ -87,6 +87,61 @@ describeArbitrumE2e("Arbitrum stablecoin e2e", () => {
         await generateLiquidBlock();
     });
 
+    test("claims an L-BTC to TBTC chain swap to a pasted destination without a connected wallet", async ({
+        arbitrum,
+        recipientAddress,
+        page,
+    }) => {
+        test.setTimeout(fullFlowTestTimeout);
+
+        const token = getRegtestTokenAddress("TBTC");
+        expect(
+            await getTokenBalance(
+                arbitrum.publicClient,
+                token,
+                recipientAddress,
+            ),
+        ).toEqual(0n);
+
+        const swapId = await createSwap(
+            page,
+            "L-BTC",
+            "TBTC",
+            recipientAddress,
+            lbtcSendAmount,
+        );
+
+        expect(await page.evaluate(() => "ethereum" in window)).toBe(false);
+
+        const storedSwap = await getStoredSwap(page, swapId);
+        expect(storedSwap).not.toBeNull();
+        expect(storedSwap!.dex).toBeUndefined();
+
+        await page
+            .locator("div[data-testid='pay-onchain-buttons']")
+            .getByText("address")
+            .click();
+        const lockupAddress = await page.evaluate(() =>
+            navigator.clipboard.readText(),
+        );
+        expect(lockupAddress).toBeDefined();
+
+        await elementsSendToAddress(lockupAddress, lbtcSendAmount);
+        await generateLiquidBlock();
+
+        await expect(
+            page.locator("div[data-status='transaction.claimed']"),
+        ).toBeVisible({ timeout: fullFlowTestTimeout });
+
+        expect(
+            await getTokenBalance(
+                arbitrum.publicClient,
+                token,
+                recipientAddress,
+            ),
+        ).toBeGreaterThan(0n);
+    });
+
     test("claims an L-BTC to USDT0-Arbitrum chain swap", async ({
         arbitrum,
         recipientAddress,
