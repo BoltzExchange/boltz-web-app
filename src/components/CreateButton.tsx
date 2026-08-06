@@ -9,7 +9,7 @@ import { isLnurlAmountError } from "boltz-swaps/errors";
 import { isKnownTokenAddress } from "boltz-swaps/evm";
 import { InvoiceType, decodeInvoice } from "boltz-swaps/invoice";
 import { resolveInvoice } from "boltz-swaps/resolveInvoice";
-import { SwapPosition, SwapType } from "boltz-swaps/types";
+import { NetworkTransport, SwapPosition, SwapType } from "boltz-swaps/types";
 import log from "loglevel";
 import {
     type Accessor,
@@ -330,6 +330,10 @@ const CreateButton = () => {
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
     const deferredInvoiceDestination = () => lnurl() || bolt12Offer();
+    const requiresConnectedWallet = () => isEvmAsset(assetSend());
+    const missingWalletConnection = () =>
+        requiresConnectedWallet() &&
+        connectedWallet()?.transport !== NetworkTransport.Evm;
     const canCreateCommitmentSwap = () =>
         canCommitSubmarineSendAmount(pair(), amountChanged()) &&
         amountValid() &&
@@ -356,6 +360,14 @@ const CreateButton = () => {
         hasBolt12Offer: Boolean(bolt12Offer()),
     });
 
+    const setCreateSwapLabel = () => {
+        setButtonLabel({
+            key: missingWalletConnection()
+                ? "connect_wallet_to_continue"
+                : "create_swap",
+        });
+    };
+
     createEffect(
         on(
             [
@@ -376,6 +388,7 @@ const CreateButton = () => {
                 receiveAmount,
                 onchainAddress,
                 invoice,
+                connectedWallet,
             ],
             () => {
                 setButtonDisable(false);
@@ -478,11 +491,11 @@ const CreateButton = () => {
                     }
                 } else {
                     if (canCreateCommitmentSwap()) {
-                        setButtonLabel({ key: "create_swap" });
+                        setCreateSwapLabel();
                         return;
                     }
                     if (validWayToFetchInvoice()) {
-                        setButtonLabel({ key: "create_swap" });
+                        setCreateSwapLabel();
                         return;
                     }
                     if (!invoiceValid()) {
@@ -492,7 +505,7 @@ const CreateButton = () => {
                         return;
                     }
                 }
-                setButtonLabel({ key: "create_swap" });
+                setCreateSwapLabel();
             },
         ),
     );
@@ -1100,6 +1113,7 @@ const CreateButton = () => {
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
+                missingWalletConnection() ||
                 (gasTopUpSupported(assetReceive()) &&
                     getGasToken() === undefined) ||
                 (onchainAddress() === "" &&
