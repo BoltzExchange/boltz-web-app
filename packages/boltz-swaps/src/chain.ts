@@ -17,9 +17,11 @@ import type { ECKeys, UtxoAsset } from "./utxo/index.ts";
 
 export type UtxoClaimKeys = {
     claimKeys: ECKeys;
-    // Net amount (in sats) to deliver to the claim address; the gap to the
-    // gross lockup (`claimDetails.amount`) funds the claim transaction fee,
-    // typically the chain pair's `minerFees.user.claim`.
+    // Amount (in sats) requested at the claim address; the gap to the gross
+    // lockup (`claimDetails.amount`) funds the claim transaction fee, typically
+    // the chain pair's `minerFees.user.claim`. An unconfidential Liquid
+    // destination reserves up to `liquidUnconfidentialClaimExtra` more out of
+    // it, so the result's `receiveAmount` is what actually lands.
     receiveAmount: number;
     blindingKey?: string;
     cooperativeSource?: {
@@ -127,7 +129,7 @@ const claimUtxoDestination = async (
     await broadcastApiTransaction(asset, result.transactionHex);
     return {
         transactionHash: result.transactionId,
-        receiveAmount: BigInt(receiveAmount),
+        receiveAmount: BigInt(result.claimedAmount),
     };
 };
 

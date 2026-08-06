@@ -99,7 +99,7 @@ test.describe("ChainSwap replacement quote acceptance crash", () => {
         const quoteAmount: number = (await (await quoteFetched).json()).amount;
 
         const claimFee = await getLbtcBtcClaimFee();
-        const expectedReceive = quoteAmount - claimFee - 1;
+        const expectedReceive = quoteAmount - claimFee;
 
         // Let the acceptance POST reach the backend, but never deliver the
         // response to the app: the crash window between the server accepting

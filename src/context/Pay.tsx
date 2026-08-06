@@ -211,7 +211,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
             ...output,
             blindingPrivateKey: parseBlindingKey(swap, false),
         } as never);
-        const receiveAmount = lockupAmount - (claimFee + 1);
+        const receiveAmount = lockupAmount - claimFee;
         if (receiveAmount <= 0) {
             throw new Error(
                 `recovered receive amount is not positive for swap ${swap.id}`,

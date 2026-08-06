@@ -159,7 +159,7 @@ describe("PayProvider claimSwap", () => {
         expect(fetchPairs).toHaveBeenCalledTimes(1);
         expect(claim).toHaveBeenCalledTimes(1);
         const claimedSwap = claim.mock.calls[0][1] as ChainSwap;
-        expect(claimedSwap.receiveAmount).toBe(5_000 - 101);
+        expect(claimedSwap.receiveAmount).toBe(5_000 - 100);
         expect(claimedSwap.claimDetails.amount).toBe(5_000);
         expect(notify).toHaveBeenCalledWith("success", "swap_completed");
     });

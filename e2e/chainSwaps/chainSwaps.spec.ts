@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
 
+import { LBTC } from "../../src/consts/Assets";
 import { btcToSat, satToBtc } from "../../src/utils/denomination";
 import {
     bitcoinSendToAddress,
@@ -12,9 +13,11 @@ import {
     generateBitcoinBlock,
     generateInvoiceWithRoutingHint,
     generateLiquidBlock,
+    getAddressUtxos,
     getBitcoinAddress,
     getBitcoinWalletTx,
     getLiquidAddress,
+    getLiquidUnconfidentialAddress,
     setDisableAllSigners,
     verifyRescueFile,
 } from "../utils";
@@ -153,6 +156,71 @@ test.describe("Chain swap", () => {
         expect(await elementsGetReceivedByAddress(liquidAddress, 0)).toBe(
             bip21Amount.toNumber(),
         );
+    });
+
+    // The claim reserves the unconfidential surcharge out of its output, so the
+    // swap has to request that much more for the payee to land the full amount
+    test("BTC/LN with Magic Routing Hint to an unconfidential address", async ({
+        page,
+    }) => {
+        await page.goto("/");
+
+        await page.locator("div[class='asset asset-BTC'] div").click();
+        await page.getByTestId("select-LN").click();
+
+        const liquidAddress = await getLiquidUnconfidentialAddress();
+        const invoice = await generateInvoiceWithRoutingHint(
+            liquidAddress,
+            btcToSat(BigNumber("0.0009")).toNumber(),
+        );
+        await page.locator("input[data-testid='invoice']").fill(invoice);
+
+        const bip21 = new URL((await fetchBip21Invoice(invoice)).bip21);
+        const bip21AmountSats = btcToSat(
+            BigNumber(bip21.searchParams.get("amount") ?? 0),
+        ).toNumber();
+
+        await page.getByTestId("create-swap-button").click();
+        await verifyRescueFile(page);
+
+        await expect(
+            page.locator("span[class='optimized-route']"),
+        ).toBeVisible();
+
+        await page.locator("p[data-testid='copy-box']").click();
+        const copyAddress = await page.evaluate(() =>
+            navigator.clipboard.readText(),
+        );
+
+        await page
+            .getByTestId("pay-onchain-buttons")
+            .getByText("amount")
+            .click();
+        const sendAmount = await page.evaluate(() =>
+            navigator.clipboard.readText(),
+        );
+
+        await bitcoinSendToAddress(
+            copyAddress,
+            satToBtc(BigNumber(sendAmount)).toString(),
+        );
+        await generateBitcoinBlock();
+
+        await expect(
+            page.locator("div[data-status='transaction.claimed']"),
+        ).toBeVisible({ timeout: 15_000 });
+        await generateLiquidBlock();
+
+        await expect
+            .poll(
+                async () =>
+                    (await getAddressUtxos(LBTC, liquidAddress)).reduce(
+                        (sum, utxo) => sum + (utxo.value ?? 0),
+                        0,
+                    ),
+                { timeout: 30_000 },
+            )
+            .toBe(bip21AmountSats);
     });
 
     test("L-BTC/BTC with zeroConf toggle automatically claims swap", async ({

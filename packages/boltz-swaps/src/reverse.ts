@@ -19,7 +19,10 @@ export type ReverseExecuteArgs<A extends string = string> = {
     createdSwap: ReverseCreatedResponse;
     to: A;
     preimage: string;
-    // Net amount to the claim address; the gap to the gross lockup funds the fee.
+    // Amount requested at the claim address; the gap to the gross lockup funds
+    // the fee. An unconfidential Liquid destination reserves up to
+    // `liquidUnconfidentialClaimExtra` more out of it, so the result's
+    // `receiveAmount` is what actually lands.
     receiveAmount: number;
     claimAddress: string;
     claimKeys?: ECKeys;
@@ -156,6 +159,6 @@ export const executeReverseSwap = async <A extends string = string>(
     await broadcastApiTransaction(to, result.transactionHex);
     return {
         claimTransactionId: result.transactionId,
-        receiveAmount: BigInt(receiveAmount),
+        receiveAmount: BigInt(result.claimedAmount),
     };
 };

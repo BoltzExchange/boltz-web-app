@@ -45,7 +45,6 @@ import Pair, {
     type EncodedHop,
     toDexAmount,
 } from "../utils/Pair";
-import { calculateSendAmount } from "../utils/calculate";
 import { canCommitSubmarineSendAmount } from "../utils/commitmentSwap";
 import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
@@ -60,7 +59,10 @@ import { handleCreateSwapError } from "../utils/handleCreateSwapError";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { getDestinationAddress, getPair } from "../utils/helper";
 import { getAssetByBip21Prefix } from "../utils/invoice";
-import { findMagicRoutingHint } from "../utils/magicRoutingHint";
+import {
+    findMagicRoutingHint,
+    magicRoutingHintAmounts,
+} from "../utils/magicRoutingHint";
 import { estimateFeesPerGas } from "../utils/provider";
 import { gasTopUpSupported } from "../utils/quoter";
 import { canSendAsset } from "../utils/selectableAsset";
@@ -750,21 +752,18 @@ const CreateButton = () => {
                             throw new Error("invalid_bip21_amount");
                         }
 
-                        const mrhSendAmount = calculateSendAmount(
+                        const mrhAmounts = magicRoutingHintAmounts(
+                            chainPair,
                             bip21AmountSats,
-                            chainPair.fees.percentage,
-                            chainPair.fees.minerFees.server +
-                                chainPair.fees.minerFees.user.claim,
-                            SwapType.Chain,
+                            bip21Asset,
+                            chainAddress,
                         );
 
                         const savedFees = getMagicRoutingHintSavedFees({
                             pairs,
                             assetSend,
-                            addressValid,
-                            onchainAddress,
-                            sendAmount: () => mrhSendAmount,
-                            assetReceive: () => bip21Asset,
+                            sendAmount: () => mrhAmounts.sendAmount,
+                            unconfidentialExtra: mrhAmounts.surcharge,
                         });
 
                         if (BigNumber(savedFees).isLessThanOrEqualTo(0)) {
@@ -784,8 +783,8 @@ const CreateButton = () => {
                             ),
                         );
                         setOnchainAddress(chainAddress);
-                        setReceiveAmount(bip21AmountSats);
-                        setSendAmount(mrhSendAmount);
+                        setReceiveAmount(mrhAmounts.receiveAmount);
+                        setSendAmount(mrhAmounts.sendAmount);
 
                         log.debug("Creating MRH swap");
                         const mrhRescue = rescueFile();

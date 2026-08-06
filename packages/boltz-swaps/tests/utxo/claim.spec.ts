@@ -8,6 +8,7 @@ import {
     type CooperativeSourceClaimInput,
     claimChainSwapUtxo,
     createCooperativeSourceClaimSignature,
+    liquidUnconfidentialClaimExtra,
 } from "../../src/utxo/claim.ts";
 import type * as MusigModule from "../../src/utxo/musig.ts";
 import type * as TransactionModule from "../../src/utxo/transaction.ts";
@@ -244,6 +245,7 @@ describe("claimChainSwapUtxo cooperative happy path", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 
@@ -325,6 +327,7 @@ describe("createCooperativeSourceClaimSignature eligibility", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 
@@ -357,6 +360,7 @@ describe("createCooperativeSourceClaimSignature eligibility", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });
@@ -382,6 +386,7 @@ describe("uncooperative fallback", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });
@@ -399,6 +404,7 @@ describe("non-cooperative branch", () => {
         expect(result).toEqual({
             transactionHex: "cohex",
             transactionId: "coid",
+            claimedAmount: 50_000,
         });
     });
 });
@@ -484,6 +490,86 @@ describe("L-BTC specific paths", () => {
         expect(constructClaimTransaction.mock.calls[0][5]).toBe(
             decodedBlindingKey,
         );
+    });
+
+    test("reserves the unconfidential surcharge when blinded inputs go to an unconfidential destination", async () => {
+        mocks.getOutputAmount.mockResolvedValue(60_000);
+        mocks.decodeAddress.mockReturnValue({
+            script: new Uint8Array([0x00, 0x14]),
+            blindingKey: undefined,
+        });
+
+        await claimChainSwapUtxo(
+            baseParams({
+                asset: "L-BTC",
+                cooperative: false,
+                blindingKey: "ffeedd",
+                receiveAmount: 50_000,
+            }),
+        );
+
+        expect(constructClaimTransaction.mock.calls[0][2]).toBe(
+            10_000 + liquidUnconfidentialClaimExtra,
+        );
+    });
+
+    test("does not reserve the surcharge for a confidential destination", async () => {
+        mocks.getOutputAmount.mockResolvedValue(60_000);
+        mocks.decodeAddress.mockReturnValue({
+            script: new Uint8Array([0x00, 0x14]),
+            blindingKey: Buffer.from("aabbcc", "hex"),
+        });
+
+        await claimChainSwapUtxo(
+            baseParams({
+                asset: "L-BTC",
+                cooperative: false,
+                blindingKey: "ffeedd",
+                receiveAmount: 50_000,
+            }),
+        );
+
+        expect(constructClaimTransaction.mock.calls[0][2]).toBe(10_000);
+    });
+
+    test("does not reserve the surcharge when the inputs are not blinded", async () => {
+        mocks.getOutputAmount.mockResolvedValue(60_000);
+        mocks.decodeAddress.mockReturnValue({
+            script: new Uint8Array([0x00, 0x14]),
+            blindingKey: undefined,
+        });
+
+        await claimChainSwapUtxo(
+            baseParams({
+                asset: "L-BTC",
+                cooperative: false,
+                blindingKey: undefined,
+                receiveAmount: 50_000,
+            }),
+        );
+
+        expect(constructClaimTransaction.mock.calls[0][2]).toBe(10_000);
+    });
+
+    test("rejects a claim too small to absorb the unconfidential surcharge", async () => {
+        // Whole lockup is the receive amount: nothing left for the surcharge
+        mocks.getOutputAmount.mockResolvedValue(liquidUnconfidentialClaimExtra);
+        mocks.decodeAddress.mockReturnValue({
+            script: new Uint8Array([0x00, 0x14]),
+            blindingKey: undefined,
+        });
+
+        await expect(
+            claimChainSwapUtxo(
+                baseParams({
+                    asset: "L-BTC",
+                    cooperative: false,
+                    blindingKey: "ffeedd",
+                    receiveAmount: liquidUnconfidentialClaimExtra,
+                }),
+            ),
+        ).rejects.toThrow(/does not cover the .* sat surcharge/);
+        expect(constructClaimTransaction).not.toHaveBeenCalled();
     });
 
     test("BTC asset skips secp init and leaves blindingPrivateKey and liquid network undefined", async () => {

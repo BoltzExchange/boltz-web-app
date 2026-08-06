@@ -115,6 +115,9 @@ beforeEach(() => {
     claimReverseUtxoMock.mockResolvedValue({
         transactionHex: "rawtxhex",
         transactionId: "claim-txid",
+        // Deliberately not the requested amount: the result must report what
+        // the claim output actually carries
+        claimedAmount: 49_794,
     });
     buildSwapContractsForAssetMock.mockResolvedValue({
         etherSwap: { address: "0xe" },
@@ -216,7 +219,7 @@ describe("executeReverseSwap: UTXO destination", () => {
 
         expect(result).toEqual({
             claimTransactionId: "claim-txid",
-            receiveAmount: 49_800n,
+            receiveAmount: 49_794n,
         });
         expect(claimReverseUtxoMock).toHaveBeenCalledTimes(1);
         expect(claimReverseUtxoMock).toHaveBeenCalledWith(

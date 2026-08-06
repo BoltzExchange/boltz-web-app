@@ -5,11 +5,13 @@ import { SwapType } from "boltz-swaps/types";
 import { calculateSendAmount } from "../src/utils/calculate";
 import { btcToSat, satToBtc } from "../src/utils/denomination";
 import {
+    elementsGetDecodedTransaction,
     expectApproxAmount,
     expectApproxBtcAmount,
     generateBitcoinBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    getLiquidUnconfidentialAddress,
     getReversePairFees,
     payInvoiceLnd,
     payInvoiceLndBackground,
@@ -84,6 +86,66 @@ test.describe("reverseSwap", () => {
 
         const txInfo = JSON.parse(await getBitcoinWalletTx(txId!));
         expectApproxBtcAmount(txInfo.amount.toString(), receiveAmount);
+    });
+
+    test("Reverse swap LN/L-BTC to an unconfidential address", async ({
+        page,
+    }) => {
+        await page.goto("/");
+
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+            )
+            .click();
+        await page.getByTestId("select-L-BTC").click();
+
+        const receiveAmount = "0.001";
+        await page.getByTestId("receiveAmount").fill(receiveAmount);
+
+        const claimAddress = await getLiquidUnconfidentialAddress();
+        expect(claimAddress.startsWith("ert1")).toBe(true);
+        await page.getByTestId("onchainAddress").fill(claimAddress);
+
+        await page.getByTestId("create-swap-button").click();
+
+        await page.locator("span[class='btn']").click();
+        const invoice = await page.evaluate(() =>
+            navigator.clipboard.readText(),
+        );
+        await payInvoiceLnd(invoice);
+
+        const txIdLink = page.getByText("open claim transaction");
+        await expect(txIdLink).toBeVisible({ timeout: 30_000 });
+
+        // Liquid claim links carry a "#blinded=" fragment; strip it for the txid
+        const txId = (await txIdLink.getAttribute("href"))!
+            .split("/")
+            .pop()!
+            .split("#")[0];
+
+        const tx = await elementsGetDecodedTransaction(txId);
+
+        const claimed = tx.vout.find(
+            (out) => out.scriptPubKey.address === claimAddress,
+        );
+        expect(claimed).toBeDefined();
+        expect(btcToSat(BigNumber(claimed!.value!)).toNumber()).toEqual(
+            btcToSat(BigNumber(receiveAmount)).toNumber(),
+        );
+
+        // boltz-core injects it because no other output is blinded
+        expect(
+            tx.vout.filter((out) => out.scriptPubKey.type === "nulldata"),
+        ).toHaveLength(1);
+
+        const fee = tx.vout.find((out) => out.scriptPubKey.type === "fee");
+        expect(fee).toBeDefined();
+
+        // Elements relays at 0.1 sat/vbyte with truncating division
+        expect(
+            btcToSat(BigNumber(fee!.value!)).toNumber(),
+        ).toBeGreaterThanOrEqual(Math.floor(tx.discountvsize! / 10));
     });
 
     test("LN/BTC with zeroConf toggle automatically claims swap", async ({

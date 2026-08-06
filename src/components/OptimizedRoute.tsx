@@ -17,10 +17,6 @@ import { calculateBoltzFeeOnSend } from "../utils/calculate";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
 import type { ChainSwap } from "../utils/swapCreator";
-import {
-    unconfidentialExtra as extraFee,
-    isToUnconfidentialLiquid,
-} from "./Fees";
 import Tooltip from "./settings/Tooltip";
 
 const getTotalChainFees = ({
@@ -109,25 +105,13 @@ export const getMagicRoutingHintSavedFees = ({
     pairs,
     assetSend,
     sendAmount,
-    assetReceive,
-    addressValid,
-    onchainAddress,
+    unconfidentialExtra,
 }: {
     pairs: Accessor<Pairs | undefined>;
     assetSend: Accessor<string>;
     sendAmount: Accessor<BigNumber>;
-    assetReceive: Accessor<string>;
-    addressValid: Accessor<boolean>;
-    onchainAddress: Accessor<string>;
+    unconfidentialExtra: number;
 }) => {
-    const unconfidentialExtra = isToUnconfidentialLiquid({
-        assetReceive,
-        addressValid,
-        onchainAddress,
-    })
-        ? extraFee
-        : 0;
-
     const chainFee = getTotalChainFees({
         pairs,
         sendAmount,
